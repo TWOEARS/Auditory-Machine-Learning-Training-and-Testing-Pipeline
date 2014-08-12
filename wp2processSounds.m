@@ -35,6 +35,8 @@ for i = 1:length( soundFileNames )
         sound = sound(:,i);
     end
     
+    sound = sound ./ max( abs( sound ) );
+    
     wp2data = [];
     for angle = niState.wp2dataCreation.angle
         

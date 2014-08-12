@@ -2,7 +2,7 @@ function esetup = setupExperiment()
 
 esetup.wp2dataCreation.fsHz = 44.1E3;
 esetup.wp2dataCreation.nErbs = 1;
-esetup.wp2dataCreation.nChannels = 32;
+esetup.wp2dataCreation.nChannels = 16;
 esetup.wp2dataCreation.mEarF = true;
 esetup.wp2dataCreation.fLowHz = 80;
 esetup.wp2dataCreation.fHighHz = 8000;
@@ -21,7 +21,7 @@ esetup.wp2dataCreation.head = 'QU_KEMAR_anechoic_3m.mat';
 esetup.blockCreation.blockSize = 500e-3;
 esetup.blockCreation.shiftSize = esetup.blockCreation.blockSize / 2;
 
-esetup.Labeling.minBlockToEventRatio = 0.8;
+esetup.Labeling.minBlockToEventRatio = 0.7;
 
 esetup.featureCreation.function = @msFeatures;
 esetup.featureCreation.functionParam.derivations = 1;

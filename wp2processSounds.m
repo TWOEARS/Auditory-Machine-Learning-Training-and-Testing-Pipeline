@@ -55,4 +55,6 @@ for i = 1:length( soundFileNames )
 
 end
 
+wp1sim.set('ShutDown',true);
+
 disp( ';' );

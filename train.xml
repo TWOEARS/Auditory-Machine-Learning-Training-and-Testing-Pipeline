@@ -6,7 +6,7 @@
   NumberOfThreads="1"
   ReverberationMaxOrder="2"
   HRIRs="impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa">
-  <source Position="0 1 1.75"
+  <source Radius="3.0"
           Type="point"
           Name="TrainWav">
     <buffer ChannelMapping="1"

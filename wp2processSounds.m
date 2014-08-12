@@ -4,8 +4,16 @@ disp( 'wp2 processing of sounds' );
 
 [classSoundFileNames, soundFileNames] = makeSoundLists( soundsDir, className );
 
-wp2state = init_WP2( niState.wp2dataCreation.strFeatures, niState.wp2dataCreation.strCues, niState.wp2dataCreation );
+%wp2state = init_WP2( niState.wp2dataCreation.strFeatures, niState.wp2dataCreation.strCues, niState.wp2dataCreation );
 wp2DataHash = getWp2dataHash( niState );
+
+startWP1;
+import simulator.*
+import xml.*
+wp1sim = SimulatorConvexRoom();  % simulator object
+wp1sim.loadConfig('train.xml');
+wp1sim.set('Init',true);
+
 for i = 1:length( soundFileNames )
     
     wp2SaveName = [soundFileNames{i} '.' wp2DataHash '.wp2.mat'];
@@ -32,7 +40,7 @@ for i = 1:length( soundFileNames )
         
         fprintf( '.' );
         
-        earSignals = makeEarsignals( sound, angle, niState );
+        earSignals = makeEarsignals( sound, angle, wp1sim, niState );
         
         fprintf( '.' );
         

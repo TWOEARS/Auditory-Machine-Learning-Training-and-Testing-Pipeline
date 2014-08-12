@@ -1,15 +1,13 @@
 %% add needed pathes
 
 thisPath = getMFilePath();
+reporoot = fileparts( fileparts( fileparts( fileparts( thisPath ) ) ) );
 addpath( genpath( thisPath ) );
 addpath( genpath( [getMFilePath() '..' filesep 'tools' filesep] ) );
-reporoot = fileparts( fileparts( fileparts( fileparts( thisPath ) ) ) );
 addpath(fullfile(reporoot, 'wp1git/src'));
 %addpath(genpath(fullfile(reporoot, 'wp2git/src')));
 %addpath(genpath(fullfile(reporoot, 'wp3git/src')));
 %addpath(genpath(fullfile(reporoot, 'twoears-ssr/mex')));
-
-startWP1;
 
 
 %% create experiment: standard

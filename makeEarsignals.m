@@ -1,4 +1,8 @@
-function signals = makeEarsignals( monoSound, angle, niState )
+function signals = makeEarsignals( monoSound, angle, wp1sim, niState )
+
+
+wp1sim.Sources(1).AudioBuffer.setData( monoSound );
+wp1sim.set('ReInit',true);
 
 head = Head( niState.wp2dataCreation.head, niState.wp2dataCreation.fsHz );
 hrirs = head.getHrirs( angle );

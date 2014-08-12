@@ -40,7 +40,7 @@ for i = 1:length( soundFileNames )
         
         fprintf( '.' );
         
-        earSignals = makeEarsignals( sound, angle, wp1sim, niState );
+        earSignals = makeEarsignals( sound, angle, wp1sim );
         
         fprintf( '.' );
         

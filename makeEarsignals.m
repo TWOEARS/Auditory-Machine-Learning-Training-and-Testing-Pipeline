@@ -1,4 +1,4 @@
-function signals = makeEarsignals( monoSound, angle, wp1sim, niState )
+function signals = makeEarsignals( monoSound, angle, wp1sim )
 
 
 wp1sim.Sources(1).AudioBuffer.setData( monoSound );
@@ -7,12 +7,12 @@ wp1sim.Sinks.removeData();
 
 wp1sim.Sources(1).set('Azimuth', angle);
 
-head = Head( niState.wp2dataCreation.head, niState.wp2dataCreation.fsHz );
-hrirs = head.getHrirs( angle );
+while ~wp1sim.Sources(1).isEmpty()
+  wp1sim.set('Refresh',true);  % refresh all objects
+  wp1sim.set('Process',true);  % processing 
+end
+signals = wp1sim.Sinks.getData();
+signals = signals / max( abs( signals(:) ) ); % normalize
 
-convLength = ceil( niState.wp2dataCreation.fsHz / head.fs * head.numSamples );
-signals = zeros( length( monoSound ) + convLength - 1, 2 );
 
-signals(:,1) = conv( monoSound, hrirs(:, 1) );
-signals(:,2) = conv( monoSound, hrirs(:, 2) );
 

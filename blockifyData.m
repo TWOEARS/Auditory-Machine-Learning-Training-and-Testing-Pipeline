@@ -5,14 +5,14 @@ disp( 'blockifying data' );
 [~, soundFileNames] = makeSoundLists( soundsDir, className );
 
 blockDataHash = getBlockDataHash( esetup );
-for i = 1:length( soundFileNames )
+for z = 1:length( soundFileNames )
     
     fprintf( '.' );
     
-    blocksSaveName = [soundFileNames{i} '.' blockDataHash '.blocks.mat'];
+    blocksSaveName = [soundFileNames{z} '.' blockDataHash '.blocks.mat'];
     if exist( blocksSaveName, 'file' ); continue; end;
 
-    wp2SaveName = [soundFileNames{i} '.' getWp2dataHash( esetup ) '.wp2.mat'];
+    wp2SaveName = [soundFileNames{z} '.' getWp2dataHash( esetup ) '.wp2.mat'];
     ls = load( wp2SaveName, 'wp2data' );
     wp2data = ls.wp2data;
     
@@ -20,11 +20,11 @@ for i = 1:length( soundFileNames )
     
     for k = 1:size( wp2data, 1 ) % different wp2cues/features
         wp2BlockFeaturesTmp = [];
-        for j = 1:size( wp2data, 2 ) % different earsignals (e.g. different angles)
+        for m = 1:size( wp2data, 2 ) % different earsignals (e.g. different angles)
             
             fprintf( '.' );
             
-            nHops = size( wp2data(k,j).data, 2 );
+            nHops = size( wp2data(k,m).data, 2 );
             bs = getBlockSizes( esetup );
             nHopsMinusLastBlock = max( nHops - bs.hopsPerBlock, 0 );
             for blockIdx = 1:(1 + ceil( nHopsMinusLastBlock / bs.hopsPerShift ) )
@@ -34,7 +34,7 @@ for i = 1:length( soundFileNames )
                 if (blockend - blockstart + 1) < bs.hopsPerBlock
                     blockstart = nHopsMinusLastBlock + 1;
                 end
-                block = wp2data(k,j);
+                block = wp2data(k,m);
                 block.data = block.data(:,blockstart:blockend,:);
                 block.startTime = (blockstart - 1) * esetup.wp2dataCreation.hopSizeSec;
                 block.endTime = (blockend - 1) * esetup.wp2dataCreation.hopSizeSec + esetup.wp2dataCreation.winSizeSec;

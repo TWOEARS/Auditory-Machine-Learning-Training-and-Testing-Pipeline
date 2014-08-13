@@ -5,14 +5,14 @@ reporoot = fileparts( fileparts( fileparts( fileparts( thisPath ) ) ) );
 addpath( genpath( thisPath ) );
 addpath( genpath( [getMFilePath() '..' filesep 'tools' filesep] ) );
 addpath(fullfile(reporoot, 'wp1git/src'));
-%addpath(genpath(fullfile(reporoot, 'wp2git/src')));
+addpath(genpath(fullfile(reporoot, 'wp2git/src')));
 %addpath(genpath(fullfile(reporoot, 'wp3git/src')));
-%addpath(genpath(fullfile(reporoot, 'twoears-ssr/mex')));
 
 
 %% create experiment: standard
 
 e1setup = setupExperiment();
+
 %% produce models for experiment
 
 trainPath = '../../../soundsGit';

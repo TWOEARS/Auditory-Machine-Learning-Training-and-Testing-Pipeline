@@ -24,9 +24,9 @@ for k = 1:length( soundFileNames )
     fprintf( '\n%s', wp2SaveName );
 
     [sound, fsHz] = audioread( soundFileNames{k} );
-    if fsHz ~= esetup.wp2dataCreation.fsHz
-        fprintf( '\nWarning: sound is resampled from %uHz to %uHz\n', fsHz, esetup.wp2dataCreation.fsHz );
-        sound = resample( sound, esetup.wp2dataCreation.fsHz, fsHz );
+    if fsHz ~= esetup.wp2dataCreation.fs
+        fprintf( '\nWarning: sound is resampled from %uHz to %uHz\n', fsHz, esetup.wp2dataCreation.fs );
+        sound = resample( sound, esetup.wp2dataCreation.fs, fsHz );
     end
     
     if size( sound, 1 ) > 1
@@ -41,13 +41,21 @@ for k = 1:length( soundFileNames )
         
         fprintf( '.' );
 
-        earSignals = makeEarsignals( sound, angle, wp1sim );
+        earSignals = [];
+        earSignals = double( makeEarsignals( sound, angle, wp1sim ) );
         
         fprintf( '.' );
         
-        [~,wp2cues,wp2features,~] = process_WP2( earSignals, esetup.wp2dataCreation.fsHz, wp2state );
-        wp2data = [wp2data [wp2cues;wp2features]];
-        
+        dObj = [];
+        mObj = [];
+        wp2procs = [];
+        dObj = dataObject( earSignals, esetup.wp2dataCreation.fs );
+        mObj = manager( dObj );
+        for z = 1:length( esetup.wp2dataCreation.requests )
+            wp2procs{z} = mObj.addProcessor( esetup.wp2dataCreation.requests{z}, esetup.wp2dataCreation.requestP{z} );
+        end
+        mObj.processSignal();
+        wp2data = [wp2data [wp2procs{:}]'];
     end
     
     save( wp2SaveName, 'wp2data', 'esetup' );

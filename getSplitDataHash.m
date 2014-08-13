@@ -1,3 +1,3 @@
-function id = getSplitDataHash( niState )
+function id = getSplitDataHash( esetup )
 
-id = DataHash( {getLabelsHash( niState ) getFeaturesHash( niState ) niState.generalizationEstimation } );
+id = DataHash( {getLabelsHash( esetup ) getFeaturesHash( esetup ) esetup.generalizationEstimation } );

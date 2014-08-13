@@ -1,3 +1,3 @@
-function id = getBlockDataHash( niState )
+function id = getBlockDataHash( esetup )
 
-id = DataHash( {getWp2dataHash( niState ) niState.blockCreation} );
+id = DataHash( {getWp2dataHash( esetup ) esetup.blockCreation} );

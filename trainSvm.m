@@ -1,8 +1,8 @@
-function [model, translators, factors, predGenVal, hps, trVal] = trainSvm( foldsIdx, lfolds, dfolds, idfolds, niState )
+function [model, translators, factors, predGenVal, hps, trVal] = trainSvm( foldsIdx, lfolds, dfolds, idfolds, esetup )
 
 %% search for the best hyperparameters, using the folds indexed by foldsIdx
 
-hps = gridSvmTrain( foldsIdx, lfolds, dfolds, idfolds, niState );
+hps = gridSvmTrain( foldsIdx, lfolds, dfolds, idfolds, esetup );
 predGenVal = hps(end,5);
 
 %% train with the best hyperparameters, using all folds

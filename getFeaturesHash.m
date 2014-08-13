@@ -1,3 +1,3 @@
-function id = getFeaturesHash( niState )
+function id = getFeaturesHash( esetup )
 
-id = DataHash( {getBlockDataHash( niState ) niState.featureCreation } );
+id = DataHash( {getBlockDataHash( esetup ) esetup.featureCreation } );

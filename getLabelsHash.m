@@ -1,3 +1,3 @@
-function id = getLabelsHash( niState )
+function id = getLabelsHash( esetup )
 
-id = DataHash( {getBlockDataHash( niState ) niState.Labeling } );
+id = DataHash( {getBlockDataHash( esetup ) esetup.Labeling } );

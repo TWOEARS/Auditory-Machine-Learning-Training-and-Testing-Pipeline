@@ -1,3 +1,3 @@
-function id = getModelHash( niState )
+function id = getModelHash( esetup )
 
-id = DataHash( niState );
+id = DataHash( esetup );

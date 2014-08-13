@@ -1,3 +1,3 @@
-function id = getWp2dataHash( niState )
+function id = getWp2dataHash( esetup )
 
-id = DataHash( niState.wp2dataCreation );
+id = DataHash( esetup.wp2dataCreation );

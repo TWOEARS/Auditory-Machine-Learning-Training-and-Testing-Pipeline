@@ -1,17 +1,28 @@
 function c = stringifyCell( c )
 
-for i = 1:size(c,1)
-    if isa( c{i}, 'function_handle' )
-        c{i} = func2str( c{i} );
+for k = 1:size(c,1)
+for j = 1:size(c,2)
+    if isa( c{k,j}, 'function_handle' )
+        c{k,j} = func2str( c{k,j} );
     end
-    if isa( c{i}, 'cell' ) && ~isempty( c{i} )
-        if size( c{1}, 2 ) > 1
-            c(i) = {strcat( c{i}{:}, ' ' )};
+    while isa( c{k,j}, 'cell' ) && ~isempty( c{k,j} )
+        c{k,j} = {c{k,j}{:}};
+        a = stringifyCell( c{k,j} );
+        a = strcat( a, {'; '} );
+        c(k,j) = {strcat( a{:} )};
+    end
+    if isa( c{k,j}, 'struct' )
+        if isempty( fieldnames( c{k,j} ) )
+            c{k,j} = 'empty struct';
         else
-            c(i) = c{i};
+            sc = descriptiveStructCells( c{k,j} );
+            sc(:,2) = stringifyCell( sc(:,2) );
+            a = strcat( sc(:,1), {': '}, sc(:,2), {', '} );
+            c(k,j) = {strcat( a{:} )};
         end
     end
-    if isa( c{i}, 'numeric' ) || isa( c{i}, 'logical' )
-        c{i} = mat2str( c{i} );
+    if isa( c{k,j}, 'numeric' ) || isa( c{k,j}, 'logical' )
+        c{k,j} = mat2str( c{k,j} );
     end
+end
 end

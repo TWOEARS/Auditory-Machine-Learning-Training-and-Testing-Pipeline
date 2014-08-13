@@ -55,7 +55,7 @@ for k = 1:length( soundFileNames )
             wp2procs{z} = mObj.addProcessor( esetup.wp2dataCreation.requests{z}, esetup.wp2dataCreation.requestP{z} );
         end
         mObj.processSignal();
-        wp2data = [wp2data [wp2procs{:}]'];
+        wp2data = [wp2data wp2procs(:)];
     end
     
     save( wp2SaveName, 'wp2data', 'esetup' );

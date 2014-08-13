@@ -20,12 +20,12 @@ if ~exist( labelsSaveName, 'file' )
         if ~isempty( cell2mat( strfind( classSoundFileNames, soundFileNames{i} ) ) )
             blockLabels = labelBlocks( soundFileNames{i}, wp2BlockFeatures, esetup );
         else
-            blockLabels = -1 * ones( size( wp2BlockFeatures, 1 ), 1 );
+            blockLabels = -1 * ones( size( wp2BlockFeatures, 2 ), 1 );
         end
         
         labels = [labels; blockLabels];
         
-        identities = [identities; repmat( [i, classNames{i,2}], size( wp2BlockFeatures, 1 ), 1 )];
+        identities = [identities; repmat( [i, classNames{i,2}], size( wp2BlockFeatures, 2 ), 1 )];
         
     end
     idFiles = soundFileNames;

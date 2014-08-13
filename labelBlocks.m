@@ -3,26 +3,34 @@ function blockLabels = labelBlocks( soundFileName, wp2BlockFeatures, esetup )
 %read annotations
 annotFid = fopen( [soundFileName '.txt'] );
 if annotFid ~= -1
-    annotLine = fgetl( annotFid );
-    onsetOffset = sscanf( annotLine, '%f' );
+    onsetOffset = [];
+    while 1
+        annotLine = fgetl( annotFid );
+        if ~ischar( annotLine ), break, end
+        onsetOffset(end+1,:) = sscanf( annotLine, '%f' );
+    end
 else
     onsetOffset = [ inf, inf ];
 end
-eventOnset = onsetOffset(1);
-eventOffset = onsetOffset(2);
-eventLength = eventOffset - eventOnset;
-maxBlockEventLength = min( esetup.blockCreation.blockSize, eventLength );
 
-for blockIdx = 1:size( wp2BlockFeatures, 1 )
-
-    blockOnset = wp2BlockFeatures(blockIdx, 1).startTime;
-    blockOffset = wp2BlockFeatures(blockIdx, 1).endTime;
-    soundInBlockLength = min( blockOffset, eventOffset ) - max( blockOnset, eventOnset );
-    ratioBlockToSoundEvent = soundInBlockLength / maxBlockEventLength;
-    blockIsSoundEvent = ratioBlockToSoundEvent > esetup.Labeling.minBlockToEventRatio;
+for bi = 1:size( wp2BlockFeatures, 2 )
     
-    blockLabels(blockIdx,1) = blockIsSoundEvent;
-
+    blockOnset = wp2BlockFeatures(1,bi).startTime;
+    blockOffset = wp2BlockFeatures(1,bi).endTime;
+    
+    blockLabels(bi,1) = 0;
+    for k = 1 : size( onsetOffset, 1 )
+        eventOnset = onsetOffset(k,1);
+        eventOffset = onsetOffset(k,2);
+        eventLength = eventOffset - eventOnset;
+        maxBlockEventLen = min( esetup.blockCreation.blockSize, eventLength );
+        eventBlockOverlapLen = min( blockOffset, eventOffset ) - max( blockOnset, eventOnset );
+        relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
+        blockIsSoundEvent = relEventBlockOverlap > esetup.Labeling.minBlockToEventRatio;
+        blockLabels(bi,1) = blockLabels(bi,1) || blockIsSoundEvent;
+        if blockLabels(bi,1) == 1, break, end;
+    end
+    
 end
 
 if annotFid ~= -1

@@ -16,6 +16,7 @@ e1setup = setupExperiment();
 %% produce models for experiment
 
 trainPath = '../../../soundsGit';
+produceModel( trainPath, 'baby', e1setup );
 produceModel( trainPath, 'dog', e1setup );
 produceModel( trainPath, 'fire', e1setup );
 produceModel( trainPath, 'knock', e1setup );

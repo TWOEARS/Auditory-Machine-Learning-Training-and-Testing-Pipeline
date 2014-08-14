@@ -14,7 +14,7 @@ esetup.blockCreation.shiftSize = esetup.blockCreation.blockSize / 2;
 esetup.Labeling.minBlockToEventRatio = 0.7;
 
 esetup.featureCreation.function = @msFeatures;
-esetup.featureCreation.functionParam.derivations = 1;
+esetup.featureCreation.functionParam.derivations = 0;
 
 esetup.hyperParamSearch.epsilons = [1e-3]; 
 esetup.hyperParamSearch.cRange = [-5 5]; 

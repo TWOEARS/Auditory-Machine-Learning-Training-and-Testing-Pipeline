@@ -33,7 +33,8 @@ for i = 1:esetup.generalizationEstimation.folds
     
     fprintf( '\n%i. run of generalization assessment CV -- testing\n', i );
     [~, genVals(i), ~] = libsvmPredictExt( yfolds{i}, xfolds{i}, model, translators, factors, 0 );
-    
+    fprintf( '===============================================================\n' );
+
 end
 
 %% get perfomance numbers
@@ -44,9 +45,13 @@ genVal = mean( genVals );
 genValStd = std( genVals );
 predGenVal = mean( predGenVals );
 predGenValStd = std( predGenVals );
+fprintf( '\n=============================================\n' );
+fprintf( '====================================================================================\n' );
 fprintf( '\nTraining perfomance as evaluated by %i-fold CV is %g +-%g\n', esetup.generalizationEstimation.folds, cvtrVal, cvtrValStd );
 fprintf( '\nGeneralization perfomance as evaluated by %i-fold CV is %g +-%g\n', esetup.generalizationEstimation.folds, genVal, genValStd );
 fprintf( 'Prediction of CV was %g +-%g\n\n', predGenVal, predGenValStd );
+fprintf( '====================================================================================\n' );
+fprintf( '=============================================\n' );
 
 %% final production of a model, using the whole dataset
 

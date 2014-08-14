@@ -7,9 +7,9 @@ predGenVal = hps(end,5);
 
 %% train with the best hyperparameters, using all folds
 
-svmParamString = sprintf( '-t %d -g %e -c %e -w-1 1 -w1 %e -q -e %e -b %d', hps(end,1), hps(end,4), hps(end,3), 1, hps(end,2), calcProbs );
+svmParamString = sprintf( '-t %d -g %e -c %e -w-1 1 -w1 %e -q -e %e', hps(end,1), hps(end,4), hps(end,3), 1, hps(end,2) );
 disp( '' );
 fprintf( '\ntraining with best hyperparameters (CV gen prediction: %g)\n', predGenVal );
 
-[model, translators, factors, trVal] = libsvmtrainExt( vertcat( lfolds{foldsIdx} ), vertcat( dfolds{foldsIdx} ), svmParamString );
+[model, translators, factors, trVal] = libsvmtrainExt( vertcat( lfolds{foldsIdx} ), vertcat( dfolds{foldsIdx} ), svmParamString, calcProbs );
 

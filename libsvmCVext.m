@@ -8,9 +8,9 @@ for i = 1:nr_fold % Cross training : folding
     tridx = 1:nr_fold;
     tridx(i) = [];
 
-    [model, translators, factors, trVals(i)] = libsvmtrainExt( vertcat( lfolds{tridx} ), vertcat( dfolds{tridx} ), param );
+    [model, translators, factors, trVals(i)] = libsvmtrainExt( vertcat( lfolds{tridx} ), vertcat( dfolds{tridx} ), param, 0 );
     disp( 'testing performance:' );
-    [~, vals(i), ~] = libsvmPredictExt( lfolds{i}, dfolds{i}, model, translators, factors );
+    [~, vals(i), ~] = libsvmPredictExt( lfolds{i}, dfolds{i}, model, translators, factors, 0 );
   
     meanval = mean(vals);
     meantrval = mean(trVals);

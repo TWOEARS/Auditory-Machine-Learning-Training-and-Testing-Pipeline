@@ -1,7 +1,7 @@
-function ret = validation_function(dec, labels);
+function ret = validation_function(pred, labels);
 labels = (labels >= 0) - (labels < 0);
 valid_function = @(dec, labels) bac(dec, labels);
-ret = valid_function(dec, labels);
+ret = valid_function(pred, labels);
 %precision(dec, labels);
 %recall(dec, labels);
 %fscore(dec, labels);

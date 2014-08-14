@@ -12,7 +12,7 @@ if ~isempty( cpPos )
    str1 = paramStr(1:cpPos+2);
    cpPos2 = strfind( paramStr(cpPos+4:end), ' ' );
    str2 = paramStr(cpPos+4+cpPos2:end);
-   paramStr = sprintf( '%s %e %s', str1, cp, str2 );
+   paramStr = sprintf( '%s %e %s -b 1', str1, cp, str2 );
 end
 
 %% scale training data to zero mean, unit variance

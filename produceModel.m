@@ -32,7 +32,7 @@ for i = 1:esetup.generalizationEstimation.folds
     [model, translators, factors, predGenVals(i), hps{i}, cvtrVals(i)] = trainSvm( foldsIdx, yfolds, xfolds, idsfolds, esetup, 0 );
     
     fprintf( '\n%i. run of generalization assessment CV -- testing\n', i );
-    [~, genVals(i), ~] = libsvmPredictExt( yfolds{i}, xfolds{i}, model, translators, factors );
+    [~, genVals(i), ~] = libsvmPredictExt( yfolds{i}, xfolds{i}, model, translators, factors, 0 );
     
 end
 

@@ -6,7 +6,6 @@ addpath( genpath( thisPath ) );
 addpath( genpath( [getMFilePath() '..' filesep 'tools' filesep] ) );
 addpath(fullfile(reporoot, 'wp1git/src'));
 addpath(genpath(fullfile(reporoot, 'wp2git/src')));
-%addpath(genpath(fullfile(reporoot, 'wp3git/src')));
 
 
 %% create experiment: standard
@@ -15,13 +14,9 @@ e1setup = setupExperiment();
 
 %% produce models for experiment
 
-trainPath = '../../../soundsGit';
+trainPath = '../../../TwoEarsRUB/train';
 produceModel( trainPath, 'baby', e1setup );
 produceModel( trainPath, 'dog', e1setup );
-produceModel( trainPath, 'fire', e1setup );
-produceModel( trainPath, 'knock', e1setup );
-produceModel( trainPath, 'phone', e1setup );
-produceModel( trainPath, 'piano', e1setup );
 
 %% create experiment: standard
 

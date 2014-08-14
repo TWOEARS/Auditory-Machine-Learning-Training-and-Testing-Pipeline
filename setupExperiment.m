@@ -16,14 +16,14 @@ esetup.Labeling.minBlockToEventRatio = 0.7;
 esetup.featureCreation.function = @msFeatures;
 esetup.featureCreation.functionParam.derivations = 0;
 
-esetup.hyperParamSearch.epsilons = [1e-3]; 
+esetup.hyperParamSearch.epsilons = [5e-2]; 
 esetup.hyperParamSearch.cRange = [-5 5]; 
 esetup.hyperParamSearch.gammaRange = [-12 3]; 
 esetup.hyperParamSearch.kernels = [0];
 esetup.hyperParamSearch.method = 'grid'; % {random, grid, intelliGrid}
-esetup.hyperParamSearch.searchBudget = 9;
-esetup.hyperParamSearch.dataShare = 1; % [0..1]
+esetup.hyperParamSearch.searchBudget = 7;
+esetup.hyperParamSearch.dataShare = 0.25; % [0..1]
 esetup.hyperParamSearch.refineStages = 0;
-esetup.hyperParamSearch.folds = 4;
+esetup.hyperParamSearch.folds = 5;
 
-esetup.generalizationEstimation.folds = 4;
+esetup.generalizationEstimation.folds = 5;

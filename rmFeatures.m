@@ -13,4 +13,4 @@ end
 
 % TODO: determine which channel to use!
 s = .5 * rmBlock{1} + .5 * rmBlock{2};
-features = [mean( s, 1 )  std( s, 0, 1 )];
+features = mean( s, 1 );

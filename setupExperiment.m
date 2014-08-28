@@ -27,3 +27,5 @@ esetup.hyperParamSearch.refineStages = 0;
 esetup.hyperParamSearch.folds = 3;
 
 esetup.generalizationEstimation.folds = 5;
+
+esetup.data.trainSetShare = 0.8; % [0..1]

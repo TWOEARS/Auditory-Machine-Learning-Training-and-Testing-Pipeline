@@ -10,12 +10,16 @@ disp('--------------------------------------------------------');
 flatPrintStruct( esetup )
 disp('--------------------------------------------------------');
 
+%% collect data files
+
+dfiles = makeSoundLists( soundsDir, className );
+
 %% data pipeline: load sounds - wp2 process - extract blocks - create labels & features
 
-wp2processSounds( soundsDir, className, esetup );
-blockifyData( soundsDir, className, esetup );
-[y, identities] = makeLabels( soundsDir, className, esetup );
-x = makeFeatures( soundsDir, className, esetup );
+wp2processSounds( dfiles, esetup );
+blockifyData( dfiles, esetup );
+[y, identities] = makeLabels( dfiles, soundsDir, className, esetup );
+x = makeFeatures( dfiles, soundsDir, esetup );
 
 %%  split data for outer CV
 [yfolds, xfolds, idsfolds] = splitDataPermutation( y, x, identities, esetup.generalizationEstimation.folds );

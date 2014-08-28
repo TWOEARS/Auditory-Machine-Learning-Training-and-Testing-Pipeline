@@ -1,34 +1,32 @@
-function [labels, identities, idFiles] = makeLabels( soundsDir, className, esetup )
+function [labels, identities, idFiles] = makeLabels( dfiles, soundsDir, className, esetup )
 
 fprintf( 'make labels ' );
-
-[classSoundFileNames, soundFileNames, classNames] = makeSoundLists( soundsDir, className );
 
 labelsSaveName = [soundsDir '/' className '/' className '_' getLabelsHash( esetup ) '.labels.mat'];
 if ~exist( labelsSaveName, 'file' )
     
     labels = [];
     identities = [];
-    for i = 1:length( soundFileNames )
+    for i = 1:length( dfiles.soundFileNames )
         
         fprintf( '.' );
         
-        blocksSaveName = [soundFileNames{i} '.' getBlockDataHash( esetup ) '.blocks.mat'];
+        blocksSaveName = [dfiles.soundFileNames{i} '.' getBlockDataHash( esetup ) '.blocks.mat'];
         ls = load( blocksSaveName, 'wp2BlockFeatures' );
         wp2BlockFeatures = ls.wp2BlockFeatures;
         
-        if ~isempty( cell2mat( strfind( classSoundFileNames, soundFileNames{i} ) ) )
-            blockLabels = labelBlocks( soundFileNames{i}, wp2BlockFeatures, esetup );
+        if ~isempty( cell2mat( strfind( dfilesclassSoundFileNames, dfiles.soundFileNames{i} ) ) )
+            blockLabels = labelBlocks( dfiles.soundFileNames{i}, wp2BlockFeatures, esetup );
         else
             blockLabels = -1 * ones( size( wp2BlockFeatures, 2 ), 1 );
         end
         
         labels = [labels; blockLabels];
         
-        identities = [identities; repmat( [i, classNames{i,2}], size( wp2BlockFeatures, 2 ), 1 )];
+        identities = [identities; repmat( [i, dfiles.classNames{i,2}], size( wp2BlockFeatures, 2 ), 1 )];
         
     end
-    idFiles = soundFileNames;
+    idFiles = dfiles.soundFileNames;
     
     save( labelsSaveName, 'labels', 'identities', 'idFiles', 'esetup' );
 else

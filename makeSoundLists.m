@@ -1,4 +1,4 @@
-function [classSoundFileNames, soundFileNames, classNames] = makeSoundLists( soundsDir, className )
+function dfiles = makeSoundLists( soundsDir, className )
 
 % find all sound files in class dir
 classDir = [soundsDir '/' className];
@@ -21,3 +21,7 @@ for i = 1: size( soundDirNames, 1 )
     else soundFileNames = [soundFileNames ; soundFileNamesTmp]; end;
     classNames = [classNames; repmat( {soundDirNames(i).name, i}, size( soundFileNamesTmp, 1 ), 1 )];
 end
+
+dfiles.classSoundFileNames = classSoundFileNames;
+dfiles.soundFileNames = soundFileNames;
+dfiles.classNames = classNames;

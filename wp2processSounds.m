@@ -1,8 +1,6 @@
-function wp2processSounds( soundsDir, className, esetup )
+function wp2processSounds( dfiles, esetup )
 
 disp( 'wp2 processing of sounds' );
-
-[classSoundFileNames, soundFileNames] = makeSoundLists( soundsDir, className );
 
 wp2DataHash = getWp2dataHash( esetup );
 
@@ -13,9 +11,9 @@ wp1sim = SimulatorConvexRoom();  % simulator object
 wp1sim.loadConfig('train.xml');
 wp1sim.set('Init',true);
 
-for k = 1:length( soundFileNames )
+for k = 1:length( dfiles.soundFileNames )
     
-    wp2SaveName = [soundFileNames{k} '.' wp2DataHash '.wp2.mat'];
+    wp2SaveName = [dfiles.soundFileNames{k} '.' wp2DataHash '.wp2.mat'];
     if exist( wp2SaveName, 'file' )
         fprintf( '.' );
         continue;
@@ -23,7 +21,7 @@ for k = 1:length( soundFileNames )
     
     fprintf( '\n%s', wp2SaveName );
 
-    [sound, fsHz] = audioread( soundFileNames{k} );
+    [sound, fsHz] = audioread( dfiles.soundFileNames{k} );
     if fsHz ~= esetup.wp2dataCreation.fs
         fprintf( '\nWarning: sound is resampled from %uHz to %uHz\n', fsHz, esetup.wp2dataCreation.fs );
         sound = resample( sound, esetup.wp2dataCreation.fs, fsHz );

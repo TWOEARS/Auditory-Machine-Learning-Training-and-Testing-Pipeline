@@ -1,18 +1,16 @@
-function blockifyData( soundsDir, className, esetup )
+function blockifyData( dfiles, esetup )
 
 disp( 'blockifying data' );
 
-[~, soundFileNames] = makeSoundLists( soundsDir, className );
-
 blockDataHash = getBlockDataHash( esetup );
-for z = 1:length( soundFileNames )
+for z = 1:length( dfiles.soundFileNames )
     
     fprintf( '.' );
     
-    blocksSaveName = [soundFileNames{z} '.' blockDataHash '.blocks.mat'];
+    blocksSaveName = [dfiles.soundFileNames{z} '.' blockDataHash '.blocks.mat'];
     if exist( blocksSaveName, 'file' ); continue; end;
     
-    wp2SaveName = [soundFileNames{z} '.' getWp2dataHash( esetup ) '.wp2.mat'];
+    wp2SaveName = [dfiles.soundFileNames{z} '.' getWp2dataHash( esetup ) '.wp2.mat'];
     ls = load( wp2SaveName, 'wp2data' );
     wp2data = ls.wp2data;
     

@@ -40,6 +40,28 @@ else
     idsTest = idsTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
 end
 
+trainFiles = {};
+for k = 1:size(idsTrain,1)
+    trainFiles{k} = sprintf( '%s\n', dfiles.soundFileNames(idsTrain(k,1)) );
+end
+trainFiles = unique( trainFiles );
+trainFilesFid = fopen( [modelSavePreStr '_trainSet.txt'], 'w' );
+for k = 1:length(trainFiles)
+    fprintf( trainFilesFid, '%s', trainFiles{k} );
+end
+fclose( trainFilesFid );
+
+testFiles = {};
+for k = 1:size(idsTest,1)
+    testFiles{k} = sprintf( '%s\n', dfiles.soundFileNames(idsTest(k,1)) );
+end
+testFiles = unique( testFiles );
+testFilesFid = fopen( [modelSavePreStr '_testSet.txt'], 'w' );
+for k = 1:length(testFiles)
+    fprintf( testFilesFid, '%s', testFiles{k} );
+end
+fclose( testFilesFid );
+
 %% split data for outer CV (generalization perfomance assessment)
 
 [yfolds, xfolds, idsfolds] = splitDataPermutation( yTrain, xTrain, idsTrain, esetup.generalizationEstimation.folds );

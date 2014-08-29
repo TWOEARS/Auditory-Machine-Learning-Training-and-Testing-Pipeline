@@ -10,6 +10,7 @@ if annotFid ~= -1
         onsetOffset(end+1,:) = sscanf( annotLine, '%f' );
     end
 else
+    warning( sprintf( 'label annotation file not found: %s. Assuming no events.', soundFileName ) );
     onsetOffset = [ inf, inf ];
 end
 

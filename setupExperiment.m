@@ -28,4 +28,4 @@ esetup.hyperParamSearch.folds = 3;
 
 esetup.generalizationEstimation.folds = 5;
 
-esetup.data.trainSetShare = 0.8; % [0..1]
+esetup.data.trainSetShare = [3 4]; % [a b] read as: \frac{a}{b}

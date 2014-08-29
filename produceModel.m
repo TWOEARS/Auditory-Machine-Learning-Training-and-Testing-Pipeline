@@ -21,9 +21,28 @@ blockifyData( dfiles, esetup );
 [y, identities] = makeLabels( dfiles, soundsDir, className, esetup );
 x = makeFeatures( dfiles, soundsDir, esetup );
 
-%%  split data for outer CV
-[yfolds, xfolds, idsfolds] = splitDataPermutation( y, x, identities, esetup.generalizationEstimation.folds );
-save( [soundsDir '/' className '/' className '_' getSplitDataHash(esetup) '.splitdata.mat'], 'yfolds', 'xfolds', 'idsfolds', 'esetup' );
+%% get training share of data
+
+if esetup.data.trainSetShare(1) / esetup.data.trainSetShare(2) >= 0.99
+    yTrain = y;
+    yTest = [];
+    xTrain = x;
+    xTest = [];
+    idsTrain = identities;
+    idsTest = [];
+else
+    [yTrainTestFolds, xTrainTestFolds, idsTrainTestFolds] = splitDataPermutation( y, x, identities, esetup.data.trainSetShare(2) );
+    yTrain = yTrainTestFolds{1:esetup.data.trainSetShare(1)};
+    yTest = yTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
+    xTrain = xTrainTestFolds{1:esetup.data.trainSetShare(1)};
+    xTest = xTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
+    idsTrain = idsTrainTestFolds{1:esetup.data.trainSetShare(1)};
+    idsTest = idsTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
+end
+
+%% split data for outer CV (generalization perfomance assessment)
+
+[yfolds, xfolds, idsfolds] = splitDataPermutation( yTrain, xTrain, idsTrain, esetup.generalizationEstimation.folds );
 
 %% outer CV for estimating generalization performance
 
@@ -38,10 +57,10 @@ for i = 1:esetup.generalizationEstimation.folds
     fprintf( '\n%i. run of generalization assessment CV -- testing\n', i );
     [~, genVals(i), ~] = libsvmPredictExt( yfolds{i}, xfolds{i}, model, translators, factors, 0 );
     fprintf( '===============================================================\n' );
-
+    
 end
 
-%% get perfomance numbers
+%% get perfomance numbers of outer CV
 
 cvtrVal = mean( cvtrVals );
 cvtrValStd = std( cvtrVals );
@@ -57,15 +76,25 @@ fprintf( 'Prediction of CV was %g +-%g\n\n', predGenVal, predGenValStd );
 fprintf( '====================================================================================\n' );
 fprintf( '=============================================\n' );
 
-%% final production of a model, using the whole dataset
+%% final production of a model, using the whole training dataset
 
-disp( 'training model on whole dataset' );
+disp( 'training model on whole training dataset' );
 [model, translators, factors, trPredGenVal, trHps, trVal] = trainSvm( 1:esetup.generalizationEstimation.folds, yfolds, xfolds, idsfolds, esetup, 1 );
+
+%% test final model on test set, if split
+
+if ~isempty( yTest )
+    fprintf( '\n\nPerfomance of final model on test set:\n', i );
+    [~, testVal, ~] = libsvmPredictExt( yTest, xTest, model, translators, factors, 1 );
+    fprintf( '===============================================================\n' );
+else
+    testVal = [];
+end
 
 %% saving model and perfomance numbers, end debug output
 
-modelhashes = {['wp2hash: ' getWp2dataHash( esetup )]; ['blockdatahash: ' getBlockDataHash( esetup )]; ['labelhash: ' getLabelsHash( esetup )]; ['featureshash: ' getFeaturesHash( esetup )]; ['splitdatahash: ' getSplitDataHash( esetup )]; ['modelhash: ' getModelHash( esetup )]}
-save( [modelSavePreStr '_model.mat'], 'model', 'genVal', 'genValStd', 'genVals', 'cvtrVal', 'cvtrValStd', 'cvtrVals', 'predGenVal', 'predGenValStd', 'predGenVals', 'trPredGenVal', 'trVal', 'hps', 'trHps', 'modelhashes', 'esetup' );
+modelhashes = {['wp2hash: ' getWp2dataHash( esetup )]; ['blockdatahash: ' getBlockDataHash( esetup )]; ['labelhash: ' getLabelsHash( esetup )]; ['featureshash: ' getFeaturesHash( esetup )]; ['modelhash: ' getModelHash( esetup )]}
+save( [modelSavePreStr '_model.mat'], 'model', 'genVal', 'genValStd', 'genVals', 'cvtrVal', 'cvtrValStd', 'cvtrVals', 'predGenVal', 'predGenValStd', 'predGenVals', 'trPredGenVal', 'trVal', 'testVal', 'hps', 'trHps', 'modelhashes', 'esetup' );
 save( [modelSavePreStr '_scale.mat'], 'translators', 'factors', 'esetup' );
 dynSaveMFun( @scaleData, [], [modelSavePreStr '_scaleFunction'] );
 dynSaveMFun( esetup.featureCreation.function, esetup.featureCreation.functionParam, [modelSavePreStr '_featureFunction.mat'] );

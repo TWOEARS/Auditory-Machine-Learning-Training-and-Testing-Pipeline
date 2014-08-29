@@ -39,7 +39,7 @@ for ie = 1:size( modelFiles,1 )
     tVals{ie} = table( 'RowNames', rowNames );
     for ic = 1:size( modelFiles{ie},1 )
         ls = load( modelFiles{ie}{ic} );
-        vals = {ls.hps; ls.trHps; ls.cvtrVal; ls.predGenVal; ls.predGenValStd; ls.genVal; ls.genValStd; ls.trPredGenVal; ls.trVal};
+        vals = {ls.hps; ls.trHps; ls.cvtrVal; ls.predGenVal; ls.predGenValStd; ls.genVal; ls.genValStd; ls.trPredGenVal; ls.trVal; ls.testVal};
         tVals{ie}.(classes{ie}{ic}) = vals;
     end
     tVals{ie}.avgs = cell( size( rowNames ) );

@@ -32,17 +32,17 @@ if esetup.data.trainSetShare(1) / esetup.data.trainSetShare(2) >= 0.99
     idsTest = [];
 else
     [yTrainTestFolds, xTrainTestFolds, idsTrainTestFolds] = splitDataPermutation( y, x, identities, esetup.data.trainSetShare(2) );
-    yTrain = yTrainTestFolds{1:esetup.data.trainSetShare(1)};
-    yTest = yTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
-    xTrain = xTrainTestFolds{1:esetup.data.trainSetShare(1)};
-    xTest = xTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
-    idsTrain = idsTrainTestFolds{1:esetup.data.trainSetShare(1)};
-    idsTest = idsTrainTestFolds{esetup.data.trainSetShare(1)+1:end};
+    yTrain = vertcat( yTrainTestFolds{1:esetup.data.trainSetShare(1)} );
+    yTest = vertcat( yTrainTestFolds{esetup.data.trainSetShare(1)+1:end} );
+    xTrain = vertcat( xTrainTestFolds{1:esetup.data.trainSetShare(1)} );
+    xTest = vertcat( xTrainTestFolds{esetup.data.trainSetShare(1)+1:end} );
+    idsTrain = vertcat( idsTrainTestFolds{1:esetup.data.trainSetShare(1)} );
+    idsTest = vertcat( idsTrainTestFolds{esetup.data.trainSetShare(1)+1:end} );
 end
 
 trainFiles = {};
 for k = 1:size(idsTrain,1)
-    trainFiles{k} = sprintf( '%s\n', dfiles.soundFileNames(idsTrain(k,1)) );
+    trainFiles{k} = sprintf( '%s\n', dfiles.soundFileNames{idsTrain(k,1)} );
 end
 trainFiles = unique( trainFiles );
 trainFilesFid = fopen( [modelSavePreStr '_trainSet.txt'], 'w' );
@@ -53,7 +53,7 @@ fclose( trainFilesFid );
 
 testFiles = {};
 for k = 1:size(idsTest,1)
-    testFiles{k} = sprintf( '%s\n', dfiles.soundFileNames(idsTest(k,1)) );
+    testFiles{k} = sprintf( '%s\n', dfiles.soundFileNames{idsTest(k,1)} );
 end
 testFiles = unique( testFiles );
 testFilesFid = fopen( [modelSavePreStr '_testSet.txt'], 'w' );

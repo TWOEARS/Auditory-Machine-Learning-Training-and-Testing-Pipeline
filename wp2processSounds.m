@@ -47,12 +47,27 @@ for k = 1:length( dfiles.soundFileNames )
         dObj = [];
         mObj = [];
         wp2procs = [];
-        dObj = dataObject( earSignals, esetup.wp2dataCreation.fs );
+        dObj = dataObject( [], esetup.wp2dataCreation.fs, 1 );
         mObj = manager( dObj );
         for z = 1:length( esetup.wp2dataCreation.requests )
             wp2procs{z} = mObj.addProcessor( esetup.wp2dataCreation.requests{z}, esetup.wp2dataCreation.requestP{z} );
         end
-        mObj.processSignal();
+        tmpData = cell( size(wp2procs,2), size(wp2procs{1},2) );
+        for pos = 1:esetup.wp2dataCreation.fs:length(earSignals)
+            posEnd = min( length( earSignals ), pos + esetup.wp2dataCreation.fs - 1 );
+            mObj.processChunk( earSignals(pos:posEnd,:), 0 );
+            for z = 1:size(wp2procs,2)
+                for zz = 1:size(wp2procs{z},2)
+                    tmpData{z,zz} = [tmpData{z,zz}; wp2procs{z}{zz}.Data];
+                end
+            end
+            fprintf( '.' );
+        end
+        for z = 1:size(wp2procs,2)
+            for zz = 1:size(wp2procs{z},2)
+                wp2procs{z}{zz}.Data = tmpData{z,zz};
+            end
+        end
         wp2data = [wp2data wp2procs(:)];
     end
     

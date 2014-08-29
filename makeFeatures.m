@@ -2,7 +2,7 @@ function [features] = makeFeatures( dfiles, soundsDir, esetup )
 
 fprintf( 'make features' );
 
-featuresSavePreStr = [soundsDir '/' getFeaturesHash( esetup )];
+featuresSavePreStr = [soundsDir '/' getFeaturesHash( esetup, dfiles )];
 featuresSaveName = [featuresSavePreStr '.features.mat'];
 if ~exist( featuresSaveName, 'file' )
     

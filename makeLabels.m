@@ -2,7 +2,7 @@ function [labels, identities, idFiles] = makeLabels( dfiles, soundsDir, classNam
 
 fprintf( 'make labels ' );
 
-labelsSaveName = [soundsDir '/' className '/' className '_' getLabelsHash( esetup ) '.labels.mat'];
+labelsSaveName = [soundsDir '/' className '/' className '_' getLabelsHash( esetup, dfiles ) '.labels.mat'];
 if ~exist( labelsSaveName, 'file' )
     
     labels = [];
@@ -15,7 +15,7 @@ if ~exist( labelsSaveName, 'file' )
         ls = load( blocksSaveName, 'wp2BlockFeatures' );
         wp2BlockFeatures = ls.wp2BlockFeatures;
         
-        if ~isempty( cell2mat( strfind( dfilesclassSoundFileNames, dfiles.soundFileNames{i} ) ) )
+        if ~isempty( cell2mat( strfind( dfiles.classSoundFileNames, dfiles.soundFileNames{i} ) ) )
             blockLabels = labelBlocks( dfiles.soundFileNames{i}, wp2BlockFeatures, esetup );
         else
             blockLabels = -1 * ones( size( wp2BlockFeatures, 2 ), 1 );

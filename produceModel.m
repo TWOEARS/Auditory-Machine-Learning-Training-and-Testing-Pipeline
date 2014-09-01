@@ -115,7 +115,7 @@ end
 
 %% saving model and perfomance numbers, end debug output
 
-modelhashes = {['wp2hash: ' getWp2dataHash( esetup )]; ['blockdatahash: ' getBlockDataHash( esetup )]; ['labelhash: ' getLabelsHash( esetup )]; ['featureshash: ' getFeaturesHash( esetup )]; ['modelhash: ' getModelHash( esetup )]}
+modelhashes = {['wp2hash: ' getWp2dataHash( esetup )]; ['blockdatahash: ' getBlockDataHash( esetup )]; ['labelhash: ' getLabelsHash( esetup, dfiles )]; ['featureshash: ' getFeaturesHash( esetup, dfiles )]; ['modelhash: ' getModelHash( esetup )]}
 save( [modelSavePreStr '_model.mat'], 'model', 'genVal', 'genValStd', 'genVals', 'cvtrVal', 'cvtrValStd', 'cvtrVals', 'predGenVal', 'predGenValStd', 'predGenVals', 'trPredGenVal', 'trVal', 'testVal', 'hps', 'trHps', 'modelhashes', 'esetup' );
 save( [modelSavePreStr '_scale.mat'], 'translators', 'factors', 'esetup' );
 dynSaveMFun( @scaleData, [], [modelSavePreStr '_scaleFunction'] );

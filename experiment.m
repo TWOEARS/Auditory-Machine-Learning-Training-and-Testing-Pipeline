@@ -1,9 +1,9 @@
 %% add needed pathes
 
 thisPath = getMFilePath();
-reporoot = fileparts( fileparts( fileparts( fileparts( thisPath ) ) ) );
+reporoot = fileparts( fileparts( fileparts( thisPath ) ) );
 addpath( genpath( thisPath ) );
-addpath( genpath( [getMFilePath() '..' filesep 'tools' filesep] ) );
+addpath( genpath( [thisPath filesep '..' filesep 'tools' filesep] ) );
 addpath(fullfile(reporoot, 'wp1git/src'));
 addpath(genpath(fullfile(reporoot, 'wp2git/src')));
 

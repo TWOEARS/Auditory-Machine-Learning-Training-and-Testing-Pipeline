@@ -34,7 +34,7 @@ tExpsDescs = table( nsc{:}, 'VariableNames', strcat( 'mh_', experiments ), 'RowN
 tExpsDescs.Properties.DimensionNames = { 'properties' 'experiments' };
 writetable( tExpsDescs, cell2mat( [soundsDir '/' strcat( experiments', '.' ) 'exps.desc.csv'] ), 'WriteRowNames', true );
 
-rowNames = {'cv hps'; 'all data hps'; 'cv train perf'; 'cv pred gen perf'; 'hps-cv pred gen perf std'; 'cv gen perf'; 'cv gen perf std'; 'all data pred gen perf'; 'all data train perf'};
+rowNames = {'cv hps'; 'all data hps'; 'cv train perf'; 'cv pred gen perf'; 'hps-cv pred gen perf std'; 'cv gen perf'; 'cv gen perf std'; 'train set pred gen perf'; 'train set final perf'; 'test set final perf'};
 for ie = 1:size( modelFiles,1 )
     tVals{ie} = table( 'RowNames', rowNames );
     for ic = 1:size( modelFiles{ie},1 )

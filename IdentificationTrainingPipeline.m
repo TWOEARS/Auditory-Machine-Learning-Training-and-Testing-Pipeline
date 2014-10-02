@@ -1,6 +1,6 @@
 classdef IdentificationTrainingPipeline < handle
 
-    %%---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
         wp1proc;
@@ -10,17 +10,18 @@ classdef IdentificationTrainingPipeline < handle
         classesInWavList;
     end
     
-    %%---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     methods (Static)
     end
     
-    %%---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     methods (Access = public)
         
         function obj = IdentificationTrainingPipeline()
+            obj.classesInWavList = {};
         end
         
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         function addModelCreator( obj, trainer )
             if ~isa( trainer, 'IdTrainerInterface' )
                 error( 'ModelCreator must be of type IdTrainerInterface.' );
@@ -49,12 +50,11 @@ classdef IdentificationTrainingPipeline < handle
             obj.featureProc = featureProc;
         end
         
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         function setWavFileList( obj, wavflist )
             if ~isa( wavflist, 'char' )
                 error( 'wavflist must be a string.' );
-            end
-            if ~exist( wavflist, 'file' )
+            elseif ~exist( wavflist, 'file' )
                 error( 'Wavflist not found.' );
             end
             fid = fopen( wavflist );
@@ -65,20 +65,28 @@ classdef IdentificationTrainingPipeline < handle
                     error ( 'Could not find %s listed in %s.', wavName, wavflist );
                 end
                 wavClass = IdEvalFrame.readEventClass( wavName );
-                obj.classesInWavList = ...
-                    unique( [obj.classesInWavList, wavClass] );
+                if ~strcmpi( wavClass, 'general' )
+                    obj.classesInWavList{end+1} = wavClass;
+                    obj.classesInWavList = ...
+                        unique( obj.classesInWavList );
+                end;
             end
             fclose( fid );
             obj.wavNames = wavs{1}; 
         end
         
-        %%-----------------------------------------------------------------
-        function run( obj, models )
+        %% -----------------------------------------------------------------
+
+        function run( obj, varargin )
+            if length(varargin) == 1 && strcmpi( varargin{1}, 'all' )
+                reqModels = obj.classesInWavList;
+            end
         end
         
+        % ------------------------------------------------------------------
     end
     
-    %%---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     methods (Access = private)
     end
     

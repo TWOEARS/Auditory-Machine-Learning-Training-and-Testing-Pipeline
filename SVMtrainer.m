@@ -1,0 +1,3 @@
+classdef SVMtrainer < IdTrainerInterface
+    
+end

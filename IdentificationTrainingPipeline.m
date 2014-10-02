@@ -7,6 +7,7 @@ classdef IdentificationTrainingPipeline < handle
         wp2proc;
         featureProc;
         wavNames;
+        classesInWavList;
     end
     
     %%---------------------------------------------------------------------
@@ -57,15 +58,18 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'Wavflist not found.' );
             end
             fid = fopen( wavflist );
-            wavNames = textscan( fid, '%s' );
-            for k = 1:length(wavNames{1})
-                wavName = wavNames{1}{k};
+            wavs = textscan( fid, '%s' );
+            for k = 1:length(wavs{1})
+                wavName = wavs{1}{k};
                 if ~exist( wavName, 'file' )
                     error ( 'Could not find %s listed in %s.', wavName, wavflist );
                 end
+                wavClass = IdEvalFrame.readEventClass( wavName );
+                obj.classesInWavList = ...
+                    unique( [obj.classesInWavList, wavClass] );
             end
             fclose( fid );
-            obj.wavNames = wavNames{1}; 
+            obj.wavNames = wavs{1}; 
         end
         
         %%-----------------------------------------------------------------

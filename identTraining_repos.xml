@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<requirements>
+<repoRequirement sub="src" branch="initOnConstruction" startup="startWP1">wp1</repoRequirement>
+<repoRequirement sub="src" branch="gt_feature_condition_change" >wp2</repoRequirement>
+<repoRequirement sub="src" >tools</repoRequirement>
+<repoRequirement sub="src" branch="blackboard_s1_refactoring" >wp3</repoRequirement>
+<repoRequirement sub="third_party_software/libsvm-3.17" branch="blackboard_s1_refactoring" >wp3</repoRequirement>
+<repoRequirement sub="sound_databases" >data</repoRequirement>
+<repoRequirement sub="identificationModels" >data</repoRequirement>
+</requirements>

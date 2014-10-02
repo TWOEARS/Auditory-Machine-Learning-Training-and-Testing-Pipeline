@@ -51,7 +51,7 @@ classdef IdentificationTrainingPipeline < handle
         end
         
         %% -----------------------------------------------------------------
-        function setWavFileList( obj, wavflist )
+        function loadWavFileList( obj, wavflist )
             if ~isa( wavflist, 'char' )
                 error( 'wavflist must be a string.' );
             elseif ~exist( wavflist, 'file' )

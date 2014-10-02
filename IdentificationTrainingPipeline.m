@@ -6,7 +6,7 @@ classdef IdentificationTrainingPipeline < handle
         wp1proc;
         wp2proc;
         featureProc;
-        wavflist;
+        wavNames;
     end
     
     %%---------------------------------------------------------------------
@@ -24,24 +24,28 @@ classdef IdentificationTrainingPipeline < handle
             if ~isa( trainer, 'IdTrainerInterface' )
                 error( 'ModelCreator must be of type IdTrainerInterface.' );
             end
+            obj.trainer = trainer;
         end
         
         function setWp1Processor( obj, wp1proc )
             if ~isa( wp1proc, 'IdWp1ProcInterface' )
                 error( 'Wp1Processor must be of type IdWp1ProcInterface.' );
             end
+            obj.wp1proc = wp1proc;
         end
         
         function setWp2Processor( obj, wp2proc )
             if ~isa( wp2proc, 'IdWp2ProcInterface' )
                 error( 'Wp2Processor must be of type IdWp2ProcInterface.' );
             end
+            obj.wp2proc = wp2proc;
         end
         
         function setFeatureProcessor( obj, featureProc )
             if ~isa( featureProc, 'IdFeatureProcInterface' )
                 error( 'FeatureProcessor must be of type IdFeatureProcInterface.' );
             end
+            obj.featureProc = featureProc;
         end
         
         %%-----------------------------------------------------------------
@@ -49,6 +53,19 @@ classdef IdentificationTrainingPipeline < handle
             if ~isa( wavflist, 'char' )
                 error( 'wavflist must be a string.' );
             end
+            if ~exist( wavflist, 'file' )
+                error( 'Wavflist not found.' );
+            end
+            fid = fopen( wavflist );
+            wavNames = textscan( fid, '%s' );
+            for k = 1:length(wavNames{1})
+                wavName = wavNames{1}{k};
+                if ~exist( wavName, 'file' )
+                    error ( 'Could not find %s listed in %s.', wavName, wavflist );
+                end
+            end
+            fclose( fid );
+            obj.wavNames = wavNames{1}; 
         end
         
         %%-----------------------------------------------------------------

@@ -94,13 +94,15 @@ classdef IdentificationTrainingPipeline < handle
         %       test sets.
         %
         %   models: 'all' for all models suggested by training data
-        %           structure
+        %           structure (but not 'general')
         %           cell array of strings with model names for particular
         %           set of models
         function run( obj, models )
             if strcmpi( models, 'all' )
-                reqModels = {obj.data.className};
+                models = {obj.data.className};
+                models(strcmp('general', models)) = [];
             end
+            
         end
         
         % ------------------------------------------------------------------

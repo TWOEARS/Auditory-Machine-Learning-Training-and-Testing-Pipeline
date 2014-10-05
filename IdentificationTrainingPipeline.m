@@ -20,12 +20,15 @@ classdef IdentificationTrainingPipeline < handle
     %% ---------------------------------------------------------------------
     methods (Access = public)
         
+        %% Constructor.
         function obj = IdentificationTrainingPipeline()
             obj.data = struct( 'className', {}, ...
                 'files', struct( 'fileName', {}, 'x', {}, 'y',{} ) );
         end
         
         %% -----------------------------------------------------------------
+        %   setting up the pipeline
+        %   -----------------------
         function addModelCreator( obj, trainer )
             if ~isa( trainer, 'IdTrainerInterface' )
                 error( 'ModelCreator must be of type IdTrainerInterface.' );
@@ -55,6 +58,8 @@ classdef IdentificationTrainingPipeline < handle
         end
         
         %% -----------------------------------------------------------------
+        %   setting up the data
+        %   -------------------
         function loadWavFileList( obj, wavflist )
             if ~isa( wavflist, 'char' )
                 error( 'wavflist must be a string.' );
@@ -80,10 +85,21 @@ classdef IdentificationTrainingPipeline < handle
         end
         
         %% -----------------------------------------------------------------
+        %   running up the pipeline
+        %   -----------------------
 
-        function run( obj, varargin )
-            if length(varargin) == 1 && strcmpi( varargin{1}, 'all' )
-                reqModels = obj.classesInWavList;
+        %% function run( obj, models )
+        %       Runs the pipeline, creating the models specified in models
+        %       All models trained in one run use the same training and
+        %       test sets.
+        %
+        %   models: 'all' for all models suggested by training data
+        %           structure
+        %           cell array of strings with model names for particular
+        %           set of models
+        function run( obj, models )
+            if strcmpi( models, 'all' )
+                reqModels = {obj.data.className};
             end
         end
         

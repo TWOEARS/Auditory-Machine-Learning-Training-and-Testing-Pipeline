@@ -6,7 +6,11 @@ classdef IdentificationTrainingPipeline < handle
         wp1proc;
         wp2proc;
         featureProc;
-        data;
+        data;       % structure of data:
+                    %   data(1..#classes).className
+                    %                    .files(1..#filesInClass).fileName
+                    %                                            .x(1..#exmplInFile,#dims)
+                    %                                            .y(1..#exmplInFile)
     end
     
     %% ---------------------------------------------------------------------

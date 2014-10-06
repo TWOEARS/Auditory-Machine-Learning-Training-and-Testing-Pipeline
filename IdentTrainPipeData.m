@@ -2,13 +2,7 @@ classdef IdentTrainPipeData < handle
    
     properties (SetAccess = private)%{?IdentificationTrainingPipeline, ?IdTrainerInterface, ?IdWp1ProcInterface, ?IdWp2ProcInterface, ?IdFeatureProcInterface})
         classNames;
-        data;       % structure of data:
-                    %   data(1..#classes).files(1..#filesInClass).wavFileName
-                    %                                            .wp1FileName
-                    %                                            .wp2FileName
-                    %                                            .featuresFileName
-                    %                                            .x(1..#exmplsInFile,#dims)
-                    %                                            .y(1..#exmplsInFile)
+        data;
         emptyDataStruct;
     end
     
@@ -16,10 +10,7 @@ classdef IdentTrainPipeData < handle
         
         %% Constructor.
         function obj = IdentTrainPipeData()
-            obj.emptyDataStruct = struct( 'files', ...
-                struct( 'wavFileName', {}, 'wp1FileName', {}, ...
-                'wp2FileName', {}, 'featuresFileName', {}, ...
-                'x', {}, 'y',{} ) );
+            obj.emptyDataStruct = struct( 'files', IdentTrainPipeDataElem.empty );
             obj.data = obj.emptyDataStruct;
         end
         

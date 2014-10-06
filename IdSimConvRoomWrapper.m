@@ -3,6 +3,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
         convRoomSim;
+        multiConditions;
     end
     
     %%---------------------------------------------------------------------
@@ -15,10 +16,26 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         function obj = IdSimConvRoomWrapper( simConvRoomXML )
             obj = obj@IdWp1ProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom( simConvRoomXML, true );
+            obj.multiConditions = struct( 'angleSignal', {}, 'numOverlays', {}, ...
+                'angleOverlays', {}, 'SNRs', {}, 'typeOverlays', {}, 'fileOverlays', {}, ...
+                'offsetOverlays', {} );
+            obj.addMultiCondition( 0, 0, {}, {}, {}, {}, {} ); % clean condition
         end
         
         function delete( obj )
             obj.convRoomSim.set('ShutDown',true);
+        end
+        
+        %%-----------------------------------------------------------------
+        
+        function addMultiCondition( obj, angleSig, numOverlays, angles, SNRs, types, files, offsets )
+            obj.multiConditions(end+1).angleSignal = angleSig;
+            obj.multiConditions(end).numOverlays = numOverlays;
+            obj.multiConditions(end).angleOverlays = angles;
+            obj.multiConditions(end).SNRs = SNRs;
+            obj.multiConditions(end).typeOverlays = types;
+            obj.multiConditions(end).fileOverlays = files;
+            obj.multiConditions(end).offsetOverlays = offsets;
         end
         
         %%-----------------------------------------------------------------

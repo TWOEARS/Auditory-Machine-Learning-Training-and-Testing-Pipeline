@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <scene
-  BlockSize="1024"
+  BlockSize="2048"
   SampleRate="44100"
   MaximumDelay="0.0"
   NumberOfThreads="1"

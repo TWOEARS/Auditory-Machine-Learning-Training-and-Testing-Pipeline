@@ -3,6 +3,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
         convRoomSim;
+        hash;
     end
     
     %%---------------------------------------------------------------------
@@ -17,25 +18,49 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             obj.convRoomSim = simulator.SimulatorConvexRoom( simConvRoomXML, true );
         end
         
+        function delete( obj )
+            obj.convRoomSim.set('ShutDown',true);
+        end
+        
         %%-----------------------------------------------------------------
 
         function run( obj, idTrainData )
-            disp( 'wp1 processing of sounds' );
+            fprintf( 'wp1 processing of sounds' );
+            obj.hash = obj.getHash( 10 );
             for trainFile = idTrainData(:)'
+                fprintf( '\n.' );
                 if ~isempty( trainFile.wp1FileName ) ...
                         && exist( trainFile.wp1FileName, 'file' )
-                    fprintf( '.' );
                     continue;
                 end
                 wavSignal = getPointSourceSignalFromWav( ...
                     trainFile.wavFileName, obj.convRoomSim.SampleRate, 0 );
+                fprintf( '.' );
+                earSignals = obj.makeEarsignals( wavSignal, 0 );
+                fprintf( '.' );
             end
+            fprintf( ';\n' );
         end
 
     end
     
     %%---------------------------------------------------------------------
     methods (Access = private)
+        
+        function signals = makeEarsignals( obj, monoSound, angle )
+            obj.convRoomSim.Sources{1}.set('Azimuth', angle);
+            obj.convRoomSim.set('ReInit',true);
+            obj.convRoomSim.Sources{1}.setData( monoSound );
+            obj.convRoomSim.Sinks.removeData();
+            while ~obj.convRoomSim.Sources{1}.isEmpty()
+                obj.convRoomSim.set('Refresh',true);  % refresh all objects
+                obj.convRoomSim.set('Process',true);  % processing
+                fprintf( '.' );
+            end
+            signals = obj.convRoomSim.Sinks.getData();
+            signals = signals / max( abs( signals(:) ) ); % normalize
+        end
+
     end
     
     
@@ -59,11 +84,6 @@ end
 % 
 %     wp2data = [];
 %     for angle = esetup.wp2dataCreation.angle
-%         
-%         fprintf( '.' );
-% 
-%         earSignals = [];
-%         earSignals = double( makeEarsignals( sound, angle, wp1sim ) );
 %         
 %         fprintf( '.' );
 %         
@@ -98,6 +118,5 @@ end
 % 
 % end
 % 
-% wp1sim.set('ShutDown',true);
 % 
 % disp( ';' );

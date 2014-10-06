@@ -1,4 +1,4 @@
-classdef (Abstract) IdWp1ProcInterface < Hashable
+classdef Hashable < handle
 
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
@@ -11,10 +11,10 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
     %%---------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = IdWp1ProcInterface()
+        function hash = getHash( obj, maxRecursionLevel )
+            if ~exist( 'maxRecursionLevel', 'var' ), maxRecursionLevel = 10; end;
+            hash = DataHash( obj, maxRecursionLevel );
         end
-        
-        %%-----------------------------------------------------------------
         
     end
     
@@ -23,15 +23,6 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
     end
     
     %%---------------------------------------------------------------------
-    methods (Abstract)
-        
-        %% function wp1flist = run( obj, idTrainData, className )
-        %       wp1-process all wavs in idTrainData
-        %       save the results in mat-files
-        %       updates idTrainData
-        run( obj, idTrainData )
-        
-    end
     
 end
 

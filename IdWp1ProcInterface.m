@@ -1,7 +1,8 @@
 classdef (Abstract) IdWp1ProcInterface < Hashable
-
+    
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
+        hash;
     end
     
     %%---------------------------------------------------------------------
@@ -14,6 +15,25 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
         function obj = IdWp1ProcInterface()
         end
         
+        %% function run( obj, idTrainData )
+        %       wp1-process all wavs in idTrainData
+        %       save the results in mat-files
+        %       updates idTrainData
+        function run( obj, idTrainData )
+            fprintf( 'wp1 processing of sounds' );
+            obj.hash = obj.getHash( 10 );
+            for trainFile = idTrainData(:)'
+                fprintf( '\n.' );
+                if ~isempty( trainFile.wp1FileName ) ...
+                        && exist( trainFile.wp1FileName, 'file' )
+                    continue;
+                end
+                earSignals = obj.makeEarsignals( trainFile );
+            end
+            fprintf( ';\n' );
+        end
+        
+        
         %%-----------------------------------------------------------------
         
     end
@@ -25,11 +45,7 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
     %%---------------------------------------------------------------------
     methods (Abstract)
         
-        %% function wp1flist = run( obj, idTrainData, className )
-        %       wp1-process all wavs in idTrainData
-        %       save the results in mat-files
-        %       updates idTrainData
-        run( obj, idTrainData )
+        signals = makeEarsignals( obj, trainFile )
         
     end
     

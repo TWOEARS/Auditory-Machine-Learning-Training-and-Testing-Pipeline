@@ -3,7 +3,6 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
         convRoomSim;
-        hash;
     end
     
     %%---------------------------------------------------------------------
@@ -24,31 +23,10 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         %%-----------------------------------------------------------------
 
-        function run( obj, idTrainData )
-            fprintf( 'wp1 processing of sounds' );
-            obj.hash = obj.getHash( 10 );
-            for trainFile = idTrainData(:)'
-                fprintf( '\n.' );
-                if ~isempty( trainFile.wp1FileName ) ...
-                        && exist( trainFile.wp1FileName, 'file' )
-                    continue;
-                end
-                wavSignal = getPointSourceSignalFromWav( ...
-                    trainFile.wavFileName, obj.convRoomSim.SampleRate, 0 );
-                fprintf( '.' );
-                earSignals = obj.makeEarsignals( wavSignal, 0 );
-                fprintf( '.' );
-            end
-            fprintf( ';\n' );
-        end
-
-    end
-    
-    %%---------------------------------------------------------------------
-    methods (Access = private)
-        
-        function signals = makeEarsignals( obj, monoSound, angle )
-            obj.convRoomSim.Sources{1}.set('Azimuth', angle);
+        function signals = makeEarsignals( obj, trainFile )
+            monoSound = getPointSourceSignalFromWav( ...
+                trainFile.wavFileName, obj.convRoomSim.SampleRate, 0 );
+            obj.convRoomSim.Sources{1}.set('Azimuth', 0);
             obj.convRoomSim.set('ReInit',true);
             obj.convRoomSim.Sources{1}.setData( monoSound );
             obj.convRoomSim.Sinks.removeData();
@@ -60,6 +38,12 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             signals = obj.convRoomSim.Sinks.getData();
             signals = signals / max( abs( signals(:) ) ); % normalize
         end
+
+    end
+    
+    %%---------------------------------------------------------------------
+    methods (Access = private)
+        
 
     end
     

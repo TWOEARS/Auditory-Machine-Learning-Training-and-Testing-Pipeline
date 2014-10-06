@@ -20,8 +20,15 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         %%-----------------------------------------------------------------
 
         function run( obj, idTrainData )
+            disp( 'wp1 processing of sounds' );
             for trainFile = idTrainData(:)'
-                disp( trainFile.wavFileName );
+                if ~isempty( trainFile.wp1FileName ) ...
+                        && exist( trainFile.wp1FileName, 'file' )
+                    fprintf( '.' );
+                    continue;
+                end
+                wavSignal = getPointSourceSignalFromWav( ...
+                    trainFile.wavFileName, obj.convRoomSim.SampleRate, 0 );
             end
         end
 
@@ -50,19 +57,6 @@ end
 %     
 %     fprintf( '\n%s', wp2SaveName );
 % 
-%     [sound, fsHz] = audioread( dfiles.soundFileNames{k} );
-%     if fsHz ~= esetup.wp2dataCreation.fs
-%         fprintf( '\nWarning: sound is resampled from %uHz to %uHz\n', fsHz, esetup.wp2dataCreation.fs );
-%         sound = resample( sound, esetup.wp2dataCreation.fs, fsHz );
-%     end
-%     
-%     if size( sound, 1 ) > 1
-%         [~,m] = max( std( sound ) );
-%         sound = sound(:,m);
-%     end
-%     
-%     sound = sound ./ max( abs( sound ) );
-%     
 %     wp2data = [];
 %     for angle = esetup.wp2dataCreation.angle
 %         

@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <scene
-  BlockSize="4096"
+  BlockSize="1024"
   SampleRate="44100"
   MaximumDelay="0.0"
   NumberOfThreads="1"
   ReverberationMaxOrder="2"
-  HRIRs="impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa">
+  HRIRs="impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.wav">
   <source Radius="3.0"
+          Mute="false"
           Type="point"
           Name="TrainWav">
     <buffer ChannelMapping="1"
-            Type="fifo" />
+            Type="fifo"/>
   </source>
-  <sink Position="0 0 1.75"
+  <sink Name="Head"
+        Position="0 0 1.75"
         UnitFront="1 0 0"
-        UnitUp="0 0 1"
-        Name="Head"
-        RootPath="some/root/path/"
-        MeshFile="blub.ext"/>
+        UnitUp="0 0 1"/>
 </scene>

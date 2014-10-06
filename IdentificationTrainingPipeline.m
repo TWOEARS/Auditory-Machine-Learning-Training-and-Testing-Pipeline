@@ -93,8 +93,9 @@ classdef IdentificationTrainingPipeline < handle
                 models(strcmp('general', models)) = [];
             end
             
+            obj.wp1proc.run( obj.data );
+
             for model = models
-                obj.wp1proc.run( obj.data, model );
             end;
             
         end

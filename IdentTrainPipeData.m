@@ -53,16 +53,6 @@ classdef IdentTrainPipeData < handle
             end
             if (length(S) == 1) && strcmp(S(1).type,'()')
                 classes = S.subs{1,1};
-                if size( S.subs, 2 ) > 1
-                    fIdx = S.subs{1,2};
-                else
-                    fIdx = ':';
-                end
-                if size( S.subs, 2 ) > 2
-                    dIdx = S.subs{1,3};
-                else
-                    dIdx = 'x';
-                end
                 if isa( classes, 'char' )
                     if classes == ':'
                         cIdx = 1:length( obj.data );
@@ -75,19 +65,33 @@ classdef IdentTrainPipeData < handle
                         cIdx(end+1) = obj.getClassIdx( c{1} );
                     end
                 end
-                if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) ...
-                    && size( S.subs, 2 ) > 3
-                    if length(cIdx) > 1 || length(fIdx) > 1
-                        error( 'Indexes for x or y can only be chosen for one class and one file.' );
-                    end
-                    xIdx = S.subs{1,4};
-                    varargout{1:nargout} = obj.data(cIdx).files(fIdx).(dIdx)(xIdx);
+                if size( S.subs, 2 ) > 1
+                    fIdx = S.subs{1,2};
                 else
-                    out = {obj.data(cIdx(1)).files(fIdx).(dIdx)};
-                    for c = cIdx(2:end)
-                        out = [out, {obj.data(c).files(fIdx).(dIdx)}];
+                    fIdx = ':';
+                end
+                if size( S.subs, 2 ) > 2
+                    dIdx = S.subs{1,3};
+                    if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) ...
+                            && size( S.subs, 2 ) > 3
+                        if length(cIdx) > 1 || length(fIdx) > 1
+                            error( 'Indexes for x or y can only be chosen for one class and one file.' );
+                        end
+                        xIdx = S.subs{1,4};
+                        varargout{1:nargout} = obj.data(cIdx).files(fIdx).(dIdx)(xIdx);
+                    else
+                        out = {obj.data(cIdx(1)).files(fIdx).(dIdx)};
+                        for c = cIdx(2:end)
+                            out = [out, {obj.data(c).files(fIdx).(dIdx)}];
+                        end
+                        varargout{1:nargout} = out';
                     end
-                    varargout{1:nargout} = out';
+                else
+                    out = obj.data(cIdx(1)).files(fIdx);
+                    for c = cIdx(2:end)
+                        out = [out; obj.data(c).files(fIdx)];
+                    end
+                    varargout{1:nargout} = out;
                 end
             else
                 if nargout == 0

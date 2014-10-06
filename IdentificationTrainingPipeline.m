@@ -6,11 +6,7 @@ classdef IdentificationTrainingPipeline < handle
         wp1proc;
         wp2proc;
         featureProc;
-        data;       % structure of data:
-                    %   data(1..#classes).className
-                    %                    .files(1..#filesInClass).fileName
-                    %                                            .x(1..#exmplInFile,#dims)
-                    %                                            .y(1..#exmplInFile)
+        data;       
     end
     
     %% ---------------------------------------------------------------------
@@ -22,8 +18,7 @@ classdef IdentificationTrainingPipeline < handle
         
         %% Constructor.
         function obj = IdentificationTrainingPipeline()
-            obj.data = struct( 'className', {}, ...
-                'files', struct( 'fileName', {}, 'x', {}, 'y',{} ) );
+            obj.data = IdentTrainPipeData();
         end
         
         %% -----------------------------------------------------------------
@@ -74,12 +69,7 @@ classdef IdentificationTrainingPipeline < handle
                     error ( 'Could not find %s listed in %s.', wavName, wavflist );
                 end
                 wavClass = IdEvalFrame.readEventClass( wavName );
-                [classAlreadyPresent,classIndex] = max( strcmp( {obj.data.className}, wavClass ) ); 
-                if isempty( classAlreadyPresent )  ||  ~classAlreadyPresent
-                    obj.data(end+1).className = wavClass;
-                    classIndex = length( obj.data );
-                end
-                obj.data(classIndex).files(end+1).fileName = wavName;
+                obj.data(wavClass,'+') = wavName;
             end
             fclose( fid );
         end
@@ -99,9 +89,13 @@ classdef IdentificationTrainingPipeline < handle
         %           set of models
         function run( obj, models )
             if strcmpi( models, 'all' )
-                models = {obj.data.className};
+                models = obj.data.classNames;
                 models(strcmp('general', models)) = [];
             end
+            
+            for model = models
+                obj.wp1proc.run( obj.data, model );
+            end;
             
         end
         

@@ -18,7 +18,11 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         end
         
         %%-----------------------------------------------------------------
-        
+
+        function run( obj, idTrainData, className )
+            error('implement me');
+        end
+
     end
     
     %%---------------------------------------------------------------------

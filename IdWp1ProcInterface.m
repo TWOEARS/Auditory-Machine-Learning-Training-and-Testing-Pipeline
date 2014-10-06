@@ -24,6 +24,12 @@ classdef (Abstract) IdWp1ProcInterface < handle
     
     %%---------------------------------------------------------------------
     methods (Abstract)
+        
+        %% function wp1flist = run( obj, idTrainData, className )
+        %       wp1-process all wavs in idTrainData of class className
+        %       save the results in mat-files
+        run( obj, idTrainData, className )
+        
     end
     
 end

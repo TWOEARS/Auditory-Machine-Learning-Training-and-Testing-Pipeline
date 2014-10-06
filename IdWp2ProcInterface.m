@@ -1,4 +1,4 @@
-classdef (Abstract) IdWp2ProcInterface < handle
+classdef (Abstract) IdWp2ProcInterface < Hashable
 
     %%---------------------------------------------------------------------
     properties (SetAccess = private)

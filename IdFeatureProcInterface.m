@@ -1,4 +1,4 @@
-classdef (Abstract) IdFeatureProcInterface < handle
+classdef (Abstract) IdFeatureProcInterface < Hashable
 
     %%---------------------------------------------------------------------
     properties (SetAccess = private)

@@ -40,7 +40,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         %%-----------------------------------------------------------------
 
-        function signals = makeEarsignals( obj, trainFile )
+        function [earSignals, earsLabels] = makeEarsignalsAndLabels( obj, trainFile )
             monoSound = getPointSourceSignalFromWav( ...
                 trainFile.wavFileName, obj.convRoomSim.SampleRate, 0 );
             obj.convRoomSim.Sources{1}.set('Azimuth', 0);

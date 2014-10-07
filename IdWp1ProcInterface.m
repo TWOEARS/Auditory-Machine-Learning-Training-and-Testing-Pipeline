@@ -33,9 +33,9 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
                         && exist( trainFile.wp1FileName, 'file' )
                     continue;
                 end
-                [earSignals, earsLabels] = obj.makeEarsignalsAndLabels( trainFile );
-                trainFile.wp1FileName = [trainFile.wavFileName wp1NameExt];
-                save( [which(trainFile.wavFileName) wp1NameExt], 'earSignals', earsLabels );
+                [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile );
+                trainFile.wp1FileName = [trainFile.wavFileName obj.wp1NameExt];
+                save( [which(trainFile.wavFileName) obj.wp1NameExt], 'earSignals', 'earsOnOffs' );
             end
             fprintf( ';\n' );
         end
@@ -52,7 +52,7 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
     %%---------------------------------------------------------------------
     methods (Abstract)
         
-        [earSignals, earsLabels] = makeEarsignalsAndLabels( obj, trainFile )
+        [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, trainFile )
         
     end
     

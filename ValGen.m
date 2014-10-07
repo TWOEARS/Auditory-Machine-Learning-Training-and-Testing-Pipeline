@@ -2,7 +2,7 @@ classdef ValGen < handle
 
     properties
         type;   % one of 'manual', 'set', 'random'
-        val;    % depending on type: specific value, array of possible values, or random range
+        val;    % depending on type: specific value, cell of possible values, or random range
     end
     
     %%
@@ -39,7 +39,7 @@ classdef ValGen < handle
         function val = genSet( obj )
             setLen = size( obj.val, 1 );
             randIdx = randi( setLen, 1 );
-            val = obj.val(randIdx);
+            val = obj.val{randIdx};
         end
         
         function val = genRandom( obj )

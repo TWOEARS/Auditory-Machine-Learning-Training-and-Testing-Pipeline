@@ -13,7 +13,7 @@ classdef WallsValGen < ValGen
                     isfield( val, 'rt60' ) && isa( val.rt60, 'ValGen' ) )
                 error( 'val does not provide all needed fields' );
             end
-            obj.val = val;
+            obj = obj@ValGen( 'manual', val );
             obj.type = 'specific';
         end
         

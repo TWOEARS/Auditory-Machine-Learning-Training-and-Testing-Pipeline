@@ -4,11 +4,11 @@
   SampleRate="44100"
   MaximumDelay="0.0"
   NumberOfThreads="1"
-  ReverberationMaxOrder="2"
+  Renderer="ssr_binaural"
+  ReverberationMaxOrder="8"
   HRIRs="impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.wav">
   <source Radius="3.0"
-          Mute="false"
-          Type="point"
+          Type="ism"
           Name="TrainWav">
     <buffer ChannelMapping="1"
             Type="fifo"/>

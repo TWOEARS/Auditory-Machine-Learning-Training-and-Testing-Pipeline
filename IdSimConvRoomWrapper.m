@@ -46,7 +46,16 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 trainFile.wavFileName, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
             earsOnOffs = ...
                 IdEvalFrame.readOnOffAnnotations( trainFile.wavFileName ) + zeroOffsetLength_s;
-            obj.convRoomSim.Sources{1}.set('Azimuth', 0);
+            earSignals = obj.makeEarSignals( monoSound, 0 );
+        end
+
+    end
+    
+    %%---------------------------------------------------------------------
+    methods (Access = private)
+        
+        function earSignals = makeEarsignals( obj, monoSound, angle )
+            obj.convRoomSim.Sources{1}.set('Azimuth', angle);
             obj.convRoomSim.set('ReInit',true);
             obj.convRoomSim.Sources{1}.setData( monoSound );
             obj.convRoomSim.Sinks.removeData();
@@ -58,12 +67,6 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             earSignals = obj.convRoomSim.Sinks.getData();
             earSignals = earSignals / max( abs( earSignals(:) ) ); % normalize
         end
-
-    end
-    
-    %%---------------------------------------------------------------------
-    methods (Access = private)
-        
 
     end
     

@@ -8,7 +8,7 @@
   ReverberationMaxOrder="8"
   HRIRs="impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.wav">
   <source Radius="3.0"
-          Type="ism"
+          Type="point"
           Name="TrainWav">
     <buffer ChannelMapping="1"
             Type="fifo"/>

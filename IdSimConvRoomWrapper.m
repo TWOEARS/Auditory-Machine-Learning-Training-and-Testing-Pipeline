@@ -15,11 +15,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         function obj = IdSimConvRoomWrapper( simConvRoomXML )
             obj = obj@IdWp1ProcInterface();
+            obj.multiConditions = MultiCondition.empty;
             obj.convRoomSim = simulator.SimulatorConvexRoom( simConvRoomXML, true );
-            obj.multiConditions = struct( 'angleSignal', {}, 'numOverlays', {}, ...
-                'angleOverlays', {}, 'SNRs', {}, 'typeOverlays', {}, 'fileOverlays', {}, ...
-                'offsetOverlays', {} );
-            obj.addMultiCondition( 0, 0, {}, {}, {}, {}, {} ); % clean condition
+            obj.addMultiCondition( MultiCondition() ); % clean condition
         end
         
         function delete( obj )
@@ -28,14 +26,8 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         %%-----------------------------------------------------------------
         
-        function addMultiCondition( obj, angleSig, numOverlays, angles, SNRs, types, files, offsets )
-            obj.multiConditions(end+1).angleSignal = angleSig;
-            obj.multiConditions(end).numOverlays = numOverlays;
-            obj.multiConditions(end).angleOverlays = angles;
-            obj.multiConditions(end).SNRs = SNRs;
-            obj.multiConditions(end).typeOverlays = types;
-            obj.multiConditions(end).fileOverlays = files;
-            obj.multiConditions(end).offsetOverlays = offsets;
+        function addMultiCondition( obj, mc )
+            obj.multiConditions(end+1) = mc;
         end
         
         %%-----------------------------------------------------------------
@@ -46,7 +38,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 trainFile.wavFileName, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
             earsOnOffs = ...
                 IdEvalFrame.readOnOffAnnotations( trainFile.wavFileName ) + zeroOffsetLength_s;
-            earSignals = obj.makeEarSignals( monoSound, 0 );
+            earSignals = obj.makeEarSignals( monoSound, 1 );
         end
 
     end
@@ -54,9 +46,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     methods (Access = private)
         
-        function earSignals = makeEarsignals( obj, monoSound, angle )
-            obj.convRoomSim.Sources{1}.set('Azimuth', angle);
-            obj.convRoomSim.set('ReInit',true);
+        function earSignals = makeEarSignals( obj, monoSound, multiCondIdx )
+            mcond = obj.multiConditions(multiCondIdx);
+            mcond.setupWp1Proc( obj.convRoomSim );
             obj.convRoomSim.Sources{1}.setData( monoSound );
             obj.convRoomSim.Sinks.removeData();
             while ~obj.convRoomSim.Sources{1}.isEmpty()

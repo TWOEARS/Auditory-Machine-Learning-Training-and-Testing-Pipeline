@@ -54,6 +54,7 @@ classdef MultiCondition < handle
             if ~isa( wp1proc, 'simulator.SimulatorConvexRoom' )
                 error( 'Dont know how to handle other wp1 procs' );
             end
+            wp1proc.set( 'ShutDown', true );
             wp1proc.Sources(2:end) = [];
             if ~isempty( obj.walls )
                 wp1proc.Walls = obj.walls.genVal();

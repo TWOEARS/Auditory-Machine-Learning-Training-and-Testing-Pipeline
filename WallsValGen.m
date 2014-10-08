@@ -19,13 +19,16 @@ classdef WallsValGen < ValGen
         
         function val = genVal( obj )
             wall = simulator.Wall();
-            wall.vertices = [obj.val.front.genVal(), obj.val.right.genVal();...
-                             obj.val.front.genVal(), obj.val.left.genVal();...
-                             obj.val.back.genVal(), obj.val.left.genVal();...
-                             obj.val.back.genVal(), obj.val.right.genVal()];
+            wall.set( 'UnitUp', [0;1;0] );
+            wall.set( 'UnitFront', [0;0;1] );
+            f = obj.val.front.genVal();
+            r = obj.val.right.genVal();
+            b = obj.val.back.genVal();
+            l = obj.val.left.genVal();
+            wall.Vertices = [f, r; f, l; b, l; b, r]';
             roomheight = obj.val.height.genVal();
             RT60 = obj.val.rt60.genVal();
-            walls(1:4) = wallObj.createUniformPrism( roomheight, '2D', RT60 );
+            walls(1:4) = wall.createUniformPrism( roomheight, '2D', RT60 );
             val = walls;
         end
         

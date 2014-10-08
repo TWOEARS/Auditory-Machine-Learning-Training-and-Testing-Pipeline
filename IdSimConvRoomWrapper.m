@@ -36,9 +36,14 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             zeroOffsetLength_s = 0.25;
             monoSound = getPointSourceSignalFromWav( ...
                 trainFile.wavFileName, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
-            earsOnOffs = ...
+            monoOnOffs = ...
                 IdEvalFrame.readOnOffAnnotations( trainFile.wavFileName ) + zeroOffsetLength_s;
-            earSignals = obj.makeEarSignals( monoSound, 1 );
+            earSignals = zeros( 0, 2 );
+            earsOnOffs = zeros( 0, 2 );
+            for mc = obj.multiConditions
+                earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + monoOnOffs];
+                earSignals = [earSignals; obj.makeEarSignals( monoSound, mc )];
+            end
         end
 
     end
@@ -46,9 +51,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     methods (Access = private)
         
-        function earSignals = makeEarSignals( obj, monoSound, multiCondIdx )
-            mcond = obj.multiConditions(multiCondIdx);
+        function earSignals = makeEarSignals( obj, monoSound, mcond )
             mcond.setupWp1Proc( obj.convRoomSim );
+            obj.convRoomSim.set( 'LengthOfSimulation', length(monoSound) / obj.convRoomSim.SampleRate );
             obj.convRoomSim.Sources{1}.setData( monoSound );
             obj.convRoomSim.Sinks.removeData();
             while ~obj.convRoomSim.Sources{1}.isEmpty()

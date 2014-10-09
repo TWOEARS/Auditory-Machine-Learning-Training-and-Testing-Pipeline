@@ -25,6 +25,8 @@ classdef WallsValGen < ValGen
             r = obj.val.right.genVal();
             b = obj.val.back.genVal();
             l = obj.val.left.genVal();
+            if f <= b, error( 'front Wall position must be > back' ); end;
+            if l <= r, error( 'left Wall position must be > right' ); end;
             wall.Vertices = [f, r; f, l; b, l; b, r]';
             roomheight = obj.val.height.genVal();
             RT60 = obj.val.rt60.genVal();

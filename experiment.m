@@ -1,3 +1,6 @@
+% FIXME: this seems to be more a test script and should be moved to the test
+% folder
+
 %% add needed pathes
 
 thisPath = getMFilePath();

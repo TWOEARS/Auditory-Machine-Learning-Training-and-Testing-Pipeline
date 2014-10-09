@@ -1,3 +1,3 @@
-function id = getFeaturesHash( esetup, dfiles )
+function id = getFeaturesHash( setup, dfiles )
 
-id = DataHash( {getBlockDataHash( esetup ) esetup.featureCreation dfiles.soundFileNames } );
+id = DataHash( {getBlockDataHash( setup ) setup.featureCreation dfiles.soundFileNames } );

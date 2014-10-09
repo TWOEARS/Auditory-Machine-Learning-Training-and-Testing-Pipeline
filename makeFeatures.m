@@ -1,8 +1,8 @@
-function [features] = makeFeatures( dfiles, soundsDir, esetup )
+function [features] = makeFeatures( dfiles, soundsDir, setup )
 
 fprintf( 'make features' );
 
-featuresSavePreStr = [soundsDir '/' getFeaturesHash( esetup, dfiles )];
+featuresSavePreStr = [soundsDir '/' getFeaturesHash( setup, dfiles )];
 featuresSaveName = [featuresSavePreStr '.features.mat'];
 if ~exist( featuresSaveName, 'file' )
     
@@ -11,16 +11,16 @@ if ~exist( featuresSaveName, 'file' )
         
         fprintf( '.' );
         
-        blocksSaveName = [dfiles.soundFileNames{i} '.' getBlockDataHash( esetup ) '.blocks.mat'];
-        ls = load( blocksSaveName, 'wp2BlockFeatures' );
-        wp2BlockFeatures = ls.wp2BlockFeatures;
+        blocksSaveName = [dfiles.soundFileNames{i} '.' getBlockDataHash( setup ) '.blocks.mat'];
+        data = load( blocksSaveName, 'blockFeatures' );
+        auditoryFrontEndBlockFeatures = data.blockFeatures;
         
-        blockFeatures = makeFeaturesFromWp2Blocks( wp2BlockFeatures, esetup );
+        blockFeatures = makeFeaturesFromAuditoryFrontEndBlocks( auditoryFrontEndBlockFeatures, setup );
         features = [features; blockFeatures];
         
     end
     
-    save( featuresSaveName, 'features', 'esetup' );
+    save( featuresSaveName, 'features', 'setup' );
 else
     load( featuresSaveName, 'features' );
 end

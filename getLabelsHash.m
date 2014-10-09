@@ -1,3 +1,3 @@
-function id = getLabelsHash( esetup, dfiles )
+function id = getLabelsHash( setup, dfiles )
 
-id = DataHash( {getBlockDataHash( esetup ) esetup.Labeling dfiles.soundFileNames } );
+id = DataHash( {getBlockDataHash( setup ) setup.Labeling dfiles.soundFileNames } );

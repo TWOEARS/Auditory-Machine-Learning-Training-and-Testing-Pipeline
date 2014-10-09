@@ -1,3 +1,3 @@
-function id = getBlockDataHash( esetup )
+function id = getBlockDataHash( setup )
 
-id = DataHash( {getWp2dataHash( esetup ) esetup.blockCreation} );
+id = DataHash( {getAuditoryFrontEndDataHash( setup ) esetup.blockCreation} );

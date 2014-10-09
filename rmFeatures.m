@@ -1,8 +1,8 @@
-function features = rmFeatures( param, wp2Data )
+function features = rmFeatures( param, auditoryFrontEndData )
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean.
 
-rmBlock = wp2Data(strcmp('ratemap_magnitude', vertcat(wp2Data.Name))).Data;
+rmBlock = auditoryFrontEndData(strcmp('ratemap_magnitude', vertcat(auditoryFrontEndData.Name))).Data;
 for ci = 1 : size(rmBlock,2)
     rmBlock{ci} = rmBlock{ci}.^0.33; %cuberoot compression
     scale = max(max(abs(rmBlock{ci})));

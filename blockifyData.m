@@ -1,8 +1,8 @@
-function blockifyData( dfiles, esetup )
+function blockifyData( dfiles, setup )
 
 disp( 'blockifying data' );
 
-blockDataHash = getBlockDataHash( esetup );
+blockDataHash = getBlockDataHash( setup );
 for z = 1:length( dfiles.soundFileNames )
     
     fprintf( '.' );
@@ -10,20 +10,20 @@ for z = 1:length( dfiles.soundFileNames )
     blocksSaveName = [dfiles.soundFileNames{z} '.' blockDataHash '.blocks.mat'];
     if exist( blocksSaveName, 'file' ); continue; end;
     
-    wp2SaveName = [dfiles.soundFileNames{z} '.' getWp2dataHash( esetup ) '.wp2.mat'];
-    ls = load( wp2SaveName, 'wp2data' );
-    wp2data = ls.wp2data;
+    saveName = [dfiles.soundFileNames{z} '.' getAuditoryFrontEndDataHash( setup ) '.afe.mat'];
+    tmpData = load( saveName, 'data' );
+    data = tmpData.data;
     
-    wp2BlockFeatures = [];
+    blockFeatures = [];
     
-    for k = 1:size( wp2data, 1 ) % different wp2 requests
-        wp2BlockFeaturesTmp = [];
-        for m = 1:size( wp2data, 2 ) % different earsignals (e.g. different angles)
+    for k = 1:size( data, 1 ) % different Auditory Front-End requests
+        blockFeaturesTmp = [];
+        for m = 1:size( data, 2 ) % different earsignals (e.g. different angles)
             
             fprintf( '.' );
             
-            sigLen = size( wp2data{k,m}{1}.Data, 1 );
-            [blockLen,shiftLen] = getBlockSizes( esetup, wp2data{k,m}{1} );
+            sigLen = size( data{k,m}{1}.Data, 1 );
+            [blockLen,shiftLen] = getBlockSizes( setup, data{k,m}{1} );
             sigLenMinusLastBlock = max( sigLen - blockLen, 0 );
             nBlocks = (1 + ceil( sigLenMinusLastBlock / shiftLen ) );
             for bi = 1:nBlocks
@@ -33,25 +33,25 @@ for z = 1:length( dfiles.soundFileNames )
                     blockstart = sigLenMinusLastBlock + 1;
                 end
                 block = [];
-                block.Data{1} = wp2data{k,m}{1}.Data(blockstart:blockend,:);
-                block.Data{2} = wp2data{k,m}{2}.Data(blockstart:blockend,:);
-                block.startTime = (blockstart - 1) / wp2data{k,m}{1}.FsHz;
-                block.endTime = blockend / wp2data{k,m}{1}.FsHz; % incorrect. See below
-                % endTime = (blockend - 1) / wp2data{k,m}{1}.FsHz + esetup.wp2dataCreation.winSizeSec;
-                block.Name = wp2data{k,m}{1}.Name;
-                block.Dimensions = wp2data{k,m}{1}.Dimensions;
-                block.FsHz = wp2data{k,m}{1}.FsHz;
-                block.Canal{1} = wp2data{k,m}{1}.Canal;
-                block.Canal{2} = wp2data{k,m}{2}.Canal;
+                block.Data{1} = data{k,m}{1}.Data(blockstart:blockend,:);
+                block.Data{2} = data{k,m}{2}.Data(blockstart:blockend,:);
+                block.startTime = (blockstart - 1) / data{k,m}{1}.FsHz;
+                block.endTime = blockend / data{k,m}{1}.FsHz; % incorrect. See below
+                % endTime = (blockend - 1) / data{k,m}{1}.FsHz + setup.dataCreation.winSizeSec;
+                block.Name = data{k,m}{1}.Name;
+                block.Dimensions = data{k,m}{1}.Dimensions;
+                block.FsHz = data{k,m}{1}.FsHz;
+                block.Canal{1} = data{k,m}{1}.Canal;
+                block.Canal{2} = data{k,m}{2}.Canal;
                 
-                wp2BlockFeaturesTmp = [wp2BlockFeaturesTmp block];
+                blockFeaturesTmp = [blockFeaturesTmp block];
             end
         end
-        wp2BlockFeatures = [wp2BlockFeatures; wp2BlockFeaturesTmp];
+        blockFeatures = [blockFeatures; blockFeaturesTmp];
     end
     
     fprintf( '.' );
-    save( blocksSaveName, 'wp2BlockFeatures', 'esetup' );
+    save( blocksSaveName, 'blockFeatures', 'setup' );
     
 end
 

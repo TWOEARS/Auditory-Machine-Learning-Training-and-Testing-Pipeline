@@ -37,9 +37,13 @@ classdef ValGen < handle
         end
         
         function val = genSet( obj )
-            setLen = size( obj.val, 1 );
+            setLen = length( obj.val );
             randIdx = randi( setLen, 1 );
-            val = obj.val{randIdx};
+            if isa( obj.val, 'cell' )
+                val = obj.val{randIdx};
+            else
+                val = obj.val(randIdx);
+            end
         end
         
         function val = genRandom( obj )

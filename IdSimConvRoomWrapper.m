@@ -54,7 +54,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         function earSignals = makeEarSignals( obj, monoSound, mcond, monoOnOffs )
             sounds{1} = monoSound;
-            sounds = [sounds; mcond.setupWp1Proc( obj.convRoomSim )];
+            sounds = [sounds, mcond.setupWp1Proc( obj.convRoomSim )];
             for k = 1:1+mcond.numOverlays
                 obj.convRoomSim.set( 'LengthOfSimulation', length(monoSound) / obj.convRoomSim.SampleRate );
                 obj.convRoomSim.Sinks.removeData();
@@ -100,8 +100,8 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             signal1 = vertcat( signal1activePieces{:} );
             signal2activity(:,1) = signal2(:,1) - mean( signal2(:,1) );
             signal2activity(:,2) = signal2(:,2) - mean( signal2(:,2) );
-            s2actL = obj.detectActivity( double(signal2activity(:,1)), 40, 100e-3, 50e-3, 10e-3 );
-            s2actR = obj.detectActivity( double(signal2activity(:,2)), 40, 100e-3, 50e-3, 10e-3 );
+            s2actL = obj.detectActivity( double(signal2activity(:,1)), 40, 50e-3, 50e-3, 10e-3 );
+            s2actR = obj.detectActivity( double(signal2activity(:,2)), 40, 50e-3, 50e-3, 10e-3 );
             signal2activity = signal2activity(s2actL | s2actR,:);
             
             if isfinite(snrdB)

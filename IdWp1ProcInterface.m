@@ -29,12 +29,9 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
             obj.wp1NameExt = ['.' obj.hash '.wp1.mat'];
             for trainFile = idTrainData(:)'
                 fprintf( '\n.' );
-                if ~isempty( trainFile.wp1FileName ) ...
-                        && exist( trainFile.wp1FileName, 'file' )
-                    continue;
-                end
-                [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile );
                 trainFile.wp1FileName = [trainFile.wavFileName obj.wp1NameExt];
+                if exist( trainFile.wp1FileName, 'file' ), continue; end
+                [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile );
                 save( [which(trainFile.wavFileName) obj.wp1NameExt], 'earSignals', 'earsOnOffs' );
             end
             fprintf( ';\n' );

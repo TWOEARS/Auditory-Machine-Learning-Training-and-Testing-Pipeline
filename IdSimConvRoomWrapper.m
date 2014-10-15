@@ -106,13 +106,13 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             
             if isfinite(snrdB)
                 % Multi-channel energy of speech and noise signals
-                e_speech = sum(sum(signal1.^2));
-                e_noise  = sum(sum(signal2activity.^2));
-                e_speech = e_speech / length(signal1);
-                e_noise = e_noise / length(signal2activity);
+                e_sig1 = sum(sum(signal1.^2));
+                e_sig2  = sum(sum(signal2activity.^2));
+                e_sig1 = e_sig1 / length(signal1);
+                e_sig2 = e_sig2 / length(signal2activity);
                 
                 % Compute scaling factor for noise signal
-                gain = sqrt((e_speech/(10^(snrdB/10)))/e_noise);
+                gain = sqrt((e_sig1/(10^(snrdB/10)))/e_sig2);
                 
                 % Adjust the noise level to get required SNR
                 signal2 = gain * signal2;

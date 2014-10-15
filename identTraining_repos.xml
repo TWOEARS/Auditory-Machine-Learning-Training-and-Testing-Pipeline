@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <requirements>
-<repoRequirement sub="src" branch="initOnConstruction" startup="startWP1">wp1</repoRequirement>
+<repoRequirement sub="src" branch="initOnConstruction" startup="startBinauralSimulator">wp1</repoRequirement>
 <repoRequirement sub="src" branch="master" >wp2</repoRequirement>
 <repoRequirement sub="src" >tools</repoRequirement>
 <repoRequirement sub="src" branch="identTraining_refactor" >wp3</repoRequirement>

@@ -25,6 +25,17 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             obj.convRoomSim.set('ShutDown',true);
         end
         
+        function hashMembers = getHashObjects( obj )
+            hashMembers = {obj.multiConditions, ...
+                obj.convRoomSim.SampleRate, ...
+                obj.convRoomSim.MaximumDelay, ...
+                obj.convRoomSim.PreDelay, ...
+                obj.convRoomSim.ReverberationRoomType, ...
+                obj.convRoomSim.ReverberationMaxOrder, ...
+                obj.convRoomSim.Renderer, ...
+                audioread( obj.convRoomSim.HRIRDataset.Filename )};
+        end
+
         %%-----------------------------------------------------------------
         
         function addMultiCondition( obj, mc )
@@ -34,58 +45,147 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         %%-----------------------------------------------------------------
         
         function [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, trainFile )
-            zeroOffsetLength_s = 0.25;
-            monoSound = getPointSourceSignalFromWav( ...
-                trainFile.wavFileName, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
-            monoOnOffs = ...
-                IdEvalFrame.readOnOffAnnotations( trainFile.wavFileName ) + zeroOffsetLength_s;
             earSignals = zeros( 0, 2 );
             earsOnOffs = zeros( 0, 2 );
             for mc = obj.multiConditions
-                earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + monoOnOffs];
-                earSignals = [earSignals; obj.makeEarSignals( monoSound, mc, monoOnOffs )];
+                [mcEarSignals, mcOnOffs] = obj.makeEarSignalsForOneMC( trainFile, mc );
+                earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + mcOnOffs];
+                earSignals = [earSignals; mcEarSignals];
             end
         end
         
     end
     
     %%---------------------------------------------------------------------
-    methods (Access = public)
+    methods (Access = private)
         
-        function earSignals = makeEarSignals( obj, monoSound, mcond, monoOnOffs )
-            sounds{1} = monoSound;
-            sounds = [sounds, mcond.setupWp1Proc( obj.convRoomSim )];
-            for k = 1:1+mcond.numOverlays
-                obj.convRoomSim.set( 'LengthOfSimulation', length(monoSound) / obj.convRoomSim.SampleRate );
-                obj.convRoomSim.Sinks.removeData();
-                for m = 1:length(obj.convRoomSim.Sources)
-                    obj.convRoomSim.Sources{m}.setData( sounds{m} );
-                    obj.convRoomSim.Sources{m}.set( 'Volume', 0.0 );
-                    obj.convRoomSim.Sources{m}.set( 'Mute', 1 );
+        function [earSignals, onOffs] = makeEarSignalsForOneMC( obj, trainFile, mc )
+            mcInst = mc.instantiate();
+            [sounds, onOffs] = obj.loadSounds( mcInst, trainFile );
+            obj.setupProcForMc( mcInst );
+            for kk = 1:length( sounds )
+                if kk > 1  && strcmpi( mcInst.typeOverlays{kk-1}, 'diffuse' )
+                    es{kk} = sounds{kk}(1:length( es{1} ),:);
+                else
+                    obj.setNewSourceData( sounds );
+                    obj.setSourceOnlyActive( kk );
+                    obj.wp1Process();
+                    es{kk} = obj.convRoomSim.Sinks.getData();
                 end
-                obj.convRoomSim.Sources{k}.set( 'Mute', 0 );
-                obj.convRoomSim.Sources{k}.set( 'Volume', 1.0 );
-                obj.convRoomSim.set( 'ReInit', true );
-                while ~obj.convRoomSim.Sources{1}.isEmpty()
-                    obj.convRoomSim.set('Refresh',true);  % refresh all objects
-                    obj.convRoomSim.set('Process',true);  % processing
-                    fprintf( '.' );
-                end
-                es{k} = obj.convRoomSim.Sinks.getData();
-                es{k} = es{k} / max( abs( es{k}(:) ) ); % normalize
                 fprintf( '\n' );
             end
             sSignal = es{1};
             earSignals = sSignal;
-            for k = 2:length( es )
-                sOnOffsSamples = monoOnOffs .* obj.convRoomSim.SampleRate;
-                nSignal = es{k};
+            for kk = 2:length( es )
+                sOnOffsSamples = onOffs .* obj.convRoomSim.SampleRate;
+                nSignal = es{kk};
                 nSignal = obj.adjustSNR( ...
-                    sSignal, sOnOffsSamples, nSignal, mcond.SNRs(k-1).genVal() );
+                    sSignal, sOnOffsSamples, nSignal, mcInst.SNRs(kk-1).value );
                 earSignals = earSignals + nSignal;
+            end
+            earSignals = earSignals / max( abs( earSignals(:) ) ); % normalize
+        end
+
+        %%
+        function setNewSourceData( obj, sounds )
+            sigLen_s = length( sounds{1} ) / obj.convRoomSim.SampleRate;
+            obj.convRoomSim.set( 'LengthOfSimulation', sigLen_s );
+            obj.convRoomSim.Sinks.removeData();
+            for m = 1:length(obj.convRoomSim.Sources)
+                obj.convRoomSim.Sources{m}.setData( sounds{m} );
             end
         end
         
+        %%
+        function setSourceOnlyActive( obj, actIdx )
+            for m = 1:length(obj.convRoomSim.Sources)
+                obj.convRoomSim.Sources{m}.set( 'Volume', 0.0 );
+                obj.convRoomSim.Sources{m}.set( 'Mute', 1 );
+            end
+            obj.convRoomSim.Sources{actIdx}.set( 'Mute', 0 );
+            obj.convRoomSim.Sources{actIdx}.set( 'Volume', 1.0 );
+        end
+        
+        %%
+        function wp1Process( obj )
+            obj.convRoomSim.set( 'ReInit', true );
+            while ~obj.convRoomSim.Sources{1}.isEmpty()
+                obj.convRoomSim.set('Refresh',true);  % refresh all objects
+                obj.convRoomSim.set('Process',true);  % processing
+                fprintf( '.' );
+            end
+        end
+        
+        %%
+        function setupProcForMc( obj, mc )
+            obj.convRoomSim.set( 'ShutDown', true );
+            obj.convRoomSim.Sources(2:end) = [];
+            useReverb = ~isempty( mc.walls.value );
+            if useReverb, obj.convRoomSim.Walls = mc.walls.value; end
+            obj.createNewSimSource( 1, useReverb, true, mc.distSignal.value, mc.angleSignal.value );
+            for kk = 1:mc.numOverlays
+                isPoint = strcmpi( mc.typeOverlays{kk}, 'point' );
+                obj.createNewSimSource( ...
+                    kk+1, useReverb, isPoint, mc.distOverlays(kk).value, mc.angleOverlays(kk).value...
+                    );
+            end
+            obj.convRoomSim.set('Init',true);
+        end
+
+        %%
+        function createNewSimSource( obj, idx, useReverb, isPoint, radius, azmth )
+            if isPoint 
+                if useReverb
+                    obj.convRoomSim.Sources{idx} = simulator.source.ISMShoeBox( obj.convRoomSim );
+                else
+                    obj.convRoomSim.Sources{idx} = simulator.source.Point();
+                end
+                channelMapping = [1];
+            else % ~isPoint
+                obj.convRoomSim.Sources{idx} = simulator.source.Binaural();
+                channelMapping = [1 2];
+            end
+            obj.convRoomSim.Sources{idx}.set( 'Radius', radius );
+            obj.convRoomSim.Sources{idx}.set( 'Azimuth', azmth );
+            obj.convRoomSim.Sources{idx}.AudioBuffer = simulator.buffer.FIFO( channelMapping );
+        end
+        
+        %%
+        function [sounds, sigOnOffs] = loadSounds( obj, mc, trainFile )
+            zeroOffsetLength_s = 0.25;
+            sounds{1} = getPointSourceSignalFromWav( ...
+                trainFile.wavFileName, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
+            sigOnOffs = ...
+                IdEvalFrame.readOnOffAnnotations( trainFile.wavFileName ) + zeroOffsetLength_s;
+            sigClass = IdEvalFrame.readEventClass( trainFile.wavFileName );
+            for kk = 1:mc.numOverlays
+                ovrlFile = mc.fileOverlays(kk).value;
+                ovrlZeroOffset = mc.offsetOverlays(kk).value;
+                if strcmpi( mc.typeOverlays{kk}, 'point' )
+                    sounds{1+kk} = ...
+                        getPointSourceSignalFromWav( ...
+                            ovrlFile, obj.convRoomSim.SampleRate, ...
+                            ovrlZeroOffset );
+                elseif strcmpi( mc.typeOverlays{kk}, 'diffuse' )
+                    diffuseMonoSound = ...
+                        getPointSourceSignalFromWav( ...
+                            ovrlFile, obj.convRoomSim.SampleRate, ...
+                            ovrlZeroOffset );
+                    sounds{1+kk} = repmat( diffuseMonoSound, 1, 2 );
+                end
+                ovrlClass = IdEvalFrame.readEventClass( ovrlFile );
+                if strcmpi( ovrlClass, sigClass )
+                    maxLen = length( sounds{1} ) / obj.convRoomSim.SampleRate;
+                    ovrlOnOffs = IdEvalFrame.readOnOffAnnotations( ovrlFile ) ...
+                        + ovrlZeroOffset;
+                    ovrlOnOffs( ovrlOnOffs(:,1) >= maxLen, : ) = [];
+                    ovrlOnOffs( ovrlOnOffs > maxLen ) = maxLen;
+                    sigOnOffs = sortAndMergeOnOffs( [sigOnOffs; ovrlOnOffs] );
+                end
+            end
+        end
+        
+        %%
         function signal2 = adjustSNR( obj, signal1, sig1OnOffs, signal2, snrdB )
             %adjustSNR   Adjust SNR between two signals. Only parts of the
             %signal that actually exhibit energy are factored into the SNR
@@ -95,7 +195,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             signal1(:,1) = signal1(:,1) - mean( signal1(:,1) );
             signal1(:,2) = signal1(:,2) - mean( signal1(:,2) );
             signal1activePieces = arrayfun( ...
-                @(on, off)(signal1(on:off,:)) , sig1OnOffs(:,1), sig1OnOffs(:,2), ...
+                @(on, off)(signal1(ceil(on):floor(off),:)) , sig1OnOffs(:,1), sig1OnOffs(:,2), ...
                 'UniformOutput', false );
             signal1 = vertcat( signal1activePieces{:} );
             signal2activity(:,1) = signal2(:,1) - mean( signal2(:,1) );

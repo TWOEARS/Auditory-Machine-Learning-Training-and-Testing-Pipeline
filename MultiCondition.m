@@ -22,7 +22,7 @@ classdef MultiCondition < handle
             obj.angleSignal = ValGen( 'manual', 0 );
             obj.distSignal = ValGen( 'manual', 3 );
             obj.numOverlays = 0;
-            obj.walls = WallsValGen.empty;
+            obj.walls = ValGen( 'manual', [] );
             obj.angleOverlays = ValGen.empty;
             obj.distOverlays = ValGen.empty;
             obj.SNRs = ValGen.empty;
@@ -30,7 +30,7 @@ classdef MultiCondition < handle
             obj.fileOverlays = ValGen.empty;
             obj.offsetOverlays= ValGen.empty;
         end
-      
+        
         %%
         function addOverlay( obj, angle, dist, SNR, type, file, offset_s )
             obj.numOverlays = obj.numOverlays + 1;
@@ -56,51 +56,20 @@ classdef MultiCondition < handle
         end
         
         %%
-        function overlaySound = setupWp1Proc( obj, wp1proc )
-            if ~isa( wp1proc, 'simulator.SimulatorConvexRoom' )
-                error( 'Dont know how to handle other wp1 procs' );
+        function mcInst = instantiate( obj )
+            mcInst = MultiCondition();
+            mcInst.angleSignal = ValGen( 'manual', obj.angleSignal.value );
+            mcInst.distSignal = ValGen( 'manual', obj.distSignal.value );
+            mcInst.numOverlays = obj.numOverlays;
+            mcInst.walls = ValGen( 'manual', obj.walls.value );
+            for kk = 1:obj.numOverlays
+                mcInst.angleOverlays(kk) = ValGen( 'manual', obj.angleOverlays(kk).value );
+                mcInst.distOverlays(kk) = ValGen( 'manual', obj.distOverlays(kk).value );
+                mcInst.SNRs(kk) = ValGen( 'manual', obj.SNRs(kk).value );
+                mcInst.typeOverlays{kk} = obj.typeOverlays{kk};
+                mcInst.fileOverlays(kk) = ValGen( 'manual', obj.fileOverlays(kk).value );
+                mcInst.offsetOverlays(kk) = ValGen( 'manual', obj.offsetOverlays(kk).value );
             end
-            wp1proc.set( 'ShutDown', true );
-            wp1proc.Sources(2:end) = [];
-            if ~isempty( obj.walls )
-                wp1proc.Walls = obj.walls.genVal();
-                wp1proc.Sources{1} = simulator.source.ISMShoeBox( wp1proc );
-            else
-                wp1proc.Sources{1} = simulator.source.Point();
-            end
-            wp1proc.Sources{1}.set( 'Radius', obj.distSignal.genVal() ); 
-            wp1proc.Sources{1}.set( 'Azimuth', obj.angleSignal.genVal() );
-            wp1proc.Sources{1}.AudioBuffer = simulator.buffer.FIFO(1);
-
-            overlaySound = {};
-            for k = 1:obj.numOverlays
-                if strcmpi( obj.typeOverlays{k}, 'point' )
-                    if ~isempty( obj.walls )
-                        wp1proc.Sources{k+1} = simulator.source.ISMShoeBox( wp1proc );
-                    else
-                        wp1proc.Sources{k+1} = simulator.source.Point();
-                    end
-                    overlaySound{k} = ...
-                        getPointSourceSignalFromWav( ...
-                            obj.fileOverlays(k).genVal(), wp1proc.SampleRate, ...
-                            obj.offsetOverlays(k).genVal() );
-                    channelMapping = [1];
-                end
-                if strcmpi( obj.typeOverlays{k}, 'diffuse' )
-                    wp1proc.Sources{k+1} = simulator.source.Binaural();
-                    diffuseMonoSound = ...
-                        getPointSourceSignalFromWav( ...
-                            obj.fileOverlays(k).genVal(), wp1proc.SampleRate, ...
-                            obj.offsetOverlays(k).genVal() );
-                    overlaySound{k} = repmat( diffuseMonoSound, 1, 2 );
-                    channelMapping = [1 2];
-                end
-                wp1proc.Sources{k+1}.set( 'Radius', obj.distOverlays(k).genVal() );
-                wp1proc.Sources{k+1}.set( 'Azimuth', obj.angleOverlays(k).genVal() );
-                wp1proc.Sources{k+1}.AudioBuffer = simulator.buffer.FIFO( channelMapping );
-            end
-            
-            wp1proc.set('Init',true);
         end
         
     end

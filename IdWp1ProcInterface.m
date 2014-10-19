@@ -1,12 +1,11 @@
-classdef (Abstract) IdWp1ProcInterface < Hashable
+classdef (Abstract) IdWp1ProcInterface < Hashable & handle
     %% responsible for transforming wav files into earsignals
     %   this includes transforming onset/offset labels to the earsignals'
     %   time line, as it is the only point where the "truth" is known.
     
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
-        hash;
-        wp1NameExt;
+
     end
     
     %%---------------------------------------------------------------------
@@ -25,14 +24,13 @@ classdef (Abstract) IdWp1ProcInterface < Hashable
         %       updates idTrainData
         function run( obj, idTrainData )
             fprintf( 'wp1 processing of sounds' );
-            obj.hash = obj.getHash( 10 );
-            obj.wp1NameExt = ['.' obj.hash '.wp1.mat'];
+            wp1NameExt = ['.' obj.getHash() '.wp1.mat'];
             for trainFile = idTrainData(:)'
                 fprintf( '\n.' );
-                trainFile.wp1FileName = [trainFile.wavFileName obj.wp1NameExt];
+                trainFile.wp1FileName = [trainFile.wavFileName wp1NameExt];
                 if exist( trainFile.wp1FileName, 'file' ), continue; end
                 [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile );
-                save( [which(trainFile.wavFileName) obj.wp1NameExt], 'earSignals', 'earsOnOffs' );
+                save( [which(trainFile.wavFileName) wp1NameExt], 'earSignals', 'earsOnOffs' );
             end
             fprintf( ';\n' );
         end

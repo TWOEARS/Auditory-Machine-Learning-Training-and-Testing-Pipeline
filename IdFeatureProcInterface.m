@@ -24,6 +24,10 @@ classdef (Abstract) IdFeatureProcInterface < Hashable
     
     %%---------------------------------------------------------------------
     methods (Abstract)
+        
+        wp2Requests = getWp2Requests( obj )
+        run ( obj, data )
+    
     end
     
 end

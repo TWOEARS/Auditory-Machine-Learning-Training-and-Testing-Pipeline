@@ -24,13 +24,14 @@ classdef (Abstract) IdWp1ProcInterface < Hashable & handle
         %       updates idTrainData
         function run( obj, idTrainData )
             fprintf( 'wp1 processing of sounds' );
-            wp1NameExt = ['.' obj.getHash() '.wp1.mat'];
+            idTrainData.wp1Hash = obj.getHash();
+            wp1NameExt = ['.' idTrainData.wp1Hash '.wp1.mat'];
             for trainFile = idTrainData(:)'
                 fprintf( '\n.' );
-                trainFile.wp1FileName = [trainFile.wavFileName wp1NameExt];
-                if exist( trainFile.wp1FileName, 'file' ), continue; end
-                [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile );
-                save( [which(trainFile.wavFileName) wp1NameExt], 'earSignals', 'earsOnOffs' );
+                wp1FileName = [which(trainFile.wavFileName) wp1NameExt];
+                if exist( wp1FileName, 'file' ), continue; end
+                [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile.wavFileName );
+                save( wp1FileName, 'earSignals', 'earsOnOffs' );
             end
             fprintf( ';\n' );
         end

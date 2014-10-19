@@ -44,11 +44,11 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         %%-----------------------------------------------------------------
         
-        function [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, trainFile )
+        function [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, wavFile )
             earSignals = zeros( 0, 2 );
             earsOnOffs = zeros( 0, 2 );
             for mc = obj.multiConditions
-                [mcEarSignals, mcOnOffs] = obj.makeEarSignalsForOneMC( trainFile, mc );
+                [mcEarSignals, mcOnOffs] = obj.makeEarSignalsForOneMC( wavFile, mc );
                 earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + mcOnOffs];
                 earSignals = [earSignals; mcEarSignals];
             end
@@ -59,9 +59,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     methods (Access = private)
         
-        function [earSignals, onOffs] = makeEarSignalsForOneMC( obj, trainFile, mc )
+        function [earSignals, onOffs] = makeEarSignalsForOneMC( obj, wavFile, mc )
             mcInst = mc.instantiate();
-            [sounds, onOffs] = obj.loadSounds( mcInst, trainFile );
+            [sounds, onOffs] = obj.loadSounds( mcInst, wavFile );
             obj.setupProcForMc( mcInst );
             for kk = 1:length( sounds )
                 if kk > 1  && strcmpi( mcInst.typeOverlays{kk-1}, 'diffuse' )
@@ -151,13 +151,13 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         end
         
         %%
-        function [sounds, sigOnOffs] = loadSounds( obj, mc, trainFile )
+        function [sounds, sigOnOffs] = loadSounds( obj, mc, wavFile )
             zeroOffsetLength_s = 0.25;
             sounds{1} = getPointSourceSignalFromWav( ...
-                trainFile.wavFileName, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
+                wavFile, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
             sigOnOffs = ...
-                IdEvalFrame.readOnOffAnnotations( trainFile.wavFileName ) + zeroOffsetLength_s;
-            sigClass = IdEvalFrame.readEventClass( trainFile.wavFileName );
+                IdEvalFrame.readOnOffAnnotations( wavFile ) + zeroOffsetLength_s;
+            sigClass = IdEvalFrame.readEventClass( wavFile );
             for kk = 1:mc.numOverlays
                 ovrlFile = mc.fileOverlays(kk).value;
                 ovrlZeroOffset = mc.offsetOverlays(kk).value;
@@ -304,58 +304,3 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     
     
 end
-
-% function wp2processSounds( dfiles, esetup )
-%
-% disp( 'wp2 processing of sounds' );
-%
-% wp2DataHash = getWp2dataHash( esetup );
-%
-% for k = 1:length( dfiles.soundFileNames )
-%
-%     wp2SaveName = [dfiles.soundFileNames{k} '.' wp2DataHash '.wp2.mat'];
-%     if exist( wp2SaveName, 'file' )
-%         fprintf( '.' );
-%         continue;
-%     end;
-%
-%     fprintf( '\n%s', wp2SaveName );
-%
-%     wp2data = [];
-%     for angle = esetup.wp2dataCreation.angle
-%
-%         fprintf( '.' );
-%
-%         dObj = [];
-%         mObj = [];
-%         wp2procs = [];
-%         dObj = dataObject( [], esetup.wp2dataCreation.fs, 2, 1 );
-%         mObj = manager( dObj );
-%         for z = 1:length( esetup.wp2dataCreation.requests )
-%             wp2procs{z} = mObj.addProcessor( esetup.wp2dataCreation.requests{z}, esetup.wp2dataCreation.requestP{z} );
-%         end
-%         tmpData = cell( size(wp2procs,2), size(wp2procs{1},2) );
-%         for pos = 1:esetup.wp2dataCreation.fs:length(earSignals)
-%             posEnd = min( length( earSignals ), pos + esetup.wp2dataCreation.fs - 1 );
-%             mObj.processChunk( earSignals(pos:posEnd,:), 0 );
-%             for z = 1:size(wp2procs,2)
-%                 for zz = 1:size(wp2procs{z},2)
-%                     tmpData{z,zz} = [tmpData{z,zz}; wp2procs{z}{zz}.Data];
-%                 end
-%             end
-%             fprintf( '.' );
-%         end
-%         for z = 1:size(wp2procs,2)
-%             for zz = 1:size(wp2procs{z},2)
-%                 wp2procs{z}{zz}.Data = tmpData{z,zz};
-%             end
-%         end
-%         wp2data = [wp2data wp2procs(:)];
-%     end
-%
-%     save( wp2SaveName, 'wp2data', 'esetup' );
-%
-% end
-%
-%
-% disp( ';' );

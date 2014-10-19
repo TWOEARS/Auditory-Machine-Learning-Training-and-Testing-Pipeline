@@ -4,6 +4,9 @@ classdef IdentTrainPipeData < handle
         classNames;
         data;
         emptyDataStruct;
+        wp1Hash;
+        wp2Hash;
+        featuresHash;
     end
     
     methods
@@ -14,19 +17,6 @@ classdef IdentTrainPipeData < handle
             obj.data = obj.emptyDataStruct;
         end
         
-        %%
-%         function flist = getClassWavFileNames( obj, className )
-%             flist = {obj.data(strcmp( className, obj.classNames )).files.wavFileName};
-%         end
-%         
-%         function flist = getClassWp1FileNames( obj, className )
-%             flist = {obj.data(strcmp( className, obj.classNames )).files.wp1FileName};
-%         end
-%         
-%         function flist = getClassWp2FileNames( obj, className )
-%             flist = {obj.data(strcmp( className, obj.classNames )).files.wp2FileName};
-%         end
-% 
         %% easy get interface
         function varargout = subsref( obj, S )
             if strcmp(S(1).type,'.')

@@ -75,7 +75,7 @@ classdef IdentificationTrainingPipeline < handle
         end
         
         %% -----------------------------------------------------------------
-        %   running up the pipeline
+        %   running the pipeline
         %   -----------------------
 
         %% function run( obj, models )
@@ -94,6 +94,10 @@ classdef IdentificationTrainingPipeline < handle
             end
             
             obj.wp1proc.run( obj.data );
+            wp2Requests = obj.featureProc.getWp2Requests();
+            obj.wp2proc.registerRequests( wp2Requests );
+            obj.wp2proc.run( obj.data );
+            obj.featureProc.run ( obj.data );
 
             for model = models
             end;

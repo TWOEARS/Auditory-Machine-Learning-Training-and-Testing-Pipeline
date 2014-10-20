@@ -97,18 +97,7 @@ classdef IdentificationTrainingPipeline < handle
                 models(strcmp('general', models)) = [];
             end
 
-            wp1hash = obj.wp1proc.getHash();
-            wp2hash = obj.wp2proc.getHash();
-            featuresHash = obj.featureProc.getHash();
-            obj.wp1proc.setProcFileNameExt( ['.' wp1hash '.wp1.mat'] );
-            obj.wp2proc.setProcFileNameExt( ['.' wp1hash '.' wp2hash '.wp2.mat'] );
-            wp1proc = obj.wp1proc;
-            wp2proc = obj.wp2proc;
-            obj.wp2proc.setWp1FileNameBuilder( @wp1proc.buildProcFileName );
-            obj.featureProc.setProcFileNameExt( ...
-                ['.' wp1hash '.' wp2hash '.' featuresHash '.features.mat'] );
-            obj.featureProc.setWp1FileNameBuilder( @wp1proc.buildProcFileName );
-            obj.featureProc.setWp2FileNameBuilder( @wp2proc.buildProcFileName );
+            obj.setupProcsFileHandling();
 
             obj.wp1proc.run();
             wp2Requests = obj.featureProc.getWp2Requests();
@@ -126,6 +115,22 @@ classdef IdentificationTrainingPipeline < handle
     
     %% ---------------------------------------------------------------------
     methods (Access = private)
+        
+        function setupProcsFileHandling( obj )
+            wp1pc = obj.wp1proc;
+            wp2pc = obj.wp2proc;
+            wp1hash = wp1pc.getHash();
+            wp2hash = wp2pc.getHash();
+            featuresHash = obj.featureProc.getHash();
+            wp1pc.setProcFileNameExt( ['.' wp1hash '.wp1.mat'] );
+            wp2pc.setProcFileNameExt( ['.' wp1hash '.' wp2hash '.wp2.mat'] );
+            wp2pc.setWp1FileNameBuilder( @wp1pc.buildProcFileName );
+            obj.featureProc.setProcFileNameExt( ...
+                ['.' wp1hash '.' wp2hash '.' featuresHash '.features.mat'] );
+            obj.featureProc.setWp1FileNameBuilder( @wp1pc.buildProcFileName );
+            obj.featureProc.setWp2FileNameBuilder( @wp2pc.buildProcFileName );
+        end
+        
     end
     
 end

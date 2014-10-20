@@ -47,6 +47,7 @@ classdef (Abstract) IdWp1ProcInterface < IdProcInterface
     methods (Abstract)
         
         [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, trainFile )
+        fs = getDataFs( obj )
         
     end
     

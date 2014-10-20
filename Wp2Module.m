@@ -2,6 +2,8 @@ classdef Wp2Module < IdWp2ProcInterface
     
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
+        managerObject;           % WP2 manager object - holds the signal buffer (data obj)
+        outputSignals;
     end
     
     %%---------------------------------------------------------------------
@@ -15,11 +17,21 @@ classdef Wp2Module < IdWp2ProcInterface
             obj = obj@IdWp2ProcInterface();
         end
         
-        %%-----------------------------------------------------------------
-
-        function registerRequests( obj, wp2Requests )
+        function hashMembers = getHashObjects( obj )
+            hashMembers = {obj.managerObject.Data.getParameterSummary( obj.managerObject ) };
         end
 
+        %%-----------------------------------------------------------------
+
+        function init( obj, fs, wp2Requests )
+            wp2dataObj = dataObject( [], fs, 2, 1 );
+            obj.managerObject = manager( wp2dataObj );
+            for ii = 1:length( wp2Requests )
+                obj.outputSignals{ii} = obj.managerObject.addProcessor( ...
+                    wp2Requests{ii}.name, wp2Requests{ii}.params );
+            end
+        end
+        
         %%-----------------------------------------------------------------
 
         function run( obj )
@@ -38,6 +50,11 @@ classdef Wp2Module < IdWp2ProcInterface
     
     %%---------------------------------------------------------------------
     methods (Access = private)
+        
+        function wp2data = makeWp2Data( obj, wp1fileName )
+            
+        end
+        
     end
 
 end

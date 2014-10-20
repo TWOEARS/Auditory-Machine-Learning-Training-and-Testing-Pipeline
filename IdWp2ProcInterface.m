@@ -34,8 +34,9 @@ classdef (Abstract) IdWp2ProcInterface < IdProcInterface
     %%---------------------------------------------------------------------
     methods (Abstract)
     
-        registerRequests( obj, wp2Requests )
+        init( obj, fs, wp2Requests )
         run( obj )
+        
 
     end
     

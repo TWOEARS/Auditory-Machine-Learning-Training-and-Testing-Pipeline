@@ -43,6 +43,12 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         end
         
         %%-----------------------------------------------------------------
+
+        function fs = getDataFs( obj )
+            fs = obj.convRoomSim.SampleRate;
+        end
+        
+        %%-----------------------------------------------------------------
         
         function [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, wavFile )
             earSignals = zeros( 0, 2 );

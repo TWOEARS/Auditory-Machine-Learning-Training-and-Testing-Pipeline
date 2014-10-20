@@ -97,11 +97,11 @@ classdef IdentificationTrainingPipeline < handle
                 models(strcmp('general', models)) = [];
             end
 
+            obj.wp2proc.init( obj.wp1proc.getDataFs(), obj.featureProc.getWp2Requests() );
+
             obj.setupProcsFileHandling();
 
             obj.wp1proc.run();
-            wp2Requests = obj.featureProc.getWp2Requests();
-            obj.wp2proc.registerRequests( wp2Requests );
             obj.wp2proc.run();
             obj.featureProc.run();
 

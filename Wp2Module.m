@@ -22,17 +22,13 @@ classdef Wp2Module < IdWp2ProcInterface
 
         %%-----------------------------------------------------------------
 
-        function run( obj, idTrainData )
+        function run( obj )
             fprintf( 'wp2 processing' );
-            idTrainData.wp2Hash = obj.getHash();
-            wp2FileNameExt = ['.' idTrainData.wp1Hash '.' idTrainData.wp2Hash '.wp2.mat'];
-            for trainFile = idTrainData(:)'
+            for trainFile = obj.data(:)'
                 fprintf( '\n.' );
-                wp2FileName = [which(trainFile.wavFileName) wp2FileNameExt];
+                wp2FileName = obj.buildProcFileName( trainFile.wavFileName );
                 if exist( wp2FileName, 'file' ), continue; end
-                wp1FileNameExt = ['.' idTrainData.wp1Hash '.wp1.mat'];
-                wp1FileName = [which(trainFile.wavFileName) wp1FileNameExt];
-                wp2data = obj.makeWp2Data( [trainFile.wavFileName wp1FileNameExt] );
+                wp2data = obj.makeWp2Data( obj.buildWp1FileName( trainFile.wavFileName ) );
                 save( wp2FileName, 'wp2data' );
             end
             fprintf( ';\n' );

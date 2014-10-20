@@ -1,4 +1,4 @@
-classdef (Abstract) IdTrainerInterface < handle
+classdef (Abstract) IdTrainerInterface < IdProcInterface
 
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
@@ -12,6 +12,7 @@ classdef (Abstract) IdTrainerInterface < handle
     methods (Access = public)
         
         function obj = IdTrainerInterface()
+            obj = obj@IdProcInterface();
         end
         
         %%-----------------------------------------------------------------

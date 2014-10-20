@@ -29,6 +29,7 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'ModelCreator must be of type IdTrainerInterface.' );
             end
             obj.trainer = trainer;
+            obj.trainer.connectData( obj.data );
         end
         
         function setWp1Processor( obj, wp1proc )
@@ -36,6 +37,7 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'Wp1Processor must be of type IdWp1ProcInterface.' );
             end
             obj.wp1proc = wp1proc;
+            obj.wp1proc.connectData( obj.data );
         end
         
         function setWp2Processor( obj, wp2proc )
@@ -43,6 +45,7 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'Wp2Processor must be of type IdWp2ProcInterface.' );
             end
             obj.wp2proc = wp2proc;
+            obj.wp2proc.connectData( obj.data );
         end
         
         function setFeatureProcessor( obj, featureProc )
@@ -50,6 +53,7 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'FeatureProcessor must be of type IdFeatureProcInterface.' );
             end
             obj.featureProc = featureProc;
+            obj.featureProc.connectData( obj.data );
         end
         
         %% -----------------------------------------------------------------
@@ -92,12 +96,25 @@ classdef IdentificationTrainingPipeline < handle
                 models = obj.data.classNames;
                 models(strcmp('general', models)) = [];
             end
-            
-            obj.wp1proc.run( obj.data );
+
+            wp1hash = obj.wp1proc.getHash();
+            wp2hash = obj.wp2proc.getHash();
+            featuresHash = obj.featureProc.getHash();
+            obj.wp1proc.setProcFileNameExt( ['.' wp1hash '.wp1.mat'] );
+            obj.wp2proc.setProcFileNameExt( ['.' wp1hash '.' wp2hash '.wp2.mat'] );
+            wp1proc = obj.wp1proc;
+            wp2proc = obj.wp2proc;
+            obj.wp2proc.setWp1FileNameBuilder( @wp1proc.buildProcFileName );
+            obj.featureProc.setProcFileNameExt( ...
+                ['.' wp1hash '.' wp2hash '.' featuresHash '.features.mat'] );
+            obj.featureProc.setWp1FileNameBuilder( @wp1proc.buildProcFileName );
+            obj.featureProc.setWp2FileNameBuilder( @wp2proc.buildProcFileName );
+
+            obj.wp1proc.run();
             wp2Requests = obj.featureProc.getWp2Requests();
             obj.wp2proc.registerRequests( wp2Requests );
-            obj.wp2proc.run( obj.data );
-            obj.featureProc.run ( obj.data );
+            obj.wp2proc.run();
+            obj.featureProc.run();
 
             for model = models
             end;

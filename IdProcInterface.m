@@ -1,9 +1,11 @@
-classdef (Abstract) IdFeatureProcInterface < IdProcInterface
-
+classdef (Abstract) IdProcInterface < Hashable & handle
+    %% identification training pipeline processor
+    %
+    
     %%---------------------------------------------------------------------
     properties (SetAccess = private, Transient)
-        buildWp1FileName;
-        buildWp2FileName;
+        data;
+        procFileNameExt;
     end
     
     %%---------------------------------------------------------------------
@@ -13,18 +15,25 @@ classdef (Abstract) IdFeatureProcInterface < IdProcInterface
     %%---------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = IdFeatureProcInterface()
-            obj = obj@IdProcInterface();
+        function obj = IdProcInterface()
         end
-
+        
         %%-----------------------------------------------------------------
-            
-        function setWp1FileNameBuilder( obj, wp1FileNameBuilder )
-            obj.buildWp1FileName = wp1FileNameBuilder;
+
+        function connectData( obj, data )
+            obj.data = data;
         end
-            
-        function setWp2FileNameBuilder( obj, wp2FileNameBuilder )
-            obj.buildWp2FileName = wp2FileNameBuilder;
+        
+        %%-----------------------------------------------------------------
+
+        function setProcFileNameExt( obj, procFileNameExt )
+            obj.procFileNameExt = procFileNameExt;
+        end
+        
+        %%-----------------------------------------------------------------
+
+        function procFileName = buildProcFileName( obj, wavFileName )
+             procFileName = [which(wavFileName) obj.procFileNameExt];
         end
         
         %%-----------------------------------------------------------------
@@ -37,10 +46,6 @@ classdef (Abstract) IdFeatureProcInterface < IdProcInterface
     
     %%---------------------------------------------------------------------
     methods (Abstract)
-        
-        wp2Requests = getWp2Requests( obj )
-        run ( obj, data )
-    
     end
     
 end

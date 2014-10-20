@@ -4,9 +4,6 @@ classdef IdentTrainPipeData < handle
         classNames;
         data;
         emptyDataStruct;
-        wp1Hash;
-        wp2Hash;
-        featuresHash;
     end
     
     methods

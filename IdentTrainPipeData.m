@@ -56,7 +56,7 @@ classdef IdentTrainPipeData < handle
                             error( 'Indexes for x or y can only be chosen for one class and one file.' );
                         end
                         xIdx = S.subs{1,4};
-                        varargout{1:nargout} = obj.data(cIdx).files(fIdx).(dIdx)(xIdx);
+                        varargout{1:nargout} = obj.data(cIdx).files(fIdx).(dIdx)(xIdx,:,:,:);
                     else
                         out = {obj.data(cIdx(1)).files(fIdx).(dIdx)};
                         for c = cIdx(2:end)

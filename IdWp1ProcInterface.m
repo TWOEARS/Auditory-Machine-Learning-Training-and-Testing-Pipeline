@@ -25,8 +25,8 @@ classdef (Abstract) IdWp1ProcInterface < IdProcInterface
         function run( obj )
             fprintf( 'wp1 processing of sounds' );
             for trainFile = obj.data(:)'
-                fprintf( '\n.' );
                 wp1FileName = obj.buildProcFileName( trainFile.wavFileName );
+                fprintf( '\n.%s', wp1FileName );
                 if exist( wp1FileName, 'file' ), continue; end
                 [earSignals, earsOnOffs] = obj.makeEarsignalsAndLabels( trainFile.wavFileName );
                 save( wp1FileName, 'earSignals', 'earsOnOffs' );

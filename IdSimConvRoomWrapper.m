@@ -71,7 +71,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             obj.setupProcForMc( mcInst );
             for kk = 1:length( sounds )
                 if kk > 1  && strcmpi( mcInst.typeOverlays{kk-1}, 'diffuse' )
-                    es{kk} = sounds{kk}(1:length( es{1} ),:);
+                    es{kk} = sounds{kk}(1:min( length( sounds{kk} ), length( es{1} ) ),:);
                 else
                     obj.setNewSourceData( sounds );
                     obj.setSourceOnlyActive( kk );
@@ -87,7 +87,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 nSignal = es{kk};
                 nSignal = obj.adjustSNR( ...
                     sSignal, sOnOffsSamples, nSignal, mcInst.SNRs(kk-1).value );
-                earSignals = earSignals + nSignal;
+                earSignals(1:min( length( earSignals ), length( nSignal ) ),:) = ...
+                    earSignals(1:min( length( earSignals ), length( nSignal ) ),:) ...
+                    + nSignal;
             end
             earSignals = earSignals / max( abs( earSignals(:) ) ); % normalize
         end

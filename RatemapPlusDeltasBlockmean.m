@@ -1,12 +1,12 @@
-classdef RatemapPlusDeltasBlockmean < IdFeatureProcInterface
+classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
+% uses magnitude ratemap with cubic compression and scaling to a max value
+% of one. Reduces each freq channel to its mean and std + mean and std of
+% finite differences.
 
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
         freqChannels;
         deltasLevels;
-        blockSize_s;
-        shiftSize_s;
-        minBlockToEventRatio;
     end
     
     %%---------------------------------------------------------------------
@@ -17,12 +17,9 @@ classdef RatemapPlusDeltasBlockmean < IdFeatureProcInterface
     methods (Access = public)
         
         function obj = RatemapPlusDeltasBlockmean()
-            obj = obj@IdFeatureProcInterface();
+            obj = obj@FeatureProcInterface();
             obj.freqChannels = 16;
             obj.deltasLevels = 1;
-            obj.blockSize_s = 0.5;
-            obj.shiftSize_s = 0.25;
-            obj.minBlockToEventRatio = 0.5;
         end
         
         %%-----------------------------------------------------------------
@@ -37,32 +34,33 @@ classdef RatemapPlusDeltasBlockmean < IdFeatureProcInterface
 
         %%-----------------------------------------------------------------
 
-        function run( obj, idTrainData )
-            fprintf( 'feature creation' );
-            idTrainData.featuresHash = obj.getHash();
-            featFileNameExt = ...
-                ['.' idTrainData.wp1Hash ...
-                 '.' idTrainData.wp2Hash ...
-                 '.' idTrainData.featuresHash '.features.mat'];
-            for trainFile = idTrainData(:)'
-                fprintf( '\n.' );
-                featuresFileName = [which(trainFile.wavFileName) featFileNameExt];
-                if exist( featuresFileName, 'file' ), continue; end
-                wp2FileNameExt = ['.' idTrainData.wp1Hash '.' idTrainData.wp2Hash '.wp2.mat'];
-                wp2FileName = [which(trainFile.wavFileName) wp2FileNameExt];
-                x = obj.makeFeatures( wp2FileName );
-                wp1FileNameExt = ['.' idTrainData.wp1Hash '.wp1.mat'];
-                wp1FileName = [which(trainFile.wavFileName) wp1FileNameExt];
-                y = obj.makeLabels( wp1FileName );
-                save( featuresFileName, 'x', 'y' );
+        function x = makeDataPoint( obj, wp2data )
+            rmRL = wp2data('ratemap_magnitude');
+            rmR = rmRL{1}.Data;
+            rmL = rmRL{2}.Data;
+            rmR = obj.compressAndScale( rmR );
+            rmL = obj.compressAndScale( rmL );
+            rm = 0.5 * rmR + 0.5 * rmL;
+            x = [mean( rm, 1 )  std( rm, 0, 1 )];
+            for i = 1:obj.deltasLevels
+                rm = rm(2:end,:) - rm(1:end-1,:);
+                x = [x  mean( rm, 1 )  std( rm, 0, 1 )];
             end
-            fprintf( ';\n' );
         end
         
     end
     
     %%---------------------------------------------------------------------
     methods (Access = private)
+        
+        function rm = compressAndScale( obj, rm )
+            rm = rm.^0.33; %cuberoot compression
+            rmMedian = median( rm(rm>0.01) );
+            if isnan( rmMedian ), scale = 1;
+            else scale = 0.5 / rmMedian; end;
+            rm = rm .* repmat( scale, size( rm ) );
+        end
+        
     end
     
 end

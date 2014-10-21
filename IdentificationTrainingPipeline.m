@@ -49,8 +49,8 @@ classdef IdentificationTrainingPipeline < handle
         end
         
         function setFeatureProcessor( obj, featureProc )
-            if ~isa( featureProc, 'IdFeatureProcInterface' )
-                error( 'FeatureProcessor must be of type IdFeatureProcInterface.' );
+            if ~isa( featureProc, 'IdFeatureProc' )
+                error( 'FeatureProcessor must be of type IdFeatureProc.' );
             end
             obj.featureProc = featureProc;
             obj.featureProc.connectData( obj.data );

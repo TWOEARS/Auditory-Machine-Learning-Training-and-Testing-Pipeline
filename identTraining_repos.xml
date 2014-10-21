@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <requirements>
-<repoRequirement sub="src" branch="initOnConstruction" startup="startBinauralSimulator">wp1</repoRequirement>
-<repoRequirement sub="src" branch="master" >wp2</repoRequirement>
-<repoRequirement sub="src" >tools</repoRequirement>
-<repoRequirement sub="src" branch="identTraining_refactor" >wp3</repoRequirement>
-<repoRequirement sub="third_party_software/libsvm-3.17" branch="identTraining_refactor" >wp3</repoRequirement>
-<repoRequirement sub="sound_databases" branch="id_refactoring" >data</repoRequirement>
-<repoRequirement sub="identificationModels" branch="id_refactoring"  >data</repoRequirement>
+<TwoEarsPart sub="src" branch="initOnConstruction" startup="startBinauralSimulator" >binaural-simulator</TwoEarsPart>
+<TwoEarsPart sub="src" branch="SignalBufferDvlp" startup="startAuditoryFrontEnd" >auditory-front-end</TwoEarsPart>
+<TwoEarsPart sub="src" branch="renaming" startup="startTools" >tools</TwoEarsPart>
+<TwoEarsPart sub="src" branch="identTraining_refactor" startup="startBlackboardSystem">blackboard-system</TwoEarsPart>
+<TwoEarsPart sub-all="third_party_software/libsvm-3.17/twoEars" branch="identTraining_refactor" >blackboard-system</TwoEarsPart>
+<TwoEarsPart sub="src" branch="id_refactoring" startup="startData" >data</TwoEarsPart>
+<TwoEarsPart sub-all="sound_databases/generalSoundsNI" branch="id_refactoring">data</TwoEarsPart>
+<TwoEarsPart sub="identificationModels" branch="id_refactoring"  >data</TwoEarsPart>
 </requirements>

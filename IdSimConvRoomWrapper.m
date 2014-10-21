@@ -18,7 +18,6 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             obj = obj@IdWp1ProcInterface();
             obj.multiConditions = MultiCondition.empty;
             obj.convRoomSim = simulator.SimulatorConvexRoom( simConvRoomXML, false );
-            obj.addMultiCondition( MultiCondition() ); % clean condition
         end
         
         function delete( obj )

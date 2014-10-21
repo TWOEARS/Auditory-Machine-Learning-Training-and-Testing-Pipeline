@@ -1,4 +1,5 @@
-function ret = validation_function(pred, labels)
+function ret = validationFunction(pred, labels)
+
 labels = (labels >= 0) - (labels < 0);
 valid_function = @(dec, labels) bacExt(dec, labels);
 ret = valid_function(pred, labels);

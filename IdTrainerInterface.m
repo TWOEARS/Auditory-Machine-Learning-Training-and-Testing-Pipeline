@@ -16,7 +16,6 @@ classdef (Abstract) IdTrainerInterface < IdProcInterface
         end
         
         %%-----------------------------------------------------------------
-        
     end
     
     %%---------------------------------------------------------------------
@@ -25,6 +24,7 @@ classdef (Abstract) IdTrainerInterface < IdProcInterface
     
     %%---------------------------------------------------------------------
     methods (Abstract)
+        
     end
     
 end

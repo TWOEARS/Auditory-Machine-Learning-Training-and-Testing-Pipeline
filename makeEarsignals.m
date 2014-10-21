@@ -1,18 +1,14 @@
-function signals = makeEarsignals( monoSound, angle, wp1sim )
+function signals = makeEarsignals( monoSound, angle, sim )
 
 
-wp1sim.Sources(1).AudioBuffer.setData( monoSound );
-wp1sim.set('ReInit',true);
-wp1sim.Sinks.removeData();
+sim.Sources(1).AudioBuffer.setData( monoSound );
+sim.set('ReInit',true);
+sim.Sinks.removeData();
 
-wp1sim.Sources(1).set('Azimuth', angle);
+sim.Sources(1).set('Azimuth', angle);
 
-while ~wp1sim.Sources(1).isEmpty()
-  wp1sim.set('Refresh',true);  % refresh all objects
-  wp1sim.set('Process',true);  % processing 
+while ~sim.Sources(1).isEmpty()
+  sim.set('Refresh',true);  % refresh all objects
+  sim.set('Process',true);  % processing 
 end
-signals = wp1sim.Sinks.getData();
-signals = signals / max( abs( signals(:) ) ); % normalize
-
-
-
+signals = normalise(sim.Sinks.getData());

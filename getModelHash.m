@@ -1,3 +1,3 @@
-function id = getModelHash( esetup )
+function id = getModelHash( setup )
 
-id = DataHash( esetup );
+id = DataHash( setup );

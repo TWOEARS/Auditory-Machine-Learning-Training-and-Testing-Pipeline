@@ -1,9 +1,9 @@
-function features = makeFeaturesFromWp2Blocks( wp2Data, esetup )
+function features = makeFeaturesFromAuditoryFrontEndBlocks( data, setup )
  
-nBlocks = size( wp2Data, 2 );
+nBlocks = size( data, 2 );
 for blockIdx = 1:nBlocks 
     fprintf( '.' );
-    blockFeatures = esetup.featureCreation.function( esetup.featureCreation.functionParam, wp2Data(:,blockIdx) );
+    blockFeatures = setup.featureCreation.function( setup.featureCreation.functionParam, data(:,blockIdx) );
     if blockIdx == 1
         lenFeatureVector = length( blockFeatures );
         features = zeros( nBlocks, lenFeatureVector );

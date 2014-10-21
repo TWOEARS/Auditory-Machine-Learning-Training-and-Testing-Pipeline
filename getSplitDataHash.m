@@ -1,3 +1,3 @@
-function id = getSplitDataHash( esetup )
+function id = getSplitDataHash( setup )
 
-id = DataHash( {getLabelsHash( esetup ) getFeaturesHash( esetup ) esetup.generalizationEstimation } );
+id = DataHash( {getLabelsHash( setup ) getFeaturesHash( setup ) setup.generalizationEstimation } );

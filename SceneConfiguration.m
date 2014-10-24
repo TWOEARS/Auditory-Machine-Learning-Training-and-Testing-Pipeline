@@ -1,4 +1,4 @@
-classdef MultiCondition < handle
+classdef SceneConfiguration < handle
 
     %%
     properties
@@ -18,7 +18,7 @@ classdef MultiCondition < handle
     methods
         
         %%
-        function obj = MultiCondition() % creates a clean MC
+        function obj = SceneConfiguration() % creates a "clean" configuration
             obj.angleSignal = ValGen( 'manual', 0 );
             obj.distSignal = ValGen( 'manual', 3 );
             obj.numOverlays = 0;
@@ -56,19 +56,19 @@ classdef MultiCondition < handle
         end
         
         %%
-        function mcInst = instantiate( obj )
-            mcInst = MultiCondition();
-            mcInst.angleSignal = ValGen( 'manual', obj.angleSignal.value );
-            mcInst.distSignal = ValGen( 'manual', obj.distSignal.value );
-            mcInst.numOverlays = obj.numOverlays;
-            mcInst.walls = ValGen( 'manual', obj.walls.value );
+        function confInst = instantiate( obj )
+            confInst = SceneConfiguration();
+            confInst.angleSignal = ValGen( 'manual', obj.angleSignal.value );
+            confInst.distSignal = ValGen( 'manual', obj.distSignal.value );
+            confInst.numOverlays = obj.numOverlays;
+            confInst.walls = ValGen( 'manual', obj.walls.value );
             for kk = 1:obj.numOverlays
-                mcInst.angleOverlays(kk) = ValGen( 'manual', obj.angleOverlays(kk).value );
-                mcInst.distOverlays(kk) = ValGen( 'manual', obj.distOverlays(kk).value );
-                mcInst.SNRs(kk) = ValGen( 'manual', obj.SNRs(kk).value );
-                mcInst.typeOverlays{kk} = obj.typeOverlays{kk};
-                mcInst.fileOverlays(kk) = ValGen( 'manual', obj.fileOverlays(kk).value );
-                mcInst.offsetOverlays(kk) = ValGen( 'manual', obj.offsetOverlays(kk).value );
+                confInst.angleOverlays(kk) = ValGen( 'manual', obj.angleOverlays(kk).value );
+                confInst.distOverlays(kk) = ValGen( 'manual', obj.distOverlays(kk).value );
+                confInst.SNRs(kk) = ValGen( 'manual', obj.SNRs(kk).value );
+                confInst.typeOverlays{kk} = obj.typeOverlays{kk};
+                confInst.fileOverlays(kk) = ValGen( 'manual', obj.fileOverlays(kk).value );
+                confInst.offsetOverlays(kk) = ValGen( 'manual', obj.offsetOverlays(kk).value );
             end
         end
         

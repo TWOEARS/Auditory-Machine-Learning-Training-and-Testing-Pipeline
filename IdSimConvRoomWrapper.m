@@ -3,7 +3,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     properties (SetAccess = private)
         convRoomSim;
-        multiConditions;
+        sceneConfigurations;
     end
     
     %%---------------------------------------------------------------------
@@ -16,7 +16,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         
         function obj = IdSimConvRoomWrapper( simConvRoomXML )
             obj = obj@IdWp1ProcInterface();
-            obj.multiConditions = MultiCondition.empty;
+            obj.sceneConfigurations = SceneConfiguration.empty;
             obj.convRoomSim = simulator.SimulatorConvexRoom( simConvRoomXML, false );
 %            obj.convRoomSim = simulator.SimulatorConvexRoom();
 %            set(obj.convRoomSim, ...
@@ -44,7 +44,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         end
         
         function hashMembers = getHashObjects( obj )
-            hashMembers = {obj.multiConditions, ...
+            hashMembers = {obj.sceneConfigurations, ...
                 obj.convRoomSim.SampleRate, ...
                 obj.convRoomSim.MaximumDelay, ...
                 obj.convRoomSim.PreDelay, ...
@@ -56,8 +56,8 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
 
         %%-----------------------------------------------------------------
         
-        function addMultiCondition( obj, mc )
-            obj.multiConditions(end+1) = mc;
+        function addSceneConfiguration( obj, sc )
+            obj.sceneConfigurations(end+1) = sc;
         end
         
         %%-----------------------------------------------------------------
@@ -71,10 +71,10 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         function [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, wavFile )
             earSignals = zeros( 0, 2 );
             earsOnOffs = zeros( 0, 2 );
-            for mc = obj.multiConditions
-                [mcEarSignals, mcOnOffs] = obj.makeEarSignalsForOneMC( wavFile, mc );
-                earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + mcOnOffs];
-                earSignals = [earSignals; mcEarSignals];
+            for sc = obj.sceneConfigurations
+                [scEarSignals, scOnOffs] = obj.makeEarSignalsForOneSC( wavFile, sc );
+                earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + scOnOffs];
+                earSignals = [earSignals; scEarSignals];
             end
         end
         
@@ -83,12 +83,12 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
     %%---------------------------------------------------------------------
     methods (Access = private)
         
-        function [earSignals, onOffs] = makeEarSignalsForOneMC( obj, wavFile, mc )
-            mcInst = mc.instantiate();
-            [sounds, onOffs] = obj.loadSounds( mcInst, wavFile );
-            obj.setupProcForMc( mcInst );
+        function [earSignals, onOffs] = makeEarSignalsForOneSC( obj, wavFile, sc )
+            scInst = sc.instantiate();
+            [sounds, onOffs] = obj.loadSounds( scInst, wavFile );
+            obj.setupProcForSc( scInst );
             for kk = 1:length( sounds )
-                if kk > 1  && strcmpi( mcInst.typeOverlays{kk-1}, 'diffuse' )
+                if kk > 1  && strcmpi( scInst.typeOverlays{kk-1}, 'diffuse' )
                     es{kk} = sounds{kk}(1:min( length( sounds{kk} ), length( es{1} ) ),:);
                 else
                     obj.setNewSourceData( sounds );
@@ -104,7 +104,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 sOnOffsSamples = onOffs .* obj.convRoomSim.SampleRate;
                 nSignal = es{kk};
                 nSignal = obj.adjustSNR( ...
-                    sSignal, sOnOffsSamples, nSignal, mcInst.SNRs(kk-1).value );
+                    sSignal, sOnOffsSamples, nSignal, scInst.SNRs(kk-1).value );
                 earSignals(1:min( length( earSignals ), length( nSignal ) ),:) = ...
                     earSignals(1:min( length( earSignals ), length( nSignal ) ),:) ...
                     + nSignal;
@@ -143,16 +143,16 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         end
         
         %%
-        function setupProcForMc( obj, mc )
+        function setupProcForSc( obj, sc )
             obj.convRoomSim.set( 'ShutDown', true );
             if length(obj.convRoomSim.Sources) > 1, obj.convRoomSim.Sources(2:end) = []; end;
-            useReverb = ~isempty( mc.walls.value );
-            if useReverb, obj.convRoomSim.Walls = mc.walls.value; end
-            obj.createNewSimSource( 1, useReverb, true, mc.distSignal.value, mc.angleSignal.value );
-            for kk = 1:mc.numOverlays
-                isPoint = strcmpi( mc.typeOverlays{kk}, 'point' );
+            useReverb = ~isempty( sc.walls.value );
+            if useReverb, obj.convRoomSim.Walls = sc.walls.value; end
+            obj.createNewSimSource( 1, useReverb, true, sc.distSignal.value, sc.angleSignal.value );
+            for kk = 1:sc.numOverlays
+                isPoint = strcmpi( sc.typeOverlays{kk}, 'point' );
                 obj.createNewSimSource( ...
-                    kk+1, useReverb, isPoint, mc.distOverlays(kk).value, mc.angleOverlays(kk).value...
+                    kk+1, useReverb, isPoint, sc.distOverlays(kk).value, sc.angleOverlays(kk).value...
                     );
             end
             obj.convRoomSim.set('Init',true);
@@ -177,22 +177,22 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
         end
         
         %%
-        function [sounds, sigOnOffs] = loadSounds( obj, mc, wavFile )
+        function [sounds, sigOnOffs] = loadSounds( obj, sc, wavFile )
             zeroOffsetLength_s = 0.25;
             sounds{1} = getPointSourceSignalFromWav( ...
                 wavFile, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
             sigOnOffs = ...
                 IdEvalFrame.readOnOffAnnotations( wavFile ) + zeroOffsetLength_s;
             sigClass = IdEvalFrame.readEventClass( wavFile );
-            for kk = 1:mc.numOverlays
-                ovrlFile = mc.fileOverlays(kk).value;
-                ovrlZeroOffset = mc.offsetOverlays(kk).value;
-                if strcmpi( mc.typeOverlays{kk}, 'point' )
+            for kk = 1:sc.numOverlays
+                ovrlFile = sc.fileOverlays(kk).value;
+                ovrlZeroOffset = sc.offsetOverlays(kk).value;
+                if strcmpi( sc.typeOverlays{kk}, 'point' )
                     sounds{1+kk} = ...
                         getPointSourceSignalFromWav( ...
                             ovrlFile, obj.convRoomSim.SampleRate, ...
                             ovrlZeroOffset );
-                elseif strcmpi( mc.typeOverlays{kk}, 'diffuse' )
+                elseif strcmpi( sc.typeOverlays{kk}, 'diffuse' )
                     diffuseMonoSound = ...
                         getPointSourceSignalFromWav( ...
                             ovrlFile, obj.convRoomSim.SampleRate, ...

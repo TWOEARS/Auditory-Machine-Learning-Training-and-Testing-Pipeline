@@ -167,12 +167,12 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                     obj.convRoomSim.Sources{idx} = simulator.source.Point();
                 end
                 channelMapping = [1];
+                obj.convRoomSim.Sources{idx}.set( 'Radius', radius );
+                obj.convRoomSim.Sources{idx}.set( 'Azimuth', azmth );
             else % ~isPoint
                 obj.convRoomSim.Sources{idx} = simulator.source.Binaural();
                 channelMapping = [1 2];
             end
-            obj.convRoomSim.Sources{idx}.set( 'Radius', radius );
-            obj.convRoomSim.Sources{idx}.set( 'Azimuth', azmth );
             obj.convRoomSim.Sources{idx}.AudioBuffer = simulator.buffer.FIFO( channelMapping );
         end
         

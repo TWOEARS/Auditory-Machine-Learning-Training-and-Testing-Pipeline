@@ -82,8 +82,6 @@ classdef IdentificationTrainingPipeline < handle
                 models(strcmp('general', models)) = [];
             end
 
-%            obj.wp2proc.init( obj.wp1proc.getDataFs(), obj.featureProc.getWp2Requests() );
-
             for ii = 1 : length( obj.dataPipeProcs )
                 if ii > 1
                     obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );

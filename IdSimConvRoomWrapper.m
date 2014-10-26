@@ -70,14 +70,14 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
             rendererFunction = functions( obj.convRoomSim.Renderer );
             rendererName = rendererFunction.function;
             outputDeps.Renderer = rendererName;
-            persistent hrir;
+            persistent hrirHash;
             persistent hrirFName;
             if isempty( hrirFName )  || ...
                     ~strcmpi( hrirFName, obj.convRoomSim.HRIRDataset.Filename )
                 hrirFName = obj.convRoomSim.HRIRDataset.Filename;
-                hrir = audioread( hrirFName );
+                hrirHash = calcDataHash( audioread( hrirFName ) );
             end
-            outputDeps.hrir = hrir;
+            outputDeps.hrir = hrirHash;
         end
         %% ----------------------------------------------------------------
         

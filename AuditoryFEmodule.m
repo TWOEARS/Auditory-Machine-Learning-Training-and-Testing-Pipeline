@@ -41,6 +41,7 @@ classdef AuditoryFEmodule < IdProcInterface
         
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.afeParams = obj.afeDataObj.getParameterSummary( obj.managerObject );
+            outputDeps.reqSignals = obj.afeSignals.keys;
         end
         %% ----------------------------------------------------------------
 

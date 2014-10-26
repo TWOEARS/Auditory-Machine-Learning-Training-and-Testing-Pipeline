@@ -1,11 +1,12 @@
 classdef MultiConfigurationsEarSignalProc < IdProcInterface
     
     %% --------------------------------------------------------------------
-    properties (Access = private)
+    properties (SetAccess = private)
         sceneConfigurations;
         binauralSim;
         singleConfFiles;
         singleConfs;
+        outputWavFileName;
     end
     
     %% --------------------------------------------------------------------
@@ -17,8 +18,8 @@ classdef MultiConfigurationsEarSignalProc < IdProcInterface
         
         function obj = MultiConfigurationsEarSignalProc( binauralSim )
             obj = obj@IdProcInterface();
-            if ~isa( binauralSim, 'IdProcInterface' )
-                error( 'binauralSim must implement IdProcInterface.' );
+            if ~isa( binauralSim, 'BinSimProcInterface' )
+                error( 'binauralSim must implement BinSimProcInterface.' );
             end
             obj.binauralSim = binauralSim;
             obj.sceneConfigurations = SceneConfiguration.empty;
@@ -32,6 +33,7 @@ classdef MultiConfigurationsEarSignalProc < IdProcInterface
 
         function process( obj, inputFileName )
             obj.makeEarsignalsAndLabels( inputFileName );
+            obj.outputWavFileName = inputFileName;
         end
         
     end
@@ -51,6 +53,7 @@ classdef MultiConfigurationsEarSignalProc < IdProcInterface
         function out = getOutput( obj )
             out.singleConfFiles = obj.singleConfFiles;
             out.singleConfs = obj.singleConfs;
+            out.wavFileName = obj.outputWavFileName;
         end
         %% ----------------------------------------------------------------
         

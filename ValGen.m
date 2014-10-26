@@ -1,10 +1,6 @@
 classdef ValGen < Hashable & handle
-
-    properties (Access = public, Dependent, Transient )
-        value;
-    end
     
-    properties (Access = protected)
+    properties (SetAccess = protected)
         type;   % one of 'manual', 'set', 'random'
         val;    % depending on type: specific value, cell of possible values, or random range
     end
@@ -20,7 +16,7 @@ classdef ValGen < Hashable & handle
             obj.val = val;
         end
         
-        function val = genVal( obj )
+        function val = value( obj )
             switch obj.type
                 case 'manual'
                     val = obj.genManual();
@@ -35,11 +31,6 @@ classdef ValGen < Hashable & handle
             hashMembers = {obj.type, obj.val};
         end
 
-
-        %% easy get interface
-        function value = get.value( obj )
-            value = obj.genVal();
-        end
 
     end
     %%

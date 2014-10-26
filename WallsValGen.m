@@ -17,7 +17,7 @@ classdef WallsValGen < ValGen
             obj.type = 'specific';
         end
         
-        function val = genVal( obj )
+        function val = value( obj )
             wall = simulator.Wall();
             wall.set( 'UnitUp', [0;1;0] );
             wall.set( 'UnitFront', [0;0;1] );

@@ -63,14 +63,21 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
     %% --------------------------------------------------------------------
     methods (Access = protected)
         
-        function outputDeps = getOutputDependencies( obj )
+        function outputDeps = getInternOutputDependencies( obj )
             outputDeps.sceneConfig = obj.sceneConfig;
             outputDeps.SampleRate = obj.convRoomSim.SampleRate;
             outputDeps.ReverberationMaxOrder = obj.convRoomSim.ReverberationMaxOrder;
             rendererFunction = functions( obj.convRoomSim.Renderer );
             rendererName = rendererFunction.function;
             outputDeps.Renderer = rendererName;
-            outputDeps.hrir = audioread( obj.convRoomSim.HRIRDataset.Filename );
+            persistent hrir;
+            persistent hrirFName;
+            if isempty( hrirFName )  || ...
+                    ~strcmpi( hrirFName, obj.convRoomSim.HRIRDataset.Filename )
+                hrirFName = obj.convRoomSim.HRIRDataset.Filename;
+                hrir = audioread( hrirFName );
+            end
+            outputDeps.hrir = hrir;
         end
         %% ----------------------------------------------------------------
         
@@ -138,6 +145,7 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
                 obj.convRoomSim.set('Process',true);  % processing
                 fprintf( '.' );
             end
+            fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
 

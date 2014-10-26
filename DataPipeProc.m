@@ -27,10 +27,17 @@ classdef DataPipeProc < handle
         %% ----------------------------------------------------------------
 
         function connectToOutputFrom( obj, outputtingProc )
-            if ~isa( outputtingProc, 'DataPipeProcInterface' )
-                error( 'outputtingProc must be of type DataPipeProcInterface' );
+            if ~isa( outputtingProc, 'DataPipeProc' )
+                error( 'outputtingProc must be of type DataPipeProc' );
             end
             obj.inputFileNameBuilder = outputtingProc.getOutputFileNameBuilder();
+            obj.dataFileProcessor.setExternOutputDependencies( ...
+                outputtingProc.getOutputDependencies() );
+        end
+        %% ----------------------------------------------------------------
+
+        function outDeps = getOutputDependencies( obj )
+            outDeps = obj.dataFileProcessor.getOutputDependencies();
         end
         %% ----------------------------------------------------------------
 

@@ -43,11 +43,11 @@ classdef MultiConfigurationsEarSignalProc < BinSimProcInterface
     %% --------------------------------------------------------------------
     methods (Access = protected)
         
-        function outputDeps = getOutputDependencies( obj )
+        function outputDeps = getInternOutputDependencies( obj )
             for ii = 1 : length( obj.sceneConfigurations )
                 outDepName = sprintf( 'sceneConfig%d', ii );
                 obj.binauralSim.setSceneConfig( obj.sceneConfigurations(ii) );
-                outputDeps.(outDepName) = obj.binauralSim.getOutputDependencies;
+                outputDeps.(outDepName) = obj.binauralSim.getInternOutputDependencies;
             end
         end
         %% ----------------------------------------------------------------
@@ -62,7 +62,9 @@ classdef MultiConfigurationsEarSignalProc < BinSimProcInterface
                 soFarEarSlength = length( obj.earSout ) / obj.getDataFs;
                 obj.onOffsOut = [obj.onOffsOut; soFarEarSlength + binauralOut.onOffsOut];
                 obj.earSout = [obj.earSout; binauralOut.earSout];
+                fprintf( '.' );
             end
+            fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
         

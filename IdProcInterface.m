@@ -5,6 +5,7 @@ classdef (Abstract) IdProcInterface < handle
     %%---------------------------------------------------------------------
     properties (SetAccess = protected)
         procName;
+        externOutputDeps;
     end
     
     %%---------------------------------------------------------------------
@@ -53,7 +54,26 @@ classdef (Abstract) IdProcInterface < handle
                 exist( obj.getOutputFileName( filePath ), 'file' );
         end
         %%-----------------------------------------------------------------
-        
+    
+        function setExternOutputDependencies( obj, externOutputDeps )
+            obj.externOutputDeps = externOutputDeps;
+        end
+        %%-----------------------------------------------------------------
+
+        function outputDeps = getOutputDependencies( obj )
+            outputDeps = obj.getInternOutputDependencies();
+            if ~isa( outputDeps, 'struct' )
+                error( 'getInternOutputDependencies must combine values in a struct.' );
+            end
+            if isfield( outputDeps, 'extern' )
+                error( 'Intern output dependencies must not contain field of name "extern".' );
+            end
+            if ~isempty( obj.externOutputDeps )
+                outputDeps.extern = obj.externOutputDeps;
+            end
+        end
+        %%-----------------------------------------------------------------
+
     end
     
     %%---------------------------------------------------------------------
@@ -66,18 +86,16 @@ classdef (Abstract) IdProcInterface < handle
             else
                 obj.procName = procName;
             end
+            obj.externOutputDeps = [];
         end
         %%-----------------------------------------------------------------
     end
     
     %%---------------------------------------------------------------------
     methods (Access = private)
-
+        
         function saveOutputConfig( obj, configFileName )
             outputDeps = obj.getOutputDependencies();
-            if ~isa( outputDeps, 'struct' )
-                error( 'getOutputDependencies must combine values in a struct.' );
-            end
             save( configFileName, '-struct', 'outputDeps' );
         end
         %%-----------------------------------------------------------------
@@ -121,7 +139,16 @@ classdef (Abstract) IdProcInterface < handle
         %%-----------------------------------------------------------------
         
         function config = readConfig( obj, procFolder )
-            config = load( fullfile( procFolder, 'config.mat' ) );
+            persistent preloadedConfigs;
+            if isempty( preloadedConfigs )
+                preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            end
+            if preloadedConfigs.isKey( procFolder )
+                config = preloadedConfigs(procFolder);
+            else
+                config = load( fullfile( procFolder, 'config.mat' ) );
+                preloadedConfigs(procFolder) = config;
+            end
         end
         %%-----------------------------------------------------------------
         
@@ -137,7 +164,7 @@ classdef (Abstract) IdProcInterface < handle
        process( obj, inputFileName )
    end
    methods (Abstract, Access = protected)
-       outputDeps = getOutputDependencies( obj )
+       outputDeps = getInternOutputDependencies( obj )
        out = getOutput( obj )
    end
     

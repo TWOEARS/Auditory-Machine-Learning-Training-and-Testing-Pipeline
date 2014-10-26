@@ -1,9 +1,11 @@
-classdef MultiConfigurationsEarSignalProc < BinSimProcInterface
+classdef MultiConfigurationsEarSignalProc < IdProcInterface
     
     %% --------------------------------------------------------------------
     properties (Access = private)
         sceneConfigurations;
         binauralSim;
+        singleConfFiles;
+        singleConfs;
     end
     
     %% --------------------------------------------------------------------
@@ -14,7 +16,7 @@ classdef MultiConfigurationsEarSignalProc < BinSimProcInterface
     methods (Access = public)
         
         function obj = MultiConfigurationsEarSignalProc( binauralSim )
-            obj = obj@BinSimProcInterface();
+            obj = obj@IdProcInterface();
             if ~isa( binauralSim, 'IdProcInterface' )
                 error( 'binauralSim must implement IdProcInterface.' );
             end
@@ -26,12 +28,6 @@ classdef MultiConfigurationsEarSignalProc < BinSimProcInterface
         function setSceneConfig( obj, sceneConfig )
             obj.sceneConfigurations = sceneConfig;
         end
-        %% ----------------------------------------------------------------
-
-        function fs = getDataFs( obj )
-            fs = obj.binauralSim.getDataFs();
-        end
-        
         %% ----------------------------------------------------------------
 
         function process( obj, inputFileName )
@@ -51,17 +47,28 @@ classdef MultiConfigurationsEarSignalProc < BinSimProcInterface
             end
         end
         %% ----------------------------------------------------------------
+
+        function out = getOutput( obj )
+            out.singleConfFiles = obj.singleConfFiles;
+            out.singleConfs = obj.singleConfs;
+        end
+        %% ----------------------------------------------------------------
         
         function makeEarsignalsAndLabels( obj, wavFileName )
-            obj.earSout = zeros( 0, 2 );
-            obj.onOffsOut = zeros( 0, 2 );
+            obj.singleConfFiles = {};
+            obj.singleConfs = [];
             for ii = 1 : numel( obj.sceneConfigurations )
                 sceneConf = obj.sceneConfigurations(ii);
                 obj.binauralSim.setSceneConfig( sceneConf );
-                binauralOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
-                soFarEarSlength = length( obj.earSout ) / obj.getDataFs;
-                obj.onOffsOut = [obj.onOffsOut; soFarEarSlength + binauralOut.onOffsOut];
-                obj.earSout = [obj.earSout; binauralOut.earSout];
+                if ~obj.binauralSim.hasFileAlreadyBeenProcessed( wavFileName )
+                    obj.binauralSim.process( wavFileName );
+                    obj.binauralSim.saveOutput( wavFileName );
+                end
+                obj.singleConfFiles{ii} = obj.binauralSim.getOutputFileName( wavFileName );
+                obj.singleConfs{ii} = obj.binauralSim.getInternOutputDependencies;
+%                 soFarEarSlength = length( obj.earSout ) / obj.getDataFs;
+%                 obj.onOffsOut = [obj.onOffsOut; soFarEarSlength + binauralOut.onOffsOut];
+%                 obj.earSout = [obj.earSout; binauralOut.earSout];
                 fprintf( '.' );
             end
             fprintf( '\n' );

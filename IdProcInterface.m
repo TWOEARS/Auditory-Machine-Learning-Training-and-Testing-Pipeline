@@ -45,7 +45,7 @@ classdef (Abstract) IdProcInterface < handle
             outFileName = fullfile( currentFolder, [fileName obj.getProcFileExt] );
         end
         %%-----------------------------------------------------------------
-
+        
         function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath )
             filePath = which( filePath ); % ensure absolute path
             currentFolder = obj.getCurrentFolder( filePath );
@@ -54,12 +54,12 @@ classdef (Abstract) IdProcInterface < handle
                 exist( obj.getOutputFileName( filePath ), 'file' );
         end
         %%-----------------------------------------------------------------
-    
+        
         function setExternOutputDependencies( obj, externOutputDeps )
             obj.externOutputDeps = externOutputDeps;
         end
         %%-----------------------------------------------------------------
-
+        
         function outputDeps = getOutputDependencies( obj )
             outputDeps = obj.getInternOutputDependencies();
             if ~isa( outputDeps, 'struct' )
@@ -73,7 +73,7 @@ classdef (Abstract) IdProcInterface < handle
             end
         end
         %%-----------------------------------------------------------------
-
+        
     end
     
     %%---------------------------------------------------------------------
@@ -156,17 +156,17 @@ classdef (Abstract) IdProcInterface < handle
             procFileExt = ['.' obj.procName '.mat'];
         end
         %%-----------------------------------------------------------------
-
+        
     end
     
     %%---------------------------------------------------------------------
-   methods (Abstract)
-       process( obj, inputFileName )
-   end
-   methods (Abstract, Access = protected)
-       outputDeps = getInternOutputDependencies( obj )
-       out = getOutput( obj )
-   end
+    methods (Abstract)
+        process( obj, inputFileName )
+    end
+    methods (Abstract, Access = protected)
+        outputDeps = getInternOutputDependencies( obj )
+        out = getOutput( obj )
+    end
     
 end
 

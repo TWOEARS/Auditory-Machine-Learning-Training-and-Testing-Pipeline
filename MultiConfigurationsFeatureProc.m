@@ -1,11 +1,10 @@
-classdef MultiConfigurationsAFEmodule < IdProcInterface
+classdef MultiConfigurationsFeatureProc < IdProcInterface
     
     %% --------------------------------------------------------------------
     properties (Access = private)
-        afeProc;
-        singleConfFiles;
-        singleConfs;
-        outputWavFileName;
+        featProc;
+        x;
+        y;
     end
     
     %% --------------------------------------------------------------------
@@ -15,17 +14,17 @@ classdef MultiConfigurationsAFEmodule < IdProcInterface
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = MultiConfigurationsAFEmodule( afeProc )
+        function obj = MultiConfigurationsFeatureProc( featProc )
             obj = obj@IdProcInterface();
-            if ~isa( afeProc, 'IdProcInterface' )
+            if ~isa( featProc, 'IdProcInterface' )
                 error( 'afeProc must implement IdProcInterface.' );
             end
-            obj.afeProc = afeProc;
+            obj.featProc = featProc;
         end
         %% ----------------------------------------------------------------
 
         function process( obj, inputFileName )
-            obj.makeAFEdata( inputFileName );
+            obj.makeFeatures( inputFileName );
         end
         
     end
@@ -34,41 +33,37 @@ classdef MultiConfigurationsAFEmodule < IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.afeDeps = obj.afeProc.getInternOutputDependencies;
+            outputDeps.featDeps = obj.featProc.getInternOutputDependencies;
         end
         %% ----------------------------------------------------------------
 
         function out = getOutput( obj )
-            out.singleConfFiles = obj.singleConfFiles;
-            out.singleConfs = obj.singleConfs;
-            out.wavFileName = obj.outputWavFileName;
+            out.x = obj.x;
+            out.y = obj.y;
         end
         %% ----------------------------------------------------------------
         
-        function makeAFEdata( obj, inFileName )
+        function makeFeatures( obj, inFileName )
             in = load( inFileName );
-            obj.outputWavFileName = in.wavFileName;
-            obj.singleConfFiles = {};
-            obj.singleConfs = [];
+            obj.x = [];
+            obj.y = [];
             for ii = 1 : numel( in.singleConfFiles )
                 conf = in.singleConfs{ii};
-                obj.afeProc.setExternOutputDependencies( conf );
-                if ~obj.afeProc.hasFileAlreadyBeenProcessed( in.wavFileName )
-                    obj.afeProc.process( in.singleConfFiles{ii} );
-                    obj.afeProc.saveOutput( in.wavFileName );
+                obj.featProc.setExternOutputDependencies( conf );
+                if ~obj.featProc.hasFileAlreadyBeenProcessed( in.wavFileName )
+                    obj.featProc.process( in.singleConfFiles{ii} );
+                    xy = obj.featProc.saveOutput( in.wavFileName );
+                else
+                    xy = load( obj.featProc.getOutputFileName( in.wavFileName ) );
                 end
-                obj.singleConfFiles{ii} = obj.afeProc.getOutputFileName( in.wavFileName );
-                obj.singleConfs{ii} = obj.afeProc.getOutputDependencies;
+                obj.x = [obj.x; xy.x];
+                obj.y = [obj.y; xy.y];
                 fprintf( '.' );
             end
             fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
         
-    end
-    
-    %% --------------------------------------------------------------------
-    methods (Access = private)
     end
     
 end

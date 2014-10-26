@@ -1,27 +1,21 @@
 classdef IdFeatureProc < IdProcInterface
 
-    %%---------------------------------------------------------------------
-    properties (SetAccess = private, Transient)
-        buildWp1FileName;
-        buildWp2FileName;
-    end
+    %% --------------------------------------------------------------------
     properties (SetAccess = private)
         blockSize_s;
         shiftSize_s;
         minBlockToEventRatio;
         featureProc;
+        x;
+        y;
     end
     
-    %%---------------------------------------------------------------------
-    methods (Static)
-    end
-    
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Access = public)
         
         function obj = IdFeatureProc( featureProc )
             if ~isa( featureProc, 'FeatureProcInterface' )
-                error( 'FeatureProcessor must be of type FeatureProcInterface.' );
+                error( 'FeatureProcessor must implement FeatureProcInterface.' );
             end
             obj = obj@IdProcInterface();
             obj.blockSize_s = 0.5;
@@ -29,86 +23,66 @@ classdef IdFeatureProc < IdProcInterface
             obj.minBlockToEventRatio = 0.5;
             obj.featureProc = featureProc;
         end
-
-        %%-----------------------------------------------------------------
-            
-        function setWp1FileNameBuilder( obj, wp1FileNameBuilder )
-            obj.buildWp1FileName = wp1FileNameBuilder;
-        end
-            
-        function setWp2FileNameBuilder( obj, wp2FileNameBuilder )
-            obj.buildWp2FileName = wp2FileNameBuilder;
-        end
+        %% ----------------------------------------------------------------
         
-        %%-----------------------------------------------------------------
-
-        function wp2Requests = getWp2Requests( obj )
-            wp2Requests = obj.featureProc.getWp2Requests();
-        end
-        
-        %%-----------------------------------------------------------------
-
-        function run( obj )
-            fprintf( 'feature creation' );
-            for trainFile = obj.data(:)'
-                featuresFileName = obj.buildProcFileName( trainFile.wavFileName );
-                fprintf( '\n.%s', featuresFileName );
-                if exist( featuresFileName, 'file' )
-                    featuresMat = load( featuresFileName );
-                    trainFile.x = featuresMat.x;
-                    trainFile.y = featuresMat.y;
-                    continue;
-                end
-                wp1mat = load( obj.buildWp1FileName( trainFile.wavFileName ) );
-                wp2mat = load( obj.buildWp2FileName( trainFile.wavFileName ) );
-                [wp2blocks, y] = obj.blockifyAndLabel( wp2mat.wp2data, wp1mat.earsOnOffs );
-                for wp2block = wp2blocks
-                    x = obj.featureProc.makeDataPoint( wp2block{1} );
-                    trainFile.x(end+1,:) = x;
-                end
-                trainFile.y = y;
-                x = trainFile.x;
-                save( featuresFileName, 'x', 'y' );
+        function process( obj, inputFileName )
+            in = load( inputFileName );
+            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut );
+            obj.x = [];
+            for afeBlock = afeBlocks
+                obj.x(end+1,:) = obj.featureProc.makeDataPoint( afeBlock{1} );
             end
-            fprintf( ';\n' );
         end
-        
-        %%-----------------------------------------------------------------
+        %% ----------------------------------------------------------------
         
     end
     
-    %%---------------------------------------------------------------------
-    methods (Access = private)
-    
-        function [wp2blocks, y] = blockifyAndLabel( obj, wp2data, earsOnOffs )
-            wp2blocks = {};
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function outputDeps = getInternOutputDependencies( obj )
+            outputDeps.blockSize = obj.blockSize_s;
+            outputDeps.shiftSize = obj.shiftSize_s;
+            outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
+            outputDeps.featureProc = obj.featureProc.getInternOutputDependencies();
+        end
+        %% ----------------------------------------------------------------
+
+        function out = getOutput( obj )
+            out.x = obj.x;
+            out.y = obj.y;
+        end
+        %% ----------------------------------------------------------------
+
+        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s )
+            afeBlocks = {};
             y = [];
-            wp2dataNames = wp2data.keys;
-            anyWp2signal = wp2data(wp2dataNames{1});
-            if isa( anyWp2signal, 'cell' ), anyWp2signal = anyWp2signal{1}; end;
-            sigLen = double( length( anyWp2signal.Data ) ) / anyWp2signal.FsHz;
+            afeDataNames = afeData.keys;
+            anyAFEsignal = afeData(afeDataNames{1});
+            if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
+            sigLen = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
             for backOffset = 0.0:obj.shiftSize_s:sigLen
-                wp2block = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-                for wp2dataKey = wp2dataNames
-                    wp2signal = wp2data(wp2dataKey{1});
-                    if isa( wp2signal, 'cell' )
-                        wp2signalExtract{1} = wp2signal{1}.cutSignalCopy( obj.blockSize_s, backOffset );
-                        wp2signalExtract{1}.reduceBufferToArray();
-                        wp2signalExtract{2} = wp2signal{2}.cutSignalCopy( obj.blockSize_s, backOffset );
-                        wp2signalExtract{2}.reduceBufferToArray();
+                afeBlock = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+                for afeDataKey = afeDataNames
+                    afeSignal = afeData(afeDataKey{1});
+                    if isa( afeSignal, 'cell' )
+                        afeSignalExtract{1} = afeSignal{1}.cutSignalCopy( obj.blockSize_s, backOffset );
+                        afeSignalExtract{1}.reduceBufferToArray();
+                        afeSignalExtract{2} = afeSignal{2}.cutSignalCopy( obj.blockSize_s, backOffset );
+                        afeSignalExtract{2}.reduceBufferToArray();
                     else
-                        wp2signalExtract = wp2signal.cutSignalCopy( obj.blockSize_s, backOffset );
+                        afeSignalExtract = afeSignal.cutSignalCopy( obj.blockSize_s, backOffset );
                     end
-                    wp2block(wp2dataKey{1}) = wp2signalExtract;
+                    afeBlock(afeDataKey{1}) = afeSignalExtract;
                     fprintf( '.' );
                 end
-                wp2blocks{end+1} = wp2block;
+                afeBlocks{end+1} = afeBlock;
                 blockOffset = sigLen - backOffset;
                 blockOnset = blockOffset - obj.blockSize_s;
                 y(end+1) = 0;
-                for jj = 1 : size( earsOnOffs, 1 )
-                    eventOnset = earsOnOffs(jj,1);
-                    eventOffset = earsOnOffs(jj,2);
+                for jj = 1 : size( onOffs_s, 1 )
+                    eventOnset = onOffs_s(jj,1);
+                    eventOffset = onOffs_s(jj,2);
                     eventLength = eventOffset - eventOnset;
                     maxBlockEventLen = min( obj.blockSize_s, eventLength );
                     eventBlockOverlapLen = min( blockOffset, eventOffset ) - max( blockOnset, eventOnset );
@@ -118,16 +92,15 @@ classdef IdFeatureProc < IdProcInterface
                     if y(end) == 1, break, end;
                 end
             end
-            wp2blocks = fliplr( wp2blocks );
+            afeBlocks = fliplr( afeBlocks );
             y = fliplr( y );
             y = y';
             %scaling to [-1..1]
             y = (y * 2) - 1;
         end
+        %% ----------------------------------------------------------------
         
     end
-    
-    %%---------------------------------------------------------------------
     
 end
 

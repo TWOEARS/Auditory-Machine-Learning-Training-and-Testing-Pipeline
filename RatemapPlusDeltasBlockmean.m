@@ -3,17 +3,17 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
 
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     properties (SetAccess = private)
         freqChannels;
         deltasLevels;
     end
     
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Static)
     end
     
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Access = public)
         
         function obj = RatemapPlusDeltasBlockmean()
@@ -21,21 +21,19 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
             obj.freqChannels = 16;
             obj.deltasLevels = 1;
         end
-        
-        %%-----------------------------------------------------------------
+        %% ----------------------------------------------------------------
 
-        function wp2Requests = getWp2Requests( obj )
-            wp2Requests{1}.name = 'ratemap_magnitude';
-            wp2Requests{1}.params = genParStruct( ...
+        function afeRequests = getAFErequests( obj )
+            afeRequests{1}.name = 'ratemap_magnitude';
+            afeRequests{1}.params = genParStruct( ...
                 'nChannels', obj.freqChannels, ...
                 'rm_scaling', 'magnitude' ...
                 );
         end
+        %% ----------------------------------------------------------------
 
-        %%-----------------------------------------------------------------
-
-        function x = makeDataPoint( obj, wp2data )
-            rmRL = wp2data('ratemap_magnitude');
+        function x = makeDataPoint( obj, afeData )
+            rmRL = afeData('ratemap_magnitude');
             rmR = rmRL{1}.Data;
             rmL = rmRL{2}.Data;
             rmR = obj.compressAndScale( rmR );
@@ -47,11 +45,21 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
                 x = [x  mean( rm, 1 )  std( rm, 0, 1 )];
             end
         end
+        %% ----------------------------------------------------------------
+        
+        function outputDeps = getInternOutputDependencies( obj )
+            outputDeps.freqChannels = obj.freqChannels;
+            outputDeps.deltasLevels = obj.deltasLevels;
+            classInfo = metaclass( obj );
+            classname = classInfo.Name;
+            outputDeps.featureProc = classname;
+        end
+        %% ----------------------------------------------------------------
         
     end
     
-    %%---------------------------------------------------------------------
-    methods (Access = private)
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
         
         function rm = compressAndScale( obj, rm )
             rm = rm.^0.33; %cuberoot compression
@@ -60,6 +68,7 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
             else scale = 0.5 / rmMedian; end;
             rm = rm .* repmat( scale, size( rm ) );
         end
+        %% ----------------------------------------------------------------
         
     end
     

@@ -1,21 +1,10 @@
 classdef (Abstract) FeatureProcInterface < handle
 
-    %%---------------------------------------------------------------------
-    properties (SetAccess = private)
-    end
-    
-    %%---------------------------------------------------------------------
-    methods (Access = public)
-        
-        function obj = FeatureProcInterface()
-        end
-
-    end
-    
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Abstract)
-        wp2Requests = getWp2Requests( obj )
-        x = makeDataPoint( obj, wp2data )
+        afeRequests = getAFErequests( obj )
+        outputDeps = getInternOutputDependencies( obj )
+        x = makeDataPoint( obj, afeData )
     end
     
 end

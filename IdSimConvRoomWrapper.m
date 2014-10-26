@@ -1,119 +1,117 @@
-classdef IdSimConvRoomWrapper < IdWp1ProcInterface
+classdef IdSimConvRoomWrapper < BinSimProcInterface
     
-    %%---------------------------------------------------------------------
-    properties (SetAccess = private)
+    %% --------------------------------------------------------------------
+    properties (Access = protected)
         convRoomSim;
-        sceneConfigurations;
+        sceneConfig;
     end
     
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Static)
-
     end
     
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = IdSimConvRoomWrapper( simConvRoomXML )
-            obj = obj@IdWp1ProcInterface();
-            obj.sceneConfigurations = SceneConfiguration.empty;
-            obj.convRoomSim = simulator.SimulatorConvexRoom( simConvRoomXML, false );
-%            obj.convRoomSim = simulator.SimulatorConvexRoom();
-%            set(obj.convRoomSim, ...
-%                'BlockSize', 4096, ...
-%                'SampleRate', 44100, ...
-%		'MaximumDelay', 0.05, ...
-%		'PreDelay', 0.0, ...
-%		'Renderer', @ssr_binaural, ...
-%                'HRIRDataset', simulator.DirectionalIR( xml.dbGetFile( ...
-%                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')) ...
-%                );
-%            set(obj.convRoomSim, ...
-%                'Sinks', simulator.AudioSink(2) ...
-%                );
-%            set(obj.convRoomSim.Sinks, ...
-%                'Position' , [0; 0; 1.75], ...
-%                'UnitFront', [1; 0; 0], ...
-%                'UnitUp', [0; 0; 1], ...
-%                'Name', 'Head' ...
-%                );
+        function obj = IdSimConvRoomWrapper()
+            obj = obj@BinSimProcInterface();
+            obj.convRoomSim = simulator.SimulatorConvexRoom();
+            set(obj.convRoomSim, ...
+                'BlockSize', 4096, ...
+                'SampleRate', 44100, ...
+                'MaximumDelay', 0.05, ... % for distances up to ~15m
+                'ReverberationMaxOrder', 5, ...
+                'Renderer', @ssr_binaural, ...
+                'HRIRDataset', simulator.DirectionalIR( xml.dbGetFile( ...
+                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')) ...
+                );
+            set(obj.convRoomSim, ...
+                'Sinks', simulator.AudioSink(2) ...
+                );
+            set(obj.convRoomSim.Sinks, ...
+                'Position' , [0; 0; 1.75], ...
+                'UnitFront', [1; 0; 0], ...
+                'UnitUp', [0; 0; 1], ...
+                'Name', 'Head' ...
+                );
         end
+        %% ----------------------------------------------------------------
         
         function delete( obj )
             obj.convRoomSim.set('ShutDown',true);
         end
+        %% ----------------------------------------------------------------
         
-        function hashMembers = getHashObjects( obj )
-            hashMembers = {obj.sceneConfigurations, ...
-                obj.convRoomSim.SampleRate, ...
-                obj.convRoomSim.MaximumDelay, ...
-                obj.convRoomSim.PreDelay, ...
-                obj.convRoomSim.ReverberationRoomType, ...
-                obj.convRoomSim.ReverberationMaxOrder, ...
-                obj.convRoomSim.Renderer, ...
-                audioread( obj.convRoomSim.HRIRDataset.Filename )};
+        function setSceneConfig( obj, sceneConfig )
+            obj.sceneConfig = sceneConfig;
         end
-
-        %%-----------------------------------------------------------------
-        
-        function addSceneConfiguration( obj, sc )
-            obj.sceneConfigurations(end+1) = sc;
-        end
-        
-        %%-----------------------------------------------------------------
+        %% ----------------------------------------------------------------
 
         function fs = getDataFs( obj )
             fs = obj.convRoomSim.SampleRate;
         end
         
-        %%-----------------------------------------------------------------
-        
-        function [earSignals, earsOnOffs] = makeEarsignalsAndLabels( obj, wavFile )
-            earSignals = zeros( 0, 2 );
-            earsOnOffs = zeros( 0, 2 );
-            for sc = obj.sceneConfigurations
-                [scEarSignals, scOnOffs] = obj.makeEarSignalsForOneSC( wavFile, sc );
-                earsOnOffs = [earsOnOffs; (length(earSignals) / obj.convRoomSim.SampleRate) + scOnOffs];
-                earSignals = [earSignals; scEarSignals];
-            end
+        %% ----------------------------------------------------------------
+
+        function process( obj, inputFileName )
+            [obj.earSout, obj.onOffsOut] = obj.makeEarSignalsAndLabels( inputFileName );
         end
+        %% ----------------------------------------------------------------
+        
+    end
+
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function outputDeps = getOutputDependencies( obj )
+            outputDeps.sceneConfig = obj.sceneConfig;
+            outputDeps.SampleRate = obj.convRoomSim.SampleRate;
+            outputDeps.ReverberationMaxOrder = obj.convRoomSim.ReverberationMaxOrder;
+            rendererFunction = functions( obj.convRoomSim.Renderer );
+            rendererName = rendererFunction.function;
+            outputDeps.Renderer = rendererName;
+            outputDeps.hrir = audioread( obj.convRoomSim.HRIRDataset.Filename );
+        end
+        %% ----------------------------------------------------------------
         
     end
     
-    %%---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Access = private)
         
-        function [earSignals, onOffs] = makeEarSignalsForOneSC( obj, wavFile, sc )
-            scInst = sc.instantiate();
-            [sounds, onOffs] = obj.loadSounds( scInst, wavFile );
-            obj.setupProcForSc( scInst );
-            for kk = 1:length( sounds )
-                if kk > 1  && strcmpi( scInst.typeOverlays{kk-1}, 'diffuse' )
-                    es{kk} = sounds{kk}(1:min( length( sounds{kk} ), length( es{1} ) ),:);
+        function [earSignals, earsOnOffs] = makeEarSignalsAndLabels( obj, wavFileName )
+            sceneConfigInst = obj.sceneConfig.instantiate();
+            [sounds, earsOnOffs] = obj.loadSounds( sceneConfigInst, wavFileName );
+            obj.setupSceneConfig( sceneConfigInst );
+            ovrlEarSignals = cell( length( sounds ), 1 );
+            for ii = 1:length( sounds )
+                if ii > 1 ... % ii == 1  is the original signal
+                   && strcmpi( sceneConfigInst.typeOverlays{ii-1}, 'diffuse' )
+                    ovrlEarSignals{ii} = sounds{ii}(1:min( length( sounds{ii} ), length( ovrlEarSignals{1} ) ),:);
                 else
-                    obj.setNewSourceData( sounds );
-                    obj.setSourceOnlyActive( kk );
-                    obj.wp1Process();
-                    es{kk} = obj.convRoomSim.Sinks.getData();
+                    obj.setSourceData( sounds );
+                    obj.setActiveSource( ii );
+                    obj.simulate();
+                    ovrlEarSignals{ii} = obj.convRoomSim.Sinks.getData();
                 end
                 fprintf( '\n' );
             end
-            sSignal = es{1};
-            earSignals = sSignal;
-            for kk = 2:length( es )
-                sOnOffsSamples = onOffs .* obj.convRoomSim.SampleRate;
-                nSignal = es{kk};
-                nSignal = obj.adjustSNR( ...
-                    sSignal, sOnOffsSamples, nSignal, scInst.SNRs(kk-1).value );
-                earSignals(1:min( length( earSignals ), length( nSignal ) ),:) = ...
-                    earSignals(1:min( length( earSignals ), length( nSignal ) ),:) ...
-                    + nSignal;
+            orgSignal = ovrlEarSignals{1};
+            earSignals = orgSignal;
+            for ii = 2:length( ovrlEarSignals )
+                onOffs_samples = earsOnOffs .* obj.convRoomSim.SampleRate;
+                ovrlSignal = ovrlEarSignals{ii};
+                ovrlSignal = obj.adjustSNR( ...
+                    orgSignal, onOffs_samples, ovrlSignal, sceneConfigInst.SNRs(ii-1).value );
+                earSignals(1:min( length( earSignals ), length( ovrlSignal ) ),:) = ...
+                    earSignals(1:min( length( earSignals ), length( ovrlSignal ) ),:) ...
+                    + ovrlSignal;
             end
             earSignals = earSignals / max( abs( earSignals(:) ) ); % normalize
         end
+        %% ----------------------------------------------------------------
 
-        %%
-        function setNewSourceData( obj, sounds )
+        function setSourceData( obj, sounds )
             sigLen_s = length( sounds{1} ) / obj.convRoomSim.SampleRate;
             obj.convRoomSim.set( 'LengthOfSimulation', sigLen_s );
             obj.convRoomSim.Sinks.removeData();
@@ -121,9 +119,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 obj.convRoomSim.Sources{m}.setData( sounds{m} );
             end
         end
+        %% ----------------------------------------------------------------
         
-        %%
-        function setSourceOnlyActive( obj, actIdx )
+        function setActiveSource( obj, actIdx )
             for m = 1:length(obj.convRoomSim.Sources)
                 obj.convRoomSim.Sources{m}.set( 'Volume', 0.0 );
                 obj.convRoomSim.Sources{m}.set( 'Mute', 1 );
@@ -131,9 +129,9 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             obj.convRoomSim.Sources{actIdx}.set( 'Mute', 0 );
             obj.convRoomSim.Sources{actIdx}.set( 'Volume', 1.0 );
         end
-        
-        %%
-        function wp1Process( obj )
+        %% ----------------------------------------------------------------
+
+        function simulate( obj )
             obj.convRoomSim.set( 'ReInit', true );
             while ~obj.convRoomSim.isFinished()
                 obj.convRoomSim.set('Refresh',true);  % refresh all objects
@@ -141,24 +139,26 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 fprintf( '.' );
             end
         end
-        
-        %%
-        function setupProcForSc( obj, sc )
+        %% ----------------------------------------------------------------
+
+        function setupSceneConfig( obj, sceneConfig )
             obj.convRoomSim.set( 'ShutDown', true );
-            if length(obj.convRoomSim.Sources) > 1, obj.convRoomSim.Sources(2:end) = []; end;
-            useReverb = ~isempty( sc.walls.value );
-            if useReverb, obj.convRoomSim.Walls = sc.walls.value; end
-            obj.createNewSimSource( 1, useReverb, true, sc.distSignal.value, sc.angleSignal.value );
-            for kk = 1:sc.numOverlays
-                isPoint = strcmpi( sc.typeOverlays{kk}, 'point' );
+            if ~isempty(obj.convRoomSim.Sources), obj.convRoomSim.Sources(2:end) = []; end;
+            useReverb = ~isempty( sceneConfig.walls.value );
+            if useReverb, obj.convRoomSim.Walls = sceneConfig.walls.value; end
+            obj.createNewSimSource( 1, useReverb, true, ...
+                sceneConfig.distSignal.value, sceneConfig.angleSignal.value );
+            for ii = 1:sceneConfig.numOverlays
+                isPoint = strcmpi( sceneConfig.typeOverlays{ii}, 'point' );
                 obj.createNewSimSource( ...
-                    kk+1, useReverb, isPoint, sc.distOverlays(kk).value, sc.angleOverlays(kk).value...
+                    ii+1, useReverb, isPoint, ...
+                    sceneConfig.distOverlays(ii).value, sceneConfig.angleOverlays(ii).value...
                     );
             end
             obj.convRoomSim.set('Init',true);
         end
+        %% ----------------------------------------------------------------
 
-        %%
         function createNewSimSource( obj, idx, useReverb, isPoint, radius, azmth )
             if isPoint 
                 if useReverb
@@ -175,43 +175,43 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
             end
             obj.convRoomSim.Sources{idx}.AudioBuffer = simulator.buffer.FIFO( channelMapping );
         end
-        
-        %%
-        function [sounds, sigOnOffs] = loadSounds( obj, sc, wavFile )
-            zeroOffsetLength_s = 0.25;
+        %% ----------------------------------------------------------------
+
+        function [sounds, sigOnOffs] = loadSounds( obj, sceneConfig, wavFile )
+            silenceLength_s = 0.25; % have some silence before the actual sound starts
             sounds{1} = getPointSourceSignalFromWav( ...
-                wavFile, obj.convRoomSim.SampleRate, zeroOffsetLength_s );
+                wavFile, obj.convRoomSim.SampleRate, silenceLength_s );
             sigOnOffs = ...
-                IdEvalFrame.readOnOffAnnotations( wavFile ) + zeroOffsetLength_s;
+                IdEvalFrame.readOnOffAnnotations( wavFile ) + silenceLength_s;
             sigClass = IdEvalFrame.readEventClass( wavFile );
-            for kk = 1:sc.numOverlays
-                ovrlFile = sc.fileOverlays(kk).value;
-                ovrlZeroOffset = sc.offsetOverlays(kk).value;
-                if strcmpi( sc.typeOverlays{kk}, 'point' )
+            for kk = 1:sceneConfig.numOverlays
+                ovrlFile = sceneConfig.fileOverlays(kk).value;
+                ovrlStartOffset = sceneConfig.offsetOverlays(kk).value;
+                if strcmpi( sceneConfig.typeOverlays{kk}, 'point' )
                     sounds{1+kk} = ...
                         getPointSourceSignalFromWav( ...
                             ovrlFile, obj.convRoomSim.SampleRate, ...
-                            ovrlZeroOffset );
-                elseif strcmpi( sc.typeOverlays{kk}, 'diffuse' )
+                            ovrlStartOffset );
+                elseif strcmpi( sceneConfig.typeOverlays{kk}, 'diffuse' )
                     diffuseMonoSound = ...
                         getPointSourceSignalFromWav( ...
                             ovrlFile, obj.convRoomSim.SampleRate, ...
-                            ovrlZeroOffset );
+                            ovrlStartOffset );
                     sounds{1+kk} = repmat( diffuseMonoSound, 1, 2 );
                 end
                 ovrlClass = IdEvalFrame.readEventClass( ovrlFile );
                 if strcmpi( ovrlClass, sigClass )
                     maxLen = length( sounds{1} ) / obj.convRoomSim.SampleRate;
                     ovrlOnOffs = IdEvalFrame.readOnOffAnnotations( ovrlFile ) ...
-                        + ovrlZeroOffset;
+                        + ovrlStartOffset;
                     ovrlOnOffs( ovrlOnOffs(:,1) >= maxLen, : ) = [];
                     ovrlOnOffs( ovrlOnOffs > maxLen ) = maxLen;
                     sigOnOffs = sortAndMergeOnOffs( [sigOnOffs; ovrlOnOffs] );
                 end
             end
         end
-        
-        %%
+        %% ----------------------------------------------------------------
+
         function signal2 = adjustSNR( obj, signal1, sig1OnOffs, signal2, snrdB )
             %adjustSNR   Adjust SNR between two signals. Only parts of the
             %signal that actually exhibit energy are factored into the SNR
@@ -250,6 +250,7 @@ classdef IdSimConvRoomWrapper < IdWp1ProcInterface
                 error('Invalid value of snrdB.')
             end
         end
+        %% ----------------------------------------------------------------
         
         function vad = detectActivity( obj, signal, thresdB, hSec, blockSec, stepSec )
             %detectActivity   Energy-based voice activity detection.

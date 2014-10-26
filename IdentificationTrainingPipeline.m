@@ -3,9 +3,7 @@ classdef IdentificationTrainingPipeline < handle
     %% ---------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
-        wp1proc;
-        wp2proc;
-        featureProc;
+        dataPipeProcs;
         data;       
     end
     
@@ -19,6 +17,7 @@ classdef IdentificationTrainingPipeline < handle
         %% Constructor.
         function obj = IdentificationTrainingPipeline()
             obj.data = IdentTrainPipeData();
+            obj.dataPipeProcs = {};
         end
         
         %% -----------------------------------------------------------------
@@ -32,28 +31,13 @@ classdef IdentificationTrainingPipeline < handle
             obj.trainer.connectData( obj.data );
         end
         
-        function setWp1Processor( obj, wp1proc )
-            if ~isa( wp1proc, 'IdWp1ProcInterface' )
-                error( 'Wp1Processor must be of type IdWp1ProcInterface.' );
+        function addDataPipeProc( obj, dataProc )
+            if ~isa( dataProc, 'IdProcInterface' )
+                error( 'dataProc must be of type IdProcInterface.' );
             end
-            obj.wp1proc = wp1proc;
-            obj.wp1proc.connectData( obj.data );
-        end
-        
-        function setWp2Processor( obj, wp2proc )
-            if ~isa( wp2proc, 'IdWp2ProcInterface' )
-                error( 'Wp2Processor must be of type IdWp2ProcInterface.' );
-            end
-            obj.wp2proc = wp2proc;
-            obj.wp2proc.connectData( obj.data );
-        end
-        
-        function setFeatureProcessor( obj, featureProc )
-            if ~isa( featureProc, 'IdFeatureProc' )
-                error( 'FeatureProcessor must be of type IdFeatureProc.' );
-            end
-            obj.featureProc = featureProc;
-            obj.featureProc.connectData( obj.data );
+            dataPipeProc = DataPipeProc( dataProc ); 
+            dataPipeProc.connectData( obj.data );
+            obj.dataPipeProcs{end+1} = dataPipeProc;
         end
         
         %% -----------------------------------------------------------------
@@ -72,6 +56,7 @@ classdef IdentificationTrainingPipeline < handle
                 if ~exist( wavName, 'file' )
                     error ( 'Could not find %s listed in %s.', wavName, wavflist );
                 end
+                wavName = which( wavName ); % ensure absolute path
                 wavClass = IdEvalFrame.readEventClass( wavName );
                 obj.data(wavClass,'+') = wavName;
             end
@@ -97,13 +82,14 @@ classdef IdentificationTrainingPipeline < handle
                 models(strcmp('general', models)) = [];
             end
 
-            obj.wp2proc.init( obj.wp1proc.getDataFs(), obj.featureProc.getWp2Requests() );
+%            obj.wp2proc.init( obj.wp1proc.getDataFs(), obj.featureProc.getWp2Requests() );
 
-            obj.setupProcsFileHandling();
-
-            obj.wp1proc.run();
-            obj.wp2proc.run();
-            obj.featureProc.run();
+            for ii = 1 : length( obj.dataPipeProcs )
+                if ii > 1
+                    obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );
+                end
+                obj.dataPipeProcs{ii}.run();
+            end
 
             for model = models
             end;
@@ -115,22 +101,6 @@ classdef IdentificationTrainingPipeline < handle
     
     %% ---------------------------------------------------------------------
     methods (Access = private)
-        
-        function setupProcsFileHandling( obj )
-            wp1pc = obj.wp1proc;
-            wp2pc = obj.wp2proc;
-            wp1hash = wp1pc.getHash();
-            wp2hash = wp2pc.getHash();
-            featuresHash = obj.featureProc.getHash();
-            wp1pc.setProcFileNameExt( ['.' wp1hash '.wp1.mat'] );
-            wp2pc.setProcFileNameExt( ['.' wp1hash '.' wp2hash '.wp2.mat'] );
-            wp2pc.setWp1FileNameBuilder( @wp1pc.buildProcFileName );
-            obj.featureProc.setProcFileNameExt( ...
-                ['.' wp1hash '.' wp2hash '.' featuresHash '.features.mat'] );
-            obj.featureProc.setWp1FileNameBuilder( @wp1pc.buildProcFileName );
-            obj.featureProc.setWp2FileNameBuilder( @wp2pc.buildProcFileName );
-        end
-        
     end
     
 end

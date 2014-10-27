@@ -46,15 +46,32 @@ classdef FeatureSet1Blockmean < FeatureProcInterface
 
         function x = makeDataPoint( obj, afeData )
             rmRL = afeData('ratemap_magnitude');
-            rmR = rmRL{1}.Data;
-            rmL = rmRL{2}.Data;
-            rmR = obj.compressAndScale( rmR );
-            rmL = obj.compressAndScale( rmL );
+            rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
-            x = [mean( rm, 1 )  std( rm, 0, 1 )];
+            spfRL = afeData('spec_features');
+            spfR = compressAndScale( spfRL{1}.Data, 0.33, @(x)(median( abs(x(abs(x)>0.01)) )), 2 );
+            spfL = compressAndScale( spfRL{2}.Data, 0.33, @(x)(median( abs(x(abs(x)>0.01)) )), 2 );
+            spf = 0.5 * spfL + 0.5 * spfR;
+            onsRL = afeData('onset_strength');
+            onsR = compressAndScale( onsRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            onsL = compressAndScale( onsRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            ons = 0.5 * onsR + 0.5 * onsL;
+            xBlock = [rm, spf, ons];
+            x = [mean( xBlock, 1 )  std( xBlock, 0, 1 )];
             for i = 1:obj.deltasLevels
-                rm = rm(2:end,:) - rm(1:end-1,:);
-                x = [x  mean( rm, 1 )  std( rm, 0, 1 )];
+                xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
+                x = [x  mean( xBlock, 1 )  std( xBlock, 0, 1 )];
+            end
+            modRL = afeData('modulation');
+            modR = compressAndScale( modRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            modL = compressAndScale( modRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            mod = 0.5 * modR + 0.5 * modL;
+            mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
+            x = [x mean( mod, 1 )  std( mod, 0, 1 )];
+            for i = 1:obj.deltasLevels
+                mod = mod(2:end,:) - mod(1:end-1,:);
+                x = [x  mean( mod, 1 )  std( mod, 0, 1 )];
             end
         end
         %% ----------------------------------------------------------------
@@ -72,16 +89,6 @@ classdef FeatureSet1Blockmean < FeatureProcInterface
     
     %% --------------------------------------------------------------------
     methods (Access = protected)
-        
-        function rm = compressAndScale( obj, rm )
-            rm = rm.^0.33; %cuberoot compression
-            rmMedian = median( rm(rm>0.01) );
-            if isnan( rmMedian ), scale = 1;
-            else scale = 0.5 / rmMedian; end;
-            rm = rm .* repmat( scale, size( rm ) );
-        end
-        %% ----------------------------------------------------------------
-        
     end
     
 end

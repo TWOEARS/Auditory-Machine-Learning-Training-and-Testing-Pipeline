@@ -186,6 +186,23 @@ classdef IdentTrainPipeData < handle
             end
         end
         %% ----------------------------------------------------------------
+
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Static)
+
+        function combinedData = combineData( varargin )
+            combinedData = IdentTrainPipeData();
+            for ii = 1 : numel(varargin)
+                d = varargin{ii};
+                for jj = 1 : numel( d.classNames )
+                    cIdx = combinedData.getClassIdx( d.classNames{jj}, 'createIfnExst' );
+                    nDfiles = numel( d.data(jj).files );
+                    combinedData.data(cIdx).files(end+1:end+nDfiles) = d.data(jj).files;
+                end
+            end
+        end
         
     end
     

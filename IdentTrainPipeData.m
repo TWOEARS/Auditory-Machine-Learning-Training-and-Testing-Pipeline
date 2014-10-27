@@ -1,20 +1,22 @@
 classdef IdentTrainPipeData < handle
-   
-    properties (SetAccess = private)%{?IdentificationTrainingPipeline, ?IdTrainerInterface, ?IdWp1ProcInterface, ?IdWp2ProcInterface, ?IdFeatureProcInterface})
+    
+    %% --------------------------------------------------------------------
+    properties (SetAccess = private)
         classNames;
         data;
         emptyDataStruct;
     end
     
+    %% --------------------------------------------------------------------
     methods
         
-        %% Constructor.
         function obj = IdentTrainPipeData()
             obj.emptyDataStruct = struct( 'files', IdentTrainPipeDataElem.empty );
             obj.data = obj.emptyDataStruct;
         end
+        %% ----------------------------------------------------------------
         
-        %% easy get interface
+        % easy get interface
         function varargout = subsref( obj, S )
             if strcmp(S(1).type,'.')
                 mc = metaclass( obj );
@@ -35,7 +37,7 @@ classdef IdentTrainPipeData < handle
                     if classes == ':'
                         cIdx = 1:length( obj.data );
                     else
-                        cIdx = obj.getClassIdx( classes ); 
+                        cIdx = obj.getClassIdx( classes );
                     end;
                 elseif isa( classes, 'cell' )
                     cIdx = [];
@@ -79,8 +81,9 @@ classdef IdentTrainPipeData < handle
                 end
             end
         end
+        %% ----------------------------------------------------------------
         
-        %% easy set interface
+        % easy set interface
         function obj = subsasgn( obj, S, val )
             if (length(S) == 1) && strcmp(S(1).type,'()')
                 className = S.subs{1,1};
@@ -94,7 +97,7 @@ classdef IdentTrainPipeData < handle
                 else
                     error( 'file index must be set for assignment' );
                 end
-                if isa( fIdx, 'char' ) 
+                if isa( fIdx, 'char' )
                     if strcmp( fIdx, '+' )
                         fIdx = length( obj.data(cIdx).files ) + 1;
                     else
@@ -107,7 +110,7 @@ classdef IdentTrainPipeData < handle
                     dIdx = 'wavFileName';
                 end
                 if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) ...
-                    && size( S.subs, 2 ) > 3
+                        && size( S.subs, 2 ) > 3
                     xIdx = S.subs{1,4};
                     if isa( xIdx, 'char' )
                         dIdxLen = length( obj.data(cIdx).files(fIdx).(dIdx) );
@@ -121,6 +124,8 @@ classdef IdentTrainPipeData < handle
                         end
                     end
                     obj.data(cIdx).files(fIdx).(dIdx)(xIdx,:,:,:,:,:,:) = val;
+                elseif strcmp( dIdx, 'Elem' )
+                    obj.data(cIdx).files(fIdx) = val;
                 else
                     obj.data(cIdx).files(fIdx).(dIdx) = val;
                 end
@@ -128,19 +133,21 @@ classdef IdentTrainPipeData < handle
                 obj = builtin( 'subsasgn', obj, S, val );
             end
         end
+        %% ----------------------------------------------------------------
         
-%         function l = length( obj )
-%             l = max( 0, obj.cbuf.lst - obj.cbuf.fst + 1 );
-%         end
-%             
-%         function s = size( obj )
-%             s = size(obj.cbuf.dat);
-%             s(1) = length( obj );
-%         end
-%         
-%         function n = numel( obj )
-%             n = prod( size( obj ) );
-%         end
+        %         function l = length( obj )
+        %             l = max( 0, obj.cbuf.lst - obj.cbuf.fst + 1 );
+        %         end
+        %
+        %         function s = size( obj )
+        %             s = size(obj.cbuf.dat);
+        %             s(1) = length( obj );
+        %         end
+        %
+        %         function n = numel( obj )
+        %             n = prod( size( obj ) );
+        %         end
+        %% ----------------------------------------------------------------
         
         function ind = end( obj, k, n )
             switch k
@@ -154,15 +161,37 @@ classdef IdentTrainPipeData < handle
                     error( 'dont know how to implement this yet' );
             end
         end
+        %% ----------------------------------------------------------------
         
-%         function ie = isempty( obj )
-%             ie = (obj.cbuf.lst < obj.cbuf.fst);
-%         end
+        %         function ie = isempty( obj )
+        %             ie = (obj.cbuf.lst < obj.cbuf.fst);
+        %         end
+        %
+        %% ----------------------------------------------------------------
+        
+        function permFolds = splitInPermutedStratifiedFolds( obj, nFolds )
+            for ii = 1 : nFolds
+                permFolds{ii} = IdentTrainPipeData();
+                permFolds{ii}.classNames = obj.classNames ;
+            end
+            for cIdx = 1 : numel( obj.classNames )
+                nClassFiles = numel( obj.data(cIdx).files );
+                fIdxPerm = randperm( nClassFiles );
+                for ii = 1 : nFolds
+                    fIdx = ii : nFolds : nClassFiles;
+                    foldFidxPerm = fIdxPerm(fIdx);
+                    pf = permFolds{ii};
+                    pf.data(cIdx).files(1:length(fIdx)) = obj.data(cIdx).files(foldFidxPerm);
+                end
+            end
+        end
+        %% ----------------------------------------------------------------
         
     end
     
+    %% --------------------------------------------------------------------
     methods (Access = private)
-
+        
         %% function cIdx = getClassIdx( obj, className, mode )
         %       returns the index of the class with name 'className'
         %       if mode is 'createIfnExst', the class will be created in
@@ -180,6 +209,7 @@ classdef IdentTrainPipeData < handle
                 end
             end
         end
-    
+        %% ----------------------------------------------------------------
+        
     end
 end

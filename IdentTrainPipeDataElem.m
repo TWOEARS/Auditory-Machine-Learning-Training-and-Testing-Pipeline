@@ -4,7 +4,6 @@ classdef IdentTrainPipeDataElem < handle
         wavFileName;
         x;
         y;
-        cvFoldIdx;
     end
     
     methods

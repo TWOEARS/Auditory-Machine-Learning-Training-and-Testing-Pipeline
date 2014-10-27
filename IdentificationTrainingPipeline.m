@@ -1,17 +1,18 @@
 classdef IdentificationTrainingPipeline < handle
 
-    %% ---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
         dataPipeProcs;
+        gatherFeaturesProc;
         data;       
     end
     
-    %% ---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Static)
     end
     
-    %% ---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Access = public)
         
         %% Constructor.
@@ -19,8 +20,9 @@ classdef IdentificationTrainingPipeline < handle
             obj.data = IdentTrainPipeData();
             obj.dataPipeProcs = {};
         end
+        %% ----------------------------------------------------------------
         
-        %% -----------------------------------------------------------------
+        %   -----------------------
         %   setting up the pipeline
         %   -----------------------
         function addModelCreator( obj, trainer )
@@ -30,6 +32,7 @@ classdef IdentificationTrainingPipeline < handle
             obj.trainer = trainer;
             obj.trainer.connectData( obj.data );
         end
+        %% ----------------------------------------------------------------
         
         function addDataPipeProc( obj, dataProc )
             if ~isa( dataProc, 'IdProcInterface' )
@@ -39,8 +42,15 @@ classdef IdentificationTrainingPipeline < handle
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end
+        %% ----------------------------------------------------------------
         
-        %% -----------------------------------------------------------------
+        function addGatherFeaturesProc( obj, gatherFeaturesProc )
+            gatherFeaturesProc.connectData( obj.data );
+            obj.gatherFeaturesProc = gatherFeaturesProc;
+        end
+        %% ----------------------------------------------------------------
+        
+        %   -------------------
         %   setting up the data
         %   -------------------
         function loadWavFileList( obj, wavflist )
@@ -62,10 +72,11 @@ classdef IdentificationTrainingPipeline < handle
             end
             fclose( fid );
         end
+        %% ----------------------------------------------------------------
         
-        %% -----------------------------------------------------------------
+        %   --------------------
         %   running the pipeline
-        %   -----------------------
+        %   --------------------
 
         %% function run( obj, models )
         %       Runs the pipeline, creating the models specified in models
@@ -88,16 +99,18 @@ classdef IdentificationTrainingPipeline < handle
                 end
                 obj.dataPipeProcs{ii}.run();
             end
+            obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
+            obj.gatherFeaturesProc.run();
 
             for model = models
             end;
             
         end
-        
-        % ------------------------------------------------------------------
+        %% ----------------------------------------------------------------
+
     end
     
-    %% ---------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods (Access = private)
     end
     
@@ -115,16 +128,7 @@ end
 % flatPrintStruct( esetup )
 % disp('--------------------------------------------------------');
 % 
-% %% collect data files
 % 
-% dfiles = makeSoundLists( soundsDir, className );
-% 
-% %% data pipeline: load sounds - wp2 process - extract blocks - create labels & features
-% 
-% wp2processSounds( dfiles, esetup );
-% blockifyData( dfiles, esetup );
-% [y, identities] = makeLabels( dfiles, soundsDir, className, esetup );
-% x = makeFeatures( dfiles, soundsDir, esetup );
 % 
 % %% get training share of data
 % 

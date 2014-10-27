@@ -69,9 +69,6 @@ classdef MultiConfigurationsEarSignalProc < IdProcInterface
                 end
                 obj.singleConfFiles{ii} = obj.binauralSim.getOutputFileName( wavFileName );
                 obj.singleConfs{ii} = obj.binauralSim.getInternOutputDependencies;
-%                 soFarEarSlength = length( obj.earSout ) / obj.getDataFs;
-%                 obj.onOffsOut = [obj.onOffsOut; soFarEarSlength + binauralOut.onOffsOut];
-%                 obj.earSout = [obj.earSout; binauralOut.earSout];
                 fprintf( '.' );
             end
             fprintf( '\n' );

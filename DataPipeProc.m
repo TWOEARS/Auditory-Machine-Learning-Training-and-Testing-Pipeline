@@ -36,6 +36,11 @@ classdef DataPipeProc < handle
         end
         %% ----------------------------------------------------------------
 
+        function outFileNameBuilder = getOutputFileNameBuilder( obj )
+            outFileNameBuilder = @(inFileName)(obj.dataFileProcessor.getOutputFileName( inFileName ));
+        end
+        %% ----------------------------------------------------------------
+
         function outDeps = getOutputDependencies( obj )
             outDeps = obj.dataFileProcessor.getOutputDependencies();
         end
@@ -60,11 +65,6 @@ classdef DataPipeProc < handle
     
     %% --------------------------------------------------------------------
     methods (Access = private)
-
-        function outFileNameBuilder = getOutputFileNameBuilder( obj )
-            outFileNameBuilder = @(inFileName)(obj.dataFileProcessor.getOutputFileName( inFileName ));
-        end
-        %% ----------------------------------------------------------------
         
     end
     

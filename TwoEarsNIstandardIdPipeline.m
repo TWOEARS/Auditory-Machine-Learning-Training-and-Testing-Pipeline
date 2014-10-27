@@ -21,10 +21,13 @@ classdef TwoEarsNIstandardIdPipeline < handle
             obj.afeModule = AuditoryFEmodule( ...
                 obj.binauralSim.getDataFs(), obj.featureCreator.getAFErequests() );
             obj.multiConfAFEmodule = MultiConfigurationsAFEmodule( obj.afeModule );
+
             obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
             obj.pipeline.addDataPipeProc( obj.multiConfAFEmodule );
             obj.pipeline.addDataPipeProc( ...
                 MultiConfigurationsFeatureProc( IdFeatureProc( obj.featureCreator ) ) );
+
+            obj.pipeline.addGatherFeaturesProc( GatherFeaturesProc() );
         end
         
         function setMultiSceneConfigs( obj, sceneConfigs )

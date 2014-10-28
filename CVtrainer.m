@@ -1,9 +1,18 @@
 classdef CVtrainer < IdTrainerInterface
 
     % ---------------------------------------------------------------------
+    properties (SetAccess = protected)
+        trainer;
+    end
+    
+    % ---------------------------------------------------------------------
     methods
 
-        function setData( obj, trainSet, testSet )
+        function obj = CVtrainer( trainer )
+            if ~isa( trainer, 'IdTrainerInterface' )
+                error( 'trainer must implement IdTrainerInterface' );
+            end
+            obj.trainer = trainer;
         end
         % -----------------------------------------------------------------
         

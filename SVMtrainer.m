@@ -3,10 +3,6 @@ classdef SVMtrainer < IdTrainerInterface
     % ---------------------------------------------------------------------
     methods
 
-        function setData( obj, trainSet, testSet )
-        end
-        % -----------------------------------------------------------------
-        
         function setPositiveClass( obj, modelName )
         end
         % -----------------------------------------------------------------

@@ -33,9 +33,7 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'ModelCreator must be of type IdTrainerInterface.' );
             end
             obj.trainer = trainer;
-            obj.trainer.connectData( obj.data );
             obj.generalizationPerfomanceAssessCVtrainer = CVtrainer( obj.trainer );
-            obj.generalizationPerfomanceAssessCVtrainer.connectData( obj.data );
         end
         %% ----------------------------------------------------------------
         
@@ -118,7 +116,7 @@ classdef IdentificationTrainingPipeline < handle
                 obj.trainer.setData( obj.trainSet, obj.testSet );
                 obj.trainer.setPositiveClass( model{1} );
                 obj.trainer.run();
-                genPerfCVresults = obj.trainer.getPerformance();
+                trainPerfresults = obj.trainer.getPerformance();
                 model = obj.trainer.getModel();
             end;
             

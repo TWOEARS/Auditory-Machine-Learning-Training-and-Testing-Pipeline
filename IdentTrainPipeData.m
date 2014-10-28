@@ -187,6 +187,23 @@ classdef IdentTrainPipeData < handle
         end
         %% ----------------------------------------------------------------
 
+        function saveDataFList( obj, flistName )
+            wavFileNames = {};
+            for cIdx = 1 : numel( obj.classNames )
+                cName = obj.classNames{cIdx};
+                for dataFile = obj.data(cIdx).files
+                    [~,fn,fe] = fileparts( dataFile.wavFileName );
+                    wavFileNames{end+1} = sprintf( '%s\n', [cName, '/', fn, fe] );
+                end
+            end
+            flistFid = fopen( flistName, 'w' );
+            for kk = 1:length(wavFileNames)
+                fprintf( flistFid, '%s', wavFileNames{kk} );
+            end
+            fclose( flistFid );
+        end
+        %% ----------------------------------------------------------------
+
     end
     
     %% --------------------------------------------------------------------

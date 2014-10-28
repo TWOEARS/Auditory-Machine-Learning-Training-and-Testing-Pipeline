@@ -1,30 +1,12 @@
-classdef (Abstract) IdTrainerInterface < IdProcInterface
-
-    %%---------------------------------------------------------------------
-    properties (SetAccess = private)
-    end
-    
-    %%---------------------------------------------------------------------
-    methods (Static)
-    end
-    
-    %%---------------------------------------------------------------------
-    methods (Access = public)
-        
-        function obj = IdTrainerInterface()
-            obj = obj@IdProcInterface();
-        end
-        
-        %%-----------------------------------------------------------------
-    end
-    
-    %%---------------------------------------------------------------------
-    methods (Access = private)
-    end
+classdef (Abstract) IdTrainerInterface < handle
     
     %%---------------------------------------------------------------------
     methods (Abstract)
-        
+        setData( obj, trainSet, testSet )
+        setPositiveClass( obj, modelName )
+        run( obj )
+        performance = getPerformance( obj )
+        model = getModel( obj )
     end
     
 end

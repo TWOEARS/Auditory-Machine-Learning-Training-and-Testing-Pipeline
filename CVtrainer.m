@@ -1,4 +1,4 @@
-classdef SVMtrainer < IdTrainerInterface
+classdef CVtrainer < IdTrainerInterface
 
     % ---------------------------------------------------------------------
     methods

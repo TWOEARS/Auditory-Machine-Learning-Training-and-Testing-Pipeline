@@ -3,6 +3,7 @@ classdef IdentificationTrainingPipeline < handle
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
+        generalizationPerfomanceAssessCVtrainer;
         dataPipeProcs;
         gatherFeaturesProc;
         data;       
@@ -33,6 +34,8 @@ classdef IdentificationTrainingPipeline < handle
             end
             obj.trainer = trainer;
             obj.trainer.connectData( obj.data );
+            obj.generalizationPerfomanceAssessCVtrainer = CVtrainer( obj.trainer );
+            obj.generalizationPerfomanceAssessCVtrainer.connectData( obj.data );
         end
         %% ----------------------------------------------------------------
         
@@ -85,8 +88,7 @@ classdef IdentificationTrainingPipeline < handle
         %       All models trained in one run use the same training and
         %       test sets.
         %
-        %   models: 'all' for all models suggested by training data
-        %           structure (but not 'general')
+        %   models: 'all' for all training data classes (but not 'general')
         %           cell array of strings with model names for particular
         %           set of models
         %   trainSetShare:  value between 0 and 1. testSet gets share of
@@ -109,6 +111,15 @@ classdef IdentificationTrainingPipeline < handle
             obj.createTrainTestSplit( trainSetShare );
             
             for model = models
+                obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
+                obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( model{1} );
+                obj.generalizationPerfomanceAssessCVtrainer.run();
+                genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
+                obj.trainer.setData( obj.trainSet, obj.testSet );
+                obj.trainer.setPositiveClass( model{1} );
+                obj.trainer.run();
+                genPerfCVresults = obj.trainer.getPerformance();
+                model = obj.trainer.getModel();
             end;
             
         end
@@ -117,7 +128,7 @@ classdef IdentificationTrainingPipeline < handle
         function createTrainTestSplit( obj, trainSetShare )
             gcdShares = gcd( round( 100 * trainSetShare ), round( 100 * (1 - trainSetShare) ) ) / 100;
             nFolds = round( 1 / gcdShares );
-            folds = obj.data.splitInPermutedStratifiedFolds( nFolds )
+            folds = obj.data.splitInPermutedStratifiedFolds( nFolds );
             obj.trainSet = IdentTrainPipeData.combineData( folds{1:round(nFolds*trainSetShare)} );
             if round( nFolds * (1-trainSetShare) ) > 0
                 obj.testSet = IdentTrainPipeData.combineData( folds{round(nFolds*trainSetShare)+1:end} );

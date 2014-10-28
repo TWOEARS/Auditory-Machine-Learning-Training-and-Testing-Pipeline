@@ -6,6 +6,8 @@ classdef IdentificationTrainingPipeline < handle
         dataPipeProcs;
         gatherFeaturesProc;
         data;       
+        trainSet;
+        testSet;
     end
     
     %% --------------------------------------------------------------------
@@ -78,7 +80,7 @@ classdef IdentificationTrainingPipeline < handle
         %   running the pipeline
         %   --------------------
 
-        %% function run( obj, models )
+        %% function run( obj, models, trainSetShare )
         %       Runs the pipeline, creating the models specified in models
         %       All models trained in one run use the same training and
         %       test sets.
@@ -87,7 +89,9 @@ classdef IdentificationTrainingPipeline < handle
         %           structure (but not 'general')
         %           cell array of strings with model names for particular
         %           set of models
-        function run( obj, models )
+        %   trainSetShare:  value between 0 and 1. testSet gets share of
+        %                   1 - trainSetShare.
+        function run( obj, models, trainSetShare )
             if strcmpi( models, 'all' )
                 models = obj.data.classNames;
                 models(strcmp('general', models)) = [];
@@ -102,11 +106,27 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
+            obj.createTrainTestSplit( trainSetShare );
+            
             for model = models
             end;
             
         end
         %% ----------------------------------------------------------------
+        
+        function createTrainTestSplit( obj, trainSetShare )
+            gcdShares = gcd( round( 100 * trainSetShare ), round( 100 * (1 - trainSetShare) ) ) / 100;
+            nFolds = round( 1 / gcdShares );
+            folds = obj.data.splitInPermutedStratifiedFolds( nFolds )
+            obj.trainSet = IdentTrainPipeData.combineData( folds{1:round(nFolds*trainSetShare)} );
+            if round( nFolds * (1-trainSetShare) ) > 0
+                obj.testSet = IdentTrainPipeData.combineData( folds{round(nFolds*trainSetShare)+1:end} );
+            else
+                obj.testSet = [];
+            end
+        end
+        
+        
 
     end
     
@@ -127,49 +147,6 @@ end
 % disp('--------------------------------------------------------');
 % flatPrintStruct( esetup )
 % disp('--------------------------------------------------------');
-% 
-% 
-% 
-% %% get training share of data
-% 
-% if esetup.data.trainSetShare(1) / esetup.data.trainSetShare(2) >= 0.99
-%     yTrain = y;
-%     yTest = [];
-%     xTrain = x;
-%     xTest = [];
-%     idsTrain = identities;
-%     idsTest = [];
-% else
-%     [yTrainTestFolds, xTrainTestFolds, idsTrainTestFolds] = splitDataPermutation( y, x, identities, esetup.data.trainSetShare(2) );
-%     yTrain = vertcat( yTrainTestFolds{1:esetup.data.trainSetShare(1)} );
-%     yTest = vertcat( yTrainTestFolds{esetup.data.trainSetShare(1)+1:end} );
-%     xTrain = vertcat( xTrainTestFolds{1:esetup.data.trainSetShare(1)} );
-%     xTest = vertcat( xTrainTestFolds{esetup.data.trainSetShare(1)+1:end} );
-%     idsTrain = vertcat( idsTrainTestFolds{1:esetup.data.trainSetShare(1)} );
-%     idsTest = vertcat( idsTrainTestFolds{esetup.data.trainSetShare(1)+1:end} );
-% end
-% 
-% trainFiles = {};
-% for k = 1:size(idsTrain,1)
-%     trainFiles{k} = sprintf( '%s\n', dfiles.soundFileNames{idsTrain(k,1)} );
-% end
-% trainFiles = unique( trainFiles );
-% trainFilesFid = fopen( [modelSavePreStr '_trainSet.txt'], 'w' );
-% for k = 1:length(trainFiles)
-%     fprintf( trainFilesFid, '%s', trainFiles{k} );
-% end
-% fclose( trainFilesFid );
-% 
-% testFiles = {};
-% for k = 1:size(idsTest,1)
-%     testFiles{k} = sprintf( '%s\n', dfiles.soundFileNames{idsTest(k,1)} );
-% end
-% testFiles = unique( testFiles );
-% testFilesFid = fopen( [modelSavePreStr '_testSet.txt'], 'w' );
-% for k = 1:length(testFiles)
-%     fprintf( testFilesFid, '%s', testFiles{k} );
-% end
-% fclose( testFilesFid );
 % 
 % %% split data for outer CV (generalization perfomance assessment)
 % 

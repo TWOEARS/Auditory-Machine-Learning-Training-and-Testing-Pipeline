@@ -34,8 +34,8 @@ classdef TwoEarsNIstandardIdPipeline < handle
             obj.multiConfBinauralSim.setSceneConfig( sceneConfigs );
         end
 
-        function run( obj, models )
-            obj.pipeline.run( models );
+        function run( obj, models, trainSetShare )
+            obj.pipeline.run( models, trainSetShare );
         end
         
     end

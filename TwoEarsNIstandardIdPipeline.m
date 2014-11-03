@@ -29,7 +29,7 @@ classdef TwoEarsNIstandardIdPipeline < handle
 
             obj.pipeline.addGatherFeaturesProc( GatherFeaturesProc() );
             
-            obj.pipeline.addModelCreator( SVMtrainer() );
+            obj.pipeline.addModelCreator( SVMmodelSelectTrainer() );
         end
         
         function setMultiSceneConfigs( obj, sceneConfigs )

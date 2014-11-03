@@ -4,6 +4,7 @@ classdef (Abstract) IdTrainerInterface < handle
     properties (SetAccess = protected)
         trainSet;
         testSet;
+        positiveClass;
     end
     
     %% --------------------------------------------------------------------
@@ -16,14 +17,30 @@ classdef (Abstract) IdTrainerInterface < handle
         end
         %% ----------------------------------------------------------------
         
+        function setPositiveClass( obj, modelName )
+            obj.positiveClass = modelName;
+        end
+        %% ----------------------------------------------------------------
+        
+        function model = getModel( obj )
+            model = obj.giveTrainedModel();
+            if ~isa( model, 'IdModelInterface' )
+                error( 'giveTrainedModel must produce an IdModelInterface object.' );
+            end
+        end
+        %% ----------------------------------------------------------------
+        
     end
 
     %% --------------------------------------------------------------------
     methods (Abstract)
-        setPositiveClass( obj, modelName )
         run( obj )
         performance = getPerformance( obj )
-        model = getModel( obj )
+    end
+
+    %% --------------------------------------------------------------------
+    methods (Abstract, Access = protected)
+        model = giveTrainedModel( obj )
     end
     
 end

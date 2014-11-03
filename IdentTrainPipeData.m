@@ -52,13 +52,29 @@ classdef IdentTrainPipeData < handle
                 end
                 if size( S.subs, 2 ) > 2
                     dIdx = S.subs{1,3};
-                    if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) ...
-                            && size( S.subs, 2 ) > 3
+                    if strcmp( dIdx, 'x' ) && size( S.subs, 2 ) > 3
                         if length(cIdx) > 1 || length(fIdx) > 1
-                            error( 'Indexes for x or y can only be chosen for one class and one file.' );
+                            error( 'Index for x can only be chosen if specifying a class and a file.' );
                         end
                         xIdx = S.subs{1,4};
-                        varargout{1:nargout} = obj.data(cIdx).files(fIdx).(dIdx)(xIdx,:,:,:);
+                        varargout{1:nargout} = obj.data(cIdx).files(fIdx).x(xIdx,:,:,:);
+                    elseif strcmp( dIdx, 'y' ) && size( S.subs, 2 ) > 3
+                        if ~isa( S.subs{1,4}, 'char' )
+                            error( 'Index for positive class must be string.' );
+                        end
+                        yIdx = obj.getClassIdx( S.subs{1,4} );
+                        if isempty( yIdx )
+                            error( 'Index for positive class not valid.' );
+                        end
+                        out = {};
+                        for c = cIdx(1:end)
+                            cy = obj.data(c).files(fIdx).y;
+                            if c ~= yIdx
+                                cy = -1 * ones( size( cy ) );
+                            end
+                            out = [out, {cy}];
+                        end
+                        varargout{1:nargout} = out';
                     else
                         out = {obj.data(cIdx(1)).files(fIdx).(dIdx)};
                         for c = cIdx(2:end)

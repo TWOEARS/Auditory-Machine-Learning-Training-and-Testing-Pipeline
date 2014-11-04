@@ -32,6 +32,12 @@ classdef CVtrainer < IdTrainerInterface
         end
         %% ----------------------------------------------------------------
 
+        function setPerformanceMeasure( obj, newPerformanceMeasure )
+            setPerformanceMeasure@IdTrainerInterface( obj, newPerformanceMeasure );
+            obj.trainer.setPerformanceMeasure( newPerformanceMeasure );
+        end
+        %% ----------------------------------------------------------------
+
         function setNumberOfFolds( obj, nFolds )
             obj.nFolds = nFolds;
         end

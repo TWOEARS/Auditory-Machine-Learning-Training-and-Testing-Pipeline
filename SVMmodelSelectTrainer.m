@@ -1,40 +1,52 @@
 classdef SVMmodelSelectTrainer < IdTrainerInterface
     
-    % ---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     properties (Access = private)
         gridCVtrainer;
         svmCoreTrainer;
     end
     
-    % ---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     properties (Access = public)
         hyperParamSearch;
         hpsSets;
         makeProbModel;
     end
 
-    % ---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     methods
 
         function obj = SVMmodelSelectTrainer( )
             obj.svmCoreTrainer = SVMtrainer();
             obj.gridCVtrainer = CVtrainer( obj.svmCoreTrainer );
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function setPositiveClass( obj, modelName )
             setPositiveClass@IdTrainerInterface( obj, modelName );
             obj.gridCVtrainer.setPositiveClass( modelName );
             obj.svmCoreTrainer.setPositiveClass( modelName );
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function setData( obj, trainSet, testSet )
             setData@IdTrainerInterface( obj, trainSet, testSet );
             obj.gridCVtrainer.setData( trainSet, testSet );
             obj.svmCoreTrainer.setData( trainSet, testSet );
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
+
+        function setPerformanceMeasure( obj, newPerformanceMeasure )
+            setPerformanceMeasure@IdTrainerInterface( obj, newPerformanceMeasure );
+            obj.gridCVtrainer.setPerformanceMeasure( newPerformanceMeasure );
+            obj.svmCoreTrainer.setPerformanceMeasure( newPerformanceMeasure );
+        end
+        %% ----------------------------------------------------------------
+        
+        function setHyperParamSearchFolds( obj, nHpsFolds )
+            obj.gridCVtrainer.setNumberOfFolds( nHpsFolds );
+        end
+        %% -----------------------------------------------------------------
 
         function run( obj )
             obj.hpsSets = obj.determineHyperparameterSets();
@@ -48,13 +60,15 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 obj.gridCVtrainer.abortPerfMin = bestPerf;
                 obj.gridCVtrainer.run();
                 foldPerf = obj.gridCVtrainer.getPerformance();
-                obj.hpsSets(ii, 5) = foldPerf;
-                bestPerf = max( foldPerf, bestPerf );
+                obj.hpsSets(ii, 5) = foldPerf.avg;
+                bestPerf = max( foldPerf.avg, bestPerf );
             end
             if obj.hyperParamSearch.refineStages > 0
                 refineGridTrainer = SVMmodelSelectTrainer();
+                refineGridTrainer.hyperParamSearch = obj.hyperParamSearch;
                 refineGridTrainer.setPositiveClass( obj.positiveClass );
                 refineGridTrainer.setData( obj.trainSet, obj.testSet );
+                refineGridTrainer.setPerformanceMeasure( obj.performanceMeasure );
                 refineGridTrainer.hyperParamSearch.refineStages = obj.hyperParamSearch.refineStages - 1;
                 sortedHPs = sortrows( obj.hpsSets, 5 );
                 best3HPsmean = mean( log10( sortedHPs(end-2:end,:) ), 1 );
@@ -78,12 +92,12 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             obj.svmCoreTrainer.setData( obj.trainSet, obj.testSet );
             obj.svmCoreTrainer.run();
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function performance = getPerformance( obj )
             performance = obj.svmCoreTrainer.getPerformance();
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
 
     end
     
@@ -93,11 +107,11 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         function model = giveTrainedModel( obj )
             model = obj.svmCoreTrainer.getModel();
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
     end
 
-    % ---------------------------------------------------------------------
+    %% ---------------------------------------------------------------------
     methods (Access = private)
         
         function hyperParameters = determineHyperparameterSets( obj )
@@ -130,7 +144,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 case 'intelligrid'
             end
         end
-        % -----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
     end
     

@@ -5,6 +5,7 @@ classdef (Abstract) IdTrainerInterface < handle
         trainSet;
         testSet;
         positiveClass;
+        performanceMeasure;
     end
     
     %% --------------------------------------------------------------------
@@ -12,13 +13,22 @@ classdef (Abstract) IdTrainerInterface < handle
         
         function setData( obj, trainSet, testSet )
             obj.trainSet = trainSet;
-            if ~exist( testSet, 'var' ), testSet = []; end
+            if ~exist( 'testSet', 'var' ), testSet = []; end
             obj.testSet = testSet;
         end
         %% ----------------------------------------------------------------
         
         function setPositiveClass( obj, modelName )
             obj.positiveClass = modelName;
+        end
+        %% ----------------------------------------------------------------
+
+        function setPerformanceMeasure( obj, newPerformanceMeasure )
+            if ~isa( newPerformanceMeasure, 'function_handle' )
+                error( ['newPerformanceMeasure must be a function handle pointing ', ...
+                        'to the constructor of a PerformanceMeasure interface.'] );
+            end
+            obj.performanceMeasure = newPerformanceMeasure;
         end
         %% ----------------------------------------------------------------
         

@@ -11,7 +11,7 @@ classdef TwoEarsNIstandardIdPipeline < handle
     
     methods
         
-        function obj = TwoEarsNIstandardIdPipeline( wavflist, featureCreator )
+        function obj = TwoEarsNIstandardIdPipeline( wavflist, featureCreator, modelCreator )
             obj.pipeline = IdentificationTrainingPipeline();
             obj.pipeline.loadWavFileList( wavflist );
             obj.binauralSim = IdSimConvRoomWrapper();
@@ -29,7 +29,7 @@ classdef TwoEarsNIstandardIdPipeline < handle
 
             obj.pipeline.addGatherFeaturesProc( GatherFeaturesProc() );
             
-            obj.pipeline.addModelCreator( SVMmodelSelectTrainer() );
+            obj.pipeline.addModelCreator( modelCreator );
         end
         
         function setMultiSceneConfigs( obj, sceneConfigs )

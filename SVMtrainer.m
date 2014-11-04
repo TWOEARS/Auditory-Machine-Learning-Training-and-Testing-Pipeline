@@ -8,7 +8,6 @@ classdef SVMtrainer < IdTrainerInterface
         gamma;
         makeProbModel;
         model;
-        performanceMeasure;
     end
 
     %% --------------------------------------------------------------------
@@ -27,14 +26,6 @@ classdef SVMtrainer < IdTrainerInterface
         end
         %% ----------------------------------------------------------------
 
-        function set.performanceMeasure( obj, newPerformanceMeasure )
-            if ~isa( newPerformanceMeasure, 'PerformanceMeasure' )
-                error( 'newPerformanceMeasure must implement PerformanceMeasure interface.' );
-            end
-            obj.performanceMeasure = newPerformanceMeasure;
-        end
-        %% ----------------------------------------------------------------
-
         function set.makeProbModel( obj, newMakeProbModel )
             if ~isa( newMakeProbModel, 'logical' )
                 error( 'makeProbModel must be a logical value.' );
@@ -50,10 +41,10 @@ classdef SVMtrainer < IdTrainerInterface
             else
                 x = obj.trainSet(:,:,'x');
                 y = obj.trainSet(:,:,'y',obj.positiveClass);
-                cp = 1 / obj.getPosToNegRatio();
+                cp = 1 / obj.getPosToNegRatio( obj.trainSet );
             end
             datPermutation = randperm( length( y ) );
-            x = x(datPermutation);
+            x = x(datPermutation,:);
             y = y(datPermutation);
             obj.model = SVMmodel();
             obj.model.useProbModel = obj.makeProbModel;
@@ -70,7 +61,7 @@ classdef SVMtrainer < IdTrainerInterface
             x = obj.testSet(:,:,'x');
             y = obj.testSet(:,:,'y',obj.positiveClass);
             yModel = obj.model.applyModel( x );
-            performance = obj.performanceMeasure.calcPerformance( y, yModel );
+            performance = obj.performanceMeasure( y, yModel );
         end
         %% ----------------------------------------------------------------
 

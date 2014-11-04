@@ -57,7 +57,7 @@ classdef IdentTrainPipeData < handle
                             error( 'Index for x can only be chosen if specifying a class and a file.' );
                         end
                         xIdx = S.subs{1,4};
-                        varargout{1:nargout} = obj.data(cIdx).files(fIdx).x(xIdx,:,:,:);
+                        varargout{1:nargout} = vertcat( obj.data(cIdx).files(fIdx).x(xIdx,:,:,:) );
                     elseif strcmp( dIdx, 'y' ) && size( S.subs, 2 ) > 3
                         if ~isa( S.subs{1,4}, 'char' )
                             error( 'Index for positive class must be string.' );
@@ -66,21 +66,27 @@ classdef IdentTrainPipeData < handle
                         if isempty( yIdx )
                             error( 'Index for positive class not valid.' );
                         end
-                        out = {};
+                        out = [];
                         for c = cIdx(1:end)
-                            cy = obj.data(c).files(fIdx).y;
+                            cy = vertcat( obj.data(c).files(fIdx).y );
                             if c ~= yIdx
                                 cy = -1 * ones( size( cy ) );
                             end
-                            out = [out, {cy}];
+                            out = [out; cy];
+                        end
+                        varargout{1:nargout} = out;
+                    elseif strcmp( dIdx, 'wavFileName' )
+                        out = {};
+                        for c = cIdx(1:end)
+                            out = [out, { obj.data(c).files(fIdx).(dIdx) }];
                         end
                         varargout{1:nargout} = out';
                     else
-                        out = {obj.data(cIdx(1)).files(fIdx).(dIdx)};
-                        for c = cIdx(2:end)
-                            out = [out, {obj.data(c).files(fIdx).(dIdx)}];
+                        out = [];
+                        for c = cIdx(1:end)
+                            out = [out; vertcat( obj.data(c).files(fIdx).(dIdx) )];
                         end
-                        varargout{1:nargout} = out';
+                        varargout{1:nargout} = out;
                     end
                 else
                     out = obj.data(cIdx(1)).files(fIdx);

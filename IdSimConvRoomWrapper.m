@@ -107,6 +107,7 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
             earSignals = orgSignal;
             for ii = 2:length( ovrlEarSignals )
                 onOffs_samples = earsOnOffs .* obj.convRoomSim.SampleRate;
+                if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
                 ovrlSignal = ovrlEarSignals{ii};
                 ovrlSignal = obj.adjustSNR( ...
                     orgSignal, onOffs_samples, ovrlSignal, sceneConfigInst.SNRs(ii-1).value );
@@ -228,23 +229,29 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
 
             signal1(:,1) = signal1(:,1) - mean( signal1(:,1) );
             signal1(:,2) = signal1(:,2) - mean( signal1(:,2) );
-            sig1OnOffs(sig1OnOffs>length(signal1)) = length(signal1);
-            signal1activePieces = arrayfun( ...
-                @(on, off)(signal1(ceil(on):floor(off),:)) , sig1OnOffs(:,1), sig1OnOffs(:,2), ...
-                'UniformOutput', false );
-            signal1 = vertcat( signal1activePieces{:} );
-            signal2activity(:,1) = signal2(:,1) - mean( signal2(:,1) );
-            signal2activity(:,2) = signal2(:,2) - mean( signal2(:,2) );
-            s2actL = obj.detectActivity( double(signal2activity(:,1)), 40, 50e-3, 50e-3, 10e-3 );
-            s2actR = obj.detectActivity( double(signal2activity(:,2)), 40, 50e-3, 50e-3, 10e-3 );
-            signal2activity = signal2activity(s2actL | s2actR,:);
+            if isa( sig1OnOffs, 'char' ) && strcmpi( sig1OnOffs, 'energy' )
+                s1actL = obj.detectActivity( double(signal1(:,1)), 40, 50e-3, 50e-3, 10e-3 );
+                s1actR = obj.detectActivity( double(signal1(:,2)), 40, 50e-3, 50e-3, 10e-3 );
+                signal1 = signal1(s1actL | s1actR,:);
+            else
+                sig1OnOffs(sig1OnOffs>length(signal1)) = length(signal1);
+                signal1activePieces = arrayfun( ...
+                    @(on, off)(signal1(ceil(on):floor(off),:)) , sig1OnOffs(:,1), sig1OnOffs(:,2), ...
+                    'UniformOutput', false );
+                signal1 = vertcat( signal1activePieces{:} );
+            end
+            signal2(:,1) = signal2(:,1) - mean( signal2(:,1) );
+            signal2(:,2) = signal2(:,2) - mean( signal2(:,2) );
+            s2actL = obj.detectActivity( double(signal2(:,1)), 40, 50e-3, 50e-3, 10e-3 );
+            s2actR = obj.detectActivity( double(signal2(:,2)), 40, 50e-3, 50e-3, 10e-3 );
+            signal2 = signal2(s2actL | s2actR,:);
             
             if isfinite(snrdB)
                 % Multi-channel energy of speech and noise signals
                 e_sig1 = sum(sum(signal1.^2));
-                e_sig2  = sum(sum(signal2activity.^2));
+                e_sig2  = sum(sum(signal2.^2));
                 e_sig1 = e_sig1 / length(signal1);
-                e_sig2 = e_sig2 / length(signal2activity);
+                e_sig2 = e_sig2 / length(signal2);
                 
                 % Compute scaling factor for noise signal
                 gain = sqrt((e_sig1/(10^(snrdB/10)))/e_sig2);

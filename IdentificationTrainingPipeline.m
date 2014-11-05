@@ -34,7 +34,6 @@ classdef IdentificationTrainingPipeline < handle
             end
             obj.trainer = trainer;
             obj.generalizationPerfomanceAssessCVtrainer = CVtrainer( obj.trainer );
-            obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( 2 );
         end
         %% ----------------------------------------------------------------
         
@@ -82,7 +81,7 @@ classdef IdentificationTrainingPipeline < handle
         %   running the pipeline
         %   --------------------
 
-        %% function run( obj, models, trainSetShare )
+        %% function run( obj, models, trainSetShare, nGenAssessFolds )
         %       Runs the pipeline, creating the models specified in models
         %       All models trained in one run use the same training and
         %       test sets.
@@ -92,7 +91,9 @@ classdef IdentificationTrainingPipeline < handle
         %           set of models
         %   trainSetShare:  value between 0 and 1. testSet gets share of
         %                   1 - trainSetShare.
-        function run( obj, models, trainSetShare )
+        %   nGenAssessFolds: number of folds of generalization assessment cross validation
+        %
+        function run( obj, models, trainSetShare, nGenAssessFolds )
             if strcmpi( models, 'all' )
                 models = obj.data.classNames;
                 models(strcmp('general', models)) = [];
@@ -108,12 +109,15 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             obj.createTrainTestSplit( trainSetShare );
-            
+
             for model = models
-                obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
-                obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( model{1} );
-                obj.generalizationPerfomanceAssessCVtrainer.run();
-                genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
+                if nGenAssessFolds > 1
+                    obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
+                    obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
+                    obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( model{1} );
+                    obj.generalizationPerfomanceAssessCVtrainer.run();
+                    genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
+                end
                 obj.trainer.setData( obj.trainSet, obj.testSet );
                 obj.trainer.setPositiveClass( model{1} );
                 obj.trainer.run();

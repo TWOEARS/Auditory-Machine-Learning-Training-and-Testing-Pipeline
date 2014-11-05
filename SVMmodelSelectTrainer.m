@@ -4,22 +4,53 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
     properties (Access = private)
         gridCVtrainer;
         svmCoreTrainer;
+        hyperParamSearch;
+        hpsSets;
+        makeProbModel;
     end
     
     %% ---------------------------------------------------------------------
     properties (Access = public)
-        hyperParamSearch;
-        hpsSets;
-        makeProbModel;
     end
 
     %% ---------------------------------------------------------------------
     methods
 
-        function obj = SVMmodelSelectTrainer( )
+        function obj = SVMmodelSelectTrainer( performanceMeasure, varargin )
+            ip = inputParser();
+            ip.addRequired( 'performanceMeasure', @(x)(isa( x, 'function_handle' )) );
+            ip.addParameter( 'hpsRefineStages', 0, ...
+                @(x)(rem(x,1) == 0 && x >= 0) );
+            ip.addParameter( 'hpsMethod', 'grid', ...
+                @(x)(ischar(x) && any(strcmpi(x, {'grid','random'}))) );
+            ip.addParameter( 'hpsKernels', 0, ...
+                @(x)(rem(x,1) == 0 && all(x == 0 | x == 2)) );
+            ip.addParameter( 'hpsEpsilons', 0.01, ...
+                @(x)(isfloat(x) && x > 0) );
+            ip.addParameter( 'hpsSearchBudget', 8, ...
+                @(x)(rem(x,1) == 0 && x > 0) );
+            ip.addParameter( 'hpsCrange', [-5 3], ...
+                @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
+            ip.addParameter( 'hpsGammaRange', [-12 3], ...
+                @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
+            ip.addParameter( 'hpsCvFolds', 4, ...
+                @(x)(rem(x,1) == 0 && x > 0) );
+            ip.addParameter( 'makeProbModel', false, @islogical );
+            ip.parse( performanceMeasure, varargin{:} );
+            
             obj.svmCoreTrainer = SVMtrainer();
             obj.gridCVtrainer = CVtrainer( obj.svmCoreTrainer );
-            obj.makeProbModel = false;
+
+            obj.makeProbModel = ip.Results.makeProbModel;
+            obj.hyperParamSearch.refineStages = ip.Results.hpsRefineStages;
+            obj.hyperParamSearch.method = ip.Results.hpsMethod;
+            obj.hyperParamSearch.kernels = ip.Results.hpsKernels;
+            obj.hyperParamSearch.epsilons = ip.Results.hpsEpsilons;
+            obj.hyperParamSearch.searchBudget = ip.Results.hpsSearchBudget;
+            obj.hyperParamSearch.cRange = ip.Results.hpsCrange;
+            obj.hyperParamSearch.gammaRange = ip.Results.hpsGammaRange;
+            obj.setHyperParamSearchFolds( ip.Results.hpsCvFolds );
+            obj.setPerformanceMeasure( ip.Results.performanceMeasure );
         end
         %% -----------------------------------------------------------------
         
@@ -49,14 +80,6 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         end
         %% -----------------------------------------------------------------
 
-        function set.makeProbModel( obj, newMakeProbModel )
-            if ~isa( newMakeProbModel, 'logical' )
-                error( 'makeProbModel must be a logical value.' );
-            end
-            obj.makeProbModel = newMakeProbModel;
-        end
-        %% ----------------------------------------------------------------
-
         function run( obj )
             obj.hpsSets = obj.determineHyperparameterSets();
             bestPerf = 0;
@@ -73,12 +96,12 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 bestPerf = max( foldPerf.avg, bestPerf );
             end
             if obj.hyperParamSearch.refineStages > 0
-                refineGridTrainer = SVMmodelSelectTrainer();
-                refineGridTrainer.hyperParamSearch = obj.hyperParamSearch;
+                refineGridTrainer = SVMmodelSelectTrainer( ...
+                    obj.performanceMeasure, ...
+                    'hpsCvFolds', obj.gridCVtrainer.nFolds );
                 refineGridTrainer.setPositiveClass( obj.positiveClass );
                 refineGridTrainer.setData( obj.trainSet, obj.testSet );
-                refineGridTrainer.setPerformanceMeasure( obj.performanceMeasure );
-                refineGridTrainer.setHyperParamSearchFolds( obj.gridCVtrainer.nFolds );
+                refineGridTrainer.hyperParamSearch = obj.hyperParamSearch;
                 refineGridTrainer.hyperParamSearch.refineStages = obj.hyperParamSearch.refineStages - 1;
                 sortedHPs = sortrows( obj.hpsSets, 5 );
                 best3HPsmean = mean( log10( sortedHPs(end-2:end,:) ), 1 );

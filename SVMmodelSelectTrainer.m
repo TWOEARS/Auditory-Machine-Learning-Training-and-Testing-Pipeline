@@ -19,6 +19,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         function obj = SVMmodelSelectTrainer( )
             obj.svmCoreTrainer = SVMtrainer();
             obj.gridCVtrainer = CVtrainer( obj.svmCoreTrainer );
+            obj.makeProbModel = false;
         end
         %% -----------------------------------------------------------------
         
@@ -48,6 +49,14 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         end
         %% -----------------------------------------------------------------
 
+        function set.makeProbModel( obj, newMakeProbModel )
+            if ~isa( newMakeProbModel, 'logical' )
+                error( 'makeProbModel must be a logical value.' );
+            end
+            obj.makeProbModel = newMakeProbModel;
+        end
+        %% ----------------------------------------------------------------
+
         function run( obj )
             obj.hpsSets = obj.determineHyperparameterSets();
             bestPerf = 0;
@@ -69,6 +78,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 refineGridTrainer.setPositiveClass( obj.positiveClass );
                 refineGridTrainer.setData( obj.trainSet, obj.testSet );
                 refineGridTrainer.setPerformanceMeasure( obj.performanceMeasure );
+                refineGridTrainer.setHyperParamSearchFolds( obj.gridCVtrainer.nFolds );
                 refineGridTrainer.hyperParamSearch.refineStages = obj.hyperParamSearch.refineStages - 1;
                 sortedHPs = sortrows( obj.hpsSets, 5 );
                 best3HPsmean = mean( log10( sortedHPs(end-2:end,:) ), 1 );

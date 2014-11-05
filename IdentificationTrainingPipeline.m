@@ -34,6 +34,7 @@ classdef IdentificationTrainingPipeline < handle
             end
             obj.trainer = trainer;
             obj.generalizationPerfomanceAssessCVtrainer = CVtrainer( obj.trainer );
+            obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( 2 );
         end
         %% ----------------------------------------------------------------
         

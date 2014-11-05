@@ -39,6 +39,7 @@ classdef CVtrainer < IdTrainerInterface
         %% ----------------------------------------------------------------
 
         function setNumberOfFolds( obj, nFolds )
+            if nFolds < 2, error( 'CV cannot be executed with less than two folds.' ); end
             obj.nFolds = nFolds;
         end
         %% ----------------------------------------------------------------

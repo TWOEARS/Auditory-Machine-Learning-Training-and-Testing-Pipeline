@@ -29,6 +29,7 @@ classdef SVMmodel < IdModelInterface
         %% -----------------------------------------------------------------
         
         function x = scale2zeroMeanUnitVar( obj, x, saveScalingFactors )
+            if isempty( x ), return; end;
             if saveScalingFactors
                 obj.dataTranslators = mean( x );
                 obj.dataScalors = 1 ./ std( x );

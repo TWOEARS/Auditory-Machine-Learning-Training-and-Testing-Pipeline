@@ -42,7 +42,11 @@ classdef SVMtrainer < IdTrainerInterface
                 x = obj.trainSet(:,:,'x');
                 y = obj.trainSet(:,:,'y',obj.positiveClass);
                 cp = 1 / obj.getPosToNegRatio( obj.trainSet );
+                if isnan( cp ) || isinf( cp )
+                    warning( 'The share of positive to negative examples is inf or nan.' );
+                end
             end
+            if isempty( x ), error( 'There is no data to train the model.' ); end
             datPermutation = randperm( length( y ) );
             x = x(datPermutation,:);
             y = y(datPermutation);
@@ -58,8 +62,10 @@ classdef SVMtrainer < IdTrainerInterface
         %% ----------------------------------------------------------------
         
         function performance = getPerformance( obj )
+            if isempty( obj.testSet ), error( 'There is no testset to test on.' ); end
             x = obj.testSet(:,:,'x');
             y = obj.testSet(:,:,'y',obj.positiveClass);
+            if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = obj.model.applyModel( x );
             performance = obj.performanceMeasure( y, yModel );
         end

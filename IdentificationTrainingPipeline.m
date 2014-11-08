@@ -111,17 +111,25 @@ classdef IdentificationTrainingPipeline < handle
             obj.createTrainTestSplit( trainSetShare );
 
             for model = models
+                fprintf( 'Training model "%s"\n', model{1} );
                 if nGenAssessFolds > 1
                     obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
                     obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
                     obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( model{1} );
+                    obj.generalizationPerfomanceAssessCVtrainer.verbose = true;
                     obj.generalizationPerfomanceAssessCVtrainer.run();
                     genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
+                    disp( 'Performance after generalization assessment CV:' );
+                    disp( genPerfCVresults );
                 end
                 obj.trainer.setData( obj.trainSet, obj.testSet );
                 obj.trainer.setPositiveClass( model{1} );
+                obj.trainer.setMakeProbModel( true );
+                disp( 'Training final model on trainSet...' );
                 obj.trainer.run();
+                disp( 'Testing final model on testSet...' );
                 trainPerfresults = obj.trainer.getPerformance();
+                disp( trainPerfresults );
                 model = obj.trainer.getModel();
             end;
             

@@ -7,6 +7,11 @@ classdef CVtrainer < IdTrainerInterface
         folds;
         foldsPerformance;
     end
+
+    %% --------------------------------------------------------------------
+    properties (Access = public)
+        verbose = false;
+    end
     
     %% --------------------------------------------------------------------
     properties (SetAccess = public)
@@ -50,8 +55,10 @@ classdef CVtrainer < IdTrainerInterface
             for ff = 1 : obj.nFolds
                 foldsRecombinedData = obj.getAllFoldsButOne( ff );
                 obj.trainer.setData( foldsRecombinedData, obj.folds{ff} );
+                if obj.verbose, fprintf( 'Starting run %d of CV... ', ff ); end
                 obj.trainer.run();
                 obj.foldsPerformance(ff) = double( obj.trainer.getPerformance() );
+                if obj.verbose, fprintf( 'Done. Performance = %f\n', obj.foldsPerformance(ff) ); end
                 maxPossiblePerf = mean( obj.foldsPerformance );
                 if (ff < obj.nFolds) && (maxPossiblePerf <= obj.abortPerfMin)
                     break;

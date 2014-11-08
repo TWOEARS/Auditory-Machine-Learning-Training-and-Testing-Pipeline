@@ -96,8 +96,8 @@ classdef SVMtrainer < IdTrainerInterface
             posNegRatio = obj.getPosToNegRatio( dataSet );
             x = dataSet(:,:,'x');
             y = dataSet(:,:,'y',obj.positiveClass);
-            x = [x(y == -1,:); repmat( x(y == +1,:), floor(posNegRatio), 1)];
-            y = [y(y == -1); repmat( y(y == +1), floor(posNegRatio), 1)];
+            x = [x(y == -1,:); repmat( x(y == +1,:), round(1/posNegRatio), 1)];
+            y = [y(y == -1); repmat( y(y == +1), round(1/posNegRatio), 1)];
         end
         %% -------------------------------------------------------------------------------
         

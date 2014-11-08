@@ -24,7 +24,7 @@ classdef SVMmodel < IdModelInterface
         function [y,score] = applyModel( obj, x )
             x = obj.scale2zeroMeanUnitVar( x, false );
             yDummy = zeros( size( x, 1 ), 1 );
-            [y, ~, score] = libsvmpredict( yDummy, x, obj.model, sprintf( '-b %d', obj.useProbModel ) );
+            [y, ~, score] = libsvmpredict( yDummy, x, obj.model, sprintf( '-q -b %d', obj.useProbModel ) );
         end
         %% -----------------------------------------------------------------
         

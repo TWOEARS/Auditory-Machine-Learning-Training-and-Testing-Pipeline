@@ -79,6 +79,11 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             obj.gridCVtrainer.setNumberOfFolds( nHpsFolds );
         end
         %% -----------------------------------------------------------------
+        
+        function setMakeProbModel( obj, newMakeProbModel )
+            obj.makeProbModel = newMakeProbModel;
+        end
+        %% -----------------------------------------------------------------
 
         function run( obj )
             obj.hpsSets = obj.determineHyperparameterSets();

@@ -59,7 +59,7 @@ classdef SVMtrainer < IdTrainerInterface
             obj.model.useProbModel = obj.makeProbModel;
             saveScalingFactors = true;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, saveScalingFactors );
-            svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -b %d';
+            svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -b %d -h 0';
             svmParamStr = sprintf( svmParamStrScheme, ...
                 obj.kernel, obj.gamma, obj.c, cp, obj.epsilon, obj.makeProbModel );
             if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end

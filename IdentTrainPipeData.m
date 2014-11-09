@@ -99,7 +99,7 @@ classdef IdentTrainPipeData < handle
                 if nargout == 0
                     builtin( 'subsref', obj, S );
                 else
-                    varargout{1:nargout} = builtin( 'subsref', obj, S );
+                    [varargout{1:nargout}] = builtin( 'subsref', obj, S );
                 end
             end
         end
@@ -157,9 +157,15 @@ classdef IdentTrainPipeData < handle
         end
         %% ----------------------------------------------------------------
         
-        %         function l = length( obj )
-        %             l = max( 0, obj.cbuf.lst - obj.cbuf.fst + 1 );
-        %         end
+        function l = length( obj )
+            l = 0;
+            for d = obj.data
+                for f = d.files
+                    l = l + size( f.x, 1 );
+                end
+            end
+        end
+        %% ----------------------------------------------------------------
         %
         %         function s = size( obj )
         %             s = size(obj.cbuf.dat);
@@ -205,6 +211,24 @@ classdef IdentTrainPipeData < handle
                     pf = permFolds{ii};
                     pf.data(cIdx).files(1:length(fIdx)) = obj.data(cIdx).files(foldFidxPerm);
                 end
+            end
+        end
+        %% ----------------------------------------------------------------
+        
+        function [share, disjShare] = getShare( obj, ratio )
+            gcdShares = gcd( round( 100 * ratio ), round( 100 * (1 - ratio) ) ) / 100;
+            maxFolds = 0;
+            for d = obj.data
+                maxFolds = max( maxFolds, size( d.files, 2 ) );
+            end
+            nFolds = min( round( 1 / gcdShares ), maxFolds );
+            folds = obj.splitInPermutedStratifiedFolds( nFolds );
+            shareNfolds = round( nFolds * ratio );
+            share = IdentTrainPipeData.combineData( folds{1:shareNfolds} );
+            if shareNfolds < nFolds
+                disjShare = IdentTrainPipeData.combineData( folds{shareNfolds + 1:end} );
+            else
+                disjShare = [];
             end
         end
         %% ----------------------------------------------------------------

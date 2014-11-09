@@ -25,7 +25,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 @(x)(ischar(x) && any(strcmpi(x, {'grid','random'}))) );
             ip.addParameter( 'hpsKernels', 0, ...
                 @(x)(rem(x,1) == 0 && all(x == 0 | x == 2)) );
-            ip.addParameter( 'hpsEpsilons', 0.01, ...
+            ip.addParameter( 'hpsEpsilons', 0.05, ...
                 @(x)(isfloat(x) && x > 0) );
             ip.addParameter( 'hpsSearchBudget', 8, ...
                 @(x)(rem(x,1) == 0 && x > 0) );
@@ -34,6 +34,8 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             ip.addParameter( 'hpsGammaRange', [-12 3], ...
                 @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
             ip.addParameter( 'hpsCvFolds', 4, ...
+                @(x)(rem(x,1) == 0 && x > 0) );
+            ip.addParameter( 'hpsMaxDataSize', 10000, ...
                 @(x)(rem(x,1) == 0 && x > 0) );
             ip.addParameter( 'makeProbModel', false, @islogical );
             ip.parse( performanceMeasure, varargin{:} );
@@ -49,6 +51,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             obj.hyperParamSearch.searchBudget = ip.Results.hpsSearchBudget;
             obj.hyperParamSearch.cRange = ip.Results.hpsCrange;
             obj.hyperParamSearch.gammaRange = ip.Results.hpsGammaRange;
+            obj.hyperParamSearch.maxDataSize = ip.Results.hpsMaxDataSize;
             obj.setHyperParamSearchFolds( ip.Results.hpsCvFolds );
             obj.setPerformanceMeasure( ip.Results.performanceMeasure );
         end
@@ -90,6 +93,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             obj.svmCoreTrainer.verbose = obj.verbose;
             obj.hpsSets = obj.determineHyperparameterSets();
             bestPerf = 0;
+            obj.svmCoreTrainer.maxDataSize = obj.hyperParamSearch.maxDataSize;
             verboseFprintf( obj, 'Hyperparameter search CV...\n' );
             for ii = 1:size( obj.hpsSets, 1 )
                 obj.svmCoreTrainer.kernel = obj.hpsSets(ii,1);
@@ -136,6 +140,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             obj.svmCoreTrainer.gamma = obj.hpsSets(end,4);
             obj.svmCoreTrainer.makeProbModel = obj.makeProbModel;
             obj.svmCoreTrainer.setData( obj.trainSet, obj.testSet );
+            obj.svmCoreTrainer.maxDataSize = inf;
             verboseFprintf( obj, 'Train with best HPS set on all folds...\n' );
             obj.svmCoreTrainer.run();
         end

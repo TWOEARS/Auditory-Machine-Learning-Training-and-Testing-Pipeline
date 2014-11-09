@@ -8,6 +8,7 @@ classdef SVMtrainer < IdTrainerInterface
         gamma;
         makeProbModel;
         model;
+        maxDataSize = inf;
     end
 
     %% --------------------------------------------------------------------
@@ -50,11 +51,15 @@ classdef SVMtrainer < IdTrainerInterface
             datPermutation = randperm( length( y ) );
             x = x(datPermutation,:);
             y = y(datPermutation);
+            if length( y ) > obj.maxDataSize
+                x(obj.maxDataSize+1:end,:) = [];
+                y(obj.maxDataSize+1:end) = [];
+            end
             obj.model = SVMmodel();
             obj.model.useProbModel = obj.makeProbModel;
             saveScalingFactors = true;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, saveScalingFactors );
-            svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -h 1 -b %d';
+            svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -b %d';
             svmParamStr = sprintf( svmParamStrScheme, ...
                 obj.kernel, obj.gamma, obj.c, cp, obj.epsilon, obj.makeProbModel );
             if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end

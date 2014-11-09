@@ -161,15 +161,7 @@ classdef IdentificationTrainingPipeline < handle
         %% ----------------------------------------------------------------
         
         function createTrainTestSplit( obj, trainSetShare )
-            gcdShares = gcd( round( 100 * trainSetShare ), round( 100 * (1 - trainSetShare) ) ) / 100;
-            nFolds = round( 1 / gcdShares );
-            folds = obj.data.splitInPermutedStratifiedFolds( nFolds );
-            obj.trainSet = IdentTrainPipeData.combineData( folds{1:round(nFolds*trainSetShare)} );
-            if round( nFolds * (1-trainSetShare) ) > 0
-                obj.testSet = IdentTrainPipeData.combineData( folds{round(nFolds*trainSetShare)+1:end} );
-            else
-                obj.testSet = [];
-            end
+            [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
         end
         %% ----------------------------------------------------------------
         

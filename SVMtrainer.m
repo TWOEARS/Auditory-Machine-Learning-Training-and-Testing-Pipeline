@@ -54,10 +54,13 @@ classdef SVMtrainer < IdTrainerInterface
             obj.model.useProbModel = obj.makeProbModel;
             saveScalingFactors = true;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, saveScalingFactors );
-            svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -q -e %e -m 500 -h 1 -b %d';
+            svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -h 1 -b %d';
             svmParamStr = sprintf( svmParamStrScheme, ...
                 obj.kernel, obj.gamma, obj.c, cp, obj.epsilon, obj.makeProbModel );
+            if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end
+            verboseFprintf( obj, 'SVM training with param string\n\t%s\n', svmParamStr );
             obj.model.model = libsvmtrain( y, xScaled, svmParamStr );
+            verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------
         
@@ -66,6 +69,7 @@ classdef SVMtrainer < IdTrainerInterface
             x = obj.testSet(:,:,'x');
             y = obj.testSet(:,:,'y',obj.positiveClass);
             if isempty( x ), error( 'There is no data to test the model.' ); end
+            verboseFprintf( obj, 'SVM testing...\n' );
             yModel = obj.model.applyModel( x );
             performance = obj.performanceMeasure( y, yModel );
         end

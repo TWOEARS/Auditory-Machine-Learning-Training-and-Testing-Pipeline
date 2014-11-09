@@ -9,6 +9,11 @@ classdef (Abstract) IdTrainerInterface < handle
     end
     
     %% --------------------------------------------------------------------
+    properties (Access = public)
+        verbose = false;
+    end
+    
+    %% --------------------------------------------------------------------
     methods
         
         function setData( obj, trainSet, testSet )

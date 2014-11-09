@@ -14,6 +14,7 @@ classdef IdentificationTrainingPipeline < handle
     %% --------------------------------------------------------------------
     properties 
         featureCreator;
+        verbose = true;
     end
     
     %% --------------------------------------------------------------------
@@ -114,33 +115,41 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             obj.createTrainTestSplit( trainSetShare );
-            obj.trainSet.saveDataFList( ['trainSet.' buildCurrentTimeString() '.flist'] );
-            obj.testSet.saveDataFList( ['testSet.' buildCurrentTimeString() '.flist'] );
+            flistName = [buildCurrentTimeString() '.flist'];
+            obj.trainSet.saveDataFList( ['trainSet' flistName] );
+            obj.testSet.saveDataFList( ['testSet' flistName] );
 
             for modelName = models
-                fprintf( 'Training model "%s"\n', modelName{1} );
+                fprintf( ['\n\n===================================\n',...
+                              '##   Training model "%s"\n',...
+                              '===================================\n\n'], modelName{1} );
                 if nGenAssessFolds > 1
+                    fprintf( '\n==  Starting generalization performance assessment CV...\n\n' );
                     obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
                     obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
                     obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( modelName{1} );
-                    obj.generalizationPerfomanceAssessCVtrainer.verbose = true;
+                    obj.generalizationPerfomanceAssessCVtrainer.verbose = obj.verbose;
                     obj.generalizationPerfomanceAssessCVtrainer.run();
                     genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
-                    disp( 'Performance after generalization assessment CV:' );
+                    fprintf( '\n==  Performance after generalization assessment CV:\n' );
                     disp( genPerfCVresults );
                 end
                 obj.trainer.setData( obj.trainSet, obj.testSet );
                 obj.trainer.setPositiveClass( modelName{1} );
+                obj.trainer.verbose = obj.verbose;
 %                obj.trainer.setMakeProbModel( true );
-                disp( 'Training final model on trainSet...' );
+                fprintf( '\n==  Training final model on trainSet...\n\n' );
                 obj.trainer.run();
-                disp( 'Testing final model on testSet...' );
+                fprintf( '\n==  Testing final model on testSet... \n\n' );
                 trainPerfresults = obj.trainer.getPerformance();
-                disp( trainPerfresults );
+                fprintf( ['\n\n===================================\n',...
+                              '##   "%s" Performance: %f\n',...
+                              '===================================\n\n'], ...
+                              modelName{1}, trainPerfresults.double() );
                 model = obj.trainer.getModel();
                 featureCreator = obj.featureCreator;
-                save( [modelName{1} '.' buildCurrentTimeString() '.model.mat'], ...
-                      'model', 'featureCreator' );
+                save( [modelName{1} buildCurrentTimeString() '.model.mat'], ...
+                      'model', 'featureCreator', 'trainPerfresults', 'flistName' );
             end;
             
         end

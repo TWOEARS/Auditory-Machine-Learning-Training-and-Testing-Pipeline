@@ -29,7 +29,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 @(x)(isfloat(x) && x > 0) );
             ip.addParameter( 'hpsSearchBudget', 8, ...
                 @(x)(rem(x,1) == 0 && x > 0) );
-            ip.addParameter( 'hpsCrange', [-5 3], ...
+            ip.addParameter( 'hpsCrange', [-5 2], ...
                 @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
             ip.addParameter( 'hpsGammaRange', [-12 3], ...
                 @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
@@ -86,8 +86,11 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         %% -----------------------------------------------------------------
 
         function run( obj )
+            obj.gridCVtrainer.verbose = obj.verbose;
+            obj.svmCoreTrainer.verbose = obj.verbose;
             obj.hpsSets = obj.determineHyperparameterSets();
             bestPerf = 0;
+            verboseFprintf( obj, 'Hyperparameter search CV...\n' );
             for ii = 1:size( obj.hpsSets, 1 )
                 obj.svmCoreTrainer.kernel = obj.hpsSets(ii,1);
                 obj.svmCoreTrainer.epsilon = obj.hpsSets(ii,2);
@@ -95,15 +98,19 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 obj.svmCoreTrainer.gamma = obj.hpsSets(ii,4);
                 obj.svmCoreTrainer.makeProbModel = false;
                 obj.gridCVtrainer.abortPerfMin = bestPerf;
+                verboseFprintf( obj, 'fold %d... ', ii );
                 obj.gridCVtrainer.run();
                 foldPerf = obj.gridCVtrainer.getPerformance();
                 obj.hpsSets(ii, 5) = foldPerf.avg;
                 bestPerf = max( foldPerf.avg, bestPerf );
             end
+            verboseFprintf( obj, 'Done\n' );
             if obj.hyperParamSearch.refineStages > 0
+                verboseFprintf( obj, 'HPS refine stage...\n' );
                 refineGridTrainer = SVMmodelSelectTrainer( ...
                     obj.performanceMeasure, ...
                     'hpsCvFolds', obj.gridCVtrainer.nFolds );
+                refineGridTrainer.verbose = obj.verbose;
                 refineGridTrainer.setPositiveClass( obj.positiveClass );
                 refineGridTrainer.setData( obj.trainSet, obj.testSet );
                 refineGridTrainer.hyperParamSearch = obj.hyperParamSearch;
@@ -121,6 +128,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             end
             obj.hpsSets = sortrows( obj.hpsSets, 5 );
             predGenVal = obj.hpsSets(end,5);
+            verboseFprintf( obj, 'Best HPS set performance: %f\n', predGenVal );
             % train with the best hyperparameters, using all folds
             obj.svmCoreTrainer.kernel = obj.hpsSets(end,1);
             obj.svmCoreTrainer.epsilon = obj.hpsSets(end,2);
@@ -128,6 +136,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             obj.svmCoreTrainer.gamma = obj.hpsSets(end,4);
             obj.svmCoreTrainer.makeProbModel = obj.makeProbModel;
             obj.svmCoreTrainer.setData( obj.trainSet, obj.testSet );
+            verboseFprintf( obj, 'Train with best HPS set on all folds...\n' );
             obj.svmCoreTrainer.run();
         end
         %% -----------------------------------------------------------------

@@ -98,7 +98,7 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 obj.svmCoreTrainer.gamma = obj.hpsSets(ii,4);
                 obj.svmCoreTrainer.makeProbModel = false;
                 obj.gridCVtrainer.abortPerfMin = bestPerf;
-                verboseFprintf( obj, 'fold %d... ', ii );
+                verboseFprintf( obj, 'hps set %d... ', ii );
                 obj.gridCVtrainer.run();
                 foldPerf = obj.gridCVtrainer.getPerformance();
                 obj.hpsSets(ii, 5) = foldPerf.avg;

@@ -100,6 +100,9 @@ classdef IdentificationTrainingPipeline < handle
         %   nGenAssessFolds: number of folds of generalization assessment cross validation
         %
         function run( obj, models, trainSetShare, nGenAssessFolds )
+            logName = ['IdTrainPipe' buildCurrentTimeString() '.log'];
+            diary( logName );
+            
             if strcmpi( models, 'all' )
                 models = obj.data.classNames;
                 models(strcmp('general', models)) = [];
@@ -149,9 +152,11 @@ classdef IdentificationTrainingPipeline < handle
                 model = obj.trainer.getModel();
                 featureCreator = obj.featureCreator;
                 save( [modelName{1} buildCurrentTimeString() '.model.mat'], ...
-                      'model', 'featureCreator', 'trainPerfresults', 'flistName' );
+                      'model', 'featureCreator', ...
+                      'trainPerfresults', 'flistName', 'logName' );
             end;
             
+            diary off;
         end
         %% ----------------------------------------------------------------
         
@@ -177,76 +182,3 @@ classdef IdentificationTrainingPipeline < handle
     
 end
 
-% function produceModel( soundsDir, className, esetup )
-% 
-% %% start debug output
-% 
-% modelSavePreStr = [soundsDir '/' className '/' className '_' getModelHash(esetup)];
-% delete( [modelSavePreStr '.log'] );
-% diary( [modelSavePreStr '.log'] );
-% disp('--------------------------------------------------------');
-% disp('--------------------------------------------------------');
-% flatPrintStruct( esetup )
-% disp('--------------------------------------------------------');
-% 
-% %% split data for outer CV (generalization perfomance assessment)
-% 
-% [yfolds, xfolds, idsfolds] = splitDataPermutation( yTrain, xTrain, idsTrain, esetup.generalizationEstimation.folds );
-% 
-% %% outer CV for estimating generalization performance
-% 
-% for i = 1:esetup.generalizationEstimation.folds
-%     
-%     foldsIdx = 1:esetup.generalizationEstimation.folds;
-%     foldsIdx(i) = [];
-%     
-%     fprintf( '\n%i. run of generalization assessment CV -- training\n\n', i );
-%     [model, translators, factors, predGenVals(i), hps{i}, cvtrVals(i)] = trainSvm( foldsIdx, yfolds, xfolds, idsfolds, esetup, 0 );
-%     
-%     fprintf( '\n%i. run of generalization assessment CV -- testing\n', i );
-%     [~, genVals(i), ~] = libsvmPredictExt( yfolds{i}, xfolds{i}, model, translators, factors, 0 );
-%     fprintf( '===============================================================\n' );
-%     
-% end
-% 
-% %% get perfomance numbers of outer CV
-% 
-% cvtrVal = mean( cvtrVals );
-% cvtrValStd = std( cvtrVals );
-% genVal = mean( genVals );
-% genValStd = std( genVals );
-% predGenVal = mean( predGenVals );
-% predGenValStd = std( predGenVals );
-% fprintf( '\n=============================================\n' );
-% fprintf( '====================================================================================\n' );
-% fprintf( '\nTraining perfomance as evaluated by %i-fold CV is %g +-%g\n', esetup.generalizationEstimation.folds, cvtrVal, cvtrValStd );
-% fprintf( '\nGeneralization perfomance as evaluated by %i-fold CV is %g +-%g\n', esetup.generalizationEstimation.folds, genVal, genValStd );
-% fprintf( 'Prediction of CV was %g +-%g\n\n', predGenVal, predGenValStd );
-% fprintf( '====================================================================================\n' );
-% fprintf( '=============================================\n' );
-% 
-% %% final production of a model, using the whole training dataset
-% 
-% disp( 'training model on whole training dataset' );
-% [model, translators, factors, trPredGenVal, trHps, trVal] = trainSvm( 1:esetup.generalizationEstimation.folds, yfolds, xfolds, idsfolds, esetup, 1 );
-% 
-% %% test final model on test set, if split
-% 
-% if ~isempty( yTest )
-%     fprintf( '\n\nPerfomance of final model on test set:\n', i );
-%     [~, testVal, ~] = libsvmPredictExt( yTest, xTest, model, translators, factors, 1 );
-%     fprintf( '===============================================================\n' );
-% else
-%     testVal = [];
-% end
-% 
-% %% saving model and perfomance numbers, end debug output
-% 
-% modelhashes = {['wp2hash: ' getWp2dataHash( esetup )]; ['blockdatahash: ' getBlockDataHash( esetup )]; ['labelhash: ' getLabelsHash( esetup, dfiles )]; ['featureshash: ' getFeaturesHash( esetup, dfiles )]; ['modelhash: ' getModelHash( esetup )]}
-% save( [modelSavePreStr '_model.mat'], 'model', 'genVal', 'genValStd', 'genVals', 'cvtrVal', 'cvtrValStd', 'cvtrVals', 'predGenVal', 'predGenValStd', 'predGenVals', 'trPredGenVal', 'trVal', 'testVal', 'hps', 'trHps', 'modelhashes', 'esetup' );
-% save( [modelSavePreStr '_scale.mat'], 'translators', 'factors', 'esetup' );
-% dynSaveMFun( @scaleData, [], [modelSavePreStr '_scaleFunction'] );
-% dynSaveMFun( esetup.featureCreation.function, esetup.featureCreation.functionParam, [modelSavePreStr '_featureFunction.mat'] );
-% 
-% diary off;
-% 

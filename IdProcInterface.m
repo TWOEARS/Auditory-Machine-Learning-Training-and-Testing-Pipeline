@@ -129,9 +129,7 @@ classdef (Abstract) IdProcInterface < handle
         function currentFolder = createCurrentConfigFolder( obj, filePath )
             filePath = which( filePath ); % ensure absolute path
             fileBaseFolder = fileparts( filePath );
-            timestr = arrayfun( @num2str, clock(), 'UniformOutput', false );
-            timestr = strcat( '.', timestr );
-            timestr = [timestr{:}];
+            timestr = buildCurrentTimeString();
             currentFolder = [fileBaseFolder filesep obj.procName timestr];
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );

@@ -2,7 +2,6 @@ classdef IdFeatureProc < IdProcInterface
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
-        blockSize_s;
         shiftSize_s;
         minBlockToEventRatio;
         featureProc;
@@ -18,8 +17,7 @@ classdef IdFeatureProc < IdProcInterface
                 error( 'FeatureProcessor must implement FeatureProcInterface.' );
             end
             obj = obj@IdProcInterface();
-            obj.blockSize_s = 0.5;
-            obj.shiftSize_s = 0.25;
+            obj.shiftSize_s = featureProc.blockSize_s / 3;
             obj.minBlockToEventRatio = 0.5;
             obj.featureProc = featureProc;
         end
@@ -41,7 +39,7 @@ classdef IdFeatureProc < IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.blockSize = obj.blockSize_s;
+            outputDeps.blockSize = obj.featureProc.blockSize_s;
             outputDeps.shiftSize = obj.shiftSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.featureProc = obj.featureProc.getInternOutputDependencies();
@@ -61,30 +59,16 @@ classdef IdFeatureProc < IdProcInterface
             anyAFEsignal = afeData(afeDataNames{1});
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
             sigLen = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
-            for backOffset = 0.0:obj.shiftSize_s:sigLen
-                afeBlock = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-                for afeDataKey = afeDataNames
-                    afeSignal = afeData(afeDataKey{1});
-                    if isa( afeSignal, 'cell' )
-                        afeSignalExtract{1} = afeSignal{1}.cutSignalCopy( obj.blockSize_s, backOffset );
-                        afeSignalExtract{1}.reduceBufferToArray();
-                        afeSignalExtract{2} = afeSignal{2}.cutSignalCopy( obj.blockSize_s, backOffset );
-                        afeSignalExtract{2}.reduceBufferToArray();
-                    else
-                        afeSignalExtract = afeSignal.cutSignalCopy( obj.blockSize_s, backOffset );
-                    end
-                    afeBlock(afeDataKey{1}) = afeSignalExtract;
-                    fprintf( '.' );
-                end
-                afeBlocks{end+1} = afeBlock;
-                blockOffset = sigLen - backOffset;
-                blockOnset = blockOffset - obj.blockSize_s;
+            for backOffset_s = 0.0 : obj.shiftSize_s : sigLen - obj.shiftSize_s
+                afeBlocks{end+1} = obj.featureProc.cutDataBlock( afeData, backOffset_s );
+                blockOffset = sigLen - backOffset_s;
+                blockOnset = blockOffset - obj.featureProc.blockSize_s;
                 y(end+1) = 0;
                 for jj = 1 : size( onOffs_s, 1 )
                     eventOnset = onOffs_s(jj,1);
                     eventOffset = onOffs_s(jj,2);
                     eventLength = eventOffset - eventOnset;
-                    maxBlockEventLen = min( obj.blockSize_s, eventLength );
+                    maxBlockEventLen = min( obj.featureProc.blockSize_s, eventLength );
                     eventBlockOverlapLen = min( blockOffset, eventOffset ) - max( blockOnset, eventOnset );
                     relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
                     blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;

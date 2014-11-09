@@ -12,6 +12,11 @@ classdef IdentificationTrainingPipeline < handle
     end
     
     %% --------------------------------------------------------------------
+    properties 
+        featureCreator;
+    end
+    
+    %% --------------------------------------------------------------------
     methods (Static)
     end
     
@@ -109,13 +114,15 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             obj.createTrainTestSplit( trainSetShare );
+            obj.trainSet.saveDataFList( ['trainSet.' buildCurrentTimeString() '.flist'] );
+            obj.testSet.saveDataFList( ['testSet.' buildCurrentTimeString() '.flist'] );
 
-            for model = models
-                fprintf( 'Training model "%s"\n', model{1} );
+            for modelName = models
+                fprintf( 'Training model "%s"\n', modelName{1} );
                 if nGenAssessFolds > 1
                     obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
                     obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
-                    obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( model{1} );
+                    obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( modelName{1} );
                     obj.generalizationPerfomanceAssessCVtrainer.verbose = true;
                     obj.generalizationPerfomanceAssessCVtrainer.run();
                     genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
@@ -123,14 +130,17 @@ classdef IdentificationTrainingPipeline < handle
                     disp( genPerfCVresults );
                 end
                 obj.trainer.setData( obj.trainSet, obj.testSet );
-                obj.trainer.setPositiveClass( model{1} );
-                obj.trainer.setMakeProbModel( true );
+                obj.trainer.setPositiveClass( modelName{1} );
+%                obj.trainer.setMakeProbModel( true );
                 disp( 'Training final model on trainSet...' );
                 obj.trainer.run();
                 disp( 'Testing final model on testSet...' );
                 trainPerfresults = obj.trainer.getPerformance();
                 disp( trainPerfresults );
                 model = obj.trainer.getModel();
+                featureCreator = obj.featureCreator;
+                save( [modelName{1} '.' buildCurrentTimeString() '.model.mat'], ...
+                      'model', 'featureCreator' );
             end;
             
         end

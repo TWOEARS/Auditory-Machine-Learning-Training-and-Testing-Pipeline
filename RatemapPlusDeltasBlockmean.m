@@ -17,7 +17,7 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
     methods (Access = public)
         
         function obj = RatemapPlusDeltasBlockmean()
-            obj = obj@FeatureProcInterface();
+            obj = obj@FeatureProcInterface( 0.5 );
             obj.freqChannels = 16;
             obj.deltasLevels = 1;
         end

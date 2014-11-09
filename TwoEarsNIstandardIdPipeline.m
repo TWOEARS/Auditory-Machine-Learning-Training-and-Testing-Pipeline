@@ -18,6 +18,8 @@ classdef TwoEarsNIstandardIdPipeline < handle
             obj.multiConfBinauralSim = MultiConfigurationsEarSignalProc( binauralSim );
             obj.multiConfBinauralSim.setSceneConfig( SceneConfiguration() );
 
+            obj.pipeline.featureCreator = featureCreator;
+            
             multiConfAFEmodule = MultiConfigurationsAFEmodule( AuditoryFEmodule( ...
                 binauralSim.getDataFs(), featureCreator.getAFErequests() ) );
 

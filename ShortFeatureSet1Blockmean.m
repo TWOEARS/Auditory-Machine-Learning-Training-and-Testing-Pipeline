@@ -20,7 +20,7 @@ classdef ShortFeatureSet1Blockmean < FeatureProcInterface
     methods (Access = public)
         
         function obj = ShortFeatureSet1Blockmean( )
-            obj = obj@FeatureProcInterface();
+            obj = obj@FeatureProcInterface( 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;

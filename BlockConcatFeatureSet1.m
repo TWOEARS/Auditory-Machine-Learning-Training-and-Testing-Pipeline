@@ -14,7 +14,7 @@ classdef BlockConcatFeatureSet1 < FeatureProcInterface
     methods (Access = public)
         
         function obj = BlockConcatFeatureSet1( )
-            obj = obj@FeatureProcInterface();
+            obj = obj@FeatureProcInterface( 0.48 );
             obj.freqChannels = 16;
             obj.nConcatBlocks = 4;
         end

@@ -23,18 +23,7 @@ classdef CVtrainer < IdTrainerInterface
             obj.trainer = trainer;
             obj.nFolds = 5;
             obj.abortPerfMin = 0;
-        end
-        %% ----------------------------------------------------------------
-        
-        function setPositiveClass( obj, modelName )
-            setPositiveClass@IdTrainerInterface( obj, modelName );
-            obj.trainer.setPositiveClass( modelName );
-        end
-        %% ----------------------------------------------------------------
-
-        function setPerformanceMeasure( obj, newPerformanceMeasure )
-            setPerformanceMeasure@IdTrainerInterface( obj, newPerformanceMeasure );
-            obj.trainer.setPerformanceMeasure( newPerformanceMeasure );
+            obj.performanceMeasure = trainer.performanceMeasure;
         end
         %% ----------------------------------------------------------------
 
@@ -45,6 +34,8 @@ classdef CVtrainer < IdTrainerInterface
         %% ----------------------------------------------------------------
         
         function run( obj )
+            obj.trainer.setPositiveClass( obj.positiveClass );
+            obj.trainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.trainer.verbose = obj.verbose;
             obj.createFolds();
             obj.foldsPerformance = ones( obj.nFolds, 1 );

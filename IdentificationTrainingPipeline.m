@@ -100,8 +100,11 @@ classdef IdentificationTrainingPipeline < handle
         %   nGenAssessFolds: number of folds of generalization assessment cross validation
         %
         function run( obj, models, trainSetShare, nGenAssessFolds )
-            logName = ['IdTrainPipe' buildCurrentTimeString() '.log'];
-            diary( logName );
+            curTimeStr = buildCurrentTimeString();
+            saveDir = ['Training' curTimeStr];
+            mkdir( saveDir );
+            cd( saveDir );
+            diary( ['IdTrainPipe' curTimeStr '.log'] );
             
             if strcmpi( models, 'all' )
                 models = obj.data.classNames;
@@ -118,9 +121,8 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             obj.createTrainTestSplit( trainSetShare );
-            flistName = [buildCurrentTimeString() '.flist'];
-            obj.trainSet.saveDataFList( ['trainSet' flistName] );
-            obj.testSet.saveDataFList( ['testSet' flistName] );
+            obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'] );
+            obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'] );
 
             for modelName = models
                 fprintf( ['\n\n===================================\n',...
@@ -153,10 +155,11 @@ classdef IdentificationTrainingPipeline < handle
                 featureCreator = obj.featureCreator;
                 save( [modelName{1} buildCurrentTimeString() '.model.mat'], ...
                       'model', 'featureCreator', ...
-                      'trainPerfresults', 'flistName', 'logName' );
+                      'trainPerfresults' );
             end;
             
             diary off;
+            cd( '..' );
         end
         %% ----------------------------------------------------------------
         

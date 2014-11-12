@@ -5,14 +5,10 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         gridCVtrainer;
         svmCoreTrainer;
         parameters;
-        hpsSets;
         trainWithBestHps = true;
+        hpsSets;
     end
     
-    %% -----------------------------------------------------------------------------------
-    properties (Access = public)
-    end
-
     %% -----------------------------------------------------------------------------------
     methods
 
@@ -30,18 +26,18 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
                 @(x)(ischar(x) && any(strcmpi(x, {'grid','random'}))) );
             ip.addParameter( 'hpsKernels', 0, ...
                 @(x)(rem(x,1) == 0 && all(x == 0 | x == 2)) );
-            ip.addParameter( 'hpsEpsilons', 0.05, ...
+            ip.addParameter( 'hpsEpsilons', 0.001, ...
                 @(x)(isfloat(x) && x > 0) );
             ip.addParameter( 'hpsSearchBudget', 8, ...
                 @(x)(rem(x,1) == 0 && x > 0) );
-            ip.addParameter( 'hpsCrange', [-5 2], ...
+            ip.addParameter( 'hpsCrange', [-6 2], ...
                 @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
             ip.addParameter( 'hpsGammaRange', [-12 3], ...
                 @(x)(isfloat(x) && length(x) == 2 && x(1) < x(2)) );
             ip.addParameter( 'hpsCvFolds', 4, ...
                 @(x)(rem(x,1) == 0 && x > 0) );
             ip.addParameter( 'hpsMaxDataSize', 10000, ...
-                @(x)(rem(x,1) == 0 && x > 0) );
+                @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             ip.addParameter( 'makeProbModel', false, @islogical );
             
             obj.parameters = ip.parseParameters( obj.parameters, setDefaults, varargin{:} );
@@ -50,42 +46,38 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
         %% -------------------------------------------------------------------------------
 
         function run( obj )
-            obj.setupHpsTrainer();
-            obj.hpsSets = obj.determineHyperparameterSets();
+            obj.svmCoreTrainer = SVMtrainer();
+            obj.createHpsTrainer();
+            hps.params = obj.determineHyperparameterSets();
+            hps.perfs = zeros( size( hps.params ) );
             verboseFprintf( obj, '\nHyperparameter search CV...\n' );
-            bestHpsPerf = 0;
-            for ii = 1 : size( obj.hpsSets, 1 )
+            for ii = 1 : size( hps.params, 1 )
                 verboseFprintf( obj, '\nhps set %d...\n ', ii );
-                obj.svmCoreTrainer.kernel = obj.hpsSets(ii,1);
-                obj.svmCoreTrainer.epsilon = obj.hpsSets(ii,2);
-                obj.svmCoreTrainer.c = obj.hpsSets(ii,3);
-                obj.svmCoreTrainer.gamma = obj.hpsSets(ii,4);
-                obj.svmCoreTrainer.makeProbModel = false;
-                obj.gridCVtrainer.abortPerfMin = bestHpsPerf;
+                obj.svmCoreTrainer.setParameters( false, ...
+                    'maxDataSize', obj.parameters.hpsMaxDataSize, ...
+                    'makeProbModel', false, ...
+                    hps.params(ii) );
+                obj.gridCVtrainer.abortPerfMin = max( hps.perfs );
                 obj.gridCVtrainer.run();
-                hpsSetCvPerf = obj.gridCVtrainer.getPerformance();
-                obj.hpsSets(ii, 5) = hpsSetCvPerf.avg;
-                bestHpsPerf = max( hpsSetCvPerf.avg, bestHpsPerf );
+                hps.perfs(ii) = obj.gridCVtrainer.getPerformance().avg;
             end
             verboseFprintf( obj, 'Done\n' );
             if obj.parameters.hpsRefineStages > 0
                 verboseFprintf( obj, 'HPS refine stage...\n' );
-                refineGridTrainer = obj.setupRefineGridTrainer();
+                refineGridTrainer = obj.createRefineGridTrainer( hps );
                 refineGridTrainer.run();
-                obj.hpsSets = [obj.hpsSets; refineGridTrainer.hpsSets];
+                hps.params = [hps.params; refineGridTrainer.hpsSets.params];
+                hps.perfs = [hps.perfs; refineGridTrainer.hpsSets.perfs];
             end
-            obj.hpsSets = sortrows( obj.hpsSets, 5 );
-            predGenVal = obj.hpsSets(end,5);
-            verboseFprintf( obj, 'Best HPS set performance: %f\n', predGenVal );
+            obj.hpsSets = obj.sortHpsSetsByPerformance( hps );
+            verboseFprintf( obj, 'Best HPS set performance: %f\n', obj.hpsSets.perfs(end) );
             if obj.trainWithBestHps
-                obj.svmCoreTrainer.kernel = obj.hpsSets(end,1);
-                obj.svmCoreTrainer.epsilon = obj.hpsSets(end,2);
-                obj.svmCoreTrainer.c = obj.hpsSets(end,3);
-                obj.svmCoreTrainer.gamma = obj.hpsSets(end,4);
-                obj.svmCoreTrainer.makeProbModel = obj.parameters.makeProbModel;
+                obj.svmCoreTrainer.setParameters( false, ...
+                    obj.hpsSets.params(end), ...
+                    'makeProbModel', obj.parameters.makeProbModel, ...
+                    'maxDataSize', inf );
                 obj.svmCoreTrainer.setData( obj.trainSet, obj.testSet );
-                obj.svmCoreTrainer.maxDataSize = inf;
-                verboseFprintf( obj, 'Train with best HPS set on all folds...\n' );
+                verboseFprintf( obj, 'Train with best HPS set on full trainSet...\n' );
                 obj.svmCoreTrainer.run();
             end
         end
@@ -111,36 +103,28 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = private)
         
-        function setupHpsTrainer( obj )
-            obj.svmCoreTrainer = SVMtrainer();
-            obj.svmCoreTrainer.verbose = obj.verbose;
-            obj.svmCoreTrainer.maxDataSize = obj.parameters.hpsMaxDataSize;
+        function createHpsTrainer( obj )
             obj.gridCVtrainer = CVtrainer( obj.svmCoreTrainer );
             obj.gridCVtrainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.gridCVtrainer.setPositiveClass( obj.positiveClass );
             obj.gridCVtrainer.setData( obj.trainSet, obj.testSet );
             obj.gridCVtrainer.setNumberOfFolds( obj.parameters.hpsCvFolds );
-            obj.gridCVtrainer.verbose = obj.verbose;
         end
         %% -------------------------------------------------------------------------------
         
         function hpsSets = determineHyperparameterSets( obj )
             switch( lower( obj.parameters.hpsMethod ) )
                 case 'grid'
-                    hpsSets = obj.hpsGridSearchSets();
+                    hpsSets = obj.getHpsGridSearchSets();
                 case 'random'
                     error( 'not implemented' );
-                    for i = 1 : obj.parameters.hpsSearchBudget
-                        c = 10^( log10(obj.parameters.hpsCrange(1)) + ( log10(obj.parameters.hpsCrange(2)) - log10(obj.parameters.hpsCrange(1)) ) * rand() );
-                        g = 10^( log10(obj.parameters.hpsGammaRange(1)) + ( log10(obj.parameters.hpsGammaRange(2)) - log10(obj.parameters.hpsGammaRange(1)) ) * rand() );
-                    end
                 case 'intelligrid'
                     error( 'not implemented.' );
             end
         end
         %% -------------------------------------------------------------------------------
 
-        function hpsSets = hpsGridSearchSets( obj )
+        function hpsSets = getHpsGridSearchSets( obj )
             hpsCs = logspace( obj.parameters.hpsCrange(1), ...
                               obj.parameters.hpsCrange(2), ...
                               obj.parameters.hpsSearchBudget );
@@ -155,25 +139,34 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface
             hpsSets = [kGrid(:), eGrid(:), cGrid(:), gGrid(:)];
             hpsSets(hpsSets(:,1)~=2,4) = 1; %set gamma equal for kernels other than rbf
             hpsSets = unique( hpsSets, 'rows' );
+            hpsSets = cell2struct( num2cell(hpsSets), {'kernel','epsilon','c','gamma'},2 );
         end
         %% -------------------------------------------------------------------------------
         
-        function refineGridTrainer = setupRefineGridTrainer( obj )
+        function refineGridTrainer = createRefineGridTrainer( obj, hps )
             refineGridTrainer = SVMmodelSelectTrainer( obj.parameters );
-            refineGridTrainer.verbose = obj.verbose;
             refineGridTrainer.setPositiveClass( obj.positiveClass );
             refineGridTrainer.setData( obj.trainSet, obj.testSet );
             refineGridTrainer.trainWithBestHps = false;
-            sortedHPs = sortrows( obj.hpsSets, 5 );
-            best3HPsmean = mean( log10( sortedHPs(end-2:end,:) ), 1 );
-            eRefinedRange = getNewLogRange( log10(obj.parameters.hpsEpsilons), best3HPsmean(2) );
-            cRefinedRange = getNewLogRange( obj.parameters.hpsCrange, best3HPsmean(3) );
-            gRefinedRange = getNewLogRange( obj.parameters.hpsGammaRange, best3HPsmean(4) );
+            hps = obj.sortHpsSetsByPerformance( hps );
+            best3LogMean = @(fn)(mean( log10( [hps.params(end-2:end).(fn)] ) ));
+            eRefinedRange = getNewLogRange( ...
+                log10(obj.parameters.hpsEpsilons), best3LogMean('epsilon') );
+            cRefinedRange = getNewLogRange( ...
+                obj.parameters.hpsCrange, best3LogMean('c') );
+            gRefinedRange = getNewLogRange( ...
+                obj.parameters.hpsGammaRange, best3LogMean('gamma') );
             refineGridTrainer.setParameters( false, ...
                 'hpsRefineStages', obj.parameters.hpsRefineStages - 1, ...
                 'hpsGammaRange', gRefinedRange, ...
                 'hpsCrange', cRefinedRange, ...
-                'hpsEpsilons', unique( 10.^[eRefinedRange, best3HPsmean(2)] ) );
+                'hpsEpsilons', unique( 10.^[eRefinedRange, best3LogMean('epsilon')] ) );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function hps = sortHpsSetsByPerformance( obj, hps )
+            [hps.perfs,idx] = sort( hps.perfs );
+            hps.params = hps.params(idx);
         end
         %% -------------------------------------------------------------------------------
         

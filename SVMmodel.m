@@ -22,7 +22,7 @@ classdef SVMmodel < IdModelInterface
         %% -----------------------------------------------------------------
         
         function [y,score] = applyModel( obj, x )
-            x = obj.scale2zeroMeanUnitVar( x, false );
+            x = obj.scale2zeroMeanUnitVar( x );
             yDummy = zeros( size( x, 1 ), 1 );
             [y, ~, score] = libsvmpredict( yDummy, x, obj.model, sprintf( '-q -b %d', obj.useProbModel ) );
         end
@@ -30,7 +30,7 @@ classdef SVMmodel < IdModelInterface
         
         function x = scale2zeroMeanUnitVar( obj, x, saveScalingFactors )
             if isempty( x ), return; end;
-            if saveScalingFactors
+            if nargin > 2 && strcmp( saveScalingFactors, 'saveScalingFactors' )
                 obj.dataTranslators = mean( x );
                 obj.dataScalors = 1 ./ std( x );
             end

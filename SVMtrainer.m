@@ -1,42 +1,41 @@
 classdef SVMtrainer < IdTrainerInterface
     
     %% --------------------------------------------------------------------
-    properties (Access = public)
-        kernel;
-        epsilon;
-        c;
-        gamma;
-        makeProbModel;
+    properties (Access = protected)
+        parameters;
         model;
-        maxDataSize = inf;
     end
 
     %% --------------------------------------------------------------------
     methods
 
-        function obj = SVMtrainer( )
-            obj.makeProbModel = false;
+        function obj = SVMtrainer( varargin )
+            obj.setParameters( true, varargin{:} );
         end
         %% ----------------------------------------------------------------
 
-        function set.kernel( obj, newKernel )
-            if ~any( newKernel == [0, 2] )
-                error( 'Kernel not supported. Must be 0 (linear) or 2 (rbf)' );
-            end
-            obj.kernel = newKernel;
+        function setParameters( obj, setDefaults, varargin )
+            ip = ExtendedInputParser();
+            ip.addParameter( 'performanceMeasure', @BAC2, @(x)(isa( x, 'function_handle' )) );
+            ip.addParameter( 'kernel', 0, ...
+                @(x)(rem(x,1) == 0 && all(x == 0 | x == 2)) );
+            ip.addParameter( 'epsilon', 0.05, ...
+                @(x)(isfloat(x) && x > 0) );
+            ip.addParameter( 'c', 1, ...
+                @(x)(isfloat(x) && x > 0) );
+            ip.addParameter( 'gamma', 0.1, ...
+                @(x)(isfloat(x) && x > 0) );
+            ip.addParameter( 'maxDataSize', inf, ...
+                @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+            ip.addParameter( 'makeProbModel', false, @islogical );
+            
+            obj.parameters = ip.parseParameters( obj.parameters, setDefaults, varargin{:} );
+            obj.setPerformanceMeasure( obj.parameters.performanceMeasure );
         end
-        %% ----------------------------------------------------------------
-
-        function set.makeProbModel( obj, newMakeProbModel )
-            if ~isa( newMakeProbModel, 'logical' )
-                error( 'makeProbModel must be a logical value.' );
-            end
-            obj.makeProbModel = newMakeProbModel;
-        end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function run( obj )
-            if obj.makeProbModel
+            if obj.parameters.makeProbModel
                 [x,y] = obj.bloat2balancedData( obj.trainSet );
                 cp = 1;
             else
@@ -51,17 +50,18 @@ classdef SVMtrainer < IdTrainerInterface
             datPermutation = randperm( length( y ) );
             x = x(datPermutation,:);
             y = y(datPermutation);
-            if length( y ) > obj.maxDataSize
-                x(obj.maxDataSize+1:end,:) = [];
-                y(obj.maxDataSize+1:end) = [];
+            if length( y ) > obj.parameters.maxDataSize
+                x(obj.parameters.maxDataSize+1:end,:) = [];
+                y(obj.parameters.maxDataSize+1:end) = [];
             end
             obj.model = SVMmodel();
-            obj.model.useProbModel = obj.makeProbModel;
-            saveScalingFactors = true;
-            xScaled = obj.model.scale2zeroMeanUnitVar( x, saveScalingFactors );
+            obj.model.useProbModel = obj.parameters.makeProbModel;
+            xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -b %d -h 0';
             svmParamStr = sprintf( svmParamStrScheme, ...
-                obj.kernel, obj.gamma, obj.c, cp, obj.epsilon, obj.makeProbModel );
+                obj.parameters.kernel, obj.parameters.gamma, ...
+                obj.parameters.c, cp, ...
+                obj.parameters.epsilon, obj.parameters.makeProbModel );
             if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end
             verboseFprintf( obj, 'SVM training with param string\n\t%s\n', svmParamStr );
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );

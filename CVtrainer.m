@@ -36,7 +36,6 @@ classdef CVtrainer < IdTrainerInterface
         function run( obj )
             obj.trainer.setPositiveClass( obj.positiveClass );
             obj.trainer.setPerformanceMeasure( obj.performanceMeasure );
-            obj.trainer.verbose = obj.verbose;
             obj.createFolds();
             obj.foldsPerformance = ones( obj.nFolds, 1 );
             for ff = 1 : obj.nFolds

@@ -22,7 +22,7 @@ classdef IdentificationTrainingPipeline < handle
     end
     
     %% --------------------------------------------------------------------
-    methods (Access = public)
+    methods
         
         %% Constructor.
         function obj = IdentificationTrainingPipeline()
@@ -129,11 +129,10 @@ classdef IdentificationTrainingPipeline < handle
                               '##   Training model "%s"\n',...
                               '===================================\n\n'], modelName{1} );
                 if nGenAssessFolds > 1
-                    fprintf( '\n==  Starting generalization performance assessment CV...\n\n' );
+                    fprintf( '\n==  Generalization performance assessment CV...\n\n' );
                     obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
                     obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
                     obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( modelName{1} );
-                    obj.generalizationPerfomanceAssessCVtrainer.verbose = obj.verbose;
                     obj.generalizationPerfomanceAssessCVtrainer.run();
                     genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
                     fprintf( '\n==  Performance after generalization assessment CV:\n' );
@@ -141,21 +140,19 @@ classdef IdentificationTrainingPipeline < handle
                 end
                 obj.trainer.setData( obj.trainSet, obj.testSet );
                 obj.trainer.setPositiveClass( modelName{1} );
-                obj.trainer.verbose = obj.verbose;
-%                obj.trainer.setMakeProbModel( true );
-                fprintf( '\n==  Training final model on trainSet...\n\n' );
+                fprintf( '\n==  Training model on trainSet...\n\n' );
                 obj.trainer.run();
-                fprintf( '\n==  Testing final model on testSet... \n\n' );
-                trainPerfresults = obj.trainer.getPerformance();
+                fprintf( '\n==  Testing model on testSet... \n\n' );
+                testPerfresults = obj.trainer.getPerformance();
                 fprintf( ['\n\n===================================\n',...
                               '##   "%s" Performance: %f\n',...
                               '===================================\n\n'], ...
-                              modelName{1}, trainPerfresults.double() );
+                              modelName{1}, testPerfresults.double() );
                 model = obj.trainer.getModel();
                 featureCreator = obj.featureCreator;
                 save( [modelName{1} buildCurrentTimeString() '.model.mat'], ...
                       'model', 'featureCreator', ...
-                      'trainPerfresults' );
+                      'testPerfresults' );
             end;
             
             diary off;

@@ -29,7 +29,7 @@ classdef IdentificationTrainingPipeline < handle
             obj.data = IdentTrainPipeData();
             obj.dataPipeProcs = {};
         end
-        %% ----------------------------------------------------------------
+        %% ------------------------------------------------------------------------------- 
         
         %   -----------------------
         %   setting up the pipeline
@@ -41,7 +41,7 @@ classdef IdentificationTrainingPipeline < handle
             obj.trainer = trainer;
             obj.generalizationPerfomanceAssessCVtrainer = CVtrainer( obj.trainer );
         end
-        %% ----------------------------------------------------------------
+        %% ------------------------------------------------------------------------------- 
         
         function addDataPipeProc( obj, dataProc )
             if ~isa( dataProc, 'IdProcInterface' )
@@ -51,13 +51,13 @@ classdef IdentificationTrainingPipeline < handle
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end
-        %% ----------------------------------------------------------------
+        %% ------------------------------------------------------------------------------- 
         
         function addGatherFeaturesProc( obj, gatherFeaturesProc )
             gatherFeaturesProc.connectData( obj.data );
             obj.gatherFeaturesProc = gatherFeaturesProc;
         end
-        %% ----------------------------------------------------------------
+        %% ------------------------------------------------------------------------------- 
         
         %   -------------------
         %   setting up the data
@@ -81,7 +81,7 @@ classdef IdentificationTrainingPipeline < handle
             end
             fclose( fid );
         end
-        %% ----------------------------------------------------------------
+        %% ------------------------------------------------------------------------------- 
         
         %   --------------------
         %   running the pipeline
@@ -100,6 +100,8 @@ classdef IdentificationTrainingPipeline < handle
         %   nGenAssessFolds: number of folds of generalization assessment cross validation
         %
         function run( obj, models, trainSetShare, nGenAssessFolds )
+            cleaner = onCleanup( @() obj.finish() );
+
             curTimeStr = buildCurrentTimeString();
             saveDir = ['Training' curTimeStr];
             mkdir( saveDir );
@@ -154,16 +156,19 @@ classdef IdentificationTrainingPipeline < handle
                       'model', 'featureCreator', ...
                       'testPerfresults' );
             end;
-            
+        end
+        
+        %% -------------------------------------------------------------------------------
+        function finish( obj )    
             diary off;
             cd( '..' );
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function createTrainTestSplit( obj, trainSetShare )
             [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
         end
-        %% ----------------------------------------------------------------
+        %% ------------------------------------------------------------------------------- 
         
 
     end

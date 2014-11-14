@@ -34,6 +34,11 @@ classdef CVtrainer < IdTrainerInterface
         %% ----------------------------------------------------------------
         
         function run( obj )
+            obj.buildModel();
+        end
+        %% ----------------------------------------------------------------
+        
+        function buildModel( obj, ~, ~ )
             obj.trainer.setPositiveClass( obj.positiveClass );
             obj.trainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.createFolds();
@@ -69,11 +74,6 @@ classdef CVtrainer < IdTrainerInterface
         end
         %% ----------------------------------------------------------------
         
-    end
-    
-    %% --------------------------------------------------------------------
-    methods (Access = private)
-
         function createFolds( obj )
             obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
         end

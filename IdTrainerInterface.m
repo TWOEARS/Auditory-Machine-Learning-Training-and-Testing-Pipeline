@@ -59,12 +59,40 @@ classdef (Abstract) IdTrainerInterface < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function performance = getPerformance( obj )
+            if isempty( obj.testSet ), error( 'There is no testset to test on.' ); end
+            x = obj.testSet(:,:,'x');
+            yTrue = obj.testSet(:,:,'y',obj.positiveClass);
+            if isempty( x ), error( 'There is no data to test the model.' ); end
+            verboseFprintf( obj, 'Applying model to test set...\n' );
+            model = obj.getModel();
+            yModel = model.applyModel( x );
+            performance = obj.performanceMeasure( yTrue, yModel );
+        end
+        %% ----------------------------------------------------------------
+
+        function run( obj )
+            [x,y] = obj.getPermutedTrainingData();
+            obj.buildModel( x, y );
+        end
+        %% ----------------------------------------------------------------
+
+        function [x,y] = getPermutedTrainingData( obj )
+            x = obj.trainSet(:,:,'x');
+            if isempty( x ), error( 'There is no data to train the model.' ); end
+            y = obj.trainSet(:,:,'y',obj.positiveClass);
+            permutationIdxs = randperm( length( y ) );
+            x = x(permutationIdxs,:);
+            y = y(permutationIdxs);
+        end
+        %% ----------------------------------------------------------------
+
+        
     end
 
     %% --------------------------------------------------------------------
     methods (Abstract)
-        run( obj )
-        performance = getPerformance( obj )
+        buildModel( obj, x, y )
     end
 
     %% --------------------------------------------------------------------

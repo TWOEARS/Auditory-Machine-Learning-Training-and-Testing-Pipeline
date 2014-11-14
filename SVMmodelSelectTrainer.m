@@ -51,8 +51,13 @@ classdef SVMmodelSelectTrainer < IdTrainerInterface & Parameterized
             obj.setParameters( true, varargin{:} );
         end
         %% -------------------------------------------------------------------------------
-
+        
         function run( obj )
+            obj.buildModel();
+        end
+        %% ----------------------------------------------------------------
+        
+        function buildModel( obj, ~, ~ )
             obj.svmCoreTrainer = SVMtrainer();
             obj.createHpsTrainer();
             hps.params = obj.determineHyperparameterSets();

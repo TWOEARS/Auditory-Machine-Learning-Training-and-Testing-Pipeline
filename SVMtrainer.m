@@ -36,22 +36,17 @@ classdef SVMtrainer < IdTrainerInterface & Parameterized
         end
         %% ----------------------------------------------------------------
 
-        function run( obj )
-            if obj.parameters.makeProbModel
-                [x,y] = obj.bloat2balancedData( obj.trainSet );
-                cp = 1;
-            else
-                x = obj.trainSet(:,:,'x');
-                y = obj.trainSet(:,:,'y',obj.positiveClass);
-                cp = 1 / obj.getPosToNegRatio( obj.trainSet );
-                if isnan( cp ) || isinf( cp )
-                    warning( 'The share of positive to negative examples is inf or nan.' );
-                end
+        function buildModel( obj, x, y )
+            ypShare = ( mean( y ) + 1 ) * 0.5;
+            cp = ( 1 - ypShare ) / ypShare;
+            if isnan( cp ) || isinf( cp )
+                warning( 'The share of positive to negative examples is inf or nan.' );
             end
-            if isempty( x ), error( 'There is no data to train the model.' ); end
-            datPermutation = randperm( length( y ) );
-            x = x(datPermutation,:);
-            y = y(datPermutation);
+            if obj.parameters.makeProbModel
+                x = [x(y == -1,:); repmat( x(y == +1,:), round( cp ), 1)];
+                y = [y(y == -1); repmat( y(y == +1), round( cp ), 1)];
+                cp = 1;
+            end
             if length( y ) > obj.parameters.maxDataSize
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
@@ -71,17 +66,6 @@ classdef SVMtrainer < IdTrainerInterface & Parameterized
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------
-        
-        function performance = getPerformance( obj )
-            if isempty( obj.testSet ), error( 'There is no testset to test on.' ); end
-            x = obj.testSet(:,:,'x');
-            y = obj.testSet(:,:,'y',obj.positiveClass);
-            if isempty( x ), error( 'There is no data to test the model.' ); end
-            verboseFprintf( obj, 'SVM testing...\n' );
-            yModel = obj.model.applyModel( x );
-            performance = obj.performanceMeasure( y, yModel );
-        end
-        %% ----------------------------------------------------------------
 
     end
     
@@ -92,26 +76,6 @@ classdef SVMtrainer < IdTrainerInterface & Parameterized
             model = obj.model;
         end
         %% ----------------------------------------------------------------
-        
-    end
-    
-    %% --------------------------------------------------------------------
-    methods (Access = private)
-
-        function posNegRatio = getPosToNegRatio( obj, dataSet )
-            ypShare = ( mean( dataSet(:,:,'y',obj.positiveClass) ) + 1 ) * 0.5;
-            posNegRatio = ypShare/(1-ypShare);
-        end
-        %% -------------------------------------------------------------------------------
-
-        function [x,y] = bloat2balancedData( obj, dataSet )
-            posNegRatio = obj.getPosToNegRatio( dataSet );
-            x = dataSet(:,:,'x');
-            y = dataSet(:,:,'y',obj.positiveClass);
-            x = [x(y == -1,:); repmat( x(y == +1,:), round(1/posNegRatio), 1)];
-            y = [y(y == -1); repmat( y(y == +1), round(1/posNegRatio), 1)];
-        end
-        %% -------------------------------------------------------------------------------
         
     end
     

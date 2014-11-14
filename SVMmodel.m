@@ -7,7 +7,7 @@ classdef SVMmodel < IdModelInterface
     end
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = public)
+    properties (SetAccess = ?SVMtrainer)
         useProbModel;
         model;
     end
@@ -27,6 +27,11 @@ classdef SVMmodel < IdModelInterface
             [y, ~, score] = libsvmpredict( yDummy, x, obj.model, sprintf( '-q -b %d', obj.useProbModel ) );
         end
         %% -----------------------------------------------------------------
+
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
         
         function x = scale2zeroMeanUnitVar( obj, x, saveScalingFactors )
             if isempty( x ), return; end;

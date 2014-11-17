@@ -25,13 +25,14 @@ classdef SVMmodel < IdModelInterface
             x = obj.scale2zeroMeanUnitVar( x );
             yDummy = zeros( size( x, 1 ), 1 );
             [y, ~, score] = libsvmpredict( yDummy, x, obj.model, sprintf( '-q -b %d', obj.useProbModel ) );
+            score = score(1);
         end
         %% -----------------------------------------------------------------
 
     end
     
     %% --------------------------------------------------------------------
-    methods (Access = protected)
+    methods (Access = ?SVMtrainer)
         
         function x = scale2zeroMeanUnitVar( obj, x, saveScalingFactors )
             if isempty( x ), return; end;

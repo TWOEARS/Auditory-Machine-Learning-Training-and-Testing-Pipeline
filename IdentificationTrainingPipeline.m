@@ -122,7 +122,7 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
-            obj.createTrainTestSplit( trainSetShare );
+            [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
             obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'] );
             obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'] );
 
@@ -165,12 +165,6 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function createTrainTestSplit( obj, trainSetShare )
-            [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
-        end
-        %% ------------------------------------------------------------------------------- 
-        
-
     end
     
     %% --------------------------------------------------------------------

@@ -124,7 +124,9 @@ classdef IdentificationTrainingPipeline < handle
 
             [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
             obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'] );
-            obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'] );
+            if ~isempty( obj.testSet )
+                obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'] );
+            end
 
             for modelName = models
                 fprintf( ['\n\n===================================\n',...

@@ -37,20 +37,7 @@ classdef SVMtrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-            ypShare = ( mean( y ) + 1 ) * 0.5;
-            cp = ( 1 - ypShare ) / ypShare;
-            if isnan( cp ) || isinf( cp )
-                warning( 'The share of positive to negative examples is inf or nan.' );
-            end
-            if obj.parameters.makeProbModel
-                x = [x(y == -1,:); repmat( x(y == +1,:), round( cp ), 1)];
-                y = [y(y == -1); repmat( y(y == +1), round( cp ), 1)];
-                cp = 1;
-            end
-            if length( y ) > obj.parameters.maxDataSize
-                x(obj.parameters.maxDataSize+1:end,:) = [];
-                y(obj.parameters.maxDataSize+1:end) = [];
-            end
+            [x, y, cp] = obj.prepareData( x, y );
             obj.model = SVMmodel();
             obj.model.useProbModel = obj.parameters.makeProbModel;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
@@ -74,6 +61,24 @@ classdef SVMtrainer < IdTrainerInterface & Parameterized
         
         function model = giveTrainedModel( obj )
             model = obj.model;
+        end
+        %% ----------------------------------------------------------------
+        
+        function [x,y,cp] = prepareData( obj, x, y )
+            ypShare = ( mean( y ) + 1 ) * 0.5;
+            cp = ( 1 - ypShare ) / ypShare;
+            if isnan( cp ) || isinf( cp )
+                warning( 'The share of positive to negative examples is inf or nan.' );
+            end
+            if obj.parameters.makeProbModel
+                x = [x(y == -1,:); repmat( x(y == +1,:), round( cp ), 1)];
+                y = [y(y == -1); repmat( y(y == +1), round( cp ), 1)];
+                cp = 1;
+            end
+            if length( y ) > obj.parameters.maxDataSize
+                x(obj.parameters.maxDataSize+1:end,:) = [];
+                y(obj.parameters.maxDataSize+1:end) = [];
+            end
         end
         %% ----------------------------------------------------------------
         

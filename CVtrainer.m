@@ -6,6 +6,7 @@ classdef CVtrainer < IdTrainerInterface
         nFolds;
         folds;
         foldsPerformance;
+        models;
     end
 
     %% --------------------------------------------------------------------
@@ -24,6 +25,7 @@ classdef CVtrainer < IdTrainerInterface
             obj.nFolds = 5;
             obj.abortPerfMin = 0;
             obj.performanceMeasure = trainer.performanceMeasure;
+%            obj.models = IdModelInterface.empty;
         end
         %% ----------------------------------------------------------------
 
@@ -48,6 +50,7 @@ classdef CVtrainer < IdTrainerInterface
                 obj.trainer.setData( foldsRecombinedData, obj.folds{ff} );
                 verboseFprintf( obj, 'Starting run %d of CV... ', ff );
                 obj.trainer.run();
+                obj.models{ff} = obj.trainer.getModel();
                 obj.foldsPerformance(ff) = double( obj.trainer.getPerformance() );
                 verboseFprintf( obj, 'Done. Performance = %f\n', obj.foldsPerformance(ff) );
                 maxPossiblePerf = mean( obj.foldsPerformance );
@@ -70,7 +73,7 @@ classdef CVtrainer < IdTrainerInterface
     methods (Access = protected)
         
         function model = giveTrainedModel( obj )
-            error( 'At the moment, CVtrainers do not return models.' );
+            error( 'cvtrainer -- which model do you want?' );
         end
         %% ----------------------------------------------------------------
         

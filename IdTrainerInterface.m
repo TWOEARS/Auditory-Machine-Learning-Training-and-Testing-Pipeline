@@ -60,14 +60,10 @@ classdef (Abstract) IdTrainerInterface < handle
         %% -------------------------------------------------------------------------------
         
         function performance = getPerformance( obj )
-            if isempty( obj.testSet ), error( 'There is no testset to test on.' ); end
-            x = obj.testSet(:,:,'x');
-            yTrue = obj.testSet(:,:,'y',obj.positiveClass);
-            if isempty( x ), error( 'There is no data to test the model.' ); end
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
-            yModel = model.applyModel( x );
-            performance = obj.performanceMeasure( yTrue, yModel );
+            performance = IdModelInterface.getPerformance( ...
+                model, obj.testSet, obj.positiveClass, obj.performanceMeasure );
         end
         %% ----------------------------------------------------------------
 

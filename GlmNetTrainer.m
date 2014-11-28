@@ -48,7 +48,9 @@ classdef GlmNetTrainer < IdTrainerInterface & Parameterized
             end
             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-            obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
+%             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
+            gmmOpts.initComps = 10;
+            [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xScaled, gmmOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

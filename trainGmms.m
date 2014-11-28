@@ -23,7 +23,7 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 
-[~, model0, llh0] = emgm(x0, esetup.gmm.initComp);
+[~, model0, llh0] = emgm(x0, esetup.initComps);
 model0.negFeature = x0;
 
 % [~, trVal, ~,~,~,~] = gmmPredict( y, x, model1, model0);

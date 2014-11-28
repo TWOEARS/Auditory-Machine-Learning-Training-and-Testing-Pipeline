@@ -1,4 +1,4 @@
-classdef GlmNetTrainer < IdTrainerInterface & Parameterized
+classdef GmmTrainer < IdTrainerInterface & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,24 +8,12 @@ classdef GlmNetTrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = GlmNetTrainer( varargin )
+        function obj = GmmTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                              'default', @BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
-            pds{2} = struct( 'name', 'alpha', ...
-                             'default', 1, ...
-                             'valFun', @(x)(isfloat(x) && x >= 0 && x <= 1.0) );
-            pds{3} = struct( 'name', 'family', ...
-                             'default', 'binomial', ...
-                             'valFun', @(x)(ischar(x) && any(strcmpi(x, {'binomial'}))) );
-            pds{4} = struct( 'name', 'nLambda', ...
-                             'default', 100, ...
-                             'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
-            pds{5} = struct( 'name', 'lambda', ...
-                             'default', [], ...
-                             'valFun', @(x)(isempty(x) || isfloat(x)) );
-            pds{6} = struct( 'name', 'maxDataSize', ...
+            pds{2} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             obj = obj@Parameterized( pds );
@@ -34,23 +22,23 @@ classdef GlmNetTrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-            glmOpts.weights = obj.setDataWeights( y );
+%             glmOpts.weights = obj.setDataWeights( y );
             if length( y ) > obj.parameters.maxDataSize
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = GlmNetModel();
+            obj.model = GmmModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-            glmOpts.alpha = obj.parameters.alpha;
-            glmOpts.nlambda = obj.parameters.nLambda;
-            if ~isempty( obj.parameters.lambda )
-                glmOpts.lambda = obj.parameters.lambda;
-            end
-            verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
-            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-            obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
-%             gmmOpts.initComps = 10;
-%             [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xScaled, gmmOpts );
+%             glmOpts.alpha = obj.parameters.alpha;
+%             glmOpts.nlambda = obj.parameters.nLambda;
+%             if ~isempty( obj.parameters.lambda )
+%                 glmOpts.lambda = obj.parameters.lambda;
+%             end
+%             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
+%             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
+%             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
+            gmmOpts.initComps = 10;
+            [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xScaled, gmmOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

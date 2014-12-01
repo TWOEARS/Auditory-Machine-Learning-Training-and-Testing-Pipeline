@@ -83,6 +83,11 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% ------------------------------------------------------------------------------- 
         
+        function splitIntoTrainAndTestSets( obj, trainSetShare )
+            [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
+        end
+        %% ------------------------------------------------------------------------------- 
+        
         %   --------------------
         %   running the pipeline
         %   --------------------
@@ -99,14 +104,9 @@ classdef IdentificationTrainingPipeline < handle
         %                   1 - trainSetShare.
         %   nGenAssessFolds: number of folds of generalization assessment cross validation
         %
-        function run( obj, models, trainSetShare, nGenAssessFolds )
+        function run( obj, models, nGenAssessFolds )
             cleaner = onCleanup( @() obj.finish() );
-
-            curTimeStr = buildCurrentTimeString();
-            saveDir = ['Training' curTimeStr];
-            mkdir( saveDir );
-            cd( saveDir );
-            diary( ['IdTrainPipe' curTimeStr '.log'] );
+            obj.createFilesDir();
             
             if strcmpi( models, 'all' )
                 models = obj.data.classNames;
@@ -121,12 +121,6 @@ classdef IdentificationTrainingPipeline < handle
             end
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
-
-            [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
-            obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'] );
-            if ~isempty( obj.testSet )
-                obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'] );
-            end
 
             for modelName = models
                 fprintf( ['\n\n===================================\n',...
@@ -161,12 +155,26 @@ classdef IdentificationTrainingPipeline < handle
         end
         
         %% -------------------------------------------------------------------------------
+        
         function finish( obj )    
             diary off;
             cd( '..' );
         end
         %% -------------------------------------------------------------------------------
-        
+
+        function createFilesDir( obj )
+            curTimeStr = buildCurrentTimeString();
+            saveDir = ['Training' curTimeStr];
+            mkdir( saveDir );
+            cd( saveDir );
+            diary( ['IdTrainPipe' curTimeStr '.log'] );
+            obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'] );
+            if ~isempty( obj.testSet )
+                obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'] );
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% --------------------------------------------------------------------

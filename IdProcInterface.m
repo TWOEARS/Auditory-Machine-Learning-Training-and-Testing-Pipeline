@@ -106,7 +106,7 @@ classdef (Abstract) IdProcInterface < handle
             currentConfig = obj.getOutputDependencies();
             currentFolder = [];
             for ii = 1 : length( configs )
-                if isequaln( currentConfig, configs{ii} )
+                if isequalDeepCompare( currentConfig, configs{ii} )
                     currentFolder = procFolders{ii};
                     break;
                 end

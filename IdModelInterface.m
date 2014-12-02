@@ -20,7 +20,11 @@ classdef (Abstract) IdModelInterface < handle
     methods (Static)
         
         function perf = getPerformance( model, testSet, positiveClass, perfMeasure )
-            if isempty( testSet ), error( 'There is no testset to test on.' ); end
+            if isempty( testSet )
+                warning( 'There is no testset to test on.' ); 
+                perf = 0;
+                return;
+            end
             x = testSet(:,:,'x');
             yTrue = testSet(:,:,'y',positiveClass);
             if isempty( x ), error( 'There is no data to test the model.' ); end

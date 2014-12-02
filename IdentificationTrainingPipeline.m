@@ -26,7 +26,6 @@ classdef IdentificationTrainingPipeline < handle
         
         %% Constructor.
         function obj = IdentificationTrainingPipeline()
-            obj.data = IdentTrainPipeData();
             obj.dataPipeProcs = {};
         end
         %% ------------------------------------------------------------------------------- 
@@ -62,24 +61,8 @@ classdef IdentificationTrainingPipeline < handle
         %   -------------------
         %   setting up the data
         %   -------------------
-        function loadWavFileList( obj, wavflist )
-            if ~isa( wavflist, 'char' )
-                error( 'wavflist must be a string.' );
-            elseif ~exist( wavflist, 'file' )
-                error( 'Wavflist not found.' );
-            end
-            fid = fopen( wavflist );
-            wavs = textscan( fid, '%s' );
-            for k = 1:length(wavs{1})
-                wavName = wavs{1}{k};
-                if ~exist( wavName, 'file' )
-                    error ( 'Could not find %s listed in %s.', wavName, wavflist );
-                end
-                wavName = which( wavName ); % ensure absolute path
-                wavClass = IdEvalFrame.readEventClass( wavName );
-                obj.data(wavClass,'+') = wavName;
-            end
-            fclose( fid );
+        function connectData( obj, data )
+            obj.data = data;
         end
         %% ------------------------------------------------------------------------------- 
         
@@ -104,7 +87,7 @@ classdef IdentificationTrainingPipeline < handle
         %                   1 - trainSetShare.
         %   nGenAssessFolds: number of folds of generalization assessment cross validation
         %
-        function run( obj, models, nGenAssessFolds )
+        function modelPathBuilder = run( obj, models, nGenAssessFolds )
             cleaner = onCleanup( @() obj.finish() );
             obj.createFilesDir();
             
@@ -140,17 +123,25 @@ classdef IdentificationTrainingPipeline < handle
                 obj.trainer.setPositiveClass( modelName{1} );
                 fprintf( '\n==  Training model on trainSet...\n\n' );
                 obj.trainer.run();
-                fprintf( '\n==  Testing model on testSet... \n\n' );
-                testPerfresults = obj.trainer.getPerformance();
-                fprintf( ['\n\n===================================\n',...
-                              '##   "%s" Performance: %f\n',...
-                              '===================================\n\n'], ...
-                              modelName{1}, testPerfresults.double() );
+                if ~isempty( obj.testSet )
+                    fprintf( '\n==  Testing model on testSet... \n\n' );
+                    testPerfresults = obj.trainer.getPerformance();
+                    fprintf( ['\n\n===================================\n',...
+                        '##   "%s" Performance: %f\n',...
+                        '===================================\n\n'], ...
+                        modelName{1}, testPerfresults.double() );
+                else
+                    testPerfresults = [];
+                end
                 model = obj.trainer.getModel();
                 featureCreator = obj.featureCreator;
-                save( [modelName{1} buildCurrentTimeString() '.model.mat'], ...
+                modelFileExt = ['.model.mat'];
+                modelPath = [modelName{1} modelFileExt];
+                save( modelPath, ...
                       'model', 'featureCreator', ...
                       'testPerfresults' );
+                [mp,~,~] = fileparts( which( modelPath ) );
+                modelPathBuilder = @(classname)(fullfile( mp, [classname, modelFileExt] ));
             end;
         end
         

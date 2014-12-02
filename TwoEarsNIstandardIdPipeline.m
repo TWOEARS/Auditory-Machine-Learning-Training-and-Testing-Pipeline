@@ -9,10 +9,10 @@ classdef TwoEarsNIstandardIdPipeline < handle
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = TwoEarsNIstandardIdPipeline( wavflist, trainSetShare, featureCreator, modelCreator )
+        function obj = TwoEarsNIstandardIdPipeline( data, trainSetShare, featureCreator, modelCreator )
             obj.pipeline = IdentificationTrainingPipeline();
 
-            obj.pipeline.loadWavFileList( wavflist );
+            obj.pipeline.connectData( data );
             obj.pipeline.splitIntoTrainAndTestSets( trainSetShare );
             
             binauralSim = IdSimConvRoomWrapper();

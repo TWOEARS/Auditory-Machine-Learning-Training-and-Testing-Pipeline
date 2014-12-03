@@ -50,36 +50,36 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
             obj.cvTrainer.setNumberOfFolds( obj.parameters.cvFolds );
             obj.cvTrainer.run();
             cvModels = obj.cvTrainer.models;
-            verboseFprintf( obj, 'Calculate Performance for all lambdas...\n' );
-            lPerfs = zeros( numel( lambdas ), numel( cvModels ) );
-            coefs = zeros( numel( lambdas ), numel( cvModels ), ...
-                           obj.fullSetModel.model.dim(1) );
-            coefsRel = zeros( numel( lambdas ), numel( cvModels ), ...
-                           obj.fullSetModel.model.dim(1) );
-            coefsNum = zeros( numel( lambdas ), numel( cvModels ) );
-            for ll = 1 : numel( lambdas )
-                for ii = 1 : numel( cvModels )
-                    cvModels{ii}.setLambda( lambdas(ll) );
-                    lPerfs(ll,ii) = IdModelInterface.getPerformance( ...
-                        cvModels{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
-                        obj.performanceMeasure );
-                    coefsPlusIntercept = glmnetCoef( cvModels{ii}.model, lambdas(ll) );
-                    coefs(ll,ii,:) = coefsPlusIntercept(2:end);
-                    coefsRel(ll,ii,:) = abs( coefs(ll,ii,:) ) ./ sum( abs( coefs(ll,ii,:) ) );
-                    coefsNum(ll,ii) = sum( coefsRel(ll,ii,:) >= 0.1 / numel(coefsRel(ll,ii,:) ) );
-                    verboseFprintf( obj, '.' );
-                end
-            end
-            obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
-            obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );
-            obj.fullSetModel.nCoefs = mean( coefsNum, 2 );
-            coefsRelAvg = squeeze( mean( coefsRel, 2 ) );
-            obj.fullSetModel.coefsRelStd = squeeze( std( coefsRel, [], 2 ) ) ./ coefsRelAvg;
-            verboseFprintf( obj, 'Done\n' );
-            obj.fullSetModel.lambdasSortedByPerf = sortrows( ...
-                [lambdas,obj.fullSetModel.lPerfsMean - obj.fullSetModel.lPerfsStd], 2 );
-            bestLambda = mean( obj.fullSetModel.lambdasSortedByPerf(end-2:end,1) );
-            obj.fullSetModel.setLambda( bestLambda );
+%             verboseFprintf( obj, 'Calculate Performance for all lambdas...\n' );
+%             lPerfs = zeros( numel( lambdas ), numel( cvModels ) );
+%             coefs = zeros( numel( lambdas ), numel( cvModels ), ...
+%                            obj.fullSetModel.model.dim(1) );
+%             coefsRel = zeros( numel( lambdas ), numel( cvModels ), ...
+%                            obj.fullSetModel.model.dim(1) );
+%             coefsNum = zeros( numel( lambdas ), numel( cvModels ) );
+%             for ll = 1 : numel( lambdas )
+%                 for ii = 1 : numel( cvModels )
+%                     cvModels{ii}.setLambda( lambdas(ll) );
+%                     lPerfs(ll,ii) = IdModelInterface.getPerformance( ...
+%                         cvModels{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
+%                         obj.performanceMeasure );
+%                     coefsPlusIntercept = glmnetCoef( cvModels{ii}.model, lambdas(ll) );
+%                     coefs(ll,ii,:) = coefsPlusIntercept(2:end);
+%                     coefsRel(ll,ii,:) = abs( coefs(ll,ii,:) ) ./ sum( abs( coefs(ll,ii,:) ) );
+%                     coefsNum(ll,ii) = sum( coefsRel(ll,ii,:) >= 0.1 / numel(coefsRel(ll,ii,:) ) );
+%                     verboseFprintf( obj, '.' );
+%                 end
+%             end
+%             obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
+%             obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );
+%             obj.fullSetModel.nCoefs = mean( coefsNum, 2 );
+%             coefsRelAvg = squeeze( mean( coefsRel, 2 ) );
+%             obj.fullSetModel.coefsRelStd = squeeze( std( coefsRel, [], 2 ) ) ./ coefsRelAvg;
+%             verboseFprintf( obj, 'Done\n' );
+%             obj.fullSetModel.lambdasSortedByPerf = sortrows( ...
+%                 [lambdas,obj.fullSetModel.lPerfsMean - obj.fullSetModel.lPerfsStd], 2 );
+%             bestLambda = mean( obj.fullSetModel.lambdasSortedByPerf(end-2:end,1) );
+%             obj.fullSetModel.setLambda( bestLambda );
         end
         %% -------------------------------------------------------------------------------
         

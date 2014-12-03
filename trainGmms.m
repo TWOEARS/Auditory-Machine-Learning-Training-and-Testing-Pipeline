@@ -5,9 +5,6 @@ function [model1, model0] = trainGmms( y, x, esetup )
 %
 % model: trained gmm
 % trVal: performance of trained model on training data
-inds = round(random('uni',1 ,size(y,1),1,round(size(y,1)*0.1)));
-x = x(inds,:);
-y= y(inds);
 
 x1 = (x(y==1,:,:))';
 if sum(sum(isnan(x1)))>0

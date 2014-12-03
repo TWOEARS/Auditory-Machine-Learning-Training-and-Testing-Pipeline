@@ -37,7 +37,8 @@ classdef GmmModel < DataScalingModel
             model1 = obj.model{1};
             model0 = obj.model{2};
             [y] = gmmPredict(x, model1, model0 );
-            y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
+            score = 1; % ask Ivo about?? ll
+%             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
            
        end
         %% -----------------------------------------------------------------

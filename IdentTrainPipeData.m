@@ -13,6 +13,7 @@ classdef IdentTrainPipeData < handle
         function obj = IdentTrainPipeData()
             obj.emptyDataStruct = struct( 'files', IdentTrainPipeDataElem.empty );
             obj.data = obj.emptyDataStruct;
+            rng( 'shuffle' );
         end
         %% ----------------------------------------------------------------
         

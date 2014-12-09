@@ -80,15 +80,15 @@ classdef SceneConfiguration < handle
             end
             fileOverlaysAreEqual = true;
             for kk = 1 : obj.numOverlays
-                if length( obj.fileOverlays.val ) ~= length( cObj.fileOverlays.val )
+                if length( obj.fileOverlays(kk).val ) ~= length( cObj.fileOverlays(kk).val )
                     e = false;
                     return;
                 end
-                for jj = 1 : length( obj.fileOverlays.val )
-                    [bp, fn, fe] = fileparts( obj.fileOverlays.val{jj} );
+                for jj = 1 : length( obj.fileOverlays(kk).val )
+                    [bp, fn, fe] = fileparts( obj.fileOverlays(kk).val{jj} );
                     [~, cp, ~] = fileparts( bp );
                     files1{jj} = fullfile( cp, [fn fe] );
-                    [bp, fn, fe] = fileparts( cObj.fileOverlays.val{jj} );
+                    [bp, fn, fe] = fileparts( cObj.fileOverlays(kk).val{jj} );
                     [~, cp, ~] = fileparts( bp );
                     files2{jj} = fullfile( cp, [fn fe] );
                 end

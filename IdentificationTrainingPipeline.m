@@ -122,7 +122,9 @@ classdef IdentificationTrainingPipeline < handle
                 obj.trainer.setData( obj.trainSet, obj.testSet );
                 obj.trainer.setPositiveClass( modelName{1} );
                 fprintf( '\n==  Training model on trainSet...\n\n' );
+                tic;
                 obj.trainer.run();
+                trainTime = toc;
                 if ~isempty( obj.testSet )
                     fprintf( '\n==  Testing model on testSet... \n\n' );
                     testPerfresults = obj.trainer.getPerformance();
@@ -139,9 +141,10 @@ classdef IdentificationTrainingPipeline < handle
                 modelPath = [modelName{1} modelFileExt];
                 save( modelPath, ...
                       'model', 'featureCreator', ...
-                      'testPerfresults' );
+                      'testPerfresults', 'trainTime' );
                 [mp,~,~] = fileparts( which( modelPath ) );
                 modelPathBuilder = @(classname)(fullfile( mp, [classname, modelFileExt] ));
+                save( modelPath, 'modelPathBuilder', '-append' );
             end;
         end
         

@@ -6,7 +6,9 @@ classdef GlmNetModel < DataScalingModel
         lambda;
         lPerfsMean;
         lPerfsStd;
+        coefsRelAvg;
         coefsRelStd;
+        coefsCV;
         lambdasSortedByPerf;
         nCoefs;
     end

@@ -28,7 +28,7 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
                              'default', 100, ...
                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
             pds{6} = struct( 'name', 'cvFolds', ...
-                              'default', 4, ...
+                              'default', 10, ...
                               'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
@@ -66,7 +66,7 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
             lPerfs = zeros( numel( lambdas ), numel( cvModels ) );
             coefs = zeros( numel( lambdas ), numel( cvModels ), ...
                            obj.fullSetModel.model.dim(1) );
-            coefsRel = zeros( numel( lambdas ), numel( cvModels ), ...
+            coefsAbsRel = zeros( numel( lambdas ), numel( cvModels ), ...
                            obj.fullSetModel.model.dim(1) );
             coefsNum = zeros( numel( lambdas ), numel( cvModels ) );
             for ll = 1 : numel( lambdas )
@@ -77,16 +77,18 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
                         obj.performanceMeasure );
                     coefsPlusIntercept = glmnetCoef( cvModels{ii}.model, lambdas(ll) );
                     coefs(ll,ii,:) = coefsPlusIntercept(2:end);
-                    coefsRel(ll,ii,:) = abs( coefs(ll,ii,:) ) ./ sum( abs( coefs(ll,ii,:) ) );
-                    coefsNum(ll,ii) = sum( coefsRel(ll,ii,:) >= 0.1 / numel(coefsRel(ll,ii,:) ) );
+                    coefsRel(ll,ii,:) = coefs(ll,ii,:) ./ sum( abs( coefs(ll,ii,:) ) );
+                    coefsAbsRel(ll,ii,:) = abs( coefs(ll,ii,:) ) ./ sum( abs( coefs(ll,ii,:) ) );
+                    coefsNum(ll,ii) = sum( coefsAbsRel(ll,ii,:) >= 0.1 / numel(coefsAbsRel(ll,ii,:) ) );
                     verboseFprintf( obj, '.' );
                 end
             end
             obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
             obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );
             obj.fullSetModel.nCoefs = mean( coefsNum, 2 );
-            coefsRelAvg = squeeze( mean( coefsRel, 2 ) );
-            obj.fullSetModel.coefsRelStd = squeeze( std( coefsRel, [], 2 ) ) ./ coefsRelAvg;
+            obj.fullSetModel.coefsRelAvg = squeeze( mean( coefsRel, 2 ) );
+            obj.fullSetModel.coefsRelStd = squeeze( std( coefsRel, [], 2 ) );
+            obj.fullSetModel.coefsCV = coefs;
             verboseFprintf( obj, 'Done\n' );
             obj.fullSetModel.lambdasSortedByPerf = sortrows( ...
                 [lambdas,obj.fullSetModel.lPerfsMean - obj.fullSetModel.lPerfsStd], 2 );

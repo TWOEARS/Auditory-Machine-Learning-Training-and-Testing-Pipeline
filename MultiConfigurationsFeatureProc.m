@@ -17,7 +17,7 @@ classdef MultiConfigurationsFeatureProc < IdProcInterface
         function obj = MultiConfigurationsFeatureProc( featProc )
             obj = obj@IdProcInterface();
             if ~isa( featProc, 'IdProcInterface' )
-                error( 'afeProc must implement IdProcInterface.' );
+                error( 'featProc must implement IdProcInterface.' );
             end
             obj.featProc = featProc;
         end

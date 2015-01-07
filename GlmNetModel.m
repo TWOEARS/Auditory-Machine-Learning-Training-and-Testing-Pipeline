@@ -6,7 +6,9 @@ classdef GlmNetModel < DataScalingModel
         lambda;
         lPerfsMean;
         lPerfsStd;
+        coefsRelAvg;
         coefsRelStd;
+        coefsCV;
         lambdasSortedByPerf;
         nCoefs;
     end
@@ -27,7 +29,7 @@ classdef GlmNetModel < DataScalingModel
         function [impact, cIdx] = getCoefImpacts( obj, lambda )
             if nargin < 2, lambda = obj.lambda; end
             coefsAtLambda = abs( glmnetCoef( obj.model, lambda ) );
-            coefsAtLambda = coefsAtLambda / sum( coefsAtLambda );
+            coefsAtLambda = coefsAtLambda(2:end) / sum( coefsAtLambda(2:end) );
             [impact,cIdx] = sort( coefsAtLambda );
         end
         %% -----------------------------------------------------------------

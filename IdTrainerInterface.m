@@ -75,8 +75,12 @@ classdef (Abstract) IdTrainerInterface < handle
 
         function [x,y] = getPermutedTrainingData( obj )
             x = obj.trainSet(:,:,'x');
-            if isempty( x ), error( 'There is no data to train the model.' ); end
-            y = obj.trainSet(:,:,'y',obj.positiveClass);
+            if isempty( x )
+                warning( 'There is no data to train the model.' ); 
+                y = [];
+            else
+                y = obj.trainSet(:,:,'y',obj.positiveClass);
+            end
             permutationIdxs = randperm( length( y ) );
             x = x(permutationIdxs,:);
             y = y(permutationIdxs);

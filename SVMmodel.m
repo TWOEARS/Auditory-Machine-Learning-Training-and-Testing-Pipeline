@@ -13,6 +13,11 @@ classdef SVMmodel < DataScalingModel
         end
         %% -----------------------------------------------------------------
         
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+        
         function [y,score] = applyModelToScaledData( obj, x )
             yDummy = zeros( size( x, 1 ), 1 );
             [y, ~, score] = libsvmpredict( yDummy, x, obj.model, ...

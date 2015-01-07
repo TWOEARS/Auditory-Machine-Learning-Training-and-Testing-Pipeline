@@ -13,6 +13,7 @@ classdef IdentTrainPipeData < handle
         function obj = IdentTrainPipeData()
             obj.emptyDataStruct = struct( 'files', IdentTrainPipeDataElem.empty );
             obj.data = obj.emptyDataStruct;
+            rng( 'shuffle' );
         end
         %% ----------------------------------------------------------------
         
@@ -156,7 +157,7 @@ classdef IdentTrainPipeData < handle
             end
         end
         %% ----------------------------------------------------------------
-        
+
         function l = length( obj )
             l = 0;
             for d = obj.data
@@ -247,6 +248,29 @@ classdef IdentTrainPipeData < handle
                 fprintf( flistFid, '%s', wavFileNames{kk} );
             end
             fclose( flistFid );
+        end
+        %% ----------------------------------------------------------------
+        
+        function loadWavFileList( obj, wavflist )
+            obj.data = obj.emptyDataStruct;
+            obj.classNames = {};
+            if ~isa( wavflist, 'char' )
+                error( 'wavflist must be a string.' );
+            elseif ~exist( wavflist, 'file' )
+                error( 'Wavflist not found.' );
+            end
+            fid = fopen( wavflist );
+            wavs = textscan( fid, '%s' );
+            for k = 1:length(wavs{1})
+                wavName = wavs{1}{k};
+                if ~exist( wavName, 'file' )
+                    error ( 'Could not find %s listed in %s.', wavName, wavflist );
+                end
+                wavName = which( wavName ); % ensure absolute path
+                wavClass = IdEvalFrame.readEventClass( wavName );
+                obj.subsasgn( struct('type','()','subs',{{wavClass,'+'}}), wavName );
+            end
+            fclose( fid );
         end
         %% ----------------------------------------------------------------
 

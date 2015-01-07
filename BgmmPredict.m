@@ -23,7 +23,7 @@ function [pred] = BgmmPredict(x, model1, model0)
 logP1 = PredictiveDensity(x,model1);
 logP0 = PredictiveDensity(x,model0);
 
-pred = repmat(-1,size(y,1),1);
+pred = repmat(-1,size(x,1),1);
 pred(logP1'>logP0')=1;
 
 prob0 = 1./(1+exp(logP1-logP0));

@@ -87,9 +87,9 @@ classdef IdentificationTrainingPipeline < handle
         %                   1 - trainSetShare.
         %   nGenAssessFolds: number of folds of generalization assessment cross validation
         %
-        function modelPathBuilder = run( obj, models, nGenAssessFolds )
+        function modelPath = run( obj, models, nGenAssessFolds )
             cleaner = onCleanup( @() obj.finish() );
-            obj.createFilesDir();
+            modelPath = obj.createFilesDir();
             
             if strcmpi( models, 'all' )
                 models = obj.data.classNames;
@@ -138,13 +138,10 @@ classdef IdentificationTrainingPipeline < handle
                 model = obj.trainer.getModel();
                 featureCreator = obj.featureCreator;
                 modelFileExt = ['.model.mat'];
-                modelPath = [modelName{1} modelFileExt];
-                save( modelPath, ...
+                modelFilename = [modelName{1} modelFileExt];
+                save( modelFilename, ...
                       'model', 'featureCreator', ...
                       'testPerfresults', 'trainTime' );
-                [mp,~,~] = fileparts( which( modelPath ) );
-                modelPathBuilder = @(classname)(fullfile( mp, [classname, modelFileExt] ));
-                save( modelPath, 'modelPathBuilder', '-append' );
             end;
         end
         
@@ -156,11 +153,12 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function createFilesDir( obj )
+        function path = createFilesDir( obj )
             curTimeStr = buildCurrentTimeString();
             saveDir = ['Training' curTimeStr];
             mkdir( saveDir );
             cd( saveDir );
+            path = pwd;
             diary( ['IdTrainPipe' curTimeStr '.log'] );
             obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'] );
             if ~isempty( obj.testSet )

@@ -12,7 +12,7 @@ if sum(sum(isnan(x1)))>0
     x1(isnan(x1))=0;
 end
 [~, model1, llh1] = emgm(x1, esetup.initComps);
-model1.posFeature = x1;
+% model1.posFeature = x1;
 
 x0 = real((x(y~=1,:,:))');
 if sum(sum(isnan(x0)))>0
@@ -21,7 +21,7 @@ if sum(sum(isnan(x0)))>0
 end
 
 [~, model0, llh0] = emgm(x0, esetup.initComps);
-model0.negFeature = x0;
+% model0.negFeature = x0;
 
 % [~, trVal, ~,~,~,~] = gmmPredict( y, x, model1, model0);
 

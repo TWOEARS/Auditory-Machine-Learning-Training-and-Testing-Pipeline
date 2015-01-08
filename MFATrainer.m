@@ -1,4 +1,4 @@
-classdef BGmmTrainer < IdTrainerInterface & Parameterized
+classdef MFATrainer < IdTrainerInterface & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,7 +8,7 @@ classdef BGmmTrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = BGmmTrainer( varargin )
+        function obj = MFATrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                              'default', @BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -27,7 +27,7 @@ classdef BGmmTrainer < IdTrainerInterface & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = BGmmModel();
+            obj.model = MFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
 %             glmOpts.alpha = obj.parameters.alpha;
 %             glmOpts.nlambda = obj.parameters.nLambda;
@@ -37,8 +37,9 @@ classdef BGmmTrainer < IdTrainerInterface & Parameterized
 %             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
 %             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
-            gmmOpts.initComps = 4;
-            [obj.model.model{1}, obj.model.model{2}] = trainBGMMs( y, xScaled, gmmOpts );
+            gmmOpts.mfaK = 2;%0.5*size(xScaled,2);
+             gmmOpts.mfaM = 2;
+            [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, gmmOpts );
             % train +1 model
             % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );

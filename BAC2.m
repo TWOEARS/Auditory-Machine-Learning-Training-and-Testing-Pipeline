@@ -2,8 +2,13 @@ classdef BAC2 < PerformanceMeasure
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
+        tp;
+        fp;
+        tn;
+        fn;
         sensitivity;
         specificity;
+        acc;
     end
     
     %% --------------------------------------------------------------------
@@ -34,24 +39,27 @@ classdef BAC2 < PerformanceMeasure
         end
         % -----------------------------------------------------------------
     
-        function performance = calcPerformance( obj, yTrue, yPred )
-            tp = sum( yTrue == 1 & yPred >= 0 );
-            tn = sum( yTrue == -1 & yPred < 0 );
+        function [obj, performance] = calcPerformance( obj, yTrue, yPred )
+            obj.tp = sum( yTrue == 1 & yPred >= 0 );
+            obj.tn = sum( yTrue == -1 & yPred < 0 );
+            obj.fp = sum( yTrue == -1 & yPred >= 0 );
+            obj.fn = sum( yTrue == 1 & yPred < 0 );
             tp_fn = sum( yTrue == 1 );
             tn_fp = sum( yTrue == -1 );
             if tp_fn == 0;
                 warning( 'No positive true label.' );
                 obj.sensitivity = 0;
             else
-                obj.sensitivity = tp / tp_fn;
+                obj.sensitivity = obj.tp / tp_fn;
             end
             if tn_fp == 0;
                 warning( 'No negative true label.' );
                 obj.specificity = 0;
             else
-                obj.specificity = tn / tn_fp;
+                obj.specificity = obj.tn / tn_fp;
             end
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
+            obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
         end
         % -----------------------------------------------------------------
 

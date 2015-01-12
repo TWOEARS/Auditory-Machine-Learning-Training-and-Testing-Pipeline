@@ -13,7 +13,7 @@ classdef (Abstract) PerformanceMeasure
                 error( ['Subclass of PerformanceMeasure must call superconstructor ',...
                         'and pass yTrue and yPred.'] );
             end
-            obj.performance = obj.calcPerformance( yTrue, yPred );
+            [obj, obj.performance] = obj.calcPerformance( yTrue, yPred );
         end
         % -----------------------------------------------------------------
     
@@ -68,7 +68,7 @@ classdef (Abstract) PerformanceMeasure
 
     %% --------------------------------------------------------------------
     methods (Abstract)
-        performance = calcPerformance( obj, yTrue, yPred )
+        [obj, performance] = calcPerformance( obj, yTrue, yPred )
         b = eqPm( obj, otherPm )
         b = gtPm( obj, otherPm )
         s = char( obj )

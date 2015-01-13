@@ -37,7 +37,7 @@ classdef BGmmTrainer < IdTrainerInterface & Parameterized
 %             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
 %             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
-            gmmOpts.initComps = 4;
+            gmmOpts.initComps = 2;
             [obj.model.model{1}, obj.model.model{2}] = trainBGMMs( y, xScaled, gmmOpts );
             % train +1 model
             % call obj.setPositiveClass( 'general' );

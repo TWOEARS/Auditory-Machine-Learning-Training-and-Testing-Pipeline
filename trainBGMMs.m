@@ -19,6 +19,6 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 
-[~, model0, L0] = vbgm(x0, esetup.initComps); %
+[~, model0, L0] = vbgm(x0(:,1:5000), esetup.initComps); %
 
 

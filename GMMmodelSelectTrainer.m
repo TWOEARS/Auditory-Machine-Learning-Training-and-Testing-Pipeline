@@ -18,10 +18,13 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
             pds{2} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
-            pds{3} = struct( 'name', 'comp', ...
-                             'default', [1 2 3 4], ...
-                             'valFun', @(x)(floor(x)==x) );
-            pds{4} = struct( 'name', 'cvFolds', ...
+            pds{3} = struct( 'name', 'nComp', ...
+                             'default', [1 2 3], ...
+                             'valFun', @(x)(sum(x)>=0) );
+           pds{4} = struct( 'name', 'thr', ...
+                             'default', [0.5 0.6], ...
+                             'valFun', @(x)(x<=1 && x >= 0) );
+            pds{5} = struct( 'name', 'cvFolds', ...
                               'default', 4, ...
                               'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
             obj = obj@Parameterized( pds );
@@ -35,58 +38,64 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
         
         function buildModel( obj, ~, ~ )
+             comps =  obj.parameters.nComp;
+             thrs =  obj.parameters.thr;
+         for nt=1:numel(thrs)
+             obj.parameters.thr = thrs(nt);
+             for nc=1:numel(comps)
+                 obj.parameters.nComp = comps(nc);
+                 verboseFprintf( obj, '\nRun on full trainSet...\n' );
+                 obj.coreTrainer = GmmNetTrainer( ...
+                     'performanceMeasure', obj.parameters.performanceMeasure, ...
+                     'maxDataSize', obj.parameters.maxDataSize,...
+                     'nComp', obj.parameters.nComp, ...
+                     'thr', obj.parameters.thr);
+                 
+                 obj.coreTrainer.setData( obj.trainSet, obj.testSet );
+                 obj.coreTrainer.setPositiveClass( obj.positiveClass );
+                 obj.coreTrainer.run();
+                 obj.fullSetModel = obj.coreTrainer.getModel();
+                 
+                 verboseFprintf( obj, '\nRun cv to determine best number of components...\n' );
+                 obj.cvTrainer = CVtrainer( obj.coreTrainer );
+                 obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
+                 obj.cvTrainer.setPositiveClass( obj.positiveClass );
+                 obj.cvTrainer.setData( obj.trainSet, obj.testSet );
+                 obj.cvTrainer.setNumberOfFolds( obj.parameters.cvFolds );
+                 obj.cvTrainer.run();
+                 cvModels{nt,nc} = obj.cvTrainer.models;
+                 verboseFprintf( obj, 'Calculate Performance for all values of components...\n' );
+             end
+         end
+         for nt=1:numel(thrs)
+            lPerfs = zeros( numel( comps ), numel( cvModels{1} ) );
+            for nc = 1 : numel( comps )
+                for ii = 1 : numel( cvModels{nt,nc} )
+                    %                     cvModels{ii}.setLambda( lambdas(ll) );
+                    %                   cvModels{ii}.setnComp( comps(ll) );
+                    lPerfs(nc,ii) = IdModelInterface.getPerformance( ...
+                        cvModels{nt,nc}{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
+                        obj.performanceMeasure );
+                end
+            end
+            thrCompMatrix(:,nt) = mean(lPerfs,2);
+         end
+            [bComp, bThr] = find( thrCompMatrix==max(max(thrCompMatrix)));
+            % trian the best model
+            obj.parameters.nComp = comps(bComp);
+            obj.parameters.thr = thrs(bThr);
             verboseFprintf( obj, '\nRun on full trainSet...\n' );
             obj.coreTrainer = GmmNetTrainer( ...
                 'performanceMeasure', obj.parameters.performanceMeasure, ...
-                'maxDataSize', obj.parameters.maxDataSize );
+                'maxDataSize', obj.parameters.maxDataSize,...
+                'nComp', obj.parameters.nComp, ...
+                'thr', obj.parameters.thr);
+            
             obj.coreTrainer.setData( obj.trainSet, obj.testSet );
             obj.coreTrainer.setPositiveClass( obj.positiveClass );
             obj.coreTrainer.run();
             obj.fullSetModel = obj.coreTrainer.getModel();
-            comps = obj.fullSetModel.model.comp;
-            verboseFprintf( obj, '\nRun cv to determine best number of components...\n' );
-            obj.coreTrainer.setParameters( false, 'comp', comps );
-            obj.cvTrainer = CVtrainer( obj.coreTrainer );
-            obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
-            obj.cvTrainer.setPositiveClass( obj.positiveClass );
-            obj.cvTrainer.setData( obj.trainSet, obj.testSet );
-            obj.cvTrainer.setNumberOfFolds( obj.parameters.cvFolds );
-            obj.cvTrainer.run();
-            cvModels = obj.cvTrainer.models;
-            verboseFprintf( obj, 'Calculate Performance for all values of components...\n' );
-            lPerfs = zeros( numel( comps ), numel( cvModels ) );
-            coefs = zeros( numel( comps ), numel( cvModels ), ...
-                           obj.fullSetModel.model.dim(1) );
-            coefsRel = zeros( numel(comps ), numel( cvModels ), ...
-                           obj.fullSetModel.model.dim(1) );
-            coefsNum = zeros( numel( comps ), numel( cvModels ) );
-            for ll = 1 : numel( comps )
-                for ii = 1 : numel( cvModels )
-%                     cvModels{ii}.setLambda( lambdas(ll) );
-                  cvModels{ii}.setComp( comps(ll) );
-                    lPerfs(ll,ii) = IdModelInterface.getPerformance( ...
-                        cvModels{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
-                        obj.performanceMeasure );
-                    coefsPlusIntercept = glmnetCoef( cvModels{ii}.model, comps(ll) );
-                    coefs(ll,ii,:) = coefsPlusIntercept(2:end);
-                    coefsRel(ll,ii,:) = abs( coefs(ll,ii,:) ) ./ sum( abs( coefs(ll,ii,:) ) );
-                    coefsNum(ll,ii) = sum( coefsRel(ll,ii,:) >= 0.1 / numel(coefsRel(ll,ii,:) ) );
-                    verboseFprintf( obj, '.' );
-                end
-            end
-            obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
-            obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );
-            obj.fullSetModel.nCoefs = mean( coefsNum, 2 );
-            coefsRelAvg = squeeze( mean( coefsRel, 2 ) );
-            obj.fullSetModel.coefsRelStd = squeeze( std( coefsRel, [], 2 ) ) ./ coefsRelAvg;
-            verboseFprintf( obj, 'Done\n' );
-%             obj.fullSetModel.lambdasSortedByPerf = sortrows( ...
-%                 [lambdas,obj.fullSetModel.lPerfsMean - obj.fullSetModel.lPerfsStd], 2 );
-obj.fullSetModel.compsSortedByPerf = sortrows( ...
-                [comps,obj.fullSetModel.lPerfsMean - obj.fullSetModel.lPerfsStd], 2 );
-%             bestLambda = mean( obj.fullSetModel.lambdasSortedByPerf(end-2:end,1) );
- bestComp = mean( obj.fullSetModel.compsSortedByPerf(end-2:end,1) );
-            obj.fullSetModel.setComp( bestComp );
+%             obj.fullSetModel.setnComp( bestnComp );
         end
         %% -------------------------------------------------------------------------------
         

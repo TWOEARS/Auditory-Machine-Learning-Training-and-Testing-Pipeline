@@ -3,6 +3,8 @@ classdef GmmNetModel < DataScalingModel
     %% --------------------------------------------------------------------
     properties (SetAccess = {?GmmNetTrainer, ?GMMmodelSelectTrainer})
         model;
+        nComp;
+        thr;
 %         coefsRelStd;
 %         lambdasSortedByPerf;
 %         nCoefs;
@@ -11,14 +13,14 @@ classdef GmmNetModel < DataScalingModel
     %% --------------------------------------------------------------------
     methods
 
-%         function obj = GmmModel()
-%             obj.lambda = 1e-10;
-%         end
-        %% -----------------------------------------------------------------
-
-%         function setLambda( obj, newLambda )
-%             obj.lambda = newLambda;
-%         end
+        function obj = GmmNetModel()
+            obj.nComp = [1 2 3];
+        end
+%         %% -----------------------------------------------------------------
+% 
+        function setnComp( obj, newnComp )
+            obj.nComp = newnComp;
+        end
         %% -----------------------------------------------------------------
 
 %         function [impact, cIdx] = getCoefImpacts( obj, lambda )
@@ -34,11 +36,18 @@ classdef GmmNetModel < DataScalingModel
     methods (Access = protected)
         
         function [y,score] = applyModelToScaledData( obj, x )
+          
+                
             model1 = obj.model{1};
             model0 = obj.model{2};
-            [y] = gmmPredict(x, model1, model0 );
+%             comps = featureSelectionPCA(x,1);
+%  prinComps = comps(:,1: model1.NDimensions);
+            idFeature = obj.model{3};
+           
+            [y] = gmmPredict(x(:,idFeature), model1, model0 );
             score = 1; % ask Ivo about?? ll
 %             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
+
            
        end
         %% -----------------------------------------------------------------

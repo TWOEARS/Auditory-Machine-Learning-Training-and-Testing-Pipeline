@@ -1,4 +1,4 @@
-function [model1, model0] = trainGmms( y, x, esetup )
+function [model1, model0] = trainVMF( y, x, esetup )
 % y: labels of x
 % x: matrix of data points (+1 and -1!)
 % esetup: training parameters
@@ -11,7 +11,9 @@ if sum(sum(isnan(x1)))>0
     warning('there is some missing data that create NaN which are replaced by zero')
     x1(isnan(x1))=0;
 end
-% [~, model1, llh1] = emgm(x1, esetup.initComps);
+
+pDprior=init(vMFMMB(esetup.initComps),x1);
+[model1]=adapt(pDprior,x1, 5000, 'fixed',0.1);
 % model1.posFeature = x1;
 
 x0 = real((x(y~=1,:,:))');
@@ -19,12 +21,9 @@ if sum(sum(isnan(x0)))>0
     warning('there is some missing data that create NaN which are replaced by zero')
     x0(isnan(x0))=0;
 end
-options = statset('MaxIter',500);
-   
-model1 =  gmdistribution.fit(x1',esetup.nComp,'Options',options);
-model0 =  gmdistribution.fit(x0',esetup.nComp,'Options',options);
 
-% [~, model0, llh0] = emgm(x0, esetup.initComps);
+pDprior=init(vMFMMB(esetup.initComps),x0);
+[model0]=adapt(pDprior,x0, 5000, 'fixed',0.1);
 % model0.negFeature = x0;
 
 % [~, trVal, ~,~,~,~] = gmmPredict( y, x, model1, model0);

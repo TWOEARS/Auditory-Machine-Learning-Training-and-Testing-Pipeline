@@ -10,7 +10,7 @@ R = initialization(X,init);
 R = R(:,unique(label));
 
 tol = 1e-10;
-maxiter = 700;
+maxiter = 100;
 llh = -inf(1,maxiter);
 converged = false;
 t = 1;

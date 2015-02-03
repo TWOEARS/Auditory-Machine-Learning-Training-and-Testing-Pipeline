@@ -15,7 +15,8 @@ if sum(sum(isnan(x1)))>0
     warning('there is some missing data that create NaN which are replaced by zero')
     x1(isnan(x1))=0;
 end
-[x1,~] = preprocess(x1);
+%  [x1,~] = preprocess(x1);
+x1= x1(:,1:5000);
 model1 = vbmfa(x1,esetup.mfaK);
 % [W Dim1 indexDimClus]=featureSelection(model1);
 % model1.posFeature = x1;
@@ -25,8 +26,8 @@ if sum(sum(isnan(x0)))>0
     warning('there is some missing data that create NaN which are replaced by zero')
     x0(isnan(x0))=0;
 end
-[x0,~] = preprocess(x0);
-x0= x0(:,1:2000);
+% [x0,~] = preprocess(x0);
+x0= x0(:,1:5000);
 model0 = vbmfa(x0,esetup.mfaK);
 % [Dim0 indexDimClus]=featureSelection(model0);
 

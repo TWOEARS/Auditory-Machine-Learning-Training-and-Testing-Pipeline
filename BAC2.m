@@ -35,6 +35,7 @@ classdef BAC2 < PerformanceMeasure
         % -----------------------------------------------------------------
     
         function performance = calcPerformance( obj, yTrue, yPred )
+
             tp = sum( yTrue == 1 & yPred >= 0 );
             tn = sum( yTrue == -1 & yPred < 0 );
             tp_fn = sum( yTrue == 1 );
@@ -52,6 +53,7 @@ classdef BAC2 < PerformanceMeasure
                 obj.specificity = tn / tn_fp;
             end
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
+
         end
         % -----------------------------------------------------------------
 

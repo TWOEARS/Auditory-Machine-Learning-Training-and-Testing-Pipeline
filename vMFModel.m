@@ -1,7 +1,7 @@
-classdef BMFAModel < DataScalingModel
+classdef vMFModel < DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?BMFATrainer, ?BGMMmodelSelectTrainer})
+    properties (SetAccess = {?vMFTrainer, ?GMMmodelSelectTrainer})
         model;
 %         coefsRelStd;
 %         lambdasSortedByPerf;
@@ -37,8 +37,7 @@ classdef BMFAModel < DataScalingModel
             model1 = obj.model{1};
             model0 = obj.model{2};
             idFeature = obj.model{3};
-            [y] = BmfaPredict(x(:,idFeature), model1, model0 );
-            
+            [y] = vMFPredict(x(:,idFeature), model1, model0 );
             score = 1; % ask Ivo about?? ll
 %             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
            

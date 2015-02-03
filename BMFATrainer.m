@@ -38,7 +38,9 @@ classdef BMFATrainer < IdTrainerInterface & Parameterized
 %             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             gmmOpts.mfaK = 5;
-            [obj.model.model{1}, obj.model.model{2}] = trainBMFA( y, xScaled, gmmOpts );
+            idFeature = featureSelectionPCA2(xScaled,.93);
+            [obj.model.model{1}, obj.model.model{2}] = trainBMFA( y, xScaled(:,idFeature), gmmOpts );
+            obj.model.model{3}=idFeature;
             % train +1 model
             % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );

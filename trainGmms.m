@@ -20,9 +20,31 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 options = statset('MaxIter',500);
-   
-model1 =  gmdistribution.fit(x1',esetup.nComp,'Options',options);
-model0 =  gmdistribution.fit(x0',esetup.nComp,'Options',options);
+
+try
+    model1 =  gmdistribution.fit(x1',esetup.nComp,'Options',options);
+catch err
+    if (strcmp(err.identifier,'stats:gmdistribution:IllCondCovIter'))
+        display('ill-conditioned covariance matrix was catched, training using a single Gaussian component...')
+    model1 =  gmdistribution.fit(x1',1,'Options',options);
+%         rethrow(err);
+    end
+end
+
+try
+    model0 =  gmdistribution.fit(x0',esetup.nComp,'Options',options);
+catch err
+    if (strcmp(err.identifier,'stats:gmdistribution:IllCondCovIter'))
+        display('ill-conditioned covariance matrix was catched, training using a single Gaussian component...')
+    model0 =  gmdistribution.fit(x0',1,'Options',options);
+    end
+end
+
+
+
+% model1 =  gmdistribution.fit(x1',esetup.nComp,'Options',options);
+% model0 =  gmdistribution.fit(x0',esetup.nComp,'Options',options);
+
 
 % [~, model0, llh0] = emgm(x0, esetup.initComps);
 % model0.negFeature = x0;

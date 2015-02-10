@@ -19,15 +19,21 @@ function [pred] = BgmmPredict(x, model1, model0)
 
 % Bayesian approach using computing the predictive density
 % this should be the elgont way of doing this
+% 
+% logP1 = PredictiveDensity(x,model1);
+% logP0 = PredictiveDensity(x,model0);
+% 
+% pred = repmat(-1,size(x,1),1);
+% pred(logP1'>logP0')=1;
+% 
+% prob0 = 1./(1+exp(logP1-logP0));
+% I = 1./(1+exp(logP0-logP1));
 
-logP1 = PredictiveDensity(x,model1);
-logP0 = PredictiveDensity(x,model0);
-
-pred = repmat(-1,size(x,1),1);
-pred(logP1'>logP0')=1;
-
-prob0 = 1./(1+exp(logP1-logP0));
-I = 1./(1+exp(logP0-logP1));
-
+% 
+xc = x';
+[~, llh1] = Blikelihood(xc, model1);
+[~, llh0] = Blikelihood(xc, model0);
+pred = repmat(-1,size(llh1,1),1);
+pred(llh1'>llh0')=1;
 
 

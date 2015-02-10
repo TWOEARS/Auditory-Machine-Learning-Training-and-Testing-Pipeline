@@ -16,7 +16,6 @@ if sum(sum(isnan(x1)))>0
     x1(isnan(x1))=0;
 end
 %  [x1,~] = preprocess(x1);
-x1= x1(:,1:5000);
 model1 = vbmfa(x1,esetup.mfaK);
 % [W Dim1 indexDimClus]=featureSelection(model1);
 % model1.posFeature = x1;
@@ -27,7 +26,6 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 % [x0,~] = preprocess(x0);
-x0= x0(:,1:5000);
 model0 = vbmfa(x0,esetup.mfaK);
 % [Dim0 indexDimClus]=featureSelection(model0);
 

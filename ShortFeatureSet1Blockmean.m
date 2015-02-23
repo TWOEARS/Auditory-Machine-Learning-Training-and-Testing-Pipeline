@@ -1,4 +1,4 @@
-classdef ShortFeatureSet1Blockmean < FeatureProcInterface
+classdef ShortFeatureSet1Blockmean < IdFeatureProc
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -20,7 +20,7 @@ classdef ShortFeatureSet1Blockmean < FeatureProcInterface
     methods (Access = public)
         
         function obj = ShortFeatureSet1Blockmean( )
-            obj = obj@FeatureProcInterface( 0.5 );
+            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
@@ -81,7 +81,7 @@ classdef ShortFeatureSet1Blockmean < FeatureProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getInternOutputDependencies( obj )
+        function outputDeps = getFeatureInternOutputDependencies( obj )
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.amFreqChannels = obj.amFreqChannels;
             outputDeps.freqChannelsStatistics = obj.freqChannelsStatistics;

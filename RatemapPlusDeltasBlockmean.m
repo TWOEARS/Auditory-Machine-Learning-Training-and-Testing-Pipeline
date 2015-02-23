@@ -1,4 +1,4 @@
-classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
+classdef RatemapPlusDeltasBlockmean < IdFeatureProc
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -17,7 +17,7 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
     methods (Access = public)
         
         function obj = RatemapPlusDeltasBlockmean()
-            obj = obj@FeatureProcInterface( 0.5 );
+            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.deltasLevels = 1;
         end
@@ -47,7 +47,7 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getInternOutputDependencies( obj )
+        function outputDeps = getFeatureInternOutputDependencies( obj )
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );

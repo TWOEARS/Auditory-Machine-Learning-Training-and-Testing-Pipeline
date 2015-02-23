@@ -27,7 +27,7 @@ classdef TwoEarsNIstandardIdPipeline < handle
             obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
             obj.pipeline.addDataPipeProc( multiConfAFEmodule );
             obj.pipeline.addDataPipeProc( ...
-                MultiConfigurationsFeatureProc( IdFeatureProc( featureCreator ) ) );
+                MultiConfigurationsFeatureProc( featureCreator ) );
             obj.pipeline.addGatherFeaturesProc( GatherFeaturesProc() );
             
             obj.pipeline.addModelCreator( modelCreator );

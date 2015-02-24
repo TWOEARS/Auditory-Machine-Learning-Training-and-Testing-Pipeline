@@ -69,6 +69,9 @@ classdef (Abstract) IdTrainerInterface < handle
 
         function run( obj )
             [x,y] = obj.getPermutedTrainingData();
+            if any( any( isnan( x ) ) ) || any( any( isinf( x ) ) ) 
+                warning( 'There are NaNs or INFs in the data!' );
+            end
             obj.buildModel( x, y );
         end
         %% ----------------------------------------------------------------

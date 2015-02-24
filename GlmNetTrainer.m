@@ -40,6 +40,8 @@ classdef GlmNetTrainer < IdTrainerInterface & Parameterized
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
             obj.model = GlmNetModel();
+            x(isnan(x)) = 0;
+            x(isinf(x)) = 0;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             glmOpts.alpha = obj.parameters.alpha;
             glmOpts.nlambda = obj.parameters.nLambda;

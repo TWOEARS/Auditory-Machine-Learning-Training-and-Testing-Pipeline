@@ -35,6 +35,7 @@ classdef IdFeatureProc < IdProcInterface
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.x(end+1,:) = obj.makeDataPoint( afeBlock{1} );
+                fprintf( '.' );
             end
         end
         %% ----------------------------------------------------------------

@@ -61,10 +61,10 @@ classdef ShortFeatureSet1Blockmean < IdFeatureProc
             spfL = compressAndScale( spfRL{2}.Data, 0.33, @(x)(median( abs(x(abs(x)>0.01)) )), 1 );
             spf = 0.5 * spfL + 0.5 * spfR;
             xBlock = [rm, spf];
-            x = lMomentAlongDim( xBlock, 3, 1 );
+            x = lMomentAlongDim( xBlock, [1,2,3], 1 );
             for ii = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, 2, 1 )];
+                x = [x  lMomentAlongDim( xBlock, [1,2], 1 )];
             end
             modRL = afeData('modulation');
             modR = compressAndScale( modRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
@@ -77,7 +77,7 @@ classdef ShortFeatureSet1Blockmean < IdFeatureProc
                 end
             end
             modSqueeze = reshape( modSqueeze, size( modSqueeze, 1 ), size( modSqueeze, 2 ) * size( modSqueeze, 3 ) );
-            x = [x lMomentAlongDim( modSqueeze, 2, 1 )];
+            x = [x lMomentAlongDim( modSqueeze, [1,2], 1 )];
         end
         %% ----------------------------------------------------------------
         

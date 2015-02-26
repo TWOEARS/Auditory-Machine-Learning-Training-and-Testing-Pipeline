@@ -27,7 +27,7 @@ classdef FeatureSet1VarBlocks < IdFeatureProc
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
             obj.deltasLevels = 1;
-            obj.nlmoments = 4;
+            obj.nlmoments = [1,2,3,4];
             obj.amChannels = 4;
         end
         %% ----------------------------------------------------------------
@@ -52,8 +52,6 @@ classdef FeatureSet1VarBlocks < IdFeatureProc
                 'nChannels', obj.freqChannels ...
                 );
             %include pitch
-            %include gabor??
-            %onset_strength or other ons map?
         end
         %% ----------------------------------------------------------------
 

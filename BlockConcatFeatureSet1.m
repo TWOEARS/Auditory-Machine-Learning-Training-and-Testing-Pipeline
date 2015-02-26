@@ -36,7 +36,7 @@ classdef BlockConcatFeatureSet1 < FeatureProcInterface
             nDividableRmLen = size( rm, 1 ) - mod( size( rm, 1 ), obj.nConcatBlocks );
             concatBlockLen = nDividableRmLen / obj.nConcatBlocks;
             rm = reshape( rm(end-nDividableRmLen+1:end,:), concatBlockLen, size( rm, 2 ) * obj.nConcatBlocks );
-            x = lMomentAlongDim( rm, 2, 1 );
+            x = lMomentAlongDim( rm, [1,2], 1 );
         end
         %% ----------------------------------------------------------------
         

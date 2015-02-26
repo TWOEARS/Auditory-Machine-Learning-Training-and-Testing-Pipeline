@@ -82,10 +82,10 @@ classdef BlockConcatFeatureSet2 < FeatureProcInterface
                 xbn = [xbn xBlock(:,ii:obj.nConcatBlocks:end)];
             end
             xBlock = xbn;
-            x = lMomentAlongDim( xBlock, 4, 1 );
+            x = lMomentAlongDim( xBlock, [1,2,3,4], 1 );
             for ii = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, 4, 1 )];
+                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
             end
             lenOneBlock = length( x ) / obj.nConcatBlocks;
             for ii = 2 : obj.nConcatBlocks
@@ -94,10 +94,10 @@ classdef BlockConcatFeatureSet2 < FeatureProcInterface
             nDividableXLen = size( md, 1 ) - mod( size( md, 1 ), obj.nConcatBlocks );
             concatBlockLen = nDividableXLen / obj.nConcatBlocks;
             md = reshape( md(end-nDividableXLen+1:end,:), concatBlockLen, size( md, 2 ) * obj.nConcatBlocks );
-            xm = lMomentAlongDim( md, 4, 1 );
+            xm = lMomentAlongDim( md, [1,2,3,4], 1 );
             for ii = 1:obj.deltasLevels
                 md = md(2:end,:) - md(1:end-1,:);
-                xm = [xm  lMomentAlongDim( md, 4, 1 )];
+                xm = [xm  lMomentAlongDim( md, [1,2,3,4], 1 )];
             end
             lenOneBlock = length( xm ) / obj.nConcatBlocks;
             for ii = 2 : obj.nConcatBlocks

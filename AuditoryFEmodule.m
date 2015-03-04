@@ -18,7 +18,7 @@ classdef AuditoryFEmodule < IdProcInterface
         function obj = AuditoryFEmodule( fs, afeRequests )
             obj = obj@IdProcInterface();
             obj.afeSignals = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-            obj.afeDataObj = dataObject( [], fs, 2, 1 );
+            obj.afeDataObj = dataObject( [], fs, 2, 2 );
             obj.managerObject = manager( obj.afeDataObj );
             for ii = 1:length( afeRequests )
                 obj.afeSignals(afeRequests{ii}.name) = obj.managerObject.addProcessor( ...
@@ -53,7 +53,7 @@ classdef AuditoryFEmodule < IdProcInterface
         function afeData = makeAFEdata( obj, earSignals )
             obj.managerObject.reset();
             obj.afeDataObj.clearData();
-            fs = obj.afeDataObj.signal{1,1}.FsHz;
+            fs = obj.afeDataObj.time{1,1}.FsHz;
             for outputSig = obj.afeSignals.values
                 for kk = 1:numel( outputSig{1} )
                     if isa( outputSig{1}, 'cell' )

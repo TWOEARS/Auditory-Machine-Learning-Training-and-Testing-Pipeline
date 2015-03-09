@@ -61,7 +61,7 @@ classdef IdFeatureProc < IdProcInterface
         %% ----------------------------------------------------------------
 
         function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
-            afeBlock = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for afeKey = afeData.keys
                 afeSignal = afeData(afeKey{1});
                 if isa( afeSignal, 'cell' )

@@ -17,11 +17,11 @@ classdef AuditoryFEmodule < IdProcInterface
         
         function obj = AuditoryFEmodule( fs, afeRequests )
             obj = obj@IdProcInterface();
-            obj.afeSignals = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            obj.afeSignals = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             obj.afeDataObj = dataObject( [], fs, 2, 2 );
             obj.managerObject = manager( obj.afeDataObj );
             for ii = 1:length( afeRequests )
-                obj.afeSignals(afeRequests{ii}.name) = obj.managerObject.addProcessor( ...
+                obj.afeSignals(ii) = obj.managerObject.addProcessor( ...
                     afeRequests{ii}.name, afeRequests{ii}.params );
             end
         end

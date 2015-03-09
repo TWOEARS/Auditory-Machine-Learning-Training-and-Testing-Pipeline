@@ -24,16 +24,17 @@ classdef RatemapPlusDeltasBlockmean < IdFeatureProc
         %% ----------------------------------------------------------------
 
         function afeRequests = getAFErequests( obj )
-            afeRequests{1}.name = 'ratemap_magnitude';
+            afeRequests{1}.name = 'ratemap';
             afeRequests{1}.params = genParStruct( ...
-                'nChannels', obj.freqChannels, ...
-                'rm_scaling', 'magnitude' ...
+                'pp_bNormalizeRMS', false, ...
+                'rm_scaling', 'magnitude', ...
+                'fb_nChannels', obj.freqChannels ...
                 );
         end
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
-            rmRL = afeData('ratemap_magnitude');
+            rmRL = afeData(1);
             rmR = rmRL{1}.Data;
             rmL = rmRL{2}.Data;
             rmR = obj.compressAndScale( rmR );

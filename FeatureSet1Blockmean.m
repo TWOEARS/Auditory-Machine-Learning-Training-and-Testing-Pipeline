@@ -32,7 +32,7 @@ classdef FeatureSet1Blockmean < IdFeatureProc
         function afeRequests = getAFErequests( obj )
             afeRequests{1}.name = 'ams_features';
             afeRequests{1}.params = genParStruct( ...
-                'pp_bNormalizeRMS', true, ...
+                'pp_bNormalizeRMS', false, ...
                 'fb_nChannels', obj.amFreqChannels, ...
                 'ams_fbType', 'log', ...
                 'ams_nFilters', obj.amChannels, ...
@@ -41,33 +41,33 @@ classdef FeatureSet1Blockmean < IdFeatureProc
                 );
             afeRequests{2}.name = 'ratemap';
             afeRequests{2}.params = genParStruct( ...
-                'pp_bNormalizeRMS', true, ...
+                'pp_bNormalizeRMS', false, ...
                 'rm_scaling', 'magnitude', ...
                 'fb_nChannels', obj.freqChannels ...
                 );
             afeRequests{3}.name = 'spectral_features';
             afeRequests{3}.params = genParStruct( ...
-                'pp_bNormalizeRMS', true, ...
+                'pp_bNormalizeRMS', false, ...
                 'fb_nChannels', obj.freqChannelsStatistics ...
                 );
             afeRequests{4}.name = 'onset_strength';
             afeRequests{4}.params = genParStruct( ...
-                'pp_bNormalizeRMS', true, ...
+                'pp_bNormalizeRMS', false, ...
                 'fb_nChannels', obj.freqChannels ...
                 );
         end
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
-            rmRL = afeData('ratemap');
+            rmRL = afeData(2);
             rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
-            spfRL = afeData('spectral_features');
+            spfRL = afeData(3);
             spfR = compressAndScale( spfRL{1}.Data, 0.33 );
             spfL = compressAndScale( spfRL{2}.Data, 0.33 );
             spf = 0.5 * spfL + 0.5 * spfR;
-            onsRL = afeData('onset_strength');
+            onsRL = afeData(4);
             onsR = compressAndScale( onsRL{1}.Data, 0.33 );
             onsL = compressAndScale( onsRL{2}.Data, 0.33 );
             ons = 0.5 * onsR + 0.5 * onsL;
@@ -77,7 +77,7 @@ classdef FeatureSet1Blockmean < IdFeatureProc
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
                 x = [x  lMomentAlongDim( xBlock, [2,3,4], 1 )];
             end
-            modRL = afeData('ams_features');
+            modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33 );
             modL = compressAndScale( modRL{2}.Data, 0.33 );
             mod = 0.5 * modR + 0.5 * modL;
@@ -99,7 +99,7 @@ classdef FeatureSet1Blockmean < IdFeatureProc
             classInfo = metaclass( obj );
             classname = classInfo.Name;
             outputDeps.featureProc = classname;
-            outputDeps.v = 4;
+            outputDeps.v = 5;
         end
         %% ----------------------------------------------------------------
         

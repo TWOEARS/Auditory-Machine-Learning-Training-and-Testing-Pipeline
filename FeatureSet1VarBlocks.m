@@ -8,6 +8,7 @@ classdef FeatureSet1VarBlocks < IdFeatureProc
         freqChannels;
         freqChannelsStatistics;
         amFreqChannels;
+        onsfreqChannels;
         deltasLevels;
         amChannels;
         nlmoments;

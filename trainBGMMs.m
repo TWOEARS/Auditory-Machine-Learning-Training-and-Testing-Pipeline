@@ -11,7 +11,6 @@ if sum(sum(isnan(x1)))>0
     x1(isnan(x1))=0;
 end
 
-[~, model1, L1] = vbgm(x1, esetup.initComps); %
 
 x0 = (x(y~=1,:,:))';
 if sum(sum(isnan(x0)))>0
@@ -19,6 +18,15 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 
-[~, model0, L0] = vbgm(x0, esetup.initComps); %
+[~, model1, L1] = vbgm(x1, esetup.nComp); %
+
+[~, model0, L0] = vbgm(x0, esetup.nComp); %
 
 
+
+
+% model1=init(GMMB(esetup.nComp),x1);
+% model1=adapt(model1,x1,1000);
+% 
+% model0=init(GMMB(esetup.nComp),x0);
+% model0=adapt(model0,x0,1000);

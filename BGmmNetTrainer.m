@@ -1,4 +1,4 @@
-classdef GmmNetTrainer < IdTrainerInterface & Parameterized
+classdef BGmmNetTrainer < IdTrainerInterface & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,7 +8,7 @@ classdef GmmNetTrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = GmmNetTrainer( varargin )
+        function obj = BGmmNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                 'default', @BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -33,7 +33,7 @@ classdef GmmNetTrainer < IdTrainerInterface & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = GmmNetModel();
+            obj.model = BGmmNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.nComp = obj.parameters.nComp;
             gmmOpts.thr = obj.parameters.thr;
@@ -45,7 +45,7 @@ classdef GmmNetTrainer < IdTrainerInterface & Parameterized
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             gmmOpts.initComps = gmmOpts.nComp;
           idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
-            [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xScaled(:,idFeature), gmmOpts );
+            [obj.model.model{1}, obj.model.model{2}] = trainBGMMs( y, xScaled(:,idFeature), gmmOpts );
             obj.model.model{3}=idFeature;            % train +1 model
             % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );

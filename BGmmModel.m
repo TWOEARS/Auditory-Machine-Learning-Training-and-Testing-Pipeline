@@ -36,9 +36,9 @@ classdef BGmmModel < DataScalingModel
         function [y,score] = applyModelToScaledData( obj, x )
             model1 = obj.model{1};
             model0 = obj.model{2};
-            [y] = BgmmPredict(x, model1, model0 );
-            score = 1; % ask Ivo about?? ll
-%             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
+             idFeature = obj.model{3};
+            [y] = BgmmPredict(x(:,idFeature), model1, model0 );
+            score = 1;
            
        end
         %% -----------------------------------------------------------------

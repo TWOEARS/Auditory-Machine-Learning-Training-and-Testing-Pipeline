@@ -1,4 +1,4 @@
-function [indexDimAve indexDimClus]=featureSelection(model,limit)
+function [mAve, indexDimAve, indexDimClus]=featureSelection(model,limit)
 % thr: threshold between 0 and 1
 % Jalil Taghia
 km = size(model.params.u,2);  % number of remaining components
@@ -19,7 +19,9 @@ for j=1:km
     indexDimAve = find(mAve>thr);
 end
 figure;
-plot(mn,'.-')
+% plot(mn,'.-')
+plot(mAve,'.-')
+
 hold on; plot(thr*ones(1,dim),'--k')
 ylabel('weight')
 xlabel('dimension')

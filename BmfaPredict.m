@@ -1,4 +1,4 @@
-function [pred, val, llh1,llh0,P1,P0] = BmfaPredict( x, model1, model0 )
+function [pred, llh1,llh0,P1,P0] = BmfaPredict( x, model1, model0 )
 % x: matrix of data points
 % y: vector of true labels of x
 %

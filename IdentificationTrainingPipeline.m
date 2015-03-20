@@ -102,6 +102,9 @@ classdef IdentificationTrainingPipeline < handle
                 end
                 obj.dataPipeProcs{ii}.run();
             end
+            
+            if strcmp(models{1}, 'donttrain'), return; end;
+            
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 

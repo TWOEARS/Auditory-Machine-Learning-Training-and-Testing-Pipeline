@@ -45,6 +45,12 @@ classdef MultiConfigurationsFeatureProc < IdProcInterface
         
         function makeFeatures( obj, inFileName )
             in = load( inFileName );
+            in.wavFileName = which(nameSearch(in.wavFileName));  
+            ppp = in.wavFileName;
+            pos = strfind(ppp,'\');
+            fname = ppp(1:pos(end));
+            [~,fname2] = nameSearch(in.singleConfFiles{1});
+            in.singleConfFiles{1} = [fname ,fname2]; 
             obj.x = [];
             obj.y = [];
             for ii = 1 : numel( in.singleConfFiles )

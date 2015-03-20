@@ -20,7 +20,7 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 factorDim = 1;
-mySetup.nIter = 50;
+mySetup.nIter = 6;
 mySetup.minLLstep = 1E-3;
 mySetup.TOLERANCE = 1E-1;
 % ind = randperm(2*size(x1,2));

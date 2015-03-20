@@ -1,4 +1,4 @@
-classdef ShortFeatureSet1Blockmean < FeatureProcInterface
+classdef ShortFeatureSet1Blockmean < IdFeatureProc
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -20,7 +20,7 @@ classdef ShortFeatureSet1Blockmean < FeatureProcInterface
     methods (Access = public)
         
         function obj = ShortFeatureSet1Blockmean( )
-            obj = obj@FeatureProcInterface( 0.5 );
+            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
@@ -61,10 +61,10 @@ classdef ShortFeatureSet1Blockmean < FeatureProcInterface
             spfL = compressAndScale( spfRL{2}.Data, 0.33, @(x)(median( abs(x(abs(x)>0.01)) )), 1 );
             spf = 0.5 * spfL + 0.5 * spfR;
             xBlock = [rm, spf];
-            x = lMomentAlongDim( xBlock, 3, 1 );
+            x = lMomentAlongDim( xBlock, [1,2,3], 1 );
             for ii = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, 2, 1 )];
+                x = [x  lMomentAlongDim( xBlock, [1,2], 1 )];
             end
             modRL = afeData('modulation');
             modR = compressAndScale( modRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
@@ -77,11 +77,11 @@ classdef ShortFeatureSet1Blockmean < FeatureProcInterface
                 end
             end
             modSqueeze = reshape( modSqueeze, size( modSqueeze, 1 ), size( modSqueeze, 2 ) * size( modSqueeze, 3 ) );
-            x = [x lMomentAlongDim( modSqueeze, 2, 1 )];
+            x = [x lMomentAlongDim( modSqueeze, [1,2], 1 )];
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getInternOutputDependencies( obj )
+        function outputDeps = getFeatureInternOutputDependencies( obj )
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.amFreqChannels = obj.amFreqChannels;
             outputDeps.freqChannelsStatistics = obj.freqChannelsStatistics;

@@ -1,4 +1,4 @@
-classdef FeatureSet1Blockmean < IdFeatureProc
+classdef FeatureSet1BlockmeanLmVsStd < IdFeatureProc
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -19,55 +19,53 @@ classdef FeatureSet1Blockmean < IdFeatureProc
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = FeatureSet1Blockmean( )
+        function obj = FeatureSet1BlockmeanLmVsStd( )
             obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
             obj.deltasLevels = 2;
-            obj.amChannels = 9;
+            obj.amChannels = 4;
         end
         %% ----------------------------------------------------------------
 
         function afeRequests = getAFErequests( obj )
-            afeRequests{1}.name = 'ams_features';
+            afeRequests{1}.name = 'modulation';
             afeRequests{1}.params = genParStruct( ...
-                'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.amFreqChannels, ...
-                'ams_fbType', 'log', ...
-                'ams_nFilters', obj.amChannels, ...
-                'ams_lowFreqHz', 1, ...
-                'ams_highFreqHz', 256' ...
+                'pp_bNormalizeRMS', true, ...
+                'nChannels', obj.amFreqChannels, ...
+                'am_type', 'filter', ...
+                'am_nFilters', obj.amChannels ...
                 );
-            afeRequests{2}.name = 'ratemap';
+            afeRequests{2}.name = 'ratemap_magnitude';
             afeRequests{2}.params = genParStruct( ...
-                'pp_bNormalizeRMS', false, ...
+                'pp_bNormalizeRMS', true, ...
                 'rm_scaling', 'magnitude', ...
-                'fb_nChannels', obj.freqChannels ...
+                'nChannels', obj.freqChannels ...
                 );
-            afeRequests{3}.name = 'spectral_features';
+            afeRequests{3}.name = 'spec_features';
             afeRequests{3}.params = genParStruct( ...
-                'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.freqChannelsStatistics ...
+                'pp_bNormalizeRMS', true, ...
+                'nChannels', obj.freqChannelsStatistics ...
                 );
             afeRequests{4}.name = 'onset_strength';
             afeRequests{4}.params = genParStruct( ...
-                'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.freqChannels ...
+                'pp_bNormalizeRMS', true, ...
+                'nChannels', obj.freqChannels ...
                 );
         end
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
-            rmRL = afeData(2);
+            rmRL = afeData('ratemap_magnitude');
             rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
-            spfRL = afeData(3);
+            spfRL = afeData('spec_features');
             spfR = compressAndScale( spfRL{1}.Data, 0.33 );
             spfL = compressAndScale( spfRL{2}.Data, 0.33 );
             spf = 0.5 * spfL + 0.5 * spfR;
-            onsRL = afeData(4);
+            onsRL = afeData('onset_strength');
             onsR = compressAndScale( onsRL{1}.Data, 0.33 );
             onsL = compressAndScale( onsRL{2}.Data, 0.33 );
             ons = 0.5 * onsR + 0.5 * onsL;
@@ -77,7 +75,7 @@ classdef FeatureSet1Blockmean < IdFeatureProc
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
                 x = [x  lMomentAlongDim( xBlock, [2,3,4], 1 )];
             end
-            modRL = afeData(1);
+            modRL = afeData('modulation');
             modR = compressAndScale( modRL{1}.Data, 0.33 );
             modL = compressAndScale( modRL{2}.Data, 0.33 );
             mod = 0.5 * modR + 0.5 * modL;
@@ -86,6 +84,35 @@ classdef FeatureSet1Blockmean < IdFeatureProc
             for i = 1:obj.deltasLevels
                 mod = mod(2:end,:) - mod(1:end-1,:);
                 x = [x lMomentAlongDim( mod, [2,3], 1 )];
+            end
+            
+            rmRL = afeData('ratemap_magnitude');
+            rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            rm = 0.5 * rmR + 0.5 * rmL;
+            spfRL = afeData('spec_features');
+            spfR = compressAndScale( spfRL{1}.Data, 0.33 );
+            spfL = compressAndScale( spfRL{2}.Data, 0.33 );
+            spf = 0.5 * spfL + 0.5 * spfR;
+            onsRL = afeData('onset_strength');
+            onsR = compressAndScale( onsRL{1}.Data, 0.33 );
+            onsL = compressAndScale( onsRL{2}.Data, 0.33 );
+            ons = 0.5 * onsR + 0.5 * onsL;
+            xBlock = [rm, spf, ons];
+            x = [x momentsAlongDim( xBlock, [1,2,3], 1 )];
+            for i = 1:obj.deltasLevels
+                xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
+                x = [x  momentsAlongDim( xBlock, [2,3,4], 1 )];
+            end
+            modRL = afeData('modulation');
+            modR = compressAndScale( modRL{1}.Data, 0.33 );
+            modL = compressAndScale( modRL{2}.Data, 0.33 );
+            mod = 0.5 * modR + 0.5 * modL;
+            mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
+            x = [x momentsAlongDim( mod, [1,2], 1 )];
+            for i = 1:obj.deltasLevels
+                mod = mod(2:end,:) - mod(1:end-1,:);
+                x = [x momentsAlongDim( mod, [2,3], 1 )];
             end
         end
         %% ----------------------------------------------------------------
@@ -99,7 +126,7 @@ classdef FeatureSet1Blockmean < IdFeatureProc
             classInfo = metaclass( obj );
             classname = classInfo.Name;
             outputDeps.featureProc = classname;
-            outputDeps.v = 5;
+            outputDeps.v = 3;
         end
         %% ----------------------------------------------------------------
         

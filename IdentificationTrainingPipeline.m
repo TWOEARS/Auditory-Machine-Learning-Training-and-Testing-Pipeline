@@ -139,9 +139,10 @@ classdef IdentificationTrainingPipeline < handle
                 featureCreator = obj.featureCreator;
                 modelFileExt = ['.model.mat'];
                 modelFilename = [modelName{1} modelFileExt];
+                lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
                 save( modelFilename, ...
                       'model', 'featureCreator', ...
-                      'testPerfresults', 'trainTime' );
+                      'testPerfresults', 'trainTime', 'lastDataProcParams' );
             end;
         end
         

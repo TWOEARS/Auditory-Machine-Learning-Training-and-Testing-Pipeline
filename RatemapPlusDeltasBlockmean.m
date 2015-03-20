@@ -1,4 +1,4 @@
-classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
+classdef RatemapPlusDeltasBlockmean < IdFeatureProc
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -17,23 +17,24 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
     methods (Access = public)
         
         function obj = RatemapPlusDeltasBlockmean()
-            obj = obj@FeatureProcInterface( 0.5 );
+            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.deltasLevels = 1;
         end
         %% ----------------------------------------------------------------
 
         function afeRequests = getAFErequests( obj )
-            afeRequests{1}.name = 'ratemap_magnitude';
+            afeRequests{1}.name = 'ratemap';
             afeRequests{1}.params = genParStruct( ...
-                'nChannels', obj.freqChannels, ...
-                'rm_scaling', 'magnitude' ...
+                'pp_bNormalizeRMS', false, ...
+                'rm_scaling', 'magnitude', ...
+                'fb_nChannels', obj.freqChannels ...
                 );
         end
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
-            rmRL = afeData('ratemap_magnitude');
+            rmRL = afeData(1);
             rmR = rmRL{1}.Data;
             rmL = rmRL{2}.Data;
             rmR = obj.compressAndScale( rmR );
@@ -47,7 +48,7 @@ classdef RatemapPlusDeltasBlockmean < FeatureProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getInternOutputDependencies( obj )
+        function outputDeps = getFeatureInternOutputDependencies( obj )
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );

@@ -47,6 +47,14 @@ classdef MultiConfigurationsAFEmodule < IdProcInterface
         
         function makeAFEdata( obj, inFileName )
             in = load( inFileName );
+            
+            in.wavFileName = which(nameSearch(in.wavFileName));  
+            ppp = in.wavFileName;
+            pos = strfind(ppp,'\');
+            fname = ppp(1:pos(end));
+            [~,fname2] = nameSearch(in.singleConfFiles{1});
+            in.singleConfFiles{1} = [fname ,fname2]; 
+            
             obj.outputWavFileName = in.wavFileName;
             obj.singleConfFiles = {};
             obj.singleConfs = [];

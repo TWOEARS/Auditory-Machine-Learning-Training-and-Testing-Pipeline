@@ -20,15 +20,17 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 factorDim = 1;
-mySetup.nIter = 6;
+mySetup.nIter = 200;
 mySetup.minLLstep = 1E-3;
 mySetup.TOLERANCE = 1E-1;
 % ind = randperm(2*size(x1,2));
 % x00 = x0(ind);
 % x1 = preprocess(x1);
+x1 = normvec(x1);
 pDprior1 = init(MixtureFactorAnalysers(esetup.nComp),x1 ,factorDim);
 [model1,LL1,r1] = adapt(pDprior1, x1 ,mySetup);
 % x0 = preprocess(x0);
+x0 = normvec(x0);
 pDprior0 = init(MixtureFactorAnalysers(esetup.nComp),x0 ,factorDim);
 [model0,LL0,r0] = adapt(pDprior0, x0 ,mySetup);
 

@@ -14,6 +14,7 @@ function [pred] = MbfPredict( x, model1, model0 )
 % pred(llh1'>llh0')=1;
 % val = validation_function(pred, y);
 xtest = x';
+xtest = normvec(xtest);
 % xtest = preprocess(xtest);
 logL1=  logLikelihood3(model1,xtest);
 logL0= logLikelihood3(model0,xtest);

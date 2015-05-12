@@ -66,8 +66,6 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
             lPerfs = zeros( numel( lambdas ), numel( cvModels ) );
             coefs = zeros( numel( lambdas ), numel( cvModels ), ...
                            obj.fullSetModel.model.dim(1) );
-            coefsAbsRel = zeros( numel( lambdas ), numel( cvModels ), ...
-                           obj.fullSetModel.model.dim(1) );
             coefsNum = zeros( numel( lambdas ), numel( cvModels ) );
             for ll = 1 : numel( lambdas )
                 for ii = 1 : numel( cvModels )
@@ -77,17 +75,16 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
                         obj.performanceMeasure );
                     coefsPlusIntercept = glmnetCoef( cvModels{ii}.model, lambdas(ll) );
                     coefs(ll,ii,:) = coefsPlusIntercept(2:end);
-                    coefsRel(ll,ii,:) = coefs(ll,ii,:) ./ sum( abs( coefs(ll,ii,:) ) );
-                    coefsAbsRel(ll,ii,:) = abs( coefs(ll,ii,:) ) ./ sum( abs( coefs(ll,ii,:) ) );
-                    coefsNum(ll,ii) = sum( coefsAbsRel(ll,ii,:) >= 0.1 / numel(coefsAbsRel(ll,ii,:) ) );
+                    coefsNorm(ll,ii,:) = coefs(ll,ii,:) ./ sum( abs( coefs(ll,ii,:) ) );
+                    coefsNum(ll,ii) = sum( coefsNorm(ll,ii,:) ~= 0 );
                     verboseFprintf( obj, '.' );
                 end
             end
             obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
             obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );
             obj.fullSetModel.nCoefs = mean( coefsNum, 2 );
-            obj.fullSetModel.coefsRelAvg = squeeze( mean( coefsRel, 2 ) );
-            obj.fullSetModel.coefsRelStd = squeeze( std( coefsRel, [], 2 ) );
+            obj.fullSetModel.coefsRelAvg = squeeze( mean( coefsNorm, 2 ) );
+            obj.fullSetModel.coefsRelStd = squeeze( std( coefsNorm, [], 2 ) );
             obj.fullSetModel.coefsCV = coefs;
             verboseFprintf( obj, 'Done\n' );
             obj.fullSetModel.lambdasSortedByPerf = sortrows( ...

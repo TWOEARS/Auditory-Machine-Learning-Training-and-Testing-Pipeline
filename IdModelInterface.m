@@ -29,7 +29,9 @@ classdef (Abstract) IdModelInterface < handle
             yTrue = testSet(:,:,'y',positiveClass);
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
-            perf = perfMeasure( yTrue, yModel );
+            for ii = 1 : size( yModel, 2 )
+                perf(ii) = perfMeasure( yTrue, yModel(:,ii) );
+            end
         end
         %% ----------------------------------------------------------------
     

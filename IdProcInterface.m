@@ -101,33 +101,52 @@ classdef (Abstract) IdProcInterface < handle
         %%-----------------------------------------------------------------
         
         function currentFolder = getCurrentFolder( obj, filePath )
-            filePath = which( filePath ); % ensure absolute path
             [procFolders, configs] = obj.getProcFolders( filePath );
             currentConfig = obj.getOutputDependencies();
             currentFolder = [];
-            for ii = 1 : length( configs )
-                if isequalDeepCompare( currentConfig, configs{ii} )
-                    currentFolder = procFolders{ii};
-                    break;
-                end
+            persistent preloadedPath;
+            persistent lastConfig;
+            if isempty( preloadedPath )
+                preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
+            allProcFolders = strcat( procFolders{:} );
+            if preloadedPath.isKey( allProcFolders ) && isequalDeepCompare( lastConfig, currentConfig )
+                currentFolder = preloadedPath(allProcFolders);
+            else
+                for ii = 1 : length( configs )
+                    if isequalDeepCompare( currentConfig, configs{ii} )
+                        currentFolder = procFolders{ii};
+                        break;
+                    end
+                end
+                preloadedPath(allProcFolders) = currentFolder;
+            end
+            lastConfig = currentConfig;
         end
         %%-----------------------------------------------------------------
         
         function [procFolders, configs] = getProcFolders( obj, filePath )
-            filePath = which( filePath ); % ensure absolute path
             fileBaseFolder = fileparts( filePath );
             procFoldersDir = dir( [fileBaseFolder filesep obj.procName '.*'] );
             procFolders = strcat( [fileBaseFolder filesep], {procFoldersDir.name} );
             configs = {};
-            for ii = 1 : length( procFolders )
-                configs{ii} = obj.readConfig( procFolders{ii} );
+            persistent preloadedConfigs;
+            if isempty( preloadedConfigs )
+                preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            end
+            allProcFolders = strcat( procFolder{:} );
+            if preloadedConfigs.isKey( allProcFolders )
+                configs = preloadedConfigs(allProcFolders);
+            else
+                for ii = 1 : length( procFolders )
+                    configs{ii} = obj.readConfig( procFolders{ii} );
+                end
+                preloadedConfigs(allProcFolders) = configs;
             end
         end
         %%-----------------------------------------------------------------
         
         function currentFolder = createCurrentConfigFolder( obj, filePath )
-            filePath = which( filePath ); % ensure absolute path
             fileBaseFolder = fileparts( filePath );
             timestr = buildCurrentTimeString();
             currentFolder = [fileBaseFolder filesep obj.procName timestr];

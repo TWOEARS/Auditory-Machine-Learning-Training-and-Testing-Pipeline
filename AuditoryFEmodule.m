@@ -40,7 +40,14 @@ classdef AuditoryFEmodule < IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.afeParams = obj.afeDataObj.getParameterSummary( obj.managerObject );
+            persistent afeParams;
+            if isempty( afeParams )
+                afeParams = obj.afeDataObj.getParameterSummary( obj.managerObject );
+                % this takes too long to be called often. 
+                % It should be ok to assume that the parameters don't change over calls because
+                % the requests are all set at the construction in AuditoryFEmodule().
+            end            
+            outputDeps.afeParams = afeParams;
             outputDeps.reqSignals = obj.afeSignals.keys;
         end
         %% ----------------------------------------------------------------

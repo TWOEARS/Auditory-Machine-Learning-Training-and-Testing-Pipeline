@@ -34,7 +34,7 @@ classdef LoadModelNoopTrainer < IdTrainerInterface & Parameterized
         
         function model = giveTrainedModel( obj )
             if ~exist( obj.modelPathBuilder( obj.positiveClass ), 'file' )
-                error( 'Could not find "%s".', modelPath );
+                error( 'Could not find "%s".', obj.modelPathBuilder( obj.positiveClass ) );
             end
             ms = load( obj.modelPathBuilder( obj.positiveClass ) );
             model = ms.model;

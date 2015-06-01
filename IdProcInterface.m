@@ -105,13 +105,15 @@ classdef (Abstract) IdProcInterface < handle
             currentConfig = obj.getOutputDependencies();
             currentFolder = [];
             persistent preloadedPath;
-            persistent lastConfig;
             if isempty( preloadedPath )
                 preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
             allProcFolders = strcat( procFolders{:} );
-            if preloadedPath.isKey( allProcFolders ) && isequalDeepCompare( lastConfig, currentConfig )
-                currentFolder = preloadedPath(allProcFolders);
+            if preloadedPath.isKey( allProcFolders ) 
+                preloaded = preloadedPath(allProcFolders);
+                if isequalDeepCompare( preloaded{2}, currentConfig )
+                    currentFolder = preloaded{1};
+                end
             else
                 for ii = 1 : length( configs )
                     if isequalDeepCompare( currentConfig, configs{ii} )
@@ -119,9 +121,8 @@ classdef (Abstract) IdProcInterface < handle
                         break;
                     end
                 end
-                preloadedPath(allProcFolders) = currentFolder;
+                preloadedPath(allProcFolders) = {currentFolder, currentConfig};
             end
-            lastConfig = currentConfig;
         end
         %%-----------------------------------------------------------------
         
@@ -134,7 +135,7 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( preloadedConfigs )
                 preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
-            allProcFolders = strcat( procFolder{:} );
+            allProcFolders = strcat( procFolders{:} );
             if preloadedConfigs.isKey( allProcFolders )
                 configs = preloadedConfigs(allProcFolders);
             else

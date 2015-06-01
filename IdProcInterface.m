@@ -22,7 +22,7 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( currentFolder )
                 obj.createCurrentConfigFolder( inFilePath );
             end
-            outFilename = obj.getOutputFileName( inFilePath );
+            outFilename = obj.getOutputFileName( inFilePath, currentFolder );
             save( outFilename, '-struct', 'out' );
         end
         %%-----------------------------------------------------------------
@@ -37,9 +37,11 @@ classdef (Abstract) IdProcInterface < handle
         end
         %%-----------------------------------------------------------------
         
-        function outFileName = getOutputFileName( obj, inFilePath )
+        function outFileName = getOutputFileName( obj, inFilePath, currentFolder )
             inFilePath = which( inFilePath ); % ensure absolute path
-            currentFolder = obj.getCurrentFolder( inFilePath );
+            if nargin < 3
+                currentFolder = obj.getCurrentFolder( inFilePath );
+            end
             [~, fileName, fileExt] = fileparts( inFilePath );
             fileName = [fileName fileExt];
             outFileName = fullfile( currentFolder, [fileName obj.getProcFileExt] );
@@ -51,7 +53,7 @@ classdef (Abstract) IdProcInterface < handle
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
                 ~isempty( currentFolder )  && ...
-                exist( obj.getOutputFileName( filePath ), 'file' );
+                exist( obj.getOutputFileName( filePath, currentFolder ), 'file' );
         end
         %%-----------------------------------------------------------------
         
@@ -104,27 +106,27 @@ classdef (Abstract) IdProcInterface < handle
         function currentFolder = getCurrentFolder( obj, filePath )
             [procFolders, configs] = obj.getProcFolders( filePath );
             currentConfig = obj.getOutputDependencies();
-            currentConfig.configHash = calcDataHash( currentConfig );
             currentFolder = [];
             persistent preloadedPath;
             if isempty( preloadedPath )
                 preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
             allProcFolders = strcat( procFolders{:} );
-            allProcFolders = [allProcFolders currentConfig.configHash];
             if preloadedPath.isKey( allProcFolders ) 
-                currentFolder = preloadedPath(allProcFolders);
-            else
-                for ii = 1 : length( configs )
-                    if obj.areConfigsEqual( currentConfig, configs{ii} )
-                        currentFolder = procFolders{ii};
-                        break;
-                    end
-                end
-                if ~isempty( currentFolder )
-                    preloadedPath(allProcFolders) = currentFolder;
+                preloaded = preloadedPath(allProcFolders);
+                if obj.areConfigsEqual( preloaded{2}, currentConfig )
+                    currentFolder = preloaded{1};
+                    return;
                 end
             end
+            currentConfig.configHash = calcDataHash( currentConfig );
+            for ii = 1 : length( configs )
+                if obj.areConfigsEqual( currentConfig, configs{ii} )
+                    currentFolder = procFolders{ii};
+                    break;
+                end
+            end
+            preloadedPath(allProcFolders) = {currentFolder, currentConfig};
         end
         %%-----------------------------------------------------------------
         

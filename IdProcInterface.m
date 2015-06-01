@@ -96,6 +96,7 @@ classdef (Abstract) IdProcInterface < handle
         
         function saveOutputConfig( obj, configFileName )
             outputDeps = obj.getOutputDependencies();
+            outputDeps.configHash = calcDataHash( outputDeps );
             save( configFileName, '-struct', 'outputDeps' );
         end
         %%-----------------------------------------------------------------
@@ -103,25 +104,26 @@ classdef (Abstract) IdProcInterface < handle
         function currentFolder = getCurrentFolder( obj, filePath )
             [procFolders, configs] = obj.getProcFolders( filePath );
             currentConfig = obj.getOutputDependencies();
+            currentConfig.configHash = calcDataHash( currentConfig );
             currentFolder = [];
             persistent preloadedPath;
             if isempty( preloadedPath )
                 preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
             allProcFolders = strcat( procFolders{:} );
+            allProcFolders = [allProcFolders currentConfig.configHash];
             if preloadedPath.isKey( allProcFolders ) 
-                preloaded = preloadedPath(allProcFolders);
-                if isequalDeepCompare( preloaded{2}, currentConfig )
-                    currentFolder = preloaded{1};
-                end
+                currentFolder = preloadedPath(allProcFolders);
             else
                 for ii = 1 : length( configs )
-                    if isequalDeepCompare( currentConfig, configs{ii} )
+                    if obj.areConfigsEqual( currentConfig, configs{ii} )
                         currentFolder = procFolders{ii};
                         break;
                     end
                 end
-                preloadedPath(allProcFolders) = {currentFolder, currentConfig};
+                if ~isempty( currentFolder )
+                    preloadedPath(allProcFolders) = currentFolder;
+                end
             end
         end
         %%-----------------------------------------------------------------
@@ -172,6 +174,21 @@ classdef (Abstract) IdProcInterface < handle
         
         function procFileExt = getProcFileExt( obj )
             procFileExt = ['.' obj.procName '.mat'];
+        end
+        %%-----------------------------------------------------------------
+        
+        function eq = areConfigsEqual( obj, config1, config2 )
+            if isfield( config1, 'configHash' ) % compatibility to older versions
+                if isfield( config2, 'configHash' )
+                    eq = strcmp( config1.configHash, config2.configHash );
+                else
+                    config1 = rmfield( config1, 'configHash' );
+                    eq = isequalDeepCompare( config1, config2 );
+                end
+            else
+                config2 = rmfield( config2, 'configHash' );
+                eq = isequalDeepCompare( config1, config2 );
+            end
         end
         %%-----------------------------------------------------------------
         

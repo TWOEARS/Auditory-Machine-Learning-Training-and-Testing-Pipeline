@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <requirements>
-<TwoEarsPart sub="src" branch="initOnConstruction" startup="startBinauralSimulator" >binaural-simulator</TwoEarsPart>
+<TwoEarsPart sub="src" branch="master" startup="startBinauralSimulator" >binaural-simulator</TwoEarsPart>
 <TwoEarsPart branch="SignalBufferDvlp" startup="startAuditoryFrontEnd" >auditory-front-end</TwoEarsPart>
 <TwoEarsPart sub="src" branch="SignalBufferDvlp" >auditory-front-end</TwoEarsPart>
 <TwoEarsPart sub="src" branch="master" startup="startTools" >tools</TwoEarsPart>

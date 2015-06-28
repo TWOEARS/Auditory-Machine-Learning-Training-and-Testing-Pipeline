@@ -11,7 +11,7 @@ classdef SceneConfiguration < handle
         typeOverlays;
         fileOverlays;
         offsetOverlays;
-        walls;
+        room;
     end
 
     %% -----------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ classdef SceneConfiguration < handle
             obj.angleSignal = ValGen( 'manual', 0 );
             obj.distSignal = ValGen( 'manual', 3 );
             obj.numOverlays = 0;
-            obj.walls = ValGen( 'manual', [] );
+            obj.room = ValGen( 'manual', [] );
             obj.angleOverlays = ValGen.empty;
             obj.distOverlays = ValGen.empty;
             obj.SNRs = ValGen.empty;
@@ -50,9 +50,9 @@ classdef SceneConfiguration < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function addWalls( obj, walls )
-            if ~isa( walls, 'WallsValGen' ), error( 'Use a WallsValGen' ); end;
-            obj.walls = walls;
+        function addRoom( obj, room )
+            if ~isa( room, 'RoomValGen' ), error( 'Use a RoomValGen' ); end;
+            obj.room = room;
         end
         %% -------------------------------------------------------------------------------
 
@@ -61,7 +61,7 @@ classdef SceneConfiguration < handle
             confInst.angleSignal = ValGen( 'manual', obj.angleSignal.value );
             confInst.distSignal = ValGen( 'manual', obj.distSignal.value );
             confInst.numOverlays = obj.numOverlays;
-            confInst.walls = ValGen( 'manual', obj.walls.value );
+            confInst.room = ValGen( 'manual', obj.room.value );
             for kk = 1:obj.numOverlays
                 confInst.angleOverlays(kk) = ValGen( 'manual', obj.angleOverlays(kk).value );
                 confInst.distOverlays(kk) = ValGen( 'manual', obj.distOverlays(kk).value );
@@ -96,6 +96,12 @@ classdef SceneConfiguration < handle
                     fileOverlaysAreEqual && ...
                     isequaln( sort( files1 ), sort( files2 ) );
             end
+            if isempty( obj.room.value ) && isprop( cObj, 'walls' ) ...
+                    && isempty( cObj.walls.value ) % compatibility to former walls prop
+                wallsRoomEq = true;
+            else
+                wallsRoomEq = isequaln( obj.room, cObj.room );
+            end
             e = ...
                 isequaln( obj.angleSignal, cObj.angleSignal) && ...
                 isequaln( obj.distSignal, cObj.distSignal ) && ...
@@ -105,7 +111,7 @@ classdef SceneConfiguration < handle
                 isequaln( obj.typeOverlays, cObj.typeOverlays ) && ...
                 fileOverlaysAreEqual && ...
                 isequaln( obj.offsetOverlays, cObj.offsetOverlays ) && ...
-                isequaln( obj.walls, cObj.walls );
+                wallsRoomEq;
         end
         %% -------------------------------------------------------------------------------
         

@@ -4,6 +4,7 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
     properties (Access = protected)
         convRoomSim;
         sceneConfig;
+        reverberationMaxOrder = 5;
     end
     
     %% --------------------------------------------------------------------
@@ -22,12 +23,7 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
                 'MaximumDelay', 0.05, ... % for distances up to ~15m
                 'Renderer', @ssr_binaural, ...
                 'HRIRDataset', simulator.DirectionalIR( xml.dbGetFile( ...
-                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')), ...
-                'Room', simulator.room.Shoebox.empty ...
-                );
-%                'ReverberationMaxOrder', 5 ...
-            set(obj.convRoomSim.Room,...
-                'ReverberationMaxOrder', 5 ...
+                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')) ...
                 );
             set(obj.convRoomSim, ...
                 'Sinks', simulator.AudioSink(2) ...
@@ -68,8 +64,7 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.sceneConfig = obj.sceneConfig;
             outputDeps.SampleRate = obj.convRoomSim.SampleRate;
-%            outputDeps.ReverberationMaxOrder = obj.convRoomSim.ReverberationMaxOrder;
-            outputDeps.ReverberationMaxOrder = obj.convRoomSim.Room.ReverberationMaxOrder;
+            outputDeps.ReverberationMaxOrder = obj.reverberationMaxOrder;
             rendererFunction = functions( obj.convRoomSim.Renderer );
             rendererName = rendererFunction.function;
             outputDeps.Renderer = rendererName;
@@ -156,8 +151,12 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
         function setupSceneConfig( obj, sceneConfig )
             obj.convRoomSim.set( 'ShutDown', true );
             if ~isempty(obj.convRoomSim.Sources), obj.convRoomSim.Sources(2:end) = []; end;
-            useReverb = ~isempty( sceneConfig.walls.value );
-            if useReverb, obj.convRoomSim.Walls = sceneConfig.walls.value; end
+            useReverb = ~isempty( sceneConfig.room.value );
+            if useReverb
+                obj.convRoomSim.Room = sceneConfig.room.value; 
+                obj.convRoomSim.Room.set( 'ReverberationMaxOrder', ...
+                                          obj.reverberationMaxOrder );
+            end
             obj.createNewSimSource( 1, useReverb, true, ...
                 sceneConfig.distSignal.value, sceneConfig.angleSignal.value );
             for ii = 1:sceneConfig.numOverlays
@@ -174,7 +173,9 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
         function createNewSimSource( obj, idx, useReverb, isPoint, radius, azmth )
             if isPoint 
                 if useReverb
-                    obj.convRoomSim.Sources{idx} = simulator.source.ISMShoeBox( obj.convRoomSim );
+                    obj.convRoomSim.Sources{idx} = simulator.source.ISMGroup();
+                    obj.convRoomSim.Sources{idx}.set( 'Room', ...
+                                                      obj.convRoomSim.Room );
                 else
                     obj.convRoomSim.Sources{idx} = simulator.source.Point();
                 end

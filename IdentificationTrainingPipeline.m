@@ -102,6 +102,9 @@ classdef IdentificationTrainingPipeline < handle
                 end
                 obj.dataPipeProcs{ii}.run();
             end
+            
+            if strcmp(models{1}, 'donttrain'), return; end;
+            
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
@@ -128,10 +131,17 @@ classdef IdentificationTrainingPipeline < handle
                 if ~isempty( obj.testSet )
                     fprintf( '\n==  Testing model on testSet... \n\n' );
                     testPerfresults = obj.trainer.getPerformance();
-                    fprintf( ['\n\n===================================\n',...
-                        '##   "%s" Performance: %f\n',...
-                        '===================================\n\n'], ...
-                        modelName{1}, testPerfresults.double() );
+                    if numel( testPerfresults ) == 1
+                        fprintf( ['\n\n===================================\n',...
+                            '##   "%s" Performance: %f\n',...
+                            '===================================\n\n'], ...
+                            modelName{1}, testPerfresults.double() );
+                    else
+                        fprintf( ['\n\n===================================\n',...
+                            '##   "%s" Performance: more than one value\n',...
+                            '===================================\n\n'], ...
+                            modelName{1} );
+                    end
                 else
                     testPerfresults = [];
                 end

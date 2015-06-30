@@ -30,7 +30,9 @@ classdef BAC2 < PerformanceMeasure
         % -----------------------------------------------------------------
     
         function d = double( obj )
-            d = double( obj.performance );
+            for ii = 1 : size( obj, 2 )
+                d(ii) = double( obj(ii).performance );
+            end
         end
         % -----------------------------------------------------------------
     

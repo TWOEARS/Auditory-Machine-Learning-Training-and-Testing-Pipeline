@@ -3,7 +3,6 @@ classdef GlmNetModel < DataScalingModel
     %% --------------------------------------------------------------------
     properties (SetAccess = {?GlmNetTrainer, ?GlmNetLambdaSelectTrainer})
         model;
-        lambda;
         lPerfsMean;
         lPerfsStd;
         coefsRelAvg;
@@ -11,6 +10,11 @@ classdef GlmNetModel < DataScalingModel
         coefsCV;
         lambdasSortedByPerf;
         nCoefs;
+    end
+    
+    %% --------------------------------------------------------------------
+    properties
+        lambda;
     end
     
     %% --------------------------------------------------------------------

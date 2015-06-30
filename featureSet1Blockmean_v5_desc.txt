@@ -1,0 +1,28 @@
+featureSet1Blockmean v5
+=======================
+
+Sound streams from the left and right ear are averaged.
+Features are calculated using blocks with a length of $500$~ms and a shift of $167$~ms. Per block:
+
+Ratemap Magnitudes
+   16 freq. channels: 80Hz, 155Hz, 250Hz, 367Hz, 512Hz, 694Hz, 920Hz, 1.2kHz, 1.55kHz, 1.985kHz, 2.525kHz, 3.2kHz, 4.04kHz, 5.08kHz, 6.38kHz, 8kHz
+      first three L-Moments over time
+   first and second discrete derivative over time
+      L-Moments 2, 3 and 4 over time
+Onset Strengths
+   same freq. channels as ratemap
+      first three L-Moments over time
+   first and second discrete derivative over time
+      L-Moments 2, 3 and 4 over time
+Spectral Statistics (calculated over 32 frequency channels)
+   centroid, crest, spread, entropy, brightness, hfc, decrease, flatness, flux, kurtosis, skewness, irregularity, rolloff, variation
+      first three L-Moments over time
+   first and second discrete derivative over time
+      L-Moments 2, 3 and 4 over time
+Amplitude Modulation Maps
+   8 freq. channels: 80Hz, 265Hz, 560Hz, 1.032kHz, 1.785kHz, 2.992kHz, 4.92kHz, 8kHz; 9 modulation freq. channels: 1Hz, 2Hz, 4Hz, 8Hz, 16Hz, 32Hz, 64Hz, 128Hz, 256Hz
+      first two L-Moments over time
+   first and second discrete derivative over time
+      L-Moments 2 and 3 over time
+
+

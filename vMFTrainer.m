@@ -38,7 +38,7 @@ classdef vMFTrainer < IdTrainerInterface & Parameterized
 %             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             gmmOpts.initComps = 8;
-            idFeature = featureSelectionPCA2(xScaled,1);
+            idFeature = featureSelectionPCA2(xScaled,.9);
             xScaled = xScaled(:,idFeature);
             xTrain = normvec(xScaled');
             [obj.model.model{1}, obj.model.model{2}] = trainVMF( y, xTrain', gmmOpts );

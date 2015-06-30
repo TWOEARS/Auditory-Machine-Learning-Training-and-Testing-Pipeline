@@ -1,4 +1,4 @@
-classdef BMFATrainer < IdTrainerInterface & Parameterized
+classdef MBFTrainer < IdTrainerInterface & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,7 +8,7 @@ classdef BMFATrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = BMFATrainer( varargin )
+        function obj = MBFTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                              'default', @BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -27,7 +27,7 @@ classdef BMFATrainer < IdTrainerInterface & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = BMFAModel();
+            obj.model = MbfModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
 %             glmOpts.alpha = obj.parameters.alpha;
 %             glmOpts.nlambda = obj.parameters.nLambda;
@@ -37,13 +37,13 @@ classdef BMFATrainer < IdTrainerInterface & Parameterized
 %             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
 %             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
-            gmmOpts.mfaK = 10;
-            idFeature = featureSelectionPCA2(xScaled,1);
-            [obj.model.model{1}, obj.model.model{2}] = trainBMFA( y, xScaled(:,idFeature), gmmOpts );
-            obj.model.model{3}=idFeature;
+            gmmOpts.factorDim= 1;%0.5*size(xScaled,2);
+             gmmOpts.nComp = 5;
+            [obj.model.model{1}, obj.model.model{2}] = trainMbfs( y, xScaled, gmmOpts );
             % train +1 model
             % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );
+
         end
         %% ----------------------------------------------------------------
 

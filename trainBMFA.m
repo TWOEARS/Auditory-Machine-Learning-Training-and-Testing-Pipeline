@@ -26,7 +26,7 @@ if sum(sum(isnan(x0)))>0
     x0(isnan(x0))=0;
 end
 % [x0,~] = preprocess(x0);
-model0 = vbmfa(x0,esetup.mfaK);
+model0 = vbmfa(x0(:,1:3000),esetup.mfaK);
 % [Dim0 indexDimClus]=featureSelection(model0);
 
 % model0.negFeature = x0;

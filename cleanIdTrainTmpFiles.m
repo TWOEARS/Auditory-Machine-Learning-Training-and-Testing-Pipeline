@@ -43,7 +43,7 @@ function presentProcFolder( procFolder )
 
 cprintf( '-Blue', '\n.:%s:.\n', procFolder );
 config = load( [procFolder filesep 'config.mat'] );
-flatPrintObject( config );
+flatPrintObject( config, 10 );
 choice = input( 'Enter to do nothing, ''d'' to delete this tmp proc folder. >>', 's' );
 if ~isempty( choice ) && strcmpi( choice, 'd' )
     fprintf( 'Deleting %s...\n', procFolder );

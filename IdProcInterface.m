@@ -111,22 +111,24 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( preloadedPath )
                 preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
-            allProcFolders = strcat( procFolders{:} );
-            if preloadedPath.isKey( allProcFolders ) 
-                preloaded = preloadedPath(allProcFolders);
-                if obj.areConfigsEqual( preloaded{2}, currentConfig )
-                    currentFolder = preloaded{1};
-                    return;
+            if ~isempty( procFolders )
+                allProcFolders = strcat( procFolders{:} );
+                if preloadedPath.isKey( allProcFolders )
+                    preloaded = preloadedPath(allProcFolders);
+                    if obj.areConfigsEqual( preloaded{2}, currentConfig )
+                        currentFolder = preloaded{1};
+                        return;
+                    end
                 end
-            end
-            currentConfig.configHash = calcDataHash( currentConfig );
-            for ii = 1 : length( configs )
-                if obj.areConfigsEqual( currentConfig, configs{ii} )
-                    currentFolder = procFolders{ii};
-                    break;
+                currentConfig.configHash = calcDataHash( currentConfig );
+                for ii = 1 : length( configs )
+                    if obj.areConfigsEqual( currentConfig, configs{ii} )
+                        currentFolder = procFolders{ii};
+                        break;
+                    end
                 end
+                preloadedPath(allProcFolders) = {currentFolder, currentConfig};
             end
-            preloadedPath(allProcFolders) = {currentFolder, currentConfig};
         end
         %%-----------------------------------------------------------------
         
@@ -139,14 +141,16 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( preloadedConfigs )
                 preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
-            allProcFolders = strcat( procFolders{:} );
-            if preloadedConfigs.isKey( allProcFolders )
-                configs = preloadedConfigs(allProcFolders);
-            else
-                for ii = 1 : length( procFolders )
-                    configs{ii} = obj.readConfig( procFolders{ii} );
+            if ~isempty( procFolders )
+                allProcFolders = strcat( procFolders{:} );
+                if preloadedConfigs.isKey( allProcFolders )
+                    configs = preloadedConfigs(allProcFolders);
+                else
+                    for ii = 1 : length( procFolders )
+                        configs{ii} = obj.readConfig( procFolders{ii} );
+                    end
+                    preloadedConfigs(allProcFolders) = configs;
                 end
-                preloadedConfigs(allProcFolders) = configs;
             end
         end
         %%-----------------------------------------------------------------

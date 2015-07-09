@@ -13,8 +13,7 @@ if sum(sum(isnan(x1)))>0
 end
 
 pDprior=init(vMFMMB(esetup.initComps),x1);
-[model1]=adapt(pDprior,x1, 5000, 'fixed',0.1);
-% model1.posFeature = x1;
+[model1]=adapt(pDprior,x1,50, 'fixed',0.1);
 
 x0 = real((x(y~=1,:,:))');
 if sum(sum(isnan(x0)))>0
@@ -23,10 +22,8 @@ if sum(sum(isnan(x0)))>0
 end
 
 pDprior=init(vMFMMB(esetup.initComps),x0);
-[model0]=adapt(pDprior,x0, 5000, 'fixed',0.1);
-% model0.negFeature = x0;
+[model0]=adapt(pDprior,x0, 50, 'fixed',0.1);
 
-% [~, trVal, ~,~,~,~] = gmmPredict( y, x, model1, model0);
 
 
 

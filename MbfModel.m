@@ -5,9 +5,6 @@ classdef MbfModel < DataScalingModel
         model;
         nComp;
         thr;
-%         coefsRelStd;
-%         lambdasSortedByPerf;
-%         nCoefs;
     end
     
     %% --------------------------------------------------------------------
@@ -23,31 +20,19 @@ classdef MbfModel < DataScalingModel
         end
         %% -----------------------------------------------------------------
 
-%         function [impact, cIdx] = getCoefImpacts( obj, lambda )
-%             if nargin < 2, lambda = obj.lambda; end
-%             coefsAtLambda = abs( glmnetCoef( obj.model, lambda ) );
-%             coefsAtLambda = coefsAtLambda / sum( coefsAtLambda );
-%             [impact,cIdx] = sort( coefsAtLambda );
-%         end
-        %% -----------------------------------------------------------------
 
     end
     
     methods (Access = protected)
         
         function [y,score] = applyModelToScaledData( obj, x )
-          
-                
             model1 = obj.model{1};
             model0 = obj.model{2};
-%             comps = featureSelectionPCA(x,1);
-%  prinComps = comps(:,1: model1.NDimensions);
-%             idFeature = obj.model{3};
-           
-            [y] = MbfPredict(x, model1, model0 );
-            score = 1; % ask Ivo about?? ll
-%             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
-
+            xTest = (normvec(x'))';
+%             xTest = x;
+%             xTest = (preprocess(x'))';
+%             xTest = (normvec(xTest'))';
+            [y, score] = MbfPredict(xTest, model1, model0 );
            
        end
         %% -----------------------------------------------------------------

@@ -71,8 +71,6 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
             lPerfs = zeros( numel( comps ), numel( cvModels{1} ) );
             for nc = 1 : numel( comps )
                 for ii = 1 : numel( cvModels{nt,nc} )
-                    %                     cvModels{ii}.setLambda( lambdas(ll) );
-                    %                   cvModels{ii}.setnComp( comps(ll) );
                     lPerfs(nc,ii) = IdModelInterface.getPerformance( ...
                         cvModels{nt,nc}{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
                         obj.performanceMeasure );

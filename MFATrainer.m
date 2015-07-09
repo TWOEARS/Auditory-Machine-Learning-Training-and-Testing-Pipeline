@@ -22,26 +22,15 @@ classdef MFATrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-%             glmOpts.weights = obj.setDataWeights( y );
             if length( y ) > obj.parameters.maxDataSize
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
             obj.model = MFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-%             glmOpts.alpha = obj.parameters.alpha;
-%             glmOpts.nlambda = obj.parameters.nLambda;
-%             if ~isempty( obj.parameters.lambda )
-%                 glmOpts.lambda = obj.parameters.lambda;
-%             end
-%             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
-%             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-%             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             gmmOpts.mfaK = 10;%0.5*size(xScaled,2);
              gmmOpts.mfaM = 10;
             [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, gmmOpts );
-            % train +1 model
-            % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

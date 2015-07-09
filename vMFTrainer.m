@@ -16,6 +16,12 @@ classdef vMFTrainer < IdTrainerInterface & Parameterized
             pds{2} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+            pds{3} = struct( 'name', 'nComp', ...
+                'default', [1 2 3], ...
+                'valFun', @(x)(sum(x)>=0) );
+            pds{4} = struct( 'name', 'thr', ...
+                             'default', [0.5 0.6], ...
+                             'valFun', @(x)(x<=1 && x >= 0) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end
@@ -29,22 +35,22 @@ classdef vMFTrainer < IdTrainerInterface & Parameterized
             end
             obj.model = vMFModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-%             glmOpts.alpha = obj.parameters.alpha;
-%             glmOpts.nlambda = obj.parameters.nLambda;
-%             if ~isempty( obj.parameters.lambda )
-%                 glmOpts.lambda = obj.parameters.lambda;
-%             end
-%             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
-%             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-%             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
-            gmmOpts.initComps = 8;
-            idFeature = featureSelectionPCA2(xScaled,.9);
-            xScaled = xScaled(:,idFeature);
-            xTrain = normvec(xScaled');
-            [obj.model.model{1}, obj.model.model{2}] = trainVMF( y, xTrain', gmmOpts );
+            gmmOpts.nComp = obj.parameters.nComp;
+            gmmOpts.thr = obj.parameters.thr;
+            %....... approach 1: explicit dimension reduction using PCA
+            idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
+            xTrain = xScaled(:,idFeature);
+            %....... approach 2: uncorrelate feature variables using PCA 
+%             dataDim = size(xScaled,2);
+%             ndims = floor(gmmOpts.thr*dataDim);
+%             [~,reconst] = pcares(xScaled,ndims);
+%             xTrain = reconst(:,1:ndims);
+%             idFeature = ndims;
+            
+            
+            gmmOpts.initComps = gmmOpts.nComp;
+            [obj.model.model{1}, obj.model.model{2}] = trainVMF( y, (normvec(xTrain'))', gmmOpts );
             obj.model.model{3}=idFeature;
-            % train +1 model
-            % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

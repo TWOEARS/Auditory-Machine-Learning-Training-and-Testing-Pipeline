@@ -28,7 +28,6 @@ classdef GmmNetTrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-%             glmOpts.weights = obj.setDataWeights( y );
             if length( y ) > obj.parameters.maxDataSize
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
@@ -42,12 +41,19 @@ classdef GmmNetTrainer < IdTrainerInterface & Parameterized
             end
             verboseFprintf( obj, 'GmmNet training with nComp=%f and thr=%f\n', gmmOpts.nComp, gmmOpts.thr);
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-%             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             gmmOpts.initComps = gmmOpts.nComp;
-          idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
-            [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xScaled(:,idFeature), gmmOpts );
-            obj.model.model{3}=idFeature;            % train +1 model
-            % call obj.setPositiveClass( 'general' );
+            %....... approach 1: explicit dimension reduction using PCA
+            idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
+            xTrain = xScaled(:,idFeature);
+            %....... approach 2: uncorrelate feature variables using PCA 
+% % %             dataDim = size(xScaled,2);
+% % %             ndims = gmmOpts.thr*dataDim;
+% % %             [~,reconst] = pcares(xScaled,ndims);
+% % %             xTrain = reconst(:,1:ndims);
+% % %             idFeature = ndims;
+        
+            [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xTrain, gmmOpts );
+            obj.model.model{3}=idFeature;           
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

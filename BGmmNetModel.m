@@ -5,9 +5,6 @@ classdef BGmmNetModel < DataScalingModel
         model;
         nComp;
         thr;
-%         coefsRelStd;
-%         lambdasSortedByPerf;
-%         nCoefs;
     end
     
     %% --------------------------------------------------------------------
@@ -23,31 +20,23 @@ classdef BGmmNetModel < DataScalingModel
         end
         %% -----------------------------------------------------------------
 
-%         function [impact, cIdx] = getCoefImpacts( obj, lambda )
-%             if nargin < 2, lambda = obj.lambda; end
-%             coefsAtLambda = abs( glmnetCoef( obj.model, lambda ) );
-%             coefsAtLambda = coefsAtLambda / sum( coefsAtLambda );
-%             [impact,cIdx] = sort( coefsAtLambda );
-%         end
-        %% -----------------------------------------------------------------
-
     end
     
     methods (Access = protected)
         
         function [y,score] = applyModelToScaledData( obj, x )
           
-                
             model1 = obj.model{1};
             model0 = obj.model{2};
-%             comps = featureSelectionPCA(x,1);
-%  prinComps = comps(:,1: model1.NDimensions);
             idFeature = obj.model{3};
-           
-            [y] = BgmmPredict(x(:,idFeature), model1, model0 );
-            score = 1; % ask Ivo about?? ll
-%             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
-
+            % use apparoch 1 if thraining is done with approach 1
+            xTest = x(:,idFeature);
+            % use approach 2 if trianing is done with approach 2
+%                         [~,reconst] = pcares(x,idFeature);
+%                         xTest= reconst(:,1:idFeature);
+            
+            % do prediction
+            [y, score] = BgmmPredict(xTest, model1, model0 );
            
        end
         %% -----------------------------------------------------------------

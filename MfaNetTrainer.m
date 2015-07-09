@@ -16,7 +16,7 @@ classdef MfaNetTrainer < IdTrainerInterface & Parameterized
             pds{2} = struct( 'name', 'nComp', ...
                 'default', [1 2 3], ...
                 'valFun', @(x)(sum(x)>=0) );
-            pds{3} = struct( 'name', 'thr', ...
+            pds{3} = struct( 'name', 'nDim', ...
                              'default', [5 6], ...
                              'valFun', @(x)(sum(x) >= 0) );
             pds{4} = struct( 'name', 'maxDataSize', ...
@@ -28,7 +28,6 @@ classdef MfaNetTrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-%             glmOpts.weights = obj.setDataWeights( y );
             if length( y ) > obj.parameters.maxDataSize
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
@@ -36,19 +35,15 @@ classdef MfaNetTrainer < IdTrainerInterface & Parameterized
             obj.model = MfaNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             mbfOpts.nComp = obj.parameters.nComp;
-            mbfOpts.thr = obj.parameters.thr;
+            mbfOpts.nDim = obj.parameters.nDim;
             if ~isempty( obj.parameters.nComp )
                 mbfOpts.nComp = obj.parameters.nComp;
             end
-            verboseFprintf( obj, 'MbfNet training with nComp=%f and thr=%f\n', mbfOpts.nComp, mbfOpts.thr);
+            verboseFprintf( obj, 'MbfNet training with nComp=%f and nDim=%f\n', mbfOpts.nComp, mbfOpts.nDim);
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-%             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             mbfOpts.mfaK = mbfOpts.nComp;
-            mbfOpts.mfaM = mbfOpts.thr;
-%           idFeature = featureSelectionPCA2(xScaled,mbfOpts.thr);
+            mbfOpts.mfaM = mbfOpts.nDim;
             [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, mbfOpts );
-%             obj.model.model{3}=idFeature;            % train +1 model
-            % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

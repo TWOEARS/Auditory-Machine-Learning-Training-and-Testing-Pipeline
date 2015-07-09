@@ -23,16 +23,15 @@ while true
     procList = listProcFolders( procFoldersDir );
 
     choice = [];
-    while isempty( choice )
         choice = input( ['\n''q'' to quit. ' ...
+                         'Enter to go back, '...
                          '''l'' nr to look, '...
-                         '''d'' nr to delete.'...
+                         '''d'' nr to delete. '...
                          'nr can be a range as in 10-50. >> '], 's' );
-    end
     
     if strcmpi( choice, 'q' )
         break;
-    else
+    elseif ~isempty( choice )
         [cmd,arg] = strtok( choice, ' ' );
         listNames = keys(procList);
         [arg1,arg2] = strtok( arg, '-' );
@@ -62,7 +61,7 @@ end
 
 function procList = listProcFolders( procFolders )
 
-choice = input( 'Enter to see all folders, ''t'' to see by type, ''c'' by content >> ', 's' );
+choice = input( 'Enter to see all folders, ''t'' to see by type, ''c'' by config >> ', 's' );
 procList = containers.Map('KeyType','char','ValueType','any');
 if isempty( choice )
     for ii = 1 : length( procFolders )

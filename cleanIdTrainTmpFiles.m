@@ -30,36 +30,45 @@ while true
     
     procList = listProcFolders( procFoldersDir );
 
-    choice = [];
+    while true
+        
+        choice = [];
         choice = input( ['\n''q'' to quit. ' ...
                          'Enter to go back, '...
                          '''l'' nr to look, '...
+                         '''L'' nr to list, '...
                          '''d'' nr to delete. '...
                          'nr can be a range as in 10-50. >> '], 's' );
-    
-    if strcmpi( choice, 'q' )
+
+        if strcmpi( choice, 'q' )
+            return;
+        elseif ~isempty( choice )
+            [cmd,arg] = strtok( choice, ' ' );
+            listNames = keys(procList);
+            [arg1,arg2] = strtok( arg, '-' );
+            if isempty( arg2 ), arg2 = arg1; end
+            arg = str2double( arg1 ) : str2double( arg2(2:end) );
+            idxs = [];
+            for ii = 1 : numel( arg )
+                idxs = [idxs getMapStructElem( procList, listNames{arg(ii)}, 'idxs' )];
+            end
+            if strcmp( cmd, 'l' )
+                for ii = idxs
+                    presentProcFolder( [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
+                    input( 'press enter to continue', 's' );
+                end
+            elseif strcmp( cmd, 'L' )
+                procFoldersDir = [procFoldersDir(idxs)];
+                procList = listProcFolders( procFoldersDir );
+                continue;
+            elseif strcmpi( cmd, 'd' )
+                for ii = idxs
+                    fprintf( 'Deleting %s...\n', [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
+                    rmdir( [procFoldersDir(ii).class filesep procFoldersDir(ii).name], 's' );
+                end
+            end
+        end
         break;
-    elseif ~isempty( choice )
-        [cmd,arg] = strtok( choice, ' ' );
-        listNames = keys(procList);
-        [arg1,arg2] = strtok( arg, '-' );
-        if isempty( arg2 ), arg2 = arg1; end
-        arg = str2double( arg1 ) : str2double( arg2(2:end) );
-        idxs = [];
-        for ii = 1 : numel( arg )
-            idxs = [idxs getMapStructElem( procList, listNames{arg(ii)}, 'idxs' )];
-        end
-        if strcmpi( cmd, 'l' )
-            for ii = idxs
-                presentProcFolder( [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
-                input( 'press enter to continue', 's' );
-            end
-        elseif strcmpi( cmd, 'd' )
-            for ii = idxs
-                fprintf( 'Deleting %s...\n', [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
-                rmdir( [procFoldersDir(ii).class filesep procFoldersDir(ii).name], 's' );
-            end
-        end
     end
 end
 
@@ -86,6 +95,7 @@ elseif strcmpi( choice, 't' )
         end
     end
 elseif strcmpi( choice, 'c' )
+    fprintf( '\n' );
     for ii = 1 : length( procFolders )
         iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );
         if isempty( procList )
@@ -107,7 +117,9 @@ elseif strcmpi( choice, 'c' )
                 assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
             end
         end
+        if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
+    fprintf( '\n' );
 end
 procNames = keys( procList );
 for ii = 1 : length( procNames )

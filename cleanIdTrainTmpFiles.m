@@ -29,9 +29,8 @@ while true
         end
     end
     
-    procList = listProcFolders( procFoldersDir );
-
     while true
+        procList = listProcFolders( procFoldersDir );
         
         choice = [];
         choice = input( ['\n''q'' to quit. ' ...
@@ -58,9 +57,9 @@ while true
                     presentProcFolder( [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
                     input( 'press enter to continue', 's' );
                 end
+                continue;
             elseif strcmp( cmd, 'L' )
                 procFoldersDir = [procFoldersDir(idxs)];
-                procList = listProcFolders( procFoldersDir );
                 continue;
             elseif strcmpi( cmd, 'd' )
                 for ii = idxs
@@ -79,7 +78,9 @@ end
 
 function procList = listProcFolders( procFolders )
 
-choice = input( 'Enter to see all folders, ''t'' to see by type, ''c'' by config, ''C'' by class >> ', 's' );
+choice = input( ['Enter to see all folders, '...
+                 '''t'' to see by type, ''c'' by config,'...
+                 '''C'' by class, ''e'' by earsignal''s config >> '], 's' );
 procList = containers.Map('KeyType','char','ValueType','any');
 if isempty( choice )
     for ii = 1 : length( procFolders )
@@ -106,26 +107,19 @@ elseif strcmp( choice, 'C' )
 elseif strcmp( choice, 'c' )
     fprintf( '\n' );
     for ii = 1 : length( procFolders )
-        iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );
-        if isempty( procList )
-            assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
-            assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
-        else
-            procNames = keys( procList );
-            configFound = false;
-            for jj = 1 : length( procNames )
-                if isequalDeepCompare( getMapStructElem( procList, procNames{jj}, 'config' ), iiConfig )
-                    assignMapStructElem( procList, procNames{jj}, 'idxs',...
-                        [getMapStructElem( procList, procNames{jj}, 'idxs' ), ii] );
-                    configFound = true;
-                    break;
-                end
-            end
-            if ~configFound
-                assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
-                assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
-            end
-        end
+        procList = configSort( procFolders, ii, procList, @isequalDeepCompare );
+        if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
+    end
+    fprintf( '\n' );
+elseif strcmp( choice, 'e' )
+    fprintf( '\n' );
+    pfidxs = 1 : length( procFolders );
+    for ii = pfidxs(strcmpi({procFolders.type},'IdSimConvRoomWrapper'))
+        procList = configSort( procFolders, ii, procList, @isequalDeepCompare );
+        if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
+    end
+    for ii = pfidxs(~strcmpi({procFolders.type},'IdSimConvRoomWrapper'))
+        procList = configSort( procFolders, ii, procList, @isProcConfIncludedDeepCompare );
         if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
     fprintf( '\n' );
@@ -137,6 +131,33 @@ for ii = 1 : length( procNames )
 end
 
 
+end
+
+% ---------------------------------------------------------------------------------------%
+
+function procList = configSort( procFolders, ii, procList, compFunc )
+
+iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );
+if isempty( procList )
+    assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
+    assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
+else
+    procNames = keys( procList );
+    configFound = false;
+    for jj = 1 : length( procNames )
+        if compFunc( getMapStructElem( procList, procNames{jj}, 'config' ), iiConfig )
+            assignMapStructElem( procList, procNames{jj}, 'idxs',...
+                [getMapStructElem( procList, procNames{jj}, 'idxs' ), ii] );
+            configFound = true;
+            break;
+        end
+    end
+    if ~configFound
+        assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
+        assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
+    end
+end
+        
 end
 
 % ---------------------------------------------------------------------------------------%
@@ -169,4 +190,18 @@ val = s.(fieldname);
 end
 
 % ---------------------------------------------------------------------------------------%
+
+function eq = isProcConfIncludedDeepCompare( a, b )
+
+eq = true;
+
+if isequalDeepCompare( a, b ), return; end;
+if isfield( b, 'extern' )
+    eq = isProcConfIncludedDeepCompare( a, b.extern );
+    return;
+end
+
+eq = false;
+
+end
 

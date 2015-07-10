@@ -8,12 +8,20 @@ while true
     fprintf( '\nWe''re in %s.\n\n', currentDir );
     fprintf( 'Looking for tmp proc folders...\nFound:\n' );
     
-    procFoldersDir = dir( [currentDir filesep '*.*'] );
-    procFoldersDir(1:2) = []; % "." and ".."
-    procFoldersDir([procFoldersDir.isdir] == 0) = [];
+    classFoldersDir = dir( [currentDir filesep '*'] );
+    classFoldersDir(1:2) = []; % "." and ".."
+    classFoldersDir([classFoldersDir.isdir] == 0) = [];
+    procFoldersDir = [];
+    for jj = 1 : length( classFoldersDir )
+        classProcFoldersDir = dir( [currentDir filesep classFoldersDir(jj).name filesep '*.*'] );
+        classProcFoldersDir(1:2) = []; % "." and ".."
+        classProcFoldersDir([classProcFoldersDir.isdir] == 0) = [];
+        [classProcFoldersDir(:).class] = deal( classFoldersDir(jj).name );
+        procFoldersDir = [procFoldersDir; classProcFoldersDir];
+    end
     ii = 1;
     while ii <= length( procFoldersDir )
-        if exist( [procFoldersDir(ii).name filesep 'config.mat'], 'file' )
+        if exist( [procFoldersDir(ii).class filesep procFoldersDir(ii).name filesep 'config.mat'], 'file' )
             ii = ii + 1;
         else
             procFoldersDir(ii) = [];
@@ -43,13 +51,13 @@ while true
         end
         if strcmpi( cmd, 'l' )
             for ii = idxs
-                presentProcFolder( procFoldersDir(ii).name );
+                presentProcFolder( [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
                 input( 'press enter to continue', 's' );
             end
         elseif strcmpi( cmd, 'd' )
             for ii = idxs
-                fprintf( 'Deleting %s...\n', procFoldersDir(ii).name );
-                rmdir( procFoldersDir(ii).name, 's' );
+                fprintf( 'Deleting %s...\n', [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
+                rmdir( [procFoldersDir(ii).class filesep procFoldersDir(ii).name], 's' );
             end
         end
     end
@@ -65,7 +73,7 @@ choice = input( 'Enter to see all folders, ''t'' to see by type, ''c'' by config
 procList = containers.Map('KeyType','char','ValueType','any');
 if isempty( choice )
     for ii = 1 : length( procFolders )
-        assignMapStructElem( procList, procFolders(ii).name, 'idxs', ii );
+        assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
     end
 elseif strcmpi( choice, 't' )
     for ii = 1 : length( procFolders )
@@ -79,10 +87,10 @@ elseif strcmpi( choice, 't' )
     end
 elseif strcmpi( choice, 'c' )
     for ii = 1 : length( procFolders )
-        iiConfig = load( [procFolders(ii).name filesep 'config.mat'] );
+        iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );
         if isempty( procList )
-            assignMapStructElem( procList, procFolders(ii).name, 'idxs', ii );
-            assignMapStructElem( procList, procFolders(ii).name, 'config', iiConfig );
+            assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
+            assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
         else
             procNames = keys( procList );
             configFound = false;
@@ -95,8 +103,8 @@ elseif strcmpi( choice, 'c' )
                 end
             end
             if ~configFound
-                assignMapStructElem( procList, procFolders(ii).name, 'idxs', ii );
-                assignMapStructElem( procList, procFolders(ii).name, 'config', iiConfig );
+                assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
+                assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
             end
         end
     end

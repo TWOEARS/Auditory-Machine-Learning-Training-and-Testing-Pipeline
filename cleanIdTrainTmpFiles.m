@@ -22,6 +22,7 @@ while true
     ii = 1;
     while ii <= length( procFoldersDir )
         if exist( [procFoldersDir(ii).class filesep procFoldersDir(ii).name filesep 'config.mat'], 'file' )
+            procFoldersDir(ii).type = strtok( procFoldersDir(ii).name, '.' );
             ii = ii + 1;
         else
             procFoldersDir(ii) = [];
@@ -78,7 +79,7 @@ end
 
 function procList = listProcFolders( procFolders )
 
-choice = input( 'Enter to see all folders, ''t'' to see by type, ''c'' by config >> ', 's' );
+choice = input( 'Enter to see all folders, ''t'' to see by type, ''c'' by config, ''C'' by class >> ', 's' );
 procList = containers.Map('KeyType','char','ValueType','any');
 if isempty( choice )
     for ii = 1 : length( procFolders )
@@ -86,15 +87,23 @@ if isempty( choice )
     end
 elseif strcmpi( choice, 't' )
     for ii = 1 : length( procFolders )
-        procName = strtok( procFolders(ii).name, '.' );
-        if ~procList.isKey( procName )
-            assignMapStructElem( procList, procName, 'idxs', ii );
+        if ~procList.isKey( procFolders(ii).type )
+            assignMapStructElem( procList, procFolders(ii).type, 'idxs', ii );
         else
-            assignMapStructElem( procList, procName, 'idxs', ...
-                [getMapStructElem( procList, procName, 'idxs' ) ii] );
+            assignMapStructElem( procList, procFolders(ii).type, 'idxs', ...
+                [getMapStructElem( procList, procFolders(ii).type, 'idxs' ) ii] );
         end
     end
-elseif strcmpi( choice, 'c' )
+elseif strcmp( choice, 'C' )
+    for ii = 1 : length( procFolders )
+        if ~procList.isKey( procFolders(ii).class )
+            assignMapStructElem( procList, procFolders(ii).class, 'idxs', ii );
+        else
+            assignMapStructElem( procList, procFolders(ii).class, 'idxs', ...
+                [getMapStructElem( procList, procFolders(ii).class, 'idxs' ) ii] );
+        end
+    end
+elseif strcmp( choice, 'c' )
     fprintf( '\n' );
     for ii = 1 : length( procFolders )
         iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );

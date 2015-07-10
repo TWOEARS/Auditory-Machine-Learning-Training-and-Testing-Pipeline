@@ -23,6 +23,8 @@ while true
     while ii <= length( procFoldersDir )
         if exist( [procFoldersDir(ii).class filesep procFoldersDir(ii).name filesep 'config.mat'], 'file' )
             procFoldersDir(ii).type = strtok( procFoldersDir(ii).name, '.' );
+            pfd = dir( [procFoldersDir(ii).class filesep procFoldersDir(ii).name filesep '*'] );
+            procFoldersDir(ii).size = sum( [pfd.bytes] );
             ii = ii + 1;
         else
             procFoldersDir(ii) = [];
@@ -126,8 +128,9 @@ elseif strcmp( choice, 'e' )
 end
 procNames = keys( procList );
 for ii = 1 : length( procNames )
-    fprintf( '%i: \t%s \t(%i folders)\n', ...
-        ii, procNames{ii}, numel( getMapStructElem( procList, procNames{ii}, 'idxs' ) ) );
+    nFolders = numel( getMapStructElem( procList, procNames{ii}, 'idxs' ) );
+    sizeFolders = sum( [procFolders(getMapStructElem( procList, procNames{ii}, 'idxs' )).size] ) / (1024*1000);
+    fprintf( '%i: \t%s \t(%i folders, %i MB)\n', ii, procNames{ii}, nFolders, ceil( sizeFolders ) );
 end
 
 

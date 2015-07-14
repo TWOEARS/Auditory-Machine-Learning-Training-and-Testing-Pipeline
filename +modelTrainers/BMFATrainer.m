@@ -29,7 +29,7 @@ classdef BMFATrainer < modelTrainers.Base & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = BMFAModel();
+            obj.model = models.BMFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.mfaK = obj.parameters.nComp;
             [obj.model.model{1}, obj.model.model{2}] = trainBMFA( y, xScaled, gmmOpts );

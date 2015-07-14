@@ -1,7 +1,7 @@
-classdef MfaNetModel < DataScalingModel
+classdef BGmmNetModel < models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.MfaNetTrainer, ?modelTrainers.MFAmodelSelectTrainer})
+    properties (SetAccess = {?modelTrainers.BGmmNetTrainer, ?modelTrainers.BGMMmodelSelectTrainer})
         model;
         nComp;
         thr;
@@ -10,7 +10,7 @@ classdef MfaNetModel < DataScalingModel
     %% --------------------------------------------------------------------
     methods
 
-        function obj = MfaNetModel()
+        function obj = BGmmNetModel()
             obj.nComp = [1 2 3];
         end
 %         %% -----------------------------------------------------------------
@@ -26,10 +26,17 @@ classdef MfaNetModel < DataScalingModel
         
         function [y,score] = applyModelToScaledData( obj, x )
           
-                
             model1 = obj.model{1};
             model0 = obj.model{2};
-            [y, score] = mfaPredict(x, model1, model0 );
+            idFeature = obj.model{3};
+            % use apparoch 1 if thraining is done with approach 1
+            xTest = x(:,idFeature);
+            % use approach 2 if trianing is done with approach 2
+%                         [~,reconst] = pcares(x,idFeature);
+%                         xTest= reconst(:,1:idFeature);
+            
+            % do prediction
+            [y, score] = BgmmPredict(xTest, model1, model0 );
            
        end
         %% -----------------------------------------------------------------

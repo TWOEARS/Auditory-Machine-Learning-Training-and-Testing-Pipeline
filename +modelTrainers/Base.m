@@ -35,8 +35,8 @@ classdef (Abstract) Base < handle
         
         function model = getModel( obj )
             model = obj.giveTrainedModel();
-            if ~isa( model, 'IdModelInterface' )
-                error( 'giveTrainedModel must produce an IdModelInterface object.' );
+            if ~isa( model, 'models.Base' )
+                error( 'giveTrainedModel must produce an models.Base object.' );
             end
         end
         %% -------------------------------------------------------------------------------
@@ -62,7 +62,7 @@ classdef (Abstract) Base < handle
         function performance = getPerformance( obj )
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
-            performance = IdModelInterface.getPerformance( ...
+            performance = models.Base.getPerformance( ...
                 model, obj.testSet, obj.positiveClass, obj.performanceMeasure );
         end
         %% ----------------------------------------------------------------

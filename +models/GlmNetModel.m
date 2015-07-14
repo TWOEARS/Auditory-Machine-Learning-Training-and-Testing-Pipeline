@@ -1,4 +1,4 @@
-classdef GlmNetModel < DataScalingModel
+classdef GlmNetModel < models.DataScalingModel
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?modelTrainers.GlmNetTrainer, ?modelTrainers.GlmNetLambdaSelectTrainer})

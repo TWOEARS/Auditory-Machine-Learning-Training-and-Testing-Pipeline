@@ -33,7 +33,7 @@ classdef MbfNetTrainer < modelTrainers.Base & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = MbfNetModel();
+            obj.model = models.MbfNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             mbfOpts.nComp = obj.parameters.nComp;
             mbfOpts.thr = obj.parameters.thr;

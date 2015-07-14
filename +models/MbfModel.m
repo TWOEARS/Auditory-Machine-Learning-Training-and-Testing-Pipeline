@@ -1,4 +1,4 @@
-classdef MbfModel < DataScalingModel
+classdef MbfModel < models.DataScalingModel
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?modelTrainers.MBFTrainer, ?modelTrainers.MBFmodelSelectTrainer})

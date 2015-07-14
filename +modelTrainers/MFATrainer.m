@@ -26,7 +26,7 @@ classdef MFATrainer < modelTrainers.Base & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = MFAModel();
+            obj.model = models.MFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.mfaK = 10;%0.5*size(xScaled,2);
              gmmOpts.mfaM = 10;

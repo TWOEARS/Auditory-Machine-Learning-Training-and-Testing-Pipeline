@@ -1,4 +1,4 @@
-classdef vMFModel < DataScalingModel
+classdef vMFModel < models.DataScalingModel
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?modelTrainers.vMFTrainer, ?modelTrainers.GMMmodelSelectTrainer})

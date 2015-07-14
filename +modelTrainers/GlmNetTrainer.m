@@ -39,7 +39,7 @@ classdef GlmNetTrainer < modelTrainers.Base & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = GlmNetModel();
+            obj.model = models.GlmNetModel();
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );

@@ -33,7 +33,7 @@ classdef vMFTrainer < modelTrainers.Base & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = vMFModel();
+            obj.model = models.vMFModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.nComp = obj.parameters.nComp;
             gmmOpts.thr = obj.parameters.thr;

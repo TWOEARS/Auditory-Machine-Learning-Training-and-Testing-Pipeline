@@ -38,7 +38,7 @@ classdef SVMtrainer < modelTrainers.Base & Parameterized
 
         function buildModel( obj, x, y )
             [x, y, cp] = obj.prepareData( x, y );
-            obj.model = SVMmodel();
+            obj.model = models.SVMmodel();
             obj.model.useProbModel = obj.parameters.makeProbModel;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m 500 -b %d -h 0';

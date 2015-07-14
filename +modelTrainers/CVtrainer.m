@@ -25,7 +25,6 @@ classdef CVtrainer < modelTrainers.Base
             obj.nFolds = 5;
             obj.abortPerfMin = 0;
             obj.performanceMeasure = trainer.performanceMeasure;
-%            obj.models = IdModelInterface.empty;
         end
         %% ----------------------------------------------------------------
 

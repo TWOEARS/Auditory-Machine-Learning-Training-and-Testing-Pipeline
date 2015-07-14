@@ -1,4 +1,4 @@
-classdef SVMmodel < DataScalingModel
+classdef SVMmodel < models.DataScalingModel
     
     %% --------------------------------------------------------------------
     properties (SetAccess = ?modelTrainers.SVMtrainer)

@@ -1,4 +1,4 @@
-classdef ShortFeatureSet1Blockmean < IdFeatureProc
+classdef ShortFeatureSet1Blockmean < featureCreators.Base
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -20,7 +20,7 @@ classdef ShortFeatureSet1Blockmean < IdFeatureProc
     methods (Access = public)
         
         function obj = ShortFeatureSet1Blockmean( )
-            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
+            obj = obj@featureCreators.Base( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
@@ -88,8 +88,9 @@ classdef ShortFeatureSet1Blockmean < IdFeatureProc
             outputDeps.amChannels = obj.amChannels;
             outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );
-            classname = classInfo.Name;
-            outputDeps.featureProc = classname;
+            [classname1, classname2] = strtok( classInfo.Name, '.' );
+            if isempty( classname2 ), outputDeps.featureProc = classname1;
+            else outputDeps.featureProc = classname2(2:end); end
         end
         %% ----------------------------------------------------------------
         

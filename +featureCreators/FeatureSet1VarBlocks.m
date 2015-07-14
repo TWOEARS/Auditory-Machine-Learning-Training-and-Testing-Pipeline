@@ -1,4 +1,4 @@
-classdef FeatureSet1Blockmean < IdFeatureProc
+classdef FeatureSet1VarBlocks < featureCreators.Base
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -8,8 +8,10 @@ classdef FeatureSet1Blockmean < IdFeatureProc
         freqChannels;
         freqChannelsStatistics;
         amFreqChannels;
+        onsfreqChannels;
         deltasLevels;
         amChannels;
+        nlmoments;
     end
     
     %% --------------------------------------------------------------------
@@ -19,9 +21,10 @@ classdef FeatureSet1Blockmean < IdFeatureProc
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = FeatureSet1Blockmean( )
-            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
+        function obj = FeatureSet1VarBlocks( )
+            obj = obj@featureCreators.Base( 1, 0.2, 0.5, 0.2  );
             obj.freqChannels = 16;
+            obj.onsfreqChannels = 8;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
             obj.deltasLevels = 2;
@@ -53,23 +56,30 @@ classdef FeatureSet1Blockmean < IdFeatureProc
             afeRequests{4}.name = 'onset_strength';
             afeRequests{4}.params = genParStruct( ...
                 'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.freqChannels ...
+                'fb_nChannels', obj.onsfreqChannels ...
                 );
         end
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
+            x = [obj.makeDataPointForBlock( afeData, 0.2 ), ...
+                 obj.makeDataPointForBlock( afeData, 0.5 ), ...
+                 obj.makeDataPointForBlock( afeData, 1.0 )];
+        end
+        %% ----------------------------------------------------------------
+
+        function x = makeDataPointForBlock( obj, afeData, blLen )
             rmRL = afeData(2);
-            rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
-            rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            rmR = compressAndScale( rmRL{1}.getSignalBlock(blLen), 0.33, @(x)(median( x(x>0.01) )), 0 );
+            rmL = compressAndScale( rmRL{2}.getSignalBlock(blLen), 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
             spfRL = afeData(3);
-            spfR = compressAndScale( spfRL{1}.Data, 0.33 );
-            spfL = compressAndScale( spfRL{2}.Data, 0.33 );
+            spfR = compressAndScale( spfRL{1}.getSignalBlock(blLen), 0.33 );
+            spfL = compressAndScale( spfRL{2}.getSignalBlock(blLen), 0.33 );
             spf = 0.5 * spfL + 0.5 * spfR;
             onsRL = afeData(4);
-            onsR = compressAndScale( onsRL{1}.Data, 0.33 );
-            onsL = compressAndScale( onsRL{2}.Data, 0.33 );
+            onsR = compressAndScale( onsRL{1}.getSignalBlock(blLen), 0.33 );
+            onsL = compressAndScale( onsRL{2}.getSignalBlock(blLen), 0.33 );
             ons = 0.5 * onsR + 0.5 * onsL;
             xBlock = [rm, spf, ons];
             x = lMomentAlongDim( xBlock, [1,2,3], 1 );
@@ -78,8 +88,8 @@ classdef FeatureSet1Blockmean < IdFeatureProc
                 x = [x  lMomentAlongDim( xBlock, [2,3,4], 1 )];
             end
             modRL = afeData(1);
-            modR = compressAndScale( modRL{1}.Data, 0.33 );
-            modL = compressAndScale( modRL{2}.Data, 0.33 );
+            modR = compressAndScale( modRL{1}.getSignalBlock(blLen), 0.33 );
+            modL = compressAndScale( modRL{2}.getSignalBlock(blLen), 0.33 );
             mod = 0.5 * modR + 0.5 * modL;
             mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
             x = [x lMomentAlongDim( mod, [1,2], 1 )];
@@ -97,8 +107,9 @@ classdef FeatureSet1Blockmean < IdFeatureProc
             outputDeps.amChannels = obj.amChannels;
             outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );
-            classname = classInfo.Name;
-            outputDeps.featureProc = classname;
+            [classname1, classname2] = strtok( classInfo.Name, '.' );
+            if isempty( classname2 ), outputDeps.featureProc = classname1;
+            else outputDeps.featureProc = classname2(2:end); end
             outputDeps.v = 5;
         end
         %% ----------------------------------------------------------------

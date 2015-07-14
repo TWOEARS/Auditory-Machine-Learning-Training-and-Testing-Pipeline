@@ -1,7 +1,4 @@
-classdef FeatureSet1BlockmeanLowVsHighFreqRes < IdFeatureProc
-% uses magnitude ratemap with cubic compression and scaling to a max value
-% of one. Reduces each freq channel to its mean and std + mean and std of
-% finite differences.
+classdef BlockConcatFeatureSet2 < featureCreators.Base
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -10,6 +7,7 @@ classdef FeatureSet1BlockmeanLowVsHighFreqRes < IdFeatureProc
         amFreqChannels;
         deltasLevels;
         amChannels;
+        nConcatBlocks;
     end
     
     %% --------------------------------------------------------------------
@@ -19,12 +17,14 @@ classdef FeatureSet1BlockmeanLowVsHighFreqRes < IdFeatureProc
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = FeatureSet1BlockmeanLowVsHighFreqRes( )
-            obj = obj@IdFeatureProc( 0.5, 0.5/3, 0.5, 0.5 );
-            obj.freqChannels = 8;
+        function obj = BlockConcatFeatureSet2( )
+            obj = obj@featureCreators.Base( 0.48, 0.24, 0.5, 0.48 );
+            obj.freqChannels = 16;
             obj.amFreqChannels = 8;
+            obj.freqChannelsStatistics = 32;
             obj.deltasLevels = 1;
-            obj.amChannels = 9;
+            obj.amChannels = 4;
+            obj.nConcatBlocks = 2;
         end
         %% ----------------------------------------------------------------
 
@@ -49,25 +49,10 @@ classdef FeatureSet1BlockmeanLowVsHighFreqRes < IdFeatureProc
                 'pp_bNormalizeRMS', false, ...
                 'fb_nChannels', obj.freqChannels ...
                 );
-            afeRequests{4}.name = 'ams_features';
+            afeRequests{4}.name = 'spectral_features';
             afeRequests{4}.params = genParStruct( ...
                 'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.amFreqChannels*2, ...
-                'ams_fbType', 'log', ...
-                'ams_nFilters', obj.amChannels, ...
-                'ams_lowFreqHz', 1, ...
-                'ams_highFreqHz', 256' ...
-                );
-            afeRequests{5}.name = 'ratemap';
-            afeRequests{5}.params = genParStruct( ...
-                'pp_bNormalizeRMS', false, ...
-                'rm_scaling', 'magnitude', ...
-                'fb_nChannels', obj.freqChannels*4 ...
-                );
-            afeRequests{6}.name = 'onset_strength';
-            afeRequests{6}.params = genParStruct( ...
-                'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.freqChannels*4 ...
+                'fb_nChannels', obj.freqChannelsStatistics ...
                 );
         end
         %% ----------------------------------------------------------------
@@ -77,64 +62,70 @@ classdef FeatureSet1BlockmeanLowVsHighFreqRes < IdFeatureProc
             rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
+            spfRL = afeData(4);
+            spfR = compressAndScale( spfRL{1}.Data, 0.33 );
+            spfL = compressAndScale( spfRL{2}.Data, 0.33 );
+            spf = 0.5 * spfL + 0.5 * spfR;
             onsRL = afeData(3);
             onsR = compressAndScale( onsRL{1}.Data, 0.33 );
             onsL = compressAndScale( onsRL{2}.Data, 0.33 );
             ons = 0.5 * onsR + 0.5 * onsL;
-            xBlock = [rm, ons];
-            x = lMomentAlongDim( xBlock, [1,2,3], 1 );
-            for i = 1:obj.deltasLevels
-                xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, [2,3,4], 1 )];
-            end
             modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33 );
             modL = compressAndScale( modRL{2}.Data, 0.33 );
-            mod = 0.5 * modR + 0.5 * modL;
-            mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
-            x = [x lMomentAlongDim( mod, [1,2], 1 )];
-            for i = 1:obj.deltasLevels
-                mod = mod(2:end,:) - mod(1:end-1,:);
-                x = [x lMomentAlongDim( mod, [2,3], 1 )];
+            md = 0.5 * modR + 0.5 * modL;
+            md = reshape( md, size( md, 1 ), size( md, 2 ) * size( md, 3 ) );
+            mdn = zeros( size( md, 1 ), 0 );
+            for ii = 1 : obj.nConcatBlocks
+                mdn = [mdn md(:,ii:obj.nConcatBlocks:end)];
             end
-            
-            rmRL = afeData(5);
-            rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
-            rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
-            rm = 0.5 * rmR + 0.5 * rmL;
-            onsRL = afeData(6);
-            onsR = compressAndScale( onsRL{1}.Data, 0.33 );
-            onsL = compressAndScale( onsRL{2}.Data, 0.33 );
-            ons = 0.5 * onsR + 0.5 * onsL;
-            xBlock = [rm, ons];
-            x = [x momentsAlongDim( xBlock, [1,2,3], 1 )];
-            for i = 1:obj.deltasLevels
+            md = mdn;
+            xBlock = [rm, spf, ons];
+            nDividableXLen = size( xBlock, 1 ) - mod( size( xBlock, 1 ), obj.nConcatBlocks );
+            concatBlockLen = nDividableXLen / obj.nConcatBlocks;
+            xBlock = reshape( xBlock(end-nDividableXLen+1:end,:), concatBlockLen, size( xBlock, 2 ) * obj.nConcatBlocks );
+            xbn = zeros( size( xBlock, 1 ), 0 );
+            for ii = 1 : obj.nConcatBlocks
+                xbn = [xbn xBlock(:,ii:obj.nConcatBlocks:end)];
+            end
+            xBlock = xbn;
+            x = lMomentAlongDim( xBlock, [1,2,3,4], 1 );
+            for ii = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  momentsAlongDim( xBlock, [2,3,4], 1 )];
+                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
             end
-            modRL = afeData(4);
-            modR = compressAndScale( modRL{1}.Data, 0.33 );
-            modL = compressAndScale( modRL{2}.Data, 0.33 );
-            mod = 0.5 * modR + 0.5 * modL;
-            mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
-            x = [x momentsAlongDim( mod, [1,2], 1 )];
-            for i = 1:obj.deltasLevels
-                mod = mod(2:end,:) - mod(1:end-1,:);
-                x = [x momentsAlongDim( mod, [2,3], 1 )];
+            lenOneBlock = length( x ) / obj.nConcatBlocks;
+            for ii = 2 : obj.nConcatBlocks
+                x = [x, x((ii-1)*lenOneBlock+1:ii*lenOneBlock) - x((ii-2)*lenOneBlock+1:(ii-1)*lenOneBlock)];
             end
+            nDividableXLen = size( md, 1 ) - mod( size( md, 1 ), obj.nConcatBlocks );
+            concatBlockLen = nDividableXLen / obj.nConcatBlocks;
+            md = reshape( md(end-nDividableXLen+1:end,:), concatBlockLen, size( md, 2 ) * obj.nConcatBlocks );
+            xm = lMomentAlongDim( md, [1,2,3,4], 1 );
+            for ii = 1:obj.deltasLevels
+                md = md(2:end,:) - md(1:end-1,:);
+                xm = [xm  lMomentAlongDim( md, [1,2,3,4], 1 )];
+            end
+            lenOneBlock = length( xm ) / obj.nConcatBlocks;
+            for ii = 2 : obj.nConcatBlocks
+                xm = [xm, xm((ii-1)*lenOneBlock+1:ii*lenOneBlock) - xm((ii-2)*lenOneBlock+1:(ii-1)*lenOneBlock)];
+            end
+            x = [x xm];
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getFeatureInternOutputDependencies( obj )
+        function outputDeps = getInternOutputDependencies( obj )
+            outputDeps.nConcatBlocks = obj.nConcatBlocks;
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.amFreqChannels = obj.amFreqChannels;
             outputDeps.freqChannelsStatistics = obj.freqChannelsStatistics;
             outputDeps.amChannels = obj.amChannels;
             outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );
-            classname = classInfo.Name;
-            outputDeps.featureProc = classname;
-            outputDeps.v = 4;
+            [classname1, classname2] = strtok( classInfo.Name, '.' );
+            if isempty( classname2 ), outputDeps.featureProc = classname1;
+            else outputDeps.featureProc = classname2(2:end); end
+            outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
         

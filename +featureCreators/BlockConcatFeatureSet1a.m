@@ -1,4 +1,4 @@
-classdef BlockConcatFeatureSet1a < FeatureProcInterface
+classdef BlockConcatFeatureSet1a < featureCreators.Base
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -14,22 +14,24 @@ classdef BlockConcatFeatureSet1a < FeatureProcInterface
     methods (Access = public)
         
         function obj = BlockConcatFeatureSet1a( )
-            obj = obj@FeatureProcInterface( 0.48 );
+            obj = obj@featureCreators.Base( 0.48, 0.24, 0.5, 0.48 );
             obj.freqChannels = 16;
             obj.nConcatBlocks = 4;
         end
         %% ----------------------------------------------------------------
 
         function afeRequests = getAFErequests( obj )
-            afeRequests{1}.name = 'ratemap_magnitude';
+            afeRequests{1}.name = 'ratemap';
             afeRequests{1}.params = genParStruct( ...
-                'nChannels', obj.freqChannels ...
+                'pp_bNormalizeRMS', false, ...
+                'rm_scaling', 'magnitude', ...
+                'fb_nChannels', obj.freqChannels ...
                 );
         end
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
-            rmRL = afeData('ratemap_magnitude');
+            rmRL = afeData(1);
             rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
@@ -53,8 +55,10 @@ classdef BlockConcatFeatureSet1a < FeatureProcInterface
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.nConcatBlocks = obj.nConcatBlocks;
             classInfo = metaclass( obj );
-            classname = classInfo.Name;
-            outputDeps.featureProc = classname;
+            [classname1, classname2] = strtok( classInfo.Name, '.' );
+            if isempty( classname2 ), outputDeps.featureProc = classname1;
+            else outputDeps.featureProc = classname2(2:end); end
+            outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
         

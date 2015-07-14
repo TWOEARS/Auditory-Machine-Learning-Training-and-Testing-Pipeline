@@ -83,8 +83,10 @@ classdef (Abstract) IdProcInterface < handle
         
         function obj = IdProcInterface( procName )
             if nargin < 1,
-                objMetaClass = metaclass( obj );
-                obj.procName = objMetaClass.Name;
+                classInfo = metaclass( obj );
+                [classname1, classname2] = strtok( classInfo.Name, '.' );
+                if isempty( classname2 ), obj.procName = classname1;
+                else obj.procName = classname2(2:end); end
             else
                 obj.procName = procName;
             end

@@ -1,13 +1,14 @@
-classdef BlockConcatFeatureSet2 < FeatureProcInterface
+classdef FeatureSet2Blockmean < featureCreators.Base
+% uses magnitude ratemap with cubic compression and scaling to a max value
+% of one. Reduces each freq channel to its mean and std + mean and std of
+% finite differences.
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         freqChannels;
         freqChannelsStatistics;
         amFreqChannels;
-        deltasLevels;
         amChannels;
-        nConcatBlocks;
     end
     
     %% --------------------------------------------------------------------
@@ -17,14 +18,12 @@ classdef BlockConcatFeatureSet2 < FeatureProcInterface
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = BlockConcatFeatureSet2( )
-            obj = obj@FeatureProcInterface( 0.48 );
+        function obj = FeatureSet2Blockmean( )
+            obj = obj@featureCreators.Base( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
-            obj.deltasLevels = 1;
             obj.amChannels = 4;
-            obj.nConcatBlocks = 2;
         end
         %% ----------------------------------------------------------------
 
@@ -66,57 +65,31 @@ classdef BlockConcatFeatureSet2 < FeatureProcInterface
             modRL = afeData('modulation');
             modR = compressAndScale( modRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             modL = compressAndScale( modRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
-            md = 0.5 * modR + 0.5 * modL;
-            md = reshape( md, size( md, 1 ), size( md, 2 ) * size( md, 3 ) );
-            mdn = zeros( size( md, 1 ), 0 );
-            for ii = 1 : obj.nConcatBlocks
-                mdn = [mdn md(:,ii:obj.nConcatBlocks:end)];
-            end
-            md = mdn;
+            mod = 0.5 * modR + 0.5 * modL;
+            mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
             xBlock = [rm, spf, ons];
-            nDividableXLen = size( xBlock, 1 ) - mod( size( xBlock, 1 ), obj.nConcatBlocks );
-            concatBlockLen = nDividableXLen / obj.nConcatBlocks;
-            xBlock = reshape( xBlock(end-nDividableXLen+1:end,:), concatBlockLen, size( xBlock, 2 ) * obj.nConcatBlocks );
-            xbn = zeros( size( xBlock, 1 ), 0 );
-            for ii = 1 : obj.nConcatBlocks
-                xbn = [xbn xBlock(:,ii:obj.nConcatBlocks:end)];
+            x = [mean( xBlock, 1 )  std( xBlock, 0, 1 )];
+            for ii = 1 : size( xBlock, 2 )
+                p = polyfit( 1:size(xBlock,1), xBlock(:,ii)', 2 );
+                x = [x p(1:2)];
             end
-            xBlock = xbn;
-            x = lMomentAlongDim( xBlock, [1,2,3,4], 1 );
-            for ii = 1:obj.deltasLevels
-                xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
+            x = [x mean( mod, 1 )  std( mod, 0, 1 )];
+            for ii = 1 : size( mod, 2 )
+                p = polyfit( 1:size(mod,1), mod(:,ii)', 2 );
+                x = [x p(1:2)];
             end
-            lenOneBlock = length( x ) / obj.nConcatBlocks;
-            for ii = 2 : obj.nConcatBlocks
-                x = [x, x((ii-1)*lenOneBlock+1:ii*lenOneBlock) - x((ii-2)*lenOneBlock+1:(ii-1)*lenOneBlock)];
-            end
-            nDividableXLen = size( md, 1 ) - mod( size( md, 1 ), obj.nConcatBlocks );
-            concatBlockLen = nDividableXLen / obj.nConcatBlocks;
-            md = reshape( md(end-nDividableXLen+1:end,:), concatBlockLen, size( md, 2 ) * obj.nConcatBlocks );
-            xm = lMomentAlongDim( md, [1,2,3,4], 1 );
-            for ii = 1:obj.deltasLevels
-                md = md(2:end,:) - md(1:end-1,:);
-                xm = [xm  lMomentAlongDim( md, [1,2,3,4], 1 )];
-            end
-            lenOneBlock = length( xm ) / obj.nConcatBlocks;
-            for ii = 2 : obj.nConcatBlocks
-                xm = [xm, xm((ii-1)*lenOneBlock+1:ii*lenOneBlock) - xm((ii-2)*lenOneBlock+1:(ii-1)*lenOneBlock)];
-            end
-            x = [x xm];
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.nConcatBlocks = obj.nConcatBlocks;
+        function outputDeps = getFeatureInternOutputDependencies( obj )
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.amFreqChannels = obj.amFreqChannels;
             outputDeps.freqChannelsStatistics = obj.freqChannelsStatistics;
             outputDeps.amChannels = obj.amChannels;
-            outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );
-            classname = classInfo.Name;
-            outputDeps.featureProc = classname;
+            [classname1, classname2] = strtok( classInfo.Name, '.' );
+            if isempty( classname2 ), outputDeps.featureProc = classname1;
+            else outputDeps.featureProc = classname2(2:end); end
         end
         %% ----------------------------------------------------------------
         

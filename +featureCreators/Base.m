@@ -1,4 +1,4 @@
-classdef IdFeatureProc < IdProcInterface
+classdef Base < IdProcInterface
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -20,7 +20,7 @@ classdef IdFeatureProc < IdProcInterface
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = IdFeatureProc( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
+        function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
             obj = obj@IdProcInterface();
             obj.blockSize_s = blockSize_s;
             obj.shiftSize_s = shiftsize_s;

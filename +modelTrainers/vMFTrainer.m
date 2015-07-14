@@ -38,7 +38,7 @@ classdef vMFTrainer < modelTrainers.Base & Parameterized
             gmmOpts.nComp = obj.parameters.nComp;
             gmmOpts.thr = obj.parameters.thr;
             %....... approach 1: explicit dimension reduction using PCA
-            idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
+            idFeature = modelTrainers.featureSelectionPCA2(xScaled,gmmOpts.thr);
             xTrain = xScaled(:,idFeature);
             %....... approach 2: uncorrelate feature variables using PCA 
 %             dataDim = size(xScaled,2);
@@ -47,11 +47,44 @@ classdef vMFTrainer < modelTrainers.Base & Parameterized
 %             xTrain = reconst(:,1:ndims);
 %             idFeature = ndims;
             
-            
             gmmOpts.initComps = gmmOpts.nComp;
-            [obj.model.model{1}, obj.model.model{2}] = trainVMF( y, (normvec(xTrain'))', gmmOpts );
+            [obj.model.model{1}, obj.model.model{2}] = ...
+                modelTrainers.vMFTrainer.trainVMF( y, (normvec(xTrain'))', gmmOpts );
             obj.model.model{3}=idFeature;
             verboseFprintf( obj, '\n' );
+        end
+        %% ----------------------------------------------------------------
+
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Static)
+        
+        function [model1, model0] = trainVMF( y, x, esetup )
+            % y: labels of x
+            % x: matrix of data points (+1 and -1!)
+            % esetup: training parameters
+            %
+            % model: trained gmm
+            % trVal: performance of trained model on training data
+            
+            x1 = (x(y==1,:,:))';
+            if sum(sum(isnan(x1)))>0
+                warning('there is some missing data that create NaN which are replaced by zero')
+                x1(isnan(x1))=0;
+            end
+            
+            pDprior=init(vMFMMB(esetup.initComps),x1);
+            [model1]=adapt(pDprior,x1,50, 'fixed',0.1);
+            
+            x0 = real((x(y~=1,:,:))');
+            if sum(sum(isnan(x0)))>0
+                warning('there is some missing data that create NaN which are replaced by zero')
+                x0(isnan(x0))=0;
+            end
+            
+            pDprior=init(vMFMMB(esetup.initComps),x0);
+            [model0]=adapt(pDprior,x0, 50, 'fixed',0.1);
         end
         %% ----------------------------------------------------------------
 

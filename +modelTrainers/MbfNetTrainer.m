@@ -44,8 +44,9 @@ classdef MbfNetTrainer < modelTrainers.Base & Parameterized
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
             mbfOpts.initComps = mbfOpts.nComp;
-          idFeature = featureSelectionPCA2(xScaled,mbfOpts.thr);
-            [obj.model.model{1}, obj.model.model{2}] = trainMbfs( y, xScaled(:,idFeature), mbfOpts );
+          idFeature = modelTrainers.featureSelectionPCA2(xScaled,mbfOpts.thr);
+            [obj.model.model{1}, obj.model.model{2}] = ...
+                modelTrainers.MBFTrainer.trainMbfs( y, xScaled(:,idFeature), mbfOpts );
             obj.model.model{3}=idFeature;            % train +1 model
             % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );

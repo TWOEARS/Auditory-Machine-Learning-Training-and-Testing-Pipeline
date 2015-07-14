@@ -43,7 +43,7 @@ classdef BGmmNetTrainer < modelTrainers.Base & Parameterized
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             gmmOpts.initComps = gmmOpts.nComp;
             %....... approach 1: explicit dimension reduction using PCA
-            idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
+            idFeature = modelTrainers.featureSelectionPCA2(xScaled,gmmOpts.thr);
             xTrain = xScaled(:,idFeature);
             %....... approach 2: uncorrelate feature variables using PCA
 % % %                         dataDim = size(xScaled,2);
@@ -52,7 +52,8 @@ classdef BGmmNetTrainer < modelTrainers.Base & Parameterized
 % % %                         xTrain = reconst(:,1:ndims);
 % % %                         idFeature = ndims;
             
-            [obj.model.model{1}, obj.model.model{2}] = trainBGMMs( y, xTrain, gmmOpts );
+            [obj.model.model{1}, obj.model.model{2}] = ...
+                modelTrainers.BGmmNetTrainer.trainBGMMs( y, xTrain, gmmOpts );
             obj.model.model{3}=idFeature;
             verboseFprintf( obj, '\n' );
         end
@@ -61,8 +62,40 @@ classdef BGmmNetTrainer < modelTrainers.Base & Parameterized
     end
     
     %% --------------------------------------------------------------------
-    methods (Access = protected)
+    methods (Static)
         
+        function [model1, model0] = trainBGMMs( y, x, esetup )
+            % y: labels of x
+            % x: matrix of data points (+1 and -1!)
+            % esetup: training parameters
+            %
+            % model: trained gmm
+            
+            x1 = (x(y==1,:,:))';
+            if sum(sum(isnan(x1)))>0
+                warning('there is some missing data that create NaN which are replaced by zero')
+                x1(isnan(x1))=0;
+            end
+            
+            
+            x0 = (x(y~=1,:,:))';
+            if sum(sum(isnan(x0)))>0
+                warning('there is some missing data that create NaN which are replaced by zero')
+                x0(isnan(x0))=0;
+            end
+            
+            [~, model1] = vbgm(x1, esetup.nComp); %
+            
+            [~, model0] = vbgm(x0, esetup.nComp); %
+            
+        end
+        %% ----------------------------------------------------------------
+        
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
+
         function model = giveTrainedModel( obj )
             model = obj.model;
         end

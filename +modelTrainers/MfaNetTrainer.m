@@ -43,7 +43,8 @@ classdef MfaNetTrainer < modelTrainers.Base & Parameterized
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             mbfOpts.mfaK = mbfOpts.nComp;
             mbfOpts.mfaM = mbfOpts.nDim;
-            [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, mbfOpts );
+            [obj.model.model{1}, obj.model.model{2}] = ...
+                modelTrainers.MFATrainer.trainMFA( y, xScaled, mbfOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

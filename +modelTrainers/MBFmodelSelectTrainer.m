@@ -1,4 +1,4 @@
-classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
+classdef MBFmodelSelectTrainer < modelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
     properties (Access = private)
@@ -10,7 +10,7 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
     %% -----------------------------------------------------------------------------------
     methods
 
-        function obj = GMMmodelSelectTrainer( varargin )
+        function obj = MBFmodelSelectTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                              'default', @BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -45,7 +45,7 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
              for nc=1:numel(comps)
                  obj.parameters.nComp = comps(nc);
                  verboseFprintf( obj, '\nRun on full trainSet...\n' );
-                 obj.coreTrainer = GmmNetTrainer( ...
+                 obj.coreTrainer = modelTrainers.MbfNetTrainer( ...
                      'performanceMeasure', obj.parameters.performanceMeasure, ...
                      'maxDataSize', obj.parameters.maxDataSize,...
                      'nComp', obj.parameters.nComp, ...
@@ -57,7 +57,7 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
                  obj.fullSetModel = obj.coreTrainer.getModel();
                  
                  verboseFprintf( obj, '\nRun cv to determine best number of components...\n' );
-                 obj.cvTrainer = CVtrainer( obj.coreTrainer );
+                 obj.cvTrainer = modelTrainers.CVtrainer( obj.coreTrainer );
                  obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
                  obj.cvTrainer.setPositiveClass( obj.positiveClass );
                  obj.cvTrainer.setData( obj.trainSet, obj.testSet );
@@ -71,6 +71,8 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
             lPerfs = zeros( numel( comps ), numel( cvModels{1} ) );
             for nc = 1 : numel( comps )
                 for ii = 1 : numel( cvModels{nt,nc} )
+                    %                     cvModels{ii}.setLambda( lambdas(ll) );
+                    %                   cvModels{ii}.setnComp( comps(ll) );
                     lPerfs(nc,ii) = IdModelInterface.getPerformance( ...
                         cvModels{nt,nc}{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
                         obj.performanceMeasure );
@@ -83,7 +85,7 @@ classdef GMMmodelSelectTrainer < IdTrainerInterface & Parameterized
             obj.parameters.nComp = comps(bComp);
             obj.parameters.thr = thrs(bThr);
             verboseFprintf( obj, '\nRun on full trainSet...\n' );
-            obj.coreTrainer = GmmNetTrainer( ...
+            obj.coreTrainer = modelTrainers.MbfNetTrainer( ...
                 'performanceMeasure', obj.parameters.performanceMeasure, ...
                 'maxDataSize', obj.parameters.maxDataSize,...
                 'nComp', obj.parameters.nComp, ...

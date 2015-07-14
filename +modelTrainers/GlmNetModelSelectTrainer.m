@@ -1,4 +1,4 @@
-classdef GlmNetModelSelectTrainer < HpsTrainer & Parameterized
+classdef GlmNetModelSelectTrainer < modelTrainers.HpsTrainer & Parameterized
     
     %% -----------------------------------------------------------------------------------
     properties (Access = private)
@@ -12,7 +12,7 @@ classdef GlmNetModelSelectTrainer < HpsTrainer & Parameterized
                              'default', [0.5 1], ...
                              'valFun', @(x)(isfloat(x) && length(x)==2 && x(1) < x(2)) );
             obj = obj@Parameterized( pds );
-            obj = obj@HpsTrainer( varargin{:} );
+            obj = obj@modelTrainers.HpsTrainer( varargin{:} );
             obj.setParameters( true, ...
                 'buildCoreTrainer', @GlmNetLambdaSelectTrainer, ...
                'hpsCoreTrainerParams', {'cvFolds', 2,}, ...

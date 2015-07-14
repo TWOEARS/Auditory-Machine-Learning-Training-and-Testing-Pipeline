@@ -34,11 +34,11 @@ classdef IdentificationTrainingPipeline < handle
         %   setting up the pipeline
         %   -----------------------
         function addModelCreator( obj, trainer )
-            if ~isa( trainer, 'IdTrainerInterface' )
-                error( 'ModelCreator must be of type IdTrainerInterface.' );
+            if ~isa( trainer, 'modelTrainers.Base' )
+                error( 'ModelCreator must be of type modelTrainers.Base' );
             end
             obj.trainer = trainer;
-            obj.generalizationPerfomanceAssessCVtrainer = CVtrainer( obj.trainer );
+            obj.generalizationPerfomanceAssessCVtrainer = modelTrainers.CVtrainer( obj.trainer );
         end
         %% ------------------------------------------------------------------------------- 
         

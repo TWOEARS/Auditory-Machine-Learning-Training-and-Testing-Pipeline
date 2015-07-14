@@ -1,4 +1,4 @@
-classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
+classdef BGMMmodelSelectTrainer < modelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
     properties (Access = private)
@@ -10,7 +10,7 @@ classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = MFAmodelSelectTrainer( varargin )
+        function obj = BGMMmodelSelectTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                 'default', @BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -21,9 +21,9 @@ classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
             pds{3} = struct( 'name', 'nComp', ...
                 'default', [1 2 3], ...
                 'valFun', @(x)(sum(x)>=0) );
-            pds{4} = struct( 'name', 'nDim', ...
-                'default', [2 3], ...
-                'valFun', @(x)(sum(x)>=0 ) );
+            pds{4} = struct( 'name', 'thr', ...
+                'default', [0.5 0.6], ...
+                'valFun', @(x)(sum(x)>=0) );
             pds{5} = struct( 'name', 'cvFolds', ...
                 'default', 4, ...
                 'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
@@ -39,17 +39,17 @@ classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
         
         function buildModel( obj, ~, ~ )
             comps =  obj.parameters.nComp;
-            nDims =  obj.parameters.nDim;
-            for nt=1:numel(nDims)
-                obj.parameters.nDim = nDims(nt);
+            thrs =  obj.parameters.thr;
+            for nt=1:numel(thrs)
+                obj.parameters.thr = thrs(nt);
                 for nc=1:numel(comps)
                     obj.parameters.nComp = comps(nc);
                     verboseFprintf( obj, '\nRun on full trainSet...\n' );
-                    obj.coreTrainer = MfaNetTrainer( ...
+                    obj.coreTrainer = modelTrainers.BGmmNetTrainer( ...
                         'performanceMeasure', obj.parameters.performanceMeasure, ...
                         'maxDataSize', obj.parameters.maxDataSize,...
                         'nComp', obj.parameters.nComp, ...
-                        'nDim', obj.parameters.nDim);
+                        'thr', obj.parameters.thr);
                     
                     obj.coreTrainer.setData( obj.trainSet, obj.testSet );
                     obj.coreTrainer.setPositiveClass( obj.positiveClass );
@@ -57,7 +57,7 @@ classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
                     obj.fullSetModel = obj.coreTrainer.getModel();
                     
                     verboseFprintf( obj, '\nRun cv to determine best number of components...\n' );
-                    obj.cvTrainer = CVtrainer( obj.coreTrainer );
+                    obj.cvTrainer = modelTrainers.CVtrainer( obj.coreTrainer );
                     obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
                     obj.cvTrainer.setPositiveClass( obj.positiveClass );
                     obj.cvTrainer.setData( obj.trainSet, obj.testSet );
@@ -67,7 +67,7 @@ classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
                     verboseFprintf( obj, 'Calculate Performance for all values of components...\n' );
                 end
             end
-            for nt=1:numel(nDims)
+            for nt=1:numel(thrs)
                 lPerfs = zeros( numel( comps ), numel( cvModels{1} ) );
                 for nc = 1 : numel( comps )
                     for ii = 1 : numel( cvModels{nt,nc} )
@@ -76,18 +76,18 @@ classdef MFAmodelSelectTrainer < IdTrainerInterface & Parameterized
                             obj.performanceMeasure );
                     end
                 end
-                nDimCompMatrix(:,nt) = mean(lPerfs,2);
+                thrCompMatrix(:,nt) = mean(lPerfs,2);
             end
-            [bComp, bnDim] = find( nDimCompMatrix==max(max(nDimCompMatrix)));
+            [bComp, bThr] = find( thrCompMatrix==max(max(thrCompMatrix)));
             % trian the best model
             obj.parameters.nComp = comps(bComp);
-            obj.parameters.nDim = nDims(bnDim);
+            obj.parameters.thr = thrs(bThr);
             verboseFprintf( obj, '\nRun on full trainSet...\n' );
-            obj.coreTrainer = MfaNetTrainer( ...
+            obj.coreTrainer = modelTrainers.BGmmNetTrainer( ...
                 'performanceMeasure', obj.parameters.performanceMeasure, ...
                 'maxDataSize', obj.parameters.maxDataSize,...
                 'nComp', obj.parameters.nComp, ...
-                'nDim', obj.parameters.nDim);
+                'thr', obj.parameters.thr);
             
             obj.coreTrainer.setData( obj.trainSet, obj.testSet );
             obj.coreTrainer.setPositiveClass( obj.positiveClass );

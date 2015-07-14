@@ -1,4 +1,4 @@
-classdef BGmmNetTrainer < IdTrainerInterface & Parameterized
+classdef MfaNetTrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,7 +8,7 @@ classdef BGmmNetTrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = BGmmNetTrainer( varargin )
+        function obj = MfaNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                 'default', @BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -16,9 +16,9 @@ classdef BGmmNetTrainer < IdTrainerInterface & Parameterized
             pds{2} = struct( 'name', 'nComp', ...
                 'default', [1 2 3], ...
                 'valFun', @(x)(sum(x)>=0) );
-            pds{3} = struct( 'name', 'thr', ...
-                             'default', [0.5 0.6], ...
-                             'valFun', @(x)(x<=1 && x >= 0) );
+            pds{3} = struct( 'name', 'nDim', ...
+                             'default', [5 6], ...
+                             'valFun', @(x)(sum(x) >= 0) );
             pds{4} = struct( 'name', 'maxDataSize', ...
                 'default', inf, ...
                 'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
@@ -32,28 +32,18 @@ classdef BGmmNetTrainer < IdTrainerInterface & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = BGmmNetModel();
+            obj.model = MfaNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-            gmmOpts.nComp = obj.parameters.nComp;
-            gmmOpts.thr = obj.parameters.thr;
+            mbfOpts.nComp = obj.parameters.nComp;
+            mbfOpts.nDim = obj.parameters.nDim;
             if ~isempty( obj.parameters.nComp )
-                gmmOpts.nComp = obj.parameters.nComp;
+                mbfOpts.nComp = obj.parameters.nComp;
             end
-            verboseFprintf( obj, 'GmmNet training with nComp=%f and thr=%f\n', gmmOpts.nComp, gmmOpts.thr);
+            verboseFprintf( obj, 'MbfNet training with nComp=%f and nDim=%f\n', mbfOpts.nComp, mbfOpts.nDim);
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-            gmmOpts.initComps = gmmOpts.nComp;
-            %....... approach 1: explicit dimension reduction using PCA
-            idFeature = featureSelectionPCA2(xScaled,gmmOpts.thr);
-            xTrain = xScaled(:,idFeature);
-            %....... approach 2: uncorrelate feature variables using PCA
-% % %                         dataDim = size(xScaled,2);
-% % %                         ndims = floor(gmmOpts.thr*dataDim);
-% % %                         [~,reconst] = pcares(xScaled,ndims);
-% % %                         xTrain = reconst(:,1:ndims);
-% % %                         idFeature = ndims;
-            
-            [obj.model.model{1}, obj.model.model{2}] = trainBGMMs( y, xTrain, gmmOpts );
-            obj.model.model{3}=idFeature;
+            mbfOpts.mfaK = mbfOpts.nComp;
+            mbfOpts.mfaM = mbfOpts.nDim;
+            [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, mbfOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

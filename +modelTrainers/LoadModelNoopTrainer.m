@@ -1,4 +1,4 @@
-classdef LoadModelNoopTrainer < IdTrainerInterface & Parameterized
+classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)

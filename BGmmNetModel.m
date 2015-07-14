@@ -1,7 +1,7 @@
 classdef BGmmNetModel < DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?BGmmNetTrainer, ?BGMMmodelSelectTrainer})
+    properties (SetAccess = {?modelTrainers.BGmmNetTrainer, ?modelTrainers.BGMMmodelSelectTrainer})
         model;
         nComp;
         thr;

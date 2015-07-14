@@ -1,4 +1,4 @@
-classdef SVMtrainer < IdTrainerInterface & Parameterized
+classdef SVMtrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)

@@ -1,4 +1,4 @@
-classdef MFATrainer < IdTrainerInterface & Parameterized
+classdef GlmNetTrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,12 +8,24 @@ classdef MFATrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = MFATrainer( varargin )
+        function obj = GlmNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                              'default', @BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
-            pds{2} = struct( 'name', 'maxDataSize', ...
+            pds{2} = struct( 'name', 'alpha', ...
+                             'default', 1, ...
+                             'valFun', @(x)(isfloat(x) && x >= 0 && x <= 1.0) );
+            pds{3} = struct( 'name', 'family', ...
+                             'default', 'binomial', ...
+                             'valFun', @(x)(ischar(x) && any(strcmpi(x, {'binomial'}))) );
+            pds{4} = struct( 'name', 'nLambda', ...
+                             'default', 100, ...
+                             'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
+            pds{5} = struct( 'name', 'lambda', ...
+                             'default', [], ...
+                             'valFun', @(x)(isempty(x) || isfloat(x)) );
+            pds{6} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             obj = obj@Parameterized( pds );
@@ -22,15 +34,25 @@ classdef MFATrainer < IdTrainerInterface & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
+            glmOpts.weights = obj.setDataWeights( y );
             if length( y ) > obj.parameters.maxDataSize
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = MFAModel();
+            obj.model = GlmNetModel();
+            x(isnan(x)) = 0;
+            x(isinf(x)) = 0;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-            gmmOpts.mfaK = 10;%0.5*size(xScaled,2);
-             gmmOpts.mfaM = 10;
-            [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, gmmOpts );
+            glmOpts.alpha = obj.parameters.alpha;
+            glmOpts.nlambda = obj.parameters.nLambda;
+            if ~isempty( obj.parameters.lambda )
+                glmOpts.lambda = obj.parameters.lambda;
+            end
+            verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
+            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
+            obj.model.model = glmnet( xScaled, y, obj.parameters.family, glmOpts );
+%             gmmOpts.initComps = 10;
+%             [obj.model.model{1}, obj.model.model{2}] = trainGmms( y, xScaled, gmmOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

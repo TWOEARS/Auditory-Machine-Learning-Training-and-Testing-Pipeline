@@ -1,7 +1,7 @@
 classdef BMFAModel < DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?BMFATrainer, ?BGMMmodelSelectTrainer})
+    properties (SetAccess = {?modelTrainers.BMFATrainer, ?modelTrainers.BGMMmodelSelectTrainer})
         model;
 
     end

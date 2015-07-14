@@ -1,4 +1,4 @@
-classdef MBFTrainer < IdTrainerInterface & Parameterized
+classdef BMFATrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,14 +8,14 @@ classdef MBFTrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = MBFTrainer( varargin )
+        function obj = BMFATrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @BAC2, ...
-                             'valFun', @(x)(isa( x, 'function_handle' )), ...
-                             'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
+                'default', @BAC2, ...
+                'valFun', @(x)(isa( x, 'function_handle' )), ...
+                'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'maxDataSize', ...
-                             'default', inf, ...
-                             'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+                'default', inf, ...
+                'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             pds{3} = struct( 'name', 'nComp', ...
                 'default', [1 2 3], ...
                 'valFun', @(x)(sum(x)>=0) );
@@ -29,16 +29,11 @@ classdef MBFTrainer < IdTrainerInterface & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = MbfModel();
+            obj.model = BMFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-             gmmOpts.nComp = obj.parameters.nComp;
-             xTrain = (normvec(xScaled'))';
-%             xTrain = xScaled;
-%             xTrain = (preprocess(xScaled'))';
-%             xTrain = (normvec(xTrain'))';
-            [obj.model.model{1}, obj.model.model{2}] = trainMbfs( y, xTrain, gmmOpts );
+            gmmOpts.mfaK = obj.parameters.nComp;
+            [obj.model.model{1}, obj.model.model{2}] = trainBMFA( y, xScaled, gmmOpts );
             verboseFprintf( obj, '\n' );
-
         end
         %% ----------------------------------------------------------------
 

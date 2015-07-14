@@ -1,4 +1,4 @@
-classdef CVtrainer < IdTrainerInterface
+classdef CVtrainer < modelTrainers.Base
 
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -18,8 +18,8 @@ classdef CVtrainer < IdTrainerInterface
     methods
 
         function obj = CVtrainer( trainer )
-            if ~isa( trainer, 'IdTrainerInterface' )
-                error( 'trainer must implement IdTrainerInterface' );
+            if ~isa( trainer, 'modelTrainers.Base' )
+                error( 'trainer must implement modelTrainers.Base' );
             end
             obj.trainer = trainer;
             obj.nFolds = 5;

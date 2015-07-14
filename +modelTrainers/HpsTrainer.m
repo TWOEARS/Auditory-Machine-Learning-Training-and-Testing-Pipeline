@@ -1,4 +1,4 @@
-classdef (Abstract) HpsTrainer < IdTrainerInterface & Parameterized
+classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
     properties (Access = private)
@@ -111,7 +111,7 @@ classdef (Abstract) HpsTrainer < IdTrainerInterface & Parameterized
     methods (Access = private)
         
         function createHpsTrainer( obj )
-            obj.hpsCVtrainer = CVtrainer( obj.coreTrainer );
+            obj.hpsCVtrainer = modelTrainers.CVtrainer( obj.coreTrainer );
             obj.hpsCVtrainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.hpsCVtrainer.setPositiveClass( obj.positiveClass );
             obj.hpsCVtrainer.setData( obj.trainSet, obj.testSet );

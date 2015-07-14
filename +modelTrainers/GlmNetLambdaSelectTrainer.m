@@ -1,4 +1,4 @@
-classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
+classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
     properties (Access = private)
@@ -42,7 +42,7 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
         
         function buildModel( obj, ~, ~ )
             verboseFprintf( obj, '\nRun on full trainSet...\n' );
-            obj.coreTrainer = GlmNetTrainer( ...
+            obj.coreTrainer = modelTrainers.GlmNetTrainer( ...
                 'performanceMeasure', obj.parameters.performanceMeasure, ...
                 'maxDataSize', obj.parameters.maxDataSize, ...
                 'alpha', obj.parameters.alpha, ...
@@ -55,7 +55,7 @@ classdef GlmNetLambdaSelectTrainer < IdTrainerInterface & Parameterized
             lambdas = obj.fullSetModel.model.lambda;
             verboseFprintf( obj, '\nRun cv to determine best lambda...\n' );
             obj.coreTrainer.setParameters( false, 'lambda', lambdas );
-            obj.cvTrainer = CVtrainer( obj.coreTrainer );
+            obj.cvTrainer = modelTrainers.CVtrainer( obj.coreTrainer );
             obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.cvTrainer.setPositiveClass( obj.positiveClass );
             obj.cvTrainer.setData( obj.trainSet, obj.testSet );

@@ -1,4 +1,4 @@
-classdef MfaNetTrainer < IdTrainerInterface & Parameterized
+classdef MFATrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -8,20 +8,14 @@ classdef MfaNetTrainer < IdTrainerInterface & Parameterized
     %% --------------------------------------------------------------------
     methods
 
-        function obj = MfaNetTrainer( varargin )
+        function obj = MFATrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @BAC2, ...
-                'valFun', @(x)(isa( x, 'function_handle' )), ...
-                'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
-            pds{2} = struct( 'name', 'nComp', ...
-                'default', [1 2 3], ...
-                'valFun', @(x)(sum(x)>=0) );
-            pds{3} = struct( 'name', 'nDim', ...
-                             'default', [5 6], ...
-                             'valFun', @(x)(sum(x) >= 0) );
-            pds{4} = struct( 'name', 'maxDataSize', ...
-                'default', inf, ...
-                'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+                             'default', @BAC2, ...
+                             'valFun', @(x)(isa( x, 'function_handle' )), ...
+                             'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
+            pds{2} = struct( 'name', 'maxDataSize', ...
+                             'default', inf, ...
+                             'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end
@@ -32,18 +26,11 @@ classdef MfaNetTrainer < IdTrainerInterface & Parameterized
                 x(obj.parameters.maxDataSize+1:end,:) = [];
                 y(obj.parameters.maxDataSize+1:end) = [];
             end
-            obj.model = MfaNetModel();
+            obj.model = MFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-            mbfOpts.nComp = obj.parameters.nComp;
-            mbfOpts.nDim = obj.parameters.nDim;
-            if ~isempty( obj.parameters.nComp )
-                mbfOpts.nComp = obj.parameters.nComp;
-            end
-            verboseFprintf( obj, 'MbfNet training with nComp=%f and nDim=%f\n', mbfOpts.nComp, mbfOpts.nDim);
-            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
-            mbfOpts.mfaK = mbfOpts.nComp;
-            mbfOpts.mfaM = mbfOpts.nDim;
-            [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, mbfOpts );
+            gmmOpts.mfaK = 10;%0.5*size(xScaled,2);
+             gmmOpts.mfaM = 10;
+            [obj.model.model{1}, obj.model.model{2}] = trainMFA( y, xScaled, gmmOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

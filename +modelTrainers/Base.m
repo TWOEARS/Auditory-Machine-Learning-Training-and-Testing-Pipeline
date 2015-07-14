@@ -1,4 +1,4 @@
-classdef (Abstract) IdTrainerInterface < handle
+classdef (Abstract) Base < handle
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)

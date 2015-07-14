@@ -1,4 +1,4 @@
-classdef ValGen < Hashable & handle
+classdef ValGen < handle
     
     properties (SetAccess = protected)
         type;   % one of 'manual', 'set', 'random'
@@ -27,10 +27,6 @@ classdef ValGen < Hashable & handle
             end
         end
         
-        function hashMembers = getHashObjects( obj )
-            hashMembers = {obj.type, obj.val};
-        end
-
 
     end
     %%

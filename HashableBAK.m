@@ -1,4 +1,4 @@
-classdef (HandleCompatible) Hashable    
+classdef (HandleCompatible) HashableBAK    
     % Interface for classes that provide a method to encode their status as 
     % a hashcode. 
     % Overwrite getHashObjects to specify what elements to use for hash calculation.

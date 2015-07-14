@@ -20,7 +20,7 @@ classdef (Abstract) IdProcInterface < handle
             out = obj.getOutput();
             currentFolder = obj.getCurrentFolder( inFilePath );
             if isempty( currentFolder )
-                obj.createCurrentConfigFolder( inFilePath );
+                currentFolder = obj.createCurrentConfigFolder( inFilePath );
             end
             outFilename = obj.getOutputFileName( inFilePath, currentFolder );
             save( outFilename, '-struct', 'out' );

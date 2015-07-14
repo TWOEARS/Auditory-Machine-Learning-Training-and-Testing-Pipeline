@@ -43,10 +43,10 @@ classdef IdentificationTrainingPipeline < handle
         %% ------------------------------------------------------------------------------- 
         
         function addDataPipeProc( obj, dataProc )
-            if ~isa( dataProc, 'IdProcInterface' )
-                error( 'dataProc must be of type IdProcInterface.' );
+            if ~isa( dataProc, 'core.IdProcInterface' )
+                error( 'dataProc must be of type core.IdProcInterface.' );
             end
-            dataPipeProc = DataPipeProc( dataProc ); 
+            dataPipeProc = core.DataPipeProc( dataProc ); 
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end

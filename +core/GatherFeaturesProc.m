@@ -22,8 +22,8 @@ classdef GatherFeaturesProc < handle
         %% ----------------------------------------------------------------
 
         function connectToOutputFrom( obj, outputtingProc )
-            if ~isa( outputtingProc, 'DataPipeProc' )
-                error( 'outputtingProc must be of type DataPipeProc' );
+            if ~isa( outputtingProc, 'core.DataPipeProc' )
+                error( 'outputtingProc must be of type core.DataPipeProc' );
             end
             obj.inputFileNameBuilder = outputtingProc.getOutputFileNameBuilder();
         end

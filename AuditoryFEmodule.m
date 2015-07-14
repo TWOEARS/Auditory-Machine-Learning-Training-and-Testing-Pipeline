@@ -1,4 +1,4 @@
-classdef AuditoryFEmodule < IdProcInterface
+classdef AuditoryFEmodule < core.IdProcInterface
     
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -16,7 +16,7 @@ classdef AuditoryFEmodule < IdProcInterface
     methods (Access = public)
         
         function obj = AuditoryFEmodule( fs, afeRequests )
-            obj = obj@IdProcInterface();
+            obj = obj@core.IdProcInterface();
             obj.afeSignals = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             obj.afeDataObj = dataObject( [], fs, 2, 2 );
             obj.managerObject = manager( obj.afeDataObj );

@@ -1,4 +1,4 @@
-classdef (Abstract) BinSimProcInterface < IdProcInterface
+classdef (Abstract) BinSimProcInterface < core.IdProcInterface
 
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -10,7 +10,7 @@ classdef (Abstract) BinSimProcInterface < IdProcInterface
     methods
         
         function obj = BinSimProcInterface()
-            obj = obj@IdProcInterface();
+            obj = obj@core.IdProcInterface();
         end
         %% ----------------------------------------------------------------
 

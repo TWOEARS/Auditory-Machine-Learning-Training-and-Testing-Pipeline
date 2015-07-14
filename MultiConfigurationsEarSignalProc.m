@@ -1,4 +1,4 @@
-classdef MultiConfigurationsEarSignalProc < IdProcInterface
+classdef MultiConfigurationsEarSignalProc < core.IdProcInterface
     
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -17,7 +17,7 @@ classdef MultiConfigurationsEarSignalProc < IdProcInterface
     methods (Access = public)
         
         function obj = MultiConfigurationsEarSignalProc( binauralSim )
-            obj = obj@IdProcInterface();
+            obj = obj@core.IdProcInterface();
             if ~isa( binauralSim, 'BinSimProcInterface' )
                 error( 'binauralSim must implement BinSimProcInterface.' );
             end

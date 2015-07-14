@@ -84,7 +84,7 @@ classdef CVtrainer < modelTrainers.Base
         function foldCombi = getAllFoldsButOne( obj, exceptIdx )
             foldsIdx = 1 : obj.nFolds;
             foldsIdx(exceptIdx) = [];
-            foldCombi = IdentTrainPipeData.combineData( obj.folds{foldsIdx} );
+            foldCombi = core.IdentTrainPipeData.combineData( obj.folds{foldsIdx} );
         end
         %% ----------------------------------------------------------------
 

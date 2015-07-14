@@ -10,7 +10,7 @@ classdef TwoEarsNIstandardIdPipeline < handle
     methods
         
         function obj = TwoEarsNIstandardIdPipeline( data, trainSetShare, featureCreator, modelCreator )
-            obj.pipeline = IdentificationTrainingPipeline();
+            obj.pipeline = core.IdentificationTrainingPipeline();
 
             obj.pipeline.connectData( data );
             obj.pipeline.splitIntoTrainAndTestSets( trainSetShare );
@@ -28,7 +28,7 @@ classdef TwoEarsNIstandardIdPipeline < handle
             obj.pipeline.addDataPipeProc( multiConfAFEmodule );
             obj.pipeline.addDataPipeProc( ...
                 MultiConfigurationsFeatureProc( featureCreator ) );
-            obj.pipeline.addGatherFeaturesProc( GatherFeaturesProc() );
+            obj.pipeline.addGatherFeaturesProc( core.GatherFeaturesProc() );
             
             obj.pipeline.addModelCreator( modelCreator );
         end

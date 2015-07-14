@@ -1,4 +1,4 @@
-classdef MultiConfigurationsAFEmodule < IdProcInterface
+classdef MultiConfigurationsAFEmodule < core.IdProcInterface
     
     %% --------------------------------------------------------------------
     properties (Access = private)
@@ -16,9 +16,9 @@ classdef MultiConfigurationsAFEmodule < IdProcInterface
     methods (Access = public)
         
         function obj = MultiConfigurationsAFEmodule( afeProc )
-            obj = obj@IdProcInterface();
-            if ~isa( afeProc, 'IdProcInterface' )
-                error( 'afeProc must implement IdProcInterface.' );
+            obj = obj@core.IdProcInterface();
+            if ~isa( afeProc, 'core.IdProcInterface' )
+                error( 'afeProc must implement core.IdProcInterface.' );
             end
             obj.afeProc = afeProc;
         end

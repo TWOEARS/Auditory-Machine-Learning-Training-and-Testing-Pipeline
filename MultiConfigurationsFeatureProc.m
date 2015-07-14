@@ -1,4 +1,4 @@
-classdef MultiConfigurationsFeatureProc < IdProcInterface
+classdef MultiConfigurationsFeatureProc < core.IdProcInterface
     
     %% --------------------------------------------------------------------
     properties (Access = private)
@@ -15,9 +15,9 @@ classdef MultiConfigurationsFeatureProc < IdProcInterface
     methods (Access = public)
         
         function obj = MultiConfigurationsFeatureProc( featProc )
-            obj = obj@IdProcInterface();
-            if ~isa( featProc, 'IdProcInterface' )
-                error( 'featProc must implement IdProcInterface.' );
+            obj = obj@core.IdProcInterface();
+            if ~isa( featProc, 'core.IdProcInterface' )
+                error( 'featProc must implement core.IdProcInterface.' );
             end
             obj.featProc = featProc;
         end

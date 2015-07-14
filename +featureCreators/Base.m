@@ -1,4 +1,4 @@
-classdef Base < IdProcInterface
+classdef Base < core.IdProcInterface
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -21,7 +21,7 @@ classdef Base < IdProcInterface
     methods (Access = public)
         
         function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
-            obj = obj@IdProcInterface();
+            obj = obj@core.IdProcInterface();
             obj.blockSize_s = blockSize_s;
             obj.shiftSize_s = shiftsize_s;
             obj.minBlockToEventRatio = minBlockToEventRatio;

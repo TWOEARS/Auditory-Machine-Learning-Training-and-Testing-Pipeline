@@ -11,7 +11,7 @@ classdef IdentTrainPipeData < handle
     methods
         
         function obj = IdentTrainPipeData()
-            obj.emptyDataStruct = struct( 'files', IdentTrainPipeDataElem.empty );
+            obj.emptyDataStruct = struct( 'files', core.IdentTrainPipeDataElem.empty );
             obj.data = obj.emptyDataStruct;
             rng( 'shuffle' );
         end
@@ -200,7 +200,7 @@ classdef IdentTrainPipeData < handle
         
         function permFolds = splitInPermutedStratifiedFolds( obj, nFolds )
             for ii = 1 : nFolds
-                permFolds{ii} = IdentTrainPipeData();
+                permFolds{ii} = core.IdentTrainPipeData();
                 permFolds{ii}.classNames = obj.classNames ;
             end
             for cIdx = 1 : numel( obj.classNames )
@@ -225,9 +225,9 @@ classdef IdentTrainPipeData < handle
             nFolds = min( round( 1 / gcdShares ), maxFolds );
             folds = obj.splitInPermutedStratifiedFolds( nFolds );
             shareNfolds = round( nFolds * ratio );
-            share = IdentTrainPipeData.combineData( folds{1:shareNfolds} );
+            share = core.IdentTrainPipeData.combineData( folds{1:shareNfolds} );
             if shareNfolds < nFolds
-                disjShare = IdentTrainPipeData.combineData( folds{shareNfolds + 1:end} );
+                disjShare = core.IdentTrainPipeData.combineData( folds{shareNfolds + 1:end} );
             else
                 disjShare = [];
             end
@@ -280,7 +280,7 @@ classdef IdentTrainPipeData < handle
     methods (Static)
 
         function combinedData = combineData( varargin )
-            combinedData = IdentTrainPipeData();
+            combinedData = core.IdentTrainPipeData();
             for ii = 1 : numel(varargin)
                 d = varargin{ii};
                 for jj = 1 : numel( d.classNames )

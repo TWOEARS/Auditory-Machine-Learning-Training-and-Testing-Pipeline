@@ -1,4 +1,4 @@
-classdef (Abstract) PerformanceMeasure
+classdef (Abstract) Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -8,9 +8,9 @@ classdef (Abstract) PerformanceMeasure
     %% --------------------------------------------------------------------
     methods
         
-        function obj = PerformanceMeasure( yTrue, yPred )
+        function obj = Base( yTrue, yPred )
             if nargin < 2
-                error( ['Subclass of PerformanceMeasure must call superconstructor ',...
+                error( ['Subclass of performanceMeasures.Base must call superconstructor ',...
                         'and pass yTrue and yPred.'] );
             end
             [obj, obj.performance] = obj.calcPerformance( yTrue, yPred );

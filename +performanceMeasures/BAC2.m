@@ -1,4 +1,4 @@
-classdef BAC2 < PerformanceMeasure
+classdef BAC2 < performanceMeasures.Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -15,7 +15,7 @@ classdef BAC2 < PerformanceMeasure
     methods
         
         function obj = BAC2( yTrue, yPred )
-            obj = obj@PerformanceMeasure( yTrue, yPred );
+            obj = obj@performanceMeasures.Base( yTrue, yPred );
         end
         % -----------------------------------------------------------------
     

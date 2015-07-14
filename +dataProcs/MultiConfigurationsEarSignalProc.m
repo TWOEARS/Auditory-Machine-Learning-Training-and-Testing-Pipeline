@@ -18,11 +18,11 @@ classdef MultiConfigurationsEarSignalProc < core.IdProcInterface
         
         function obj = MultiConfigurationsEarSignalProc( binauralSim )
             obj = obj@core.IdProcInterface();
-            if ~isa( binauralSim, 'BinSimProcInterface' )
-                error( 'binauralSim must implement BinSimProcInterface.' );
+            if ~isa( binauralSim, 'dataProcs.BinSimProcInterface' )
+                error( 'binauralSim must implement dataProcs.BinSimProcInterface.' );
             end
             obj.binauralSim = binauralSim;
-            obj.sceneConfigurations = SceneConfiguration.empty;
+            obj.sceneConfigurations = dataProcs.SceneConfiguration.empty;
         end
         %% ----------------------------------------------------------------
         

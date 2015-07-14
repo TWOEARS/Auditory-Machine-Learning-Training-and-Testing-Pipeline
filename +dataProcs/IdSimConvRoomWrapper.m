@@ -1,4 +1,4 @@
-classdef IdSimConvRoomWrapper < BinSimProcInterface
+classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     
     %% --------------------------------------------------------------------
     properties (Access = protected)
@@ -14,7 +14,7 @@ classdef IdSimConvRoomWrapper < BinSimProcInterface
     methods (Access = public)
         
         function obj = IdSimConvRoomWrapper()
-            obj = obj@BinSimProcInterface();
+            obj = obj@dataProcs.BinSimProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...

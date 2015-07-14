@@ -15,19 +15,19 @@ classdef TwoEarsNIstandardIdPipeline < handle
             obj.pipeline.connectData( data );
             obj.pipeline.splitIntoTrainAndTestSets( trainSetShare );
             
-            binauralSim = IdSimConvRoomWrapper();
-            obj.multiConfBinauralSim = MultiConfigurationsEarSignalProc( binauralSim );
-            obj.multiConfBinauralSim.setSceneConfig( SceneConfiguration() );
+            binauralSim = dataProcs.IdSimConvRoomWrapper();
+            obj.multiConfBinauralSim = dataProcs.MultiConfigurationsEarSignalProc( binauralSim );
+            obj.multiConfBinauralSim.setSceneConfig( dataProcs.SceneConfiguration() );
 
             obj.pipeline.featureCreator = featureCreator;
             
-            multiConfAFEmodule = MultiConfigurationsAFEmodule( AuditoryFEmodule( ...
+            multiConfAFEmodule = dataProcs.MultiConfigurationsAFEmodule( dataProcs.AuditoryFEmodule( ...
                 binauralSim.getDataFs(), featureCreator.getAFErequests() ) );
 
             obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
             obj.pipeline.addDataPipeProc( multiConfAFEmodule );
             obj.pipeline.addDataPipeProc( ...
-                MultiConfigurationsFeatureProc( featureCreator ) );
+                dataProcs.MultiConfigurationsFeatureProc( featureCreator ) );
             obj.pipeline.addGatherFeaturesProc( core.GatherFeaturesProc() );
             
             obj.pipeline.addModelCreator( modelCreator );

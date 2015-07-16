@@ -35,10 +35,8 @@ classdef RatemapPlusDeltasBlockmean < featureCreators.Base
 
         function x = makeDataPoint( obj, afeData )
             rmRL = afeData(1);
-            rmR = rmRL{1}.Data;
-            rmL = rmRL{2}.Data;
-            rmR = obj.compressAndScale( rmR );
-            rmL = obj.compressAndScale( rmL );
+            rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
+            rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
             x = [mean( rm, 1 )  std( rm, 0, 1 )];
             for i = 1:obj.deltasLevels
@@ -62,16 +60,6 @@ classdef RatemapPlusDeltasBlockmean < featureCreators.Base
     
     %% --------------------------------------------------------------------
     methods (Access = protected)
-        
-        function rm = compressAndScale( obj, rm )
-            rm = rm.^0.33; %cuberoot compression
-            rmMedian = median( rm(rm>0.01) );
-            if isnan( rmMedian ), scale = 1;
-            else scale = 0.5 / rmMedian; end;
-            rm = rm .* repmat( scale, size( rm ) );
-        end
-        %% ----------------------------------------------------------------
-        
     end
     
 end

@@ -27,12 +27,16 @@ classdef IdentificationTrainingPipeline < handle
         %% Constructor.
         function obj = IdentificationTrainingPipeline()
             obj.dataPipeProcs = {};
+            obj.data = core.IdentTrainPipeData();
+            obj.trainSet = core.IdentTrainPipeData();
+            obj.testSet = core.IdentTrainPipeData();
         end
         %% ------------------------------------------------------------------------------- 
         
         %   -----------------------
         %   setting up the pipeline
         %   -----------------------
+
         function addModelCreator( obj, trainer )
             if ~isa( trainer, 'modelTrainers.Base' )
                 error( 'ModelCreator must be of type modelTrainers.Base' );
@@ -40,8 +44,13 @@ classdef IdentificationTrainingPipeline < handle
             obj.trainer = trainer;
             obj.generalizationPerfomanceAssessCVtrainer = modelTrainers.CVtrainer( obj.trainer );
         end
-        %% ------------------------------------------------------------------------------- 
+        %   -------------------
         
+        function resetDataProcs( obj )
+            obj.dataPipeProcs = {};
+        end
+        %   -------------------
+
         function addDataPipeProc( obj, dataProc )
             if ~isa( dataProc, 'core.IdProcInterface' )
                 error( 'dataProc must be of type core.IdProcInterface.' );
@@ -50,7 +59,7 @@ classdef IdentificationTrainingPipeline < handle
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end
-        %% ------------------------------------------------------------------------------- 
+        %   -------------------
         
         function addGatherFeaturesProc( obj, gatherFeaturesProc )
             gatherFeaturesProc.connectData( obj.data );
@@ -61,10 +70,23 @@ classdef IdentificationTrainingPipeline < handle
         %   -------------------
         %   setting up the data
         %   -------------------
+
         function connectData( obj, data )
             obj.data = data;
         end
-        %% ------------------------------------------------------------------------------- 
+        %   -------------------
+
+        function setTrainData( obj, trainData )
+            obj.trainSet = trainData;
+            obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
+        end
+        %   -------------------
+        
+        function setTestData( obj, testData )
+            obj.testSet = testData;
+            obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
+        end
+        %   -------------------
         
         function splitIntoTrainAndTestSets( obj, trainSetShare )
             [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );

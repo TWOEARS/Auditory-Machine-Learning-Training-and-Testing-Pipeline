@@ -192,13 +192,20 @@ classdef IdentTrainPipeData < handle
         end
         %% ----------------------------------------------------------------
         
-        %         function ie = isempty( obj )
-        %             ie = (obj.cbuf.lst < obj.cbuf.fst);
-        %         end
-        %
+        function ie = isempty( obj )
+            for d = obj.data
+                if numel( d.files ) > 0, ie = false; return; end
+            end
+            ie = true;
+        end
+        
         %% ----------------------------------------------------------------
         
         function permFolds = splitInPermutedStratifiedFolds( obj, nFolds )
+            if nFolds == 0
+                permFolds = [];
+                return;
+            end
             for ii = 1 : nFolds
                 permFolds{ii} = core.IdentTrainPipeData();
                 permFolds{ii}.classNames = obj.classNames ;
@@ -221,6 +228,11 @@ classdef IdentTrainPipeData < handle
             maxFolds = 0;
             for d = obj.data
                 maxFolds = max( maxFolds, size( d.files, 2 ) );
+            end
+            if maxFolds == 0
+                share = core.IdentTrainPipeData();
+                disjShare = core.IdentTrainPipeData();
+                return;
             end
             nFolds = min( round( 1 / gcdShares ), maxFolds );
             folds = obj.splitInPermutedStratifiedFolds( nFolds );
@@ -252,6 +264,7 @@ classdef IdentTrainPipeData < handle
         %% ----------------------------------------------------------------
         
         function loadWavFileList( obj, wavflist )
+            if isempty( wavflist ), return; end
             obj.data = obj.emptyDataStruct;
             obj.classNames = {};
             if ~isa( wavflist, 'char' )

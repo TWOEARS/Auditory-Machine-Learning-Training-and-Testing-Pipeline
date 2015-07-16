@@ -9,4 +9,5 @@
 <TwoEarsPart sub-all="third_party_software/glmnet_matlab" branch="idTraining_feature_refactor" >blackboard-system</TwoEarsPart>
 <TwoEarsPart sub="src" branch="id_refactoring" startup="startData" >data</TwoEarsPart>
 <TwoEarsPart sub-all="sound_databases/generalSoundsNI" branch="id_refactoring">data</TwoEarsPart>
+<TwoEarsPart sub-all="sound_databases/IEEE_AASP" branch="id_refactoring">data</TwoEarsPart>
 </requirements>

@@ -1,4 +1,4 @@
-function idtestClean( classname, testFlist, modelPath )
+function modelPath = idtestClean( classname, testFlist, modelPath )
 
 testpipe = TwoEarsIdTrainPipe();
 m = load( fullfile( modelPath, [classname '.model.mat'] ) );
@@ -14,6 +14,6 @@ sc = dataProcs.SceneConfiguration(); % clean
 testpipe.setSceneConfig( [sc] ); 
 testpipe.init();
 
-testpipe.pipeline.run( {classname}, 0 );
+modelPath = testpipe.pipeline.run( {classname}, 0 );
 
 end

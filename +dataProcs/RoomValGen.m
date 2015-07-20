@@ -1,17 +1,17 @@
-classdef RoomValGen < ValGen
+classdef RoomValGen < dataProcs.ValGen
 
     %%
     methods
         
         function obj = RoomValGen( val )
             if ~( ...
-                    isfield( val, 'lengthX' ) && isa( val.lengthX, 'ValGen' ) && ...
-                    isfield( val, 'lengthY' ) && isa( val.lengthY, 'ValGen' ) && ...
-                    isfield( val, 'height' ) && isa( val.height, 'ValGen' ) && ...
-                    isfield( val, 'rt60' ) && isa( val.rt60, 'ValGen' ) )
+                    isfield( val, 'lengthX' ) && isa( val.lengthX, 'dataProcs.ValGen' ) && ...
+                    isfield( val, 'lengthY' ) && isa( val.lengthY, 'dataProcs.ValGen' ) && ...
+                    isfield( val, 'height' ) && isa( val.height, 'dataProcs.ValGen' ) && ...
+                    isfield( val, 'rt60' ) && isa( val.rt60, 'dataProcs.ValGen' ) )
                 error( 'val does not provide all needed fields' );
             end
-            obj = obj@ValGen( 'manual', val );
+            obj = obj@dataProcs.ValGen( 'manual', val );
             obj.type = 'specific';
         end
         

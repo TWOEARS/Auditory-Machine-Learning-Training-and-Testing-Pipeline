@@ -5,8 +5,14 @@
 <TwoEarsPart sub="src" branch="SignalBufferDvlp" >auditory-front-end</TwoEarsPart>
 <TwoEarsPart sub="src" branch="master" startup="startTools" >tools</TwoEarsPart>
 <TwoEarsPart sub="src" branch="adaptToWp1Master" startup="startBlackboardSystem">blackboard-system</TwoEarsPart>
+<TwoEarsPart sub-all="src/identificationTraining" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
 <TwoEarsPart sub-all="third_party_software/libsvm-3.17/twoEars" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
 <TwoEarsPart sub-all="third_party_software/glmnet_matlab" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
-<TwoEarsPart sub="src" branch="id_refactoring" startup="startData" >data</TwoEarsPart>
-<TwoEarsPart sub-all="sound_databases/generalSoundsNI" branch="id_refactoring">data</TwoEarsPart>
+<TwoEarsPart sub-all="third_party_software/GMM" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
+<TwoEarsPart sub-all="third_party_software/mfa" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
+<TwoEarsPart sub-all="third_party_software/vbgm" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
+<TwoEarsPart sub-all="third_party_software/vbmfa" branch="adaptToWp1Master" >blackboard-system</TwoEarsPart>
+<TwoEarsPart sub="src" startup="startData" branch="master" >data</TwoEarsPart>
+<TwoEarsPart sub-all="sound_databases/generalSoundsNI" branch="master" >data</TwoEarsPart>
+<TwoEarsPart sub-all="sound_databases/IEEE_AASP" branch="master" >data</TwoEarsPart>
 </requirements>

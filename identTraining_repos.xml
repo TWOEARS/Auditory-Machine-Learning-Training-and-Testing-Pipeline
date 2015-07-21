@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <requirements>
 <TwoEarsPart sub="src" branch="initOnConstruction" startup="startBinauralSimulator" >binaural-simulator</TwoEarsPart>
-<TwoEarsPart branch="SignalBufferDvlp" startup="startAuditoryFrontEnd" >auditory-front-end</TwoEarsPart>
+<TwoEarsPart branch="master" startup="startAuditoryFrontEnd" >auditory-front-end</TwoEarsPart>
 <TwoEarsPart sub="src" branch="master" startup="startTools" >tools</TwoEarsPart>
 <TwoEarsPart sub="src" branch="idTraining_feature_refactor" startup="startBlackboardSystem">blackboard-system</TwoEarsPart>
 <TwoEarsPart sub-all="src/identificationTraining" branch="idTraining_feature_refactor" >blackboard-system</TwoEarsPart>

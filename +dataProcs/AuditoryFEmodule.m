@@ -48,7 +48,6 @@ classdef AuditoryFEmodule < core.IdProcInterface
                 % the requests are all set at the construction in AuditoryFEmodule().
             end            
             outputDeps.afeParams = afeParams;
-            outputDeps.reqSignals = obj.afeSignals.keys;
         end
         %% ----------------------------------------------------------------
 

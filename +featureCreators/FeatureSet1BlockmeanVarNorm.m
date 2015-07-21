@@ -30,21 +30,26 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
         %% ----------------------------------------------------------------
 
         function afeRequests = getAFErequests( obj )
-            afeRequests{1}.name = 'modulation';
+            afeRequests{1}.name = 'amsFeatures';
             afeRequests{1}.params = genParStruct( ...
-                'nChannels', obj.amFreqChannels, ...
-                'am_type', 'filter', ...
-                'am_nFilters', obj.amChannels ...
+                'pp_bNormalizeRMS', false, ...
+                'fb_nChannels', obj.amFreqChannels, ...
+                'ams_fbType', 'log', ...
+                'ams_nFilters', obj.amChannels, ...
+                'ams_lowFreqHz', 1, ...
+                'ams_highFreqHz', 256' ...
                 );
-            afeRequests{2}.name = 'ratemap_magnitude';
+            afeRequests{2}.name = 'ratemap';
             afeRequests{2}.params = genParStruct( ...
-                'nChannels', obj.freqChannels ...
+                'pp_bNormalizeRMS', false, ...
+                'rm_scaling', 'magnitude', ...
+                'fb_nChannels', obj.freqChannels ...
                 );
-            afeRequests{3}.name = 'spec_features';
+            afeRequests{3}.name = 'spectralFeatures';
             afeRequests{3}.params = genParStruct( ...
                 'nChannels', obj.freqChannelsStatistics ...
                 );
-            afeRequests{4}.name = 'onset_strength';
+            afeRequests{4}.name = 'onsetStrength';
             afeRequests{4}.params = genParStruct( ...
                 'nChannels', obj.freqChannels ...
                 );
@@ -52,15 +57,15 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
         %% ----------------------------------------------------------------
 
         function x = makeDataPoint( obj, afeData )
-            rmRL = afeData('ratemap_magnitude');
+            rmRL = afeData(2);
             rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             rm = 0.5 * rmR + 0.5 * rmL;
-            spfRL = afeData('spec_features');
+            spfRL = afeData(3);
             spfR = compressAndScale( spfRL{1}.Data, 0.33, @(x)(median( abs(x(abs(x)>0.01)) )), 1 );
             spfL = compressAndScale( spfRL{2}.Data, 0.33, @(x)(median( abs(x(abs(x)>0.01)) )), 1 );
             spf = 0.5 * spfL + 0.5 * spfR;
-            onsRL = afeData('onset_strength');
+            onsRL = afeData(4);
             onsR = compressAndScale( onsRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             onsL = compressAndScale( onsRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             ons = 0.5 * onsR + 0.5 * onsL;
@@ -70,7 +75,7 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
                 x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
             end
-            modRL = afeData('modulation');
+            modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             modL = compressAndScale( modRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             mod = 0.5 * modR + 0.5 * modL;
@@ -81,14 +86,15 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
                 x = [x lMomentAlongDim( mod, [1,2,3,4], 1 )];
             end
             % without normalization
+            rmRL = afeData(2);
             rmR = compressAndScale( rmRL{1}.Data, 0.33 );
             rmL = compressAndScale( rmRL{2}.Data, 0.33 );
             rm = 0.5 * rmR + 0.5 * rmL;
-            spfRL = afeData('spec_features');
+            spfRL = afeData(3);
             spfR = compressAndScale( spfRL{1}.Data, 0.33 );
             spfL = compressAndScale( spfRL{2}.Data, 0.33 );
             spf = 0.5 * spfL + 0.5 * spfR;
-            onsRL = afeData('onset_strength');
+            onsRL = afeData(4);
             onsR = compressAndScale( onsRL{1}.Data, 0.33 );
             onsL = compressAndScale( onsRL{2}.Data, 0.33 );
             ons = 0.5 * onsR + 0.5 * onsL;
@@ -98,7 +104,7 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
                 x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
             end
-            modRL = afeData('modulation');
+            modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33 );
             modL = compressAndScale( modRL{2}.Data, 0.33 );
             mod = 0.5 * modR + 0.5 * modL;

@@ -246,13 +246,31 @@ classdef IdentTrainPipeData < handle
         end
         %% ----------------------------------------------------------------
 
-        function saveDataFList( obj, flistName )
+        function saveDataFList( obj, flistName, baseDir )
             wavFileNames = {};
             for cIdx = 1 : numel( obj.classNames )
                 cName = obj.classNames{cIdx};
                 for dataFile = obj.data(cIdx).files
-                    [~,fn,fe] = fileparts( dataFile.wavFileName );
-                    wavFileNames{end+1} = sprintf( '%s\n', [cName, '/', fn, fe] );
+                    if nargin < 3
+                        [~,fn,fe] = fileparts( dataFile.wavFileName );
+                        wavFileNames{end+1} = sprintf( '%s\n', [cName, '/', fn, fe] );
+                    else
+                        baseDirPos = strfind( dataFile.wavFileName, baseDir );
+                        if numel( baseDirPos ) > 1
+                            for bdp = baseDirPos
+                                if (bdp == 1 || ...
+                                        dataFile.wavFileName(bdp-1) == '/' || ...
+                                        dataFile.wavFileName(bdp-1) == '\') && ...
+                                       (bdp+length(baseDir) == length(dataFile.wavFileName) ||...
+                                       dataFile.wavFileName(bdp+length(baseDir)) == '/' || ...
+                                       dataFile.wavFileName(bdp+length(baseDir)) == '\')
+                                   baseDirPos = bdp;
+                                   break;
+                                end
+                            end
+                        end
+                        wavFileNames{end+1} = sprintf( '%s\n', dataFile.wavFileName(baseDirPos:end) );
+                    end
                 end
             end
             flistFid = fopen( flistName, 'w' );

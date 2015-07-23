@@ -1,4 +1,4 @@
-function createTrainTestSplitFlists( inputFlist, outputName, nFolds, oneFoldForTrain )
+function createTrainTestSplitFlists( inputFlist, outputName, baseDir, nFolds, oneFoldForTrain )
 
 if nargin < 4, oneFoldForTrain = false; end;
 
@@ -18,7 +18,7 @@ for ff = 1 : nFolds
         combiTStr = 'Train';
         oneTStr = 'Test';
     end
-    foldCombi.saveDataFList( [outputName '_' combiTStr 'Set_' int2str(ff) '.flist'] );
-    folds{ff}.saveDataFList( [outputName '_' oneTStr 'Set_' int2str(ff) '.flist'] );
+    foldCombi.saveDataFList( [outputName '_' combiTStr 'Set_' int2str(ff) '.flist'], baseDir );
+    folds{ff}.saveDataFList( [outputName '_' oneTStr 'Set_' int2str(ff) '.flist'], baseDir );
 end
 

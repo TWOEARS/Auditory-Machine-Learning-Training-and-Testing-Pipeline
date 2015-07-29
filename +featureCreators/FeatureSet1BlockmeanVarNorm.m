@@ -70,20 +70,20 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
             onsL = compressAndScale( onsRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             ons = 0.5 * onsR + 0.5 * onsL;
             xBlock = [rm, spf, ons];
-            x = lMomentAlongDim( xBlock, [1,2,3,4], 1 );
+            x = lMomentAlongDim( xBlock, [1,2,3,4], 1, true );
             for i = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
+                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1, true )];
             end
             modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             modL = compressAndScale( modRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
             mod = 0.5 * modR + 0.5 * modL;
             mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
-            x = [x lMomentAlongDim( mod, [1,2,3,4], 1 )];
+            x = [x lMomentAlongDim( mod, [1,2,3,4], 1, true )];
             for i = 1:obj.deltasLevels
                 mod = mod(2:end,:) - mod(1:end-1,:);
-                x = [x lMomentAlongDim( mod, [1,2,3,4], 1 )];
+                x = [x lMomentAlongDim( mod, [1,2,3,4], 1, true )];
             end
             % without normalization
             rmRL = afeData(2);
@@ -99,20 +99,20 @@ classdef FeatureSet1BlockmeanVarNorm < featureCreators.Base
             onsL = compressAndScale( onsRL{2}.Data, 0.33 );
             ons = 0.5 * onsR + 0.5 * onsL;
             xBlock = [rm, spf, ons];
-            x = [x lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
+            x = [x lMomentAlongDim( xBlock, [1,2,3,4], 1, true )];
             for i = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1 )];
+                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1, true )];
             end
             modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33 );
             modL = compressAndScale( modRL{2}.Data, 0.33 );
             mod = 0.5 * modR + 0.5 * modL;
             mod = reshape( mod, size( mod, 1 ), size( mod, 2 ) * size( mod, 3 ) );
-            x = [x lMomentAlongDim( mod, [1,2,3,4], 1 )];
+            x = [x lMomentAlongDim( mod, [1,2,3,4], 1, true )];
             for i = 1:obj.deltasLevels
                 mod = mod(2:end,:) - mod(1:end-1,:);
-                x = [x lMomentAlongDim( mod, [1,2,3,4], 1 )];
+                x = [x lMomentAlongDim( mod, [1,2,3,4], 1, true )];
             end
         end
         %% ----------------------------------------------------------------

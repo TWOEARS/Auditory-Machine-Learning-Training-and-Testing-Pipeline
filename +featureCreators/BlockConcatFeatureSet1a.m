@@ -43,7 +43,7 @@ classdef BlockConcatFeatureSet1a < featureCreators.Base
                 rmn = [rmn rm(:,ii:obj.nConcatBlocks:end)];
             end
             rm = rmn;
-            x = lMomentAlongDim( rm, [1,2], 1 );
+            x = lMomentAlongDim( rm, [1,2], 1, true );
             lenOneBlock = length( x ) / obj.nConcatBlocks;
             for ii = 2 : obj.nConcatBlocks
                 x = [x, x((ii-1)*lenOneBlock+1:ii*lenOneBlock) - x((ii-2)*lenOneBlock+1:(ii-1)*lenOneBlock)];

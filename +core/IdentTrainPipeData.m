@@ -255,21 +255,8 @@ classdef IdentTrainPipeData < handle
                         [~,fn,fe] = fileparts( dataFile.wavFileName );
                         wavFileNames{end+1} = sprintf( '%s\n', [cName, '/', fn, fe] );
                     else
-                        baseDirPos = strfind( dataFile.wavFileName, baseDir );
-                        if numel( baseDirPos ) > 1
-                            for bdp = baseDirPos
-                                if (bdp == 1 || ...
-                                        dataFile.wavFileName(bdp-1) == '/' || ...
-                                        dataFile.wavFileName(bdp-1) == '\') && ...
-                                       (bdp+length(baseDir) == length(dataFile.wavFileName) ||...
-                                       dataFile.wavFileName(bdp+length(baseDir)) == '/' || ...
-                                       dataFile.wavFileName(bdp+length(baseDir)) == '\')
-                                   baseDirPos = bdp;
-                                   break;
-                                end
-                            end
-                        end
-                        wavFileNames{end+1} = sprintf( '%s\n', dataFile.wavFileName(baseDirPos:end) );
+                        wavFileNames{end+1} = sprintf( '%s\n', ...
+                            getPathPart( dataFile.wavFileName, baseDir ) );
                     end
                 end
             end
@@ -285,18 +272,21 @@ classdef IdentTrainPipeData < handle
             if isempty( wavflist ), return; end
             obj.data = obj.emptyDataStruct;
             obj.classNames = {};
-            if ~isa( wavflist, 'char' )
-                error( 'wavflist must be a string.' );
-            elseif ~exist( wavflist, 'file' )
-                error( 'Wavflist not found.' );
+            try
+                fid = fopen( xml.dbGetFile( wavflist ) );
+            catch err
+                warning( err.message );
+                error( '%s not found!', wavflist );
             end
-            fid = fopen( wavflist );
             wavs = textscan( fid, '%s' );
-            for k = 1:length(wavs{1})
-                wavName = wavs{1}{k};
-                if ~exist( wavName, 'file' )
-                    error ( 'Could not find %s listed in %s.', wavName, wavflist );
+            for kk = 1:length(wavs{1})
+                try
+                    wavName = xml.dbGetFile( wavs{1}{kk} );
+                catch err
+                    warning( err.message );
+                    error( '%s, referenced in %s, not found!', wavs{1}{kk}, wavflist );
                 end
+                addpath( fileparts( wavName ) );
                 wavName = which( wavName ); % ensure absolute path
                 wavClass = IdEvalFrame.readEventClass( wavName );
                 obj.subsasgn( struct('type','()','subs',{{wavClass,'+'}}), wavName );
@@ -305,6 +295,7 @@ classdef IdentTrainPipeData < handle
         end
         %% ----------------------------------------------------------------
 
+        
     end
     
     %% --------------------------------------------------------------------

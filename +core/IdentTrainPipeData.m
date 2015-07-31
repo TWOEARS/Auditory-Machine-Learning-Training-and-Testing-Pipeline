@@ -280,8 +280,10 @@ classdef IdentTrainPipeData < handle
             end
             wavs = textscan( fid, '%s' );
             for kk = 1:length(wavs{1})
+                fprintf( '.' );
                 try
                     wavName = xml.dbGetFile( wavs{1}{kk} );
+                    wavName = cleanPathFromRelativeRefs( wavName );
                 catch err
                     warning( err.message );
                     error( '%s, referenced in %s, not found!', wavs{1}{kk}, wavflist );
@@ -292,6 +294,7 @@ classdef IdentTrainPipeData < handle
                 obj.subsasgn( struct('type','()','subs',{{wavClass,'+'}}), wavName );
             end
             fclose( fid );
+            fprintf( '.\n' );
         end
         %% ----------------------------------------------------------------
 

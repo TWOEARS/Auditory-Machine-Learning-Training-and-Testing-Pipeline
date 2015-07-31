@@ -258,6 +258,8 @@ classdef IdentTrainPipeData < handle
                         wavFileNames{end+1} = sprintf( '%s\n', ...
                             getPathPart( dataFile.wavFileName, baseDir ) );
                     end
+                    sdx = strfind( wavFileNames{end}, '\' );
+                    wavFileNames{end}(sdx) = '/';  % replace backslashes with slashed for url
                 end
             end
             flistFid = fopen( flistName, 'w' );
@@ -282,8 +284,10 @@ classdef IdentTrainPipeData < handle
             for kk = 1:length(wavs{1})
                 fprintf( '.' );
                 try
-                    wavName = xml.dbGetFile( wavs{1}{kk} );
+                    wavName = xml.dbGetFile( wavs{1}{kk}, 1 );
+                    disp( wavName)
                     wavName = cleanPathFromRelativeRefs( wavName );
+                    disp( wavName )
                 catch err
                     warning( err.message );
                     error( '%s, referenced in %s, not found!', wavs{1}{kk}, wavflist );

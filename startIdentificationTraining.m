@@ -5,15 +5,7 @@
 basePath = fileparts(mfilename('fullpath'));
 
 % Add all relevant folders to the matlab search path
-addpath(fullfile(basePath, 'src'));
-addpath(fullfile(basePath, 'src', '+core'));
-addpath(fullfile(basePath, 'src', '+dataProcs'));
-addpath(fullfile(basePath, 'src', 'evaluation'));
-addpath(fullfile(basePath, 'src', '+featureCreators'));
-addpath(fullfile(basePath, 'src', '+models'));
-addpath(fullfile(basePath, 'src', '+modelTrainers'));
-addpath(fullfile(basePath, 'src', '+performanceMeasures'));
-addpath(fullfile(basePath, 'src', 'postpros'));
-addpath(fullfile(basePath, 'src', 'trainingScripts'));
+addpath(genpath(fullfile(basePath, 'src')));
+addpath(genpath(fullfile(basePath, 'third_party_software')));
 
 clear basePath;

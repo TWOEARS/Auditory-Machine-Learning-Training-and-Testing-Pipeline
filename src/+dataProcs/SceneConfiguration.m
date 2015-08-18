@@ -72,6 +72,24 @@ classdef SceneConfiguration < handle
             end
         end
         %% -------------------------------------------------------------------------------
+
+        function splittedConfs = split( obj )
+            splittedConfs(1) = dataProcs.SceneConfiguration();
+            splittedConfs(1).angleSignal = copy( obj.angleSignal );
+            splittedConfs(1).distSignal = copy( obj.distSignal );
+            splittedConfs(1).room = copy( obj.room );
+            for kk = 1:obj.numOverlays
+                splittedConfs(kk+1) = dataProcs.SceneConfiguration();
+                splittedConfs(kk+1).numOverlays = 1;
+                splittedConfs(kk+1).angleOverlays(1) = copy( obj.angleOverlays(kk) );
+                splittedConfs(kk+1).distOverlays(1) = copy( obj.distOverlays(kk) );
+                splittedConfs(kk+1).SNRs(1) = copy( obj.SNRs(kk) );
+                splittedConfs(kk+1).typeOverlays{1} = obj.typeOverlays{kk};
+                splittedConfs(kk+1).fileOverlays(1) = copy( obj.fileOverlays(kk) );
+                splittedConfs(kk+1).offsetOverlays(1) = copy( obj.offsetOverlays(kk) );
+            end
+        end
+        %% -------------------------------------------------------------------------------
         
         function e = isequal( obj, cObj )
             if ~isequaln( obj.numOverlays, cObj.numOverlays )

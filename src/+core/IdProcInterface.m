@@ -16,7 +16,7 @@ classdef (Abstract) IdProcInterface < handle
     methods (Access = public)
         
         function out = saveOutput( obj, inFilePath )
-            inFilePath = which( inFilePath ); % ensure absolute path
+%            inFilePath = which( inFilePath ); % ensure absolute path
             out = obj.getOutput();
             currentFolder = obj.getCurrentFolder( inFilePath );
             if isempty( currentFolder )
@@ -38,7 +38,7 @@ classdef (Abstract) IdProcInterface < handle
         %%-----------------------------------------------------------------
         
         function outFileName = getOutputFileName( obj, inFilePath, currentFolder )
-            inFilePath = which( inFilePath ); % ensure absolute path
+%            inFilePath = which( inFilePath ); % ensure absolute path
             if nargin < 3
                 currentFolder = obj.getCurrentFolder( inFilePath );
             end
@@ -49,7 +49,7 @@ classdef (Abstract) IdProcInterface < handle
         %%-----------------------------------------------------------------
         
         function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath )
-            filePath = which( filePath ); % ensure absolute path
+%            filePath = which( filePath ); % ensure absolute path
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
                 ~isempty( currentFolder )  && ...

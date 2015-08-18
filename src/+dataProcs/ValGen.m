@@ -1,4 +1,4 @@
-classdef ValGen < handle
+classdef ValGen < matlab.mixin.Copyable
     
     properties (SetAccess = protected)
         type;   % one of 'manual', 'set', 'random'

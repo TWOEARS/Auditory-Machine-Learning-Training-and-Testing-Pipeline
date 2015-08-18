@@ -2,7 +2,9 @@ function trainAndTestCleanModel_2( classname )
 
 if nargin < 1, classname = 'speech'; end;
 
-startTwoEars( '../../src/identificationTraining/identTraining_repos.xml' );
+%startTwoEars( '../IdentificationTraining.xml' );
+addpath( '..' );
+startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
@@ -12,8 +14,8 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'trainTestSets/IEEE_AASP_80pTrain_TrainSet_1.flist';
-pipe.testset = 'trainTestSets/IEEE_AASP_80pTrain_TestSet_1.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_80pTrain_TrainSet_1.flist';
+pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_80pTrain_TestSet_1.flist';
 
 sc = dataProcs.SceneConfiguration(); % clean
 pipe.setSceneConfig( [sc] ); 

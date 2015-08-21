@@ -281,6 +281,7 @@ classdef IdentTrainPipeData < handle
                 error( '%s not found!', wavflist );
             end
             wavs = textscan( fid, '%s' );
+            paths = {};
             for kk = 1:length(wavs{1})
                 fprintf( '.' );
                 try
@@ -292,7 +293,11 @@ classdef IdentTrainPipeData < handle
                     warning( err.message );
                     error( '%s, referenced in %s, not found!', wavs{1}{kk}, wavflist );
                 end
-                addpath( fileparts( wavName ) );
+                p = fileparts( wavName );
+                if ~any( strcmp( p, paths ) )
+                    addpath( fileparts( wavName ) );
+                    paths{end+1} = p;
+                end
                 wavName = which( wavName ); % ensure absolute path
                 wavClass = IdEvalFrame.readEventClass( wavName );
                 obj.subsasgn( struct('type','()','subs',{{wavClass,'+'}}), wavName );

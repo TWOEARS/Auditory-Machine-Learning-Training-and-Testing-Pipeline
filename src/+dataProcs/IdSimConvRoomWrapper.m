@@ -237,28 +237,30 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 IdEvalFrame.readOnOffAnnotations( wavFile ) + obj.silenceLength_s;
             sigClass = IdEvalFrame.readEventClass( wavFile );
             for kk = 1:sceneConfig.numOverlays
-                ovrlFile = sceneConfig.fileOverlays(kk).value;
                 ovrlStartOffset = sceneConfig.offsetOverlays(kk).value;
-                if strcmpi( sceneConfig.typeOverlays{kk}, 'point' )
-                    sounds{1+kk} = ...
-                        getPointSourceSignalFromWav( ...
-                            ovrlFile, obj.convRoomSim.SampleRate, ...
-                            ovrlStartOffset );
-                elseif strcmpi( sceneConfig.typeOverlays{kk}, 'diffuse' )
-                    diffuseMonoSound = ...
-                        getPointSourceSignalFromWav( ...
-                            ovrlFile, obj.convRoomSim.SampleRate, ...
-                            ovrlStartOffset );
-                    sounds{1+kk} = repmat( diffuseMonoSound, 1, 2 );
+                ovrl = sceneConfig.overlays(kk).value;
+                if ischar( ovrl ) % then it is a filename
+                    sounds{1+kk} = getPointSourceSignalFromWav( ...
+                                      ovrl, obj.convRoomSim.SampleRate, ovrlStartOffset );
+                    ovrlClass = IdEvalFrame.readEventClass( ovrl );
+                    if strcmpi( ovrlClass, sigClass )
+                        maxLen = length( sounds{1} ) / obj.convRoomSim.SampleRate;
+                        ovrlOnOffs = IdEvalFrame.readOnOffAnnotations( ovrl ) ...
+                            + ovrlStartOffset;
+                        ovrlOnOffs( ovrlOnOffs(:,1) >= maxLen, : ) = [];
+                        ovrlOnOffs( ovrlOnOffs > maxLen ) = maxLen;
+                        sigOnOffs = sortAndMergeOnOffs( [sigOnOffs; ovrlOnOffs] );
+                    end
+                elseif isfloat( ovrl ) && size( ovrl, 2 ) == 1
+                    sounds{1+kk} = ovrl;
+                    nZeros = floor( obj.convRoomSim.SampleRate * ovrlStartOffset );
+                    zeroOffset = zeros( nZeros, 1 ) + mean( sounds{1+kk} );
+                    sounds{1+kk} = [zeroOffset; sounds{1+kk}; zeroOffset];
+                else
+                    error( 'This was not foreseen.' );
                 end
-                ovrlClass = IdEvalFrame.readEventClass( ovrlFile );
-                if strcmpi( ovrlClass, sigClass )
-                    maxLen = length( sounds{1} ) / obj.convRoomSim.SampleRate;
-                    ovrlOnOffs = IdEvalFrame.readOnOffAnnotations( ovrlFile ) ...
-                        + ovrlStartOffset;
-                    ovrlOnOffs( ovrlOnOffs(:,1) >= maxLen, : ) = [];
-                    ovrlOnOffs( ovrlOnOffs > maxLen ) = maxLen;
-                    sigOnOffs = sortAndMergeOnOffs( [sigOnOffs; ovrlOnOffs] );
+                if strcmpi( sceneConfig.typeOverlays{kk}, 'diffuse' )
+                    sounds{1+kk} = repmat( sounds{1+kk}, 1, 2 );
                 end
             end
         end

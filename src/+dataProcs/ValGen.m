@@ -1,4 +1,4 @@
-classdef ValGen < matlab.mixin.Copyable
+classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
     
     properties (SetAccess = protected)
         type;   % one of 'manual', 'set', 'random'

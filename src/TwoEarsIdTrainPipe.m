@@ -15,6 +15,7 @@ classdef TwoEarsIdTrainPipe < handle
         pipeline;
         binauralSim;
         multiConfBinauralSim;
+        dataSetupAlreadyDone = false;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -41,7 +42,7 @@ classdef TwoEarsIdTrainPipe < handle
         %% -------------------------------------------------------------------------------
         
         function init( obj )
-            obj.setupData();
+            obj.setupData( true );
             obj.pipeline.featureCreator = obj.featureCreator;
             obj.pipeline.resetDataProcs();
             obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
@@ -57,7 +58,10 @@ classdef TwoEarsIdTrainPipe < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function setupData( obj )
+        function setupData( obj, skipIfAlreadyDone )
+            if nargin > 1 && skipIfAlreadyDone && obj.dataSetupAlreadyDone
+                return;
+            end
             if ~isempty( obj.trainset ) || ~isempty( obj.testset )
                 trainSet = core.IdentTrainPipeData();
                 trainSet.loadWavFileList( obj.trainset );
@@ -71,6 +75,7 @@ classdef TwoEarsIdTrainPipe < handle
                 obj.pipeline.connectData( data );
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
             end
+            obj.dataSetupAlreadyDone = true;
         end
         %% -------------------------------------------------------------------------------
         

@@ -129,7 +129,9 @@ classdef (Abstract) IdProcInterface < handle
                         break;
                     end
                 end
-                preloadedPath(allProcFolders) = {currentFolder, currentConfig};
+                if ~isempty( currentFolder )
+                    preloadedPath(allProcFolders) = {currentFolder, currentConfig};
+                end
             end
         end
         %%-----------------------------------------------------------------

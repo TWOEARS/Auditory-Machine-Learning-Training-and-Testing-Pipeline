@@ -86,36 +86,72 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     
     %% --------------------------------------------------------------------
     methods (Access = private)
-        
         function [earSignals, earsOnOffs] = makeEarSignalsAndLabels( obj, wavFileName )
+            if obj.sceneConfig.numOverlays > 0
+                splittedConfigs = obj.sceneConfig.split();
+                sceneConfigBak = obj.sceneConfig;
+                earsOnOffs = [];
+                for ii = 1 : numel( splittedConfigs )
+                    obj.setSceneConfig( splittedConfigs(ii) );
+                    wavFileNameSplConf = [wavFileName '.splcfg.wav'];
+                    orgProcessed = obj.hasFileAlreadyBeenProcessed( wavFileName );
+                    splCfgProcessed = obj.hasFileAlreadyBeenProcessed( wavFileNameSplConf );
+                    if ~orgProcessed && ~splCfgProcessed
+                        [splitEarSignals{ii}, splitEarsOnOffs{ii}] = ...
+                            obj.makeEarSignalsAndLabels2( wavFileName );
+                        obj.earSout = splitEarSignals{ii};
+                        obj.onOffsOut = splitEarsOnOffs{ii};
+                        obj.saveOutput( wavFileNameSplConf );
+                    else
+                        if orgProcessed && ~splCfgProcessed
+                            splitConfFile = obj.getOutputFileName( wavFileName );
+                        elseif splCfgProcessed
+                            splitConfFile = obj.getOutputFileName( wavFileNameSplConf );
+                        else
+                            error( 'Should this happen?' );
+                        end
+                        splitSaved = load( splitConfFile );
+                        splitEarSignals{ii} = splitSaved.earSout;
+                        splitEarsOnOffs{ii} = splitSaved.onOffsOut;
+                    end
+                    earsOnOffs = sortAndMergeOnOffs( [earsOnOffs; splitEarsOnOffs{ii}] );
+                    fprintf( '.' );
+                end
+                orgSignal = splitEarSignals{1};
+                earSignals = orgSignal;
+                for ii = 2:length( splitEarSignals )
+                    onOffs_samples = earsOnOffs .* obj.convRoomSim.SampleRate;
+                    if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
+                    ovrlSignal = splitEarSignals{ii};
+                    ovrlSignal = obj.adjustSNR( ...
+                        orgSignal, onOffs_samples, ovrlSignal, splittedConfigs(ii).SNRs(1).value );
+                    earSignals(1:min( length( earSignals ), length( ovrlSignal ) ),:) = ...
+                        earSignals(1:min( length( earSignals ), length( ovrlSignal ) ),:) ...
+                        + ovrlSignal(1:min( length( earSignals ), length( ovrlSignal ) ),:);
+                end
+                obj.setSceneConfig( sceneConfigBak );
+                fprintf( '\n' );
+            else
+                [earSignals, earsOnOffs] = obj.makeEarSignalsAndLabels2( wavFileName );
+            end
+        end
+        %% ----------------------------------------------------------------
+        
+        function [earSignals, earsOnOffs] = makeEarSignalsAndLabels2( obj, wavFileName )
             sceneConfigInst = obj.sceneConfig.instantiate();
             [sounds, earsOnOffs] = obj.loadSounds( sceneConfigInst, wavFileName );
             obj.setupSceneConfig( sceneConfigInst );
-            ovrlEarSignals = cell( length( sounds ), 1 );
-            for ii = 1:length( sounds )
-                if ii > 1 ... % ii == 1  is the original signal
-                   && strcmpi( sceneConfigInst.typeOverlays{ii-1}, 'diffuse' )
-                    ovrlEarSignals{ii} = sounds{ii}(1:min( length( sounds{ii} ), length( ovrlEarSignals{1} ) ),:);
-                else
-                    obj.setSourceData( sounds );
-                    obj.setActiveSource( ii );
-                    obj.simulate();
-                    ovrlEarSignals{ii} = obj.convRoomSim.Sinks.getData();
-                end
-                fprintf( '\n' );
+            ii =  length( sounds );
+            if ii > 1 ... % ii == 1  is the original signal
+                    && strcmpi( sceneConfigInst.typeOverlays{ii-1}, 'diffuse' )
+                earSignals = sounds{ii};
+            else
+                obj.setSourceData( sounds );
+                obj.setActiveSource( ii );
+                obj.simulate();
+                earSignals = obj.convRoomSim.Sinks.getData();
             end
-            orgSignal = ovrlEarSignals{1};
-            earSignals = orgSignal;
-            for ii = 2:length( ovrlEarSignals )
-                onOffs_samples = earsOnOffs .* obj.convRoomSim.SampleRate;
-                if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
-                ovrlSignal = ovrlEarSignals{ii};
-                ovrlSignal = obj.adjustSNR( ...
-                    orgSignal, onOffs_samples, ovrlSignal, sceneConfigInst.SNRs(ii-1).value );
-                earSignals(1:min( length( earSignals ), length( ovrlSignal ) ),:) = ...
-                    earSignals(1:min( length( earSignals ), length( ovrlSignal ) ),:) ...
-                    + ovrlSignal;
-            end
+            fprintf( '\n' );
             earSignals = earSignals / max( abs( earSignals(:) ) ); % normalize
         end
         %% ----------------------------------------------------------------
@@ -164,6 +200,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 sceneConfig.distSignal.value, sceneConfig.angleSignal.value );
             for ii = 1:sceneConfig.numOverlays
                 isPoint = strcmpi( sceneConfig.typeOverlays{ii}, 'point' );
+                if isPoint, error( 'Implement smart check, dont double compute' ); end
                 obj.createNewSimSource( ...
                     ii+1, useReverb, isPoint, ...
                     sceneConfig.distOverlays(ii).value, sceneConfig.angleOverlays(ii).value...
@@ -200,28 +237,30 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 IdEvalFrame.readOnOffAnnotations( wavFile ) + obj.silenceLength_s;
             sigClass = IdEvalFrame.readEventClass( wavFile );
             for kk = 1:sceneConfig.numOverlays
-                ovrlFile = sceneConfig.fileOverlays(kk).value;
                 ovrlStartOffset = sceneConfig.offsetOverlays(kk).value;
-                if strcmpi( sceneConfig.typeOverlays{kk}, 'point' )
-                    sounds{1+kk} = ...
-                        getPointSourceSignalFromWav( ...
-                            ovrlFile, obj.convRoomSim.SampleRate, ...
-                            ovrlStartOffset );
-                elseif strcmpi( sceneConfig.typeOverlays{kk}, 'diffuse' )
-                    diffuseMonoSound = ...
-                        getPointSourceSignalFromWav( ...
-                            ovrlFile, obj.convRoomSim.SampleRate, ...
-                            ovrlStartOffset );
-                    sounds{1+kk} = repmat( diffuseMonoSound, 1, 2 );
+                ovrl = sceneConfig.overlays(kk).value;
+                if ischar( ovrl ) % then it is a filename
+                    sounds{1+kk} = getPointSourceSignalFromWav( ...
+                                      ovrl, obj.convRoomSim.SampleRate, ovrlStartOffset );
+                    ovrlClass = IdEvalFrame.readEventClass( ovrl );
+                    if strcmpi( ovrlClass, sigClass )
+                        maxLen = length( sounds{1} ) / obj.convRoomSim.SampleRate;
+                        ovrlOnOffs = IdEvalFrame.readOnOffAnnotations( ovrl ) ...
+                            + ovrlStartOffset;
+                        ovrlOnOffs( ovrlOnOffs(:,1) >= maxLen, : ) = [];
+                        ovrlOnOffs( ovrlOnOffs > maxLen ) = maxLen;
+                        sigOnOffs = sortAndMergeOnOffs( [sigOnOffs; ovrlOnOffs] );
+                    end
+                elseif isfloat( ovrl ) && size( ovrl, 2 ) == 1
+                    sounds{1+kk} = ovrl;
+                    nZeros = floor( obj.convRoomSim.SampleRate * ovrlStartOffset );
+                    zeroOffset = zeros( nZeros, 1 ) + mean( sounds{1+kk} );
+                    sounds{1+kk} = [zeroOffset; sounds{1+kk}; zeroOffset];
+                else
+                    error( 'This was not foreseen.' );
                 end
-                ovrlClass = IdEvalFrame.readEventClass( ovrlFile );
-                if strcmpi( ovrlClass, sigClass )
-                    maxLen = length( sounds{1} ) / obj.convRoomSim.SampleRate;
-                    ovrlOnOffs = IdEvalFrame.readOnOffAnnotations( ovrlFile ) ...
-                        + ovrlStartOffset;
-                    ovrlOnOffs( ovrlOnOffs(:,1) >= maxLen, : ) = [];
-                    ovrlOnOffs( ovrlOnOffs > maxLen ) = maxLen;
-                    sigOnOffs = sortAndMergeOnOffs( [sigOnOffs; ovrlOnOffs] );
+                if strcmpi( sceneConfig.typeOverlays{kk}, 'diffuse' )
+                    sounds{1+kk} = repmat( sounds{1+kk}, 1, 2 );
                 end
             end
         end
@@ -250,14 +289,14 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
             signal2(:,2) = signal2(:,2) - mean( signal2(:,2) );
             s2actL = obj.detectActivity( double(signal2(:,1)), 40, 50e-3, 50e-3, 10e-3 );
             s2actR = obj.detectActivity( double(signal2(:,2)), 40, 50e-3, 50e-3, 10e-3 );
-            signal2 = signal2(s2actL | s2actR,:);
+            signal2act = signal2(s2actL | s2actR,:);
             
             if isfinite(snrdB)
                 % Multi-channel energy of speech and noise signals
                 e_sig1 = sum(sum(signal1.^2));
-                e_sig2  = sum(sum(signal2.^2));
+                e_sig2  = sum(sum(signal2act.^2));
                 e_sig1 = e_sig1 / length(signal1);
-                e_sig2 = e_sig2 / length(signal2);
+                e_sig2 = e_sig2 / length(signal2act);
                 
                 % Compute scaling factor for noise signal
                 gain = sqrt((e_sig1/(10^(snrdB/10)))/e_sig2);

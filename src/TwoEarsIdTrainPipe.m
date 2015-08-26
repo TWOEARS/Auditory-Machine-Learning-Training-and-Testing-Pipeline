@@ -33,6 +33,7 @@ classdef TwoEarsIdTrainPipe < handle
                 'cvFolds', 4, ...
                 'alpha', 0.99 );
             obj.init();
+            obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
 

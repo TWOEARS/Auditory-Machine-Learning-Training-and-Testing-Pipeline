@@ -141,7 +141,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
             sceneConfigInst = obj.sceneConfig.instantiate();
             [sounds, earsOnOffs] = obj.loadSounds( sceneConfigInst, wavFileName );
             obj.setupSceneConfig( sceneConfigInst );
-            ii =  length( sounds );
+            ii = length( sounds );
             if ii > 1 ... % ii == 1  is the original signal
                     && strcmpi( sceneConfigInst.typeOverlays{ii-1}, 'diffuse' )
                 earSignals = sounds{ii};

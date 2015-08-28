@@ -1,10 +1,14 @@
 classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
-    properties (Access = private)
+    properties (SetAccess = {?Parameterized})
         cvTrainer;
         coreTrainer;
         fullSetModel;
+        alpha;
+        family;
+        nLambda;
+        cvFolds;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -43,11 +47,11 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
         function buildModel( obj, ~, ~ )
             verboseFprintf( obj, '\nRun on full trainSet...\n' );
             obj.coreTrainer = modelTrainers.GlmNetTrainer( ...
-                'performanceMeasure', obj.parameters.performanceMeasure, ...
-                'maxDataSize', obj.parameters.maxDataSize, ...
-                'alpha', obj.parameters.alpha, ...
-                'family', obj.parameters.family, ...
-                'nLambda', obj.parameters.nLambda );
+                'performanceMeasure', obj.performanceMeasure, ...
+                'maxDataSize', obj.maxDataSize, ...
+                'alpha', obj.alpha, ...
+                'family', obj.family, ...
+                'nLambda', obj.nLambda );
             obj.coreTrainer.setData( obj.trainSet, obj.testSet );
             obj.coreTrainer.setPositiveClass( obj.positiveClass );
             obj.coreTrainer.run();
@@ -59,7 +63,7 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
             obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.cvTrainer.setPositiveClass( obj.positiveClass );
             obj.cvTrainer.setData( obj.trainSet, obj.testSet );
-            obj.cvTrainer.setNumberOfFolds( obj.parameters.cvFolds );
+            obj.cvTrainer.setNumberOfFolds( obj.cvFolds );
             obj.cvTrainer.run();
             cvModels = obj.cvTrainer.models;
             verboseFprintf( obj, 'Calculate Performance for all lambdas...\n' );

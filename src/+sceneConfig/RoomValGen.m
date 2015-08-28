@@ -1,18 +1,17 @@
-classdef RoomValGen < dataProcs.ValGen
+classdef RoomValGen < sceneConfig.ValGen
 
     %%
     methods
         
         function obj = RoomValGen( val )
             if ~( ...
-                    isfield( val, 'lengthX' ) && isa( val.lengthX, 'dataProcs.ValGen' ) && ...
-                    isfield( val, 'lengthY' ) && isa( val.lengthY, 'dataProcs.ValGen' ) && ...
-                    isfield( val, 'height' ) && isa( val.height, 'dataProcs.ValGen' ) && ...
-                    isfield( val, 'rt60' ) && isa( val.rt60, 'dataProcs.ValGen' ) )
+                    isfield( val, 'lengthX' ) && isa( val.lengthX, 'sceneConfig.ValGen' ) && ...
+                    isfield( val, 'lengthY' ) && isa( val.lengthY, 'sceneConfig.ValGen' ) && ...
+                    isfield( val, 'height' ) && isa( val.height, 'sceneConfig.ValGen' ) && ...
+                    isfield( val, 'rt60' ) && isa( val.rt60, 'sceneConfig.ValGen' ) )
                 error( 'val does not provide all needed fields' );
             end
-            obj = obj@dataProcs.ValGen( 'manual', val );
-            obj.type = 'specific';
+            obj = obj@sceneConfig.ValGen( 'manual', val );
         end
         
         function val = value( obj )
@@ -30,11 +29,5 @@ classdef RoomValGen < dataProcs.ValGen
         
         % TODO: rt60? reflection coeffs? absorb coeffs? Position?
     end
-    
-    %%
-    methods (Access = protected)
         
-        
-    end
-    
 end

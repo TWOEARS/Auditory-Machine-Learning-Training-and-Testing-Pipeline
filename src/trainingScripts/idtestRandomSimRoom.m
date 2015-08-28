@@ -12,16 +12,16 @@ testpipe.modelCreator.verbose( 'on' );
 
 testpipe.testset = testFlist;
 
-sc = dataProcs.SceneConfiguration();
-sc.angleSignal = dataProcs.ValGen('random', [0,359.9]);
-sc.distSignal = dataProcs.ValGen('random', [0.5,3]);
-wall.front = dataProcs.ValGen('random', [3,5]);
-wall.back = dataProcs.ValGen('random', [-3,-5]);
-wall.right = dataProcs.ValGen('random', [-3,-5]);
-wall.left = dataProcs.ValGen('random', [3,5]);
-wall.height = dataProcs.ValGen('random', [2,3]);
-wall.rt60 = dataProcs.ValGen('random', [1,8]);
-sc.addWalls( dataProcs.WallsValGen(wall) );
+sc = sceneConfig.SceneConfiguration();
+sc.angleSignal = sceneConfig.ValGen('random', [0,359.9]);
+sc.distSignal = sceneConfig.ValGen('random', [0.5,3]);
+wall.front = sceneConfig.ValGen('random', [3,5]);
+wall.back = sceneConfig.ValGen('random', [-3,-5]);
+wall.right = sceneConfig.ValGen('random', [-3,-5]);
+wall.left = sceneConfig.ValGen('random', [3,5]);
+wall.height = sceneConfig.ValGen('random', [2,3]);
+wall.rt60 = sceneConfig.ValGen('random', [1,8]);
+sc.addWalls( sceneConfig.WallsValGen(wall) );
 
 testpipe.setSceneConfig( [sc] ); 
 

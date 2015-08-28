@@ -5,7 +5,11 @@ classdef (Abstract) Base < handle
         trainSet;
         testSet;
         positiveClass;
+    end
+    
+    properties (SetAccess = {?modelTrainers.Base, ?Parameterized})
         performanceMeasure;
+        maxDataSize;
     end
     
     %% --------------------------------------------------------------------
@@ -71,6 +75,10 @@ classdef (Abstract) Base < handle
             [x,y] = obj.getPermutedTrainingData();
             if any( any( isnan( x ) ) ) || any( any( isinf( x ) ) ) 
                 warning( 'There are NaNs or INFs in the data!' );
+            end
+            if numel( y ) > obj.maxDataSize
+                x(obj.maxDataSize+1:end,:) = [];
+                y(obj.maxDataSize+1:end) = [];
             end
             obj.buildModel( x, y );
         end

@@ -22,7 +22,7 @@ classdef MultiConfigurationsEarSignalProc < core.IdProcInterface
                 error( 'binauralSim must implement dataProcs.BinSimProcInterface.' );
             end
             obj.binauralSim = binauralSim;
-            obj.sceneConfigurations = dataProcs.SceneConfiguration.empty;
+            obj.sceneConfigurations = sceneConfig.SceneConfiguration.empty;
         end
         %% ----------------------------------------------------------------
         

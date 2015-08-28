@@ -8,7 +8,7 @@ pipe.modelCreator.verbose( 'on' );
 pipe.trainset = trainFlist;
 pipe.testset = testFlist;
 
-sc = dataProcs.SceneConfiguration(); % clean
+sc = sceneConfig.SceneConfiguration(); % clean
 pipe.setSceneConfig( [sc] ); 
 
 pipe.init();

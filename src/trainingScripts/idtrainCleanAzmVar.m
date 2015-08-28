@@ -7,8 +7,8 @@ trainpipe.modelCreator.verbose( 'on' );
 
 trainpipe.trainset = trainFlist;
 
-sc = dataProcs.SceneConfiguration(); % clean
-sc.angleSignal = dataProcs.ValGen('manual', azm);
+sc = sceneConfig.SceneConfiguration(); % clean
+sc.angleSignal = sceneConfig.ValGen('manual', azm);
 trainpipe.setSceneConfig( [sc] ); 
 
 trainpipe.init();

@@ -7,16 +7,16 @@ trainpipe.modelCreator.verbose( 'on' );
 
 trainpipe.trainset = trainFlist;
 
-sc1 = dataProcs.SceneConfiguration();
-sc1.angleSignal = ValGen('manual', 0);
-sc2 = dataProcs.SceneConfiguration();
-sc2.angleSignal = ValGen('manual', 45);
-sc3 = dataProcs.SceneConfiguration();
-sc3.angleSignal = ValGen('manual', 90);
-sc4 = dataProcs.SceneConfiguration();
-sc4.angleSignal = ValGen('manual', 135);
-sc5 = dataProcs.SceneConfiguration();
-sc5.angleSignal = ValGen('manual', 180);
+sc1 = sceneConfig.SceneConfiguration();
+sc1.angleSignal = sceneConfig.ValGen('manual', 0);
+sc2 = sceneConfig.SceneConfiguration();
+sc2.angleSignal = sceneConfig.ValGen('manual', 45);
+sc3 = sceneConfig.SceneConfiguration();
+sc3.angleSignal = sceneConfig.ValGen('manual', 90);
+sc4 = sceneConfig.SceneConfiguration();
+sc4.angleSignal = sceneConfig.ValGen('manual', 135);
+sc5 = sceneConfig.SceneConfiguration();
+sc5.angleSignal = sceneConfig.ValGen('manual', 180);
 trainpipe.setSceneConfig( [sc1,sc2,sc3,sc4,sc5] ); 
 
 trainpipe.init();

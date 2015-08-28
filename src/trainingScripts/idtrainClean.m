@@ -5,7 +5,7 @@ trainpipe.featureCreator = featureCreator;
 trainpipe.modelCreator = modelTrainer;
 trainpipe.modelCreator.verbose( 'on' );
 trainpipe.trainset = trainFlist;
-sc = dataProcs.SceneConfiguration(); % clean
+sc = sceneConfig.SceneConfiguration(); % clean
 trainpipe.setSceneConfig( [sc] ); 
 trainpipe.init();
 

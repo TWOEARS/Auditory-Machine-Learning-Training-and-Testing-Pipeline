@@ -10,7 +10,7 @@ testpipe.modelCreator = ...
         );
 testpipe.modelCreator.verbose( 'on' );
 testpipe.testset = testFlist;
-sc = dataProcs.SceneConfiguration(); % clean
+sc = sceneConfig.SceneConfiguration(); % clean
 testpipe.setSceneConfig( [sc] ); 
 testpipe.init();
 

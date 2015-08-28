@@ -14,7 +14,7 @@ pipe.trainsetShare = 1;
 pipe.setupData();
 
 if isempty( sceneConfig )
-    sceneConfig = dataProcs.SceneConfiguration();
+    sceneConfig = sceneConfig.SceneConfiguration();
 end
 pipe.setSceneConfig( sceneConfig ); 
 

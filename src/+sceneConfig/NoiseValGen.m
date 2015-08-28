@@ -1,14 +1,13 @@
-classdef NoiseValGen < dataProcs.ValGen
+classdef NoiseValGen < sceneConfig.ValGen
 
     %%
     methods
         
         function obj = NoiseValGen( val )
-            if ~( isfield( val, 'len' ) && isa( val.len, 'dataProcs.ValGen' ) )
+            if ~( isfield( val, 'len' ) && isa( val.len, 'sceneConfig.ValGen' ) )
                 error( 'val does not provide all needed fields' );
             end
-            obj = obj@dataProcs.ValGen( 'manual', val );
-            obj.type = 'specific';
+            obj = obj@sceneConfig.ValGen( 'manual', val );
         end
         
         function val = value( obj )
@@ -17,11 +16,5 @@ classdef NoiseValGen < dataProcs.ValGen
         end
         
     end
-    
-    %%
-    methods (Access = protected)
         
-        
-    end
-    
 end

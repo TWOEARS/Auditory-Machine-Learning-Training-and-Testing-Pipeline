@@ -1,11 +1,19 @@
 classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
-    properties (Access = private)
+    properties (SetAccess = {?Parameterized})
         hpsCVtrainer;
         coreTrainer;
         trainWithBestHps = true;
         hpsSets;
+        buildCoreTrainer;
+        hpsCoreTrainerParams;
+        finalCoreTrainerParams;
+        hpsMaxDataSize;
+        hpsRefineStages;
+        hpsSearchBudget;
+        hpsCvFolds;
+        hpsMethod;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -53,7 +61,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
         
         function buildModel( obj, ~, ~ )
-            obj.coreTrainer = obj.parameters.buildCoreTrainer();
+            obj.coreTrainer = obj.buildCoreTrainer();
             obj.createHpsTrainer();
             hps.params = obj.determineHyperparameterSets();
             hps.perfs = zeros( size( hps.params ) );
@@ -61,15 +69,15 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             for ii = 1 : size( hps.params, 1 )
                 verboseFprintf( obj, '\nhps set %d...\n ', ii );
                 obj.coreTrainer.setParameters( false, ...
-                    'maxDataSize', obj.parameters.hpsMaxDataSize, ...
+                    'maxDataSize', obj.hpsMaxDataSize, ...
                     hps.params(ii), ...
-                    obj.parameters.hpsCoreTrainerParams{:} );
+                    obj.hpsCoreTrainerParams{:} );
                 obj.hpsCVtrainer.abortPerfMin = max( hps.perfs );
                 obj.hpsCVtrainer.run();
                 hps.perfs(ii) = obj.hpsCVtrainer.getPerformance().avg;
             end
             verboseFprintf( obj, 'Done\n' );
-            if obj.parameters.hpsRefineStages > 0
+            if obj.hpsRefineStages > 0
                 verboseFprintf( obj, 'HPS refine stage...\n' );
                 refinedHpsTrainer = obj.createRefineGridTrainer( hps );
                 refinedHpsTrainer.run();
@@ -82,7 +90,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
                 obj.coreTrainer.setParameters( false, ...
                     obj.hpsSets.params(end), ...
                     'maxDataSize', inf, ...
-                    obj.parameters.finalCoreTrainerParams{:} );
+                    obj.finalCoreTrainerParams{:} );
                 obj.coreTrainer.setData( obj.trainSet, obj.testSet );
                 verboseFprintf( obj, 'Train with best HPS set on full trainSet...\n' );
                 obj.coreTrainer.run();
@@ -115,12 +123,12 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             obj.hpsCVtrainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.hpsCVtrainer.setPositiveClass( obj.positiveClass );
             obj.hpsCVtrainer.setData( obj.trainSet, obj.testSet );
-            obj.hpsCVtrainer.setNumberOfFolds( obj.parameters.hpsCvFolds );
+            obj.hpsCVtrainer.setNumberOfFolds( obj.hpsCvFolds );
         end
         %% -------------------------------------------------------------------------------
         
         function hpsSets = determineHyperparameterSets( obj )
-            switch( lower( obj.parameters.hpsMethod ) )
+            switch( lower( obj.hpsMethod ) )
                 case 'grid'
                     hpsSets = obj.getHpsGridSearchSets();
                 case 'random'
@@ -138,7 +146,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             refinedHpsTrainer.setData( obj.trainSet, obj.testSet );
             refinedHpsTrainer.trainWithBestHps = false;
             refinedHpsTrainer.setParameters( false, ...
-                'hpsRefineStages', obj.parameters.hpsRefineStages - 1 );
+                'hpsRefineStages', obj.hpsRefineStages - 1 );
         end
         %% -------------------------------------------------------------------------------
         

@@ -1,8 +1,9 @@
 classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
-    properties (Access = protected)
+    properties (SetAccess = {?Parameterized})
         modelPathBuilder;
+        modelParams;
     end
 
     %% --------------------------------------------------------------------
@@ -38,9 +39,9 @@ classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
             end
             ms = load( obj.modelPathBuilder( obj.positiveClass ) );
             model = ms.model;
-            fieldsModelParams = fieldnames( obj.parameters.modelParams );
+            fieldsModelParams = fieldnames( obj.modelParams );
             for ii = 1: length( fieldsModelParams )
-                model.(fieldsModelParams{ii}) = obj.parameters.modelParams.(fieldsModelParams{ii});
+                model.(fieldsModelParams{ii}) = obj.modelParams.(fieldsModelParams{ii});
             end
         end
         %% ----------------------------------------------------------------

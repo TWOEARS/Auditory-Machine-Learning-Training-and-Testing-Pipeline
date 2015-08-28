@@ -21,8 +21,8 @@ testpipe.modelCreator.verbose( 'on' );
 
 testpipe.testset = testFlist;
 
-sc = dataProcs.SceneConfiguration(); % clean
-sc.angleSignal = dataProcs.ValGen('manual', [azm]);
+sc = sceneConfig.SceneConfiguration(); % clean
+sc.angleSignal = sceneConfig.ValGen('manual', [azm]);
 testpipe.setSceneConfig( [sc] ); 
 
 testpipe.init();

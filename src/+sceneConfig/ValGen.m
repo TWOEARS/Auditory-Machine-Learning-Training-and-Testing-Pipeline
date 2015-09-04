@@ -5,6 +5,10 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
         val;    % depending on type: specific value, cell of possible values, or random range
     end
     
+    properties (Access = protected)
+        instantiated = false;
+    end
+    
     %%
     methods
         
@@ -17,11 +21,13 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
         end
         
         function instance = instantiate( obj )
-            instance = copy( obj );
-            if ~isempty( obj )
-                instance.type = 'manual';
-                instance.val = obj.value();
+            if isempty( obj )  ||  obj.instantiated
+                instance = obj; return; 
             end
+            instance = copy( obj );
+            instance.type = 'manual';
+            instance.val = obj.value();
+            instance.instantiated = true;
         end
         
         function val = value( obj )
@@ -42,23 +48,21 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
         end
         
         function e = isequal( obj1, obj2 )
-            if isempty( obj1 ) && isempty( obj2 )
-                e = true;
-                return;
+            e = zeros( size( obj2 ) );
+            if numel( obj1 ) > 1
+                error( 'ValGen.isequal expects a single object as first argument.' );
             end
-            if isempty( obj1 ) || isempty( obj2 )
-                e = false;
-                return;
+            if isempty( obj1 ) && isempty( obj2 ), e = true; return; end
+            if isempty( obj1 ) || isempty( obj2 ), return; end
+            for ii = 1 : numel( obj2 )
+                if ~strcmpi( obj1.type, obj2(ii).type ), continue; end
+                if strcmpi( obj1.type, 'manual' )
+                    e(ii) = isequal( obj1.val, obj2(ii).val );
+                else
+                    e(ii) = isequal( sort( obj1.val ), sort( obj2(ii).val ) );
+                end
             end
-            if ~strcmpi( obj1.type, obj2.type )
-                e = false; 
-                return; 
-            end
-            if strcmpi( obj1.type, 'manual' )
-                e = isequal( obj1.val, obj2.val );
-            else
-                e = isequal( sort( obj1.val ), sort( obj2.val ) );
-            end
+            e = logical( e );
         end
         
     end

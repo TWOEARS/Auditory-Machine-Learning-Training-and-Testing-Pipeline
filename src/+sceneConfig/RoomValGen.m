@@ -15,6 +15,7 @@ classdef RoomValGen < sceneConfig.ValGen
         end
         
         function val = value( obj )
+            if obj.instantiated, val = value@sceneConfig.ValGen( obj ); return; end
             room = simulator.room.Shoebox();
             room.set( 'ReverberationMaxOrder', 5 ); 
             room.set( 'UnitZ', [0; 0; 1] );

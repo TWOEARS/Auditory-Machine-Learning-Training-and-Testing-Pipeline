@@ -11,6 +11,7 @@ classdef NoiseValGen < sceneConfig.ValGen
         end
         
         function val = value( obj )
+            if obj.instantiated, val = value@sceneConfig.ValGen( obj ); return; end
             len = floor( obj.val.len.value() );
             val = rand( len, 1 ) * 2 - 1;
         end

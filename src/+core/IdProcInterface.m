@@ -2,22 +2,23 @@ classdef (Abstract) IdProcInterface < handle
     %% data file processor
     %
     
-    %%---------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
         procName;
         externOutputDeps;
     end
     
-    %%---------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Static)
     end
     
-    %%---------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
         function out = saveOutput( obj, inFilePath )
 %            inFilePath = which( inFilePath ); % ensure absolute path
             out = obj.getOutput();
+            if isempty( inFilePath ), return; end
             currentFolder = obj.getCurrentFolder( inFilePath );
             if isempty( currentFolder )
                 currentFolder = obj.createCurrentConfigFolder( inFilePath );
@@ -25,7 +26,7 @@ classdef (Abstract) IdProcInterface < handle
             outFilename = obj.getOutputFileName( inFilePath, currentFolder );
             save( outFilename, '-struct', 'out' );
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function out = processSaveAndGetOutput( obj, inFileName )
             if ~obj.hasFileAlreadyBeenProcessed( inFileName )
@@ -35,7 +36,7 @@ classdef (Abstract) IdProcInterface < handle
                 out = load( obj.getOutputFileName( inFileName ) );
             end
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function outFileName = getOutputFileName( obj, inFilePath, currentFolder )
 %            inFilePath = which( inFilePath ); % ensure absolute path
@@ -46,16 +47,17 @@ classdef (Abstract) IdProcInterface < handle
             fileName = [fileName fileExt];
             outFileName = fullfile( currentFolder, [fileName obj.getProcFileExt] );
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath )
+            if isempty( filePath ), fileProcessed = false; return; end
 %            filePath = which( filePath ); % ensure absolute path
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
                 ~isempty( currentFolder )  && ...
                 exist( obj.getOutputFileName( filePath, currentFolder ), 'file' );
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function setExternOutputDependencies( obj, externOutputDeps )
             obj.externOutputDeps = externOutputDeps;
@@ -74,11 +76,11 @@ classdef (Abstract) IdProcInterface < handle
                 outputDeps.extern = obj.externOutputDeps;
             end
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
     end
     
-    %%---------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
         function obj = IdProcInterface( procName )
@@ -95,15 +97,15 @@ classdef (Abstract) IdProcInterface < handle
         %%-----------------------------------------------------------------
     end
     
-    %%---------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = private)
         
         function saveOutputConfig( obj, configFileName )
             outputDeps = obj.getOutputDependencies();
-            outputDeps.configHash = calcDataHash( outputDeps );
+%            outputDeps.configHash = calcDataHash( outputDeps );
             save( configFileName, '-struct', 'outputDeps' );
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function currentFolder = getCurrentFolder( obj, filePath )
             [procFolders, configs] = obj.getProcFolders( filePath );
@@ -122,7 +124,7 @@ classdef (Abstract) IdProcInterface < handle
                         return;
                     end
                 end
-                currentConfig.configHash = calcDataHash( currentConfig );
+%                currentConfig.configHash = calcDataHash( currentConfig );
                 for ii = 1 : length( configs )
                     if obj.areConfigsEqual( currentConfig, configs{ii} )
                         currentFolder = procFolders{ii};
@@ -134,7 +136,7 @@ classdef (Abstract) IdProcInterface < handle
                 end
             end
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function [procFolders, configs] = getProcFolders( obj, filePath )
             fileBaseFolder = fileparts( filePath );
@@ -157,7 +159,7 @@ classdef (Abstract) IdProcInterface < handle
                 end
             end
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function currentFolder = createCurrentConfigFolder( obj, filePath )
             fileBaseFolder = fileparts( filePath );
@@ -166,7 +168,7 @@ classdef (Abstract) IdProcInterface < handle
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function config = readConfig( obj, procFolder )
             persistent preloadedConfigs;
@@ -180,31 +182,32 @@ classdef (Abstract) IdProcInterface < handle
                 preloadedConfigs(procFolder) = config;
             end
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function procFileExt = getProcFileExt( obj )
             procFileExt = ['.' obj.procName '.mat'];
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
         function eq = areConfigsEqual( obj, config1, config2 )
-            if isfield( config1, 'configHash' ) % compatibility to older versions
-                if isfield( config2, 'configHash' )
-                    eq = strcmp( config1.configHash, config2.configHash );
-                else
-                    config1 = rmfield( config1, 'configHash' );
-                    eq = isequalDeepCompare( config1, config2 );
-                end
-            else
-                config2 = rmfield( config2, 'configHash' );
+%            if isfield( config1, 'configHash' ) % compatibility to older versions
+%                if isfield( config2, 'configHash' )
+%                    eq = isequalDeepCompare( config1, config2 );
+%                    eq = strcmp( config1.configHash, config2.configHash );
+%                else
+%                    config1 = rmfield( config1, 'configHash' );
+%                    eq = isequalDeepCompare( config1, config2 );
+%                end
+%            else
+%                config2 = rmfield( config2, 'configHash' );
                 eq = isequalDeepCompare( config1, config2 );
-            end
+%            end
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
         
     end
     
-    %%---------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Abstract)
         process( obj, inputFileName )
     end

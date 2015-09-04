@@ -2,9 +2,6 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
 
     %% -----------------------------------------------------------------------------------
     properties
-        azimuth;
-        distance;
-        type;
         data;
         offset;
     end
@@ -13,22 +10,12 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
     methods
         
         function obj = SourceBase( varargin )
-            pds{1} = struct( 'name', 'azimuth', ...
-                             'default', sceneConfig.ValGen( 'manual', 0 ), ...
-                             'valFun', @(x)(isa(x, 'sceneConfig.ValGen')) );
-            pds{2} = struct( 'name', 'distance', ...
-                             'default', sceneConfig.ValGen( 'manual', 3 ), ...
-                             'valFun', @(x)(isa(x, 'sceneConfig.ValGen')) );
-            pds{3} = struct( 'name', 'type', ...
-                             'default', 'point', ...
-                             'valFun', @(x)(ischar(x) && ...
-                                            any(strcmpi(x,{'point','diffuse'})) ) );
-            pds{4} = struct( 'name', 'data', ...
+            pds{1} = struct( 'name', 'data', ...
                              'default', sceneConfig.NoiseValGen( ...
                                             struct('len',sceneConfig.ValGen('manual',44100))), ...
                              'valFun', @(x)(isa(x, 'sceneConfig.ValGen')) );
-            pds{5} = struct( 'name', 'offset', ...
-                             'default', sceneConfig.ValGen.empty, ...
+            pds{2} = struct( 'name', 'offset', ...
+                             'default', sceneConfig.ValGen('manual',0.5), ...
                              'valFun', @(x)(isa(x, 'sceneConfig.ValGen')) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
@@ -37,19 +24,31 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
         
         function srcInstance = instantiate( obj )
             srcInstance = copy( obj );
-            srcInstance.azimuth = obj.azimuth.instantiate();
-            srcInstance.distance = obj.distance.instantiate();
             srcInstance.data = obj.data.instantiate();
             srcInstance.offset = obj.offset.instantiate();
         end
         %% -------------------------------------------------------------------------------
         
         function e = isequal( obj1, obj2 )
-            e = isequal( obj1.azimuth, obj2.azimuth ) && ...
-                isequal( obj1.distance, obj2.distance ) && ...
-                isequal( obj1.type, obj2.type ) && ...
-                isequal( obj1.data, obj2.data ) && ...
-                isequal( obj1.offset, obj2.offset );
+            e = isequal( obj1.data, obj2.data ) && isequal( obj1.offset, obj2.offset );
+        end
+        %% -------------------------------------------------------------------------------
+        
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Static)
+        function e = isequalHetrgn( obj1, obj2 )
+            e = zeros( size( obj2 ) );
+            if numel( obj1 ) > 1
+                error( 'SourceBase.isequalHetrgn expects a single object as first argument.' );
+            end
+            for ii = 1 : numel( obj2 )
+                if strcmp( class( obj1 ), class( obj2(ii) ) ) && isequal( obj1, obj2(ii) )
+                    e(ii) = 1; 
+                end
+            end
+            e = logical( e );
         end
         %% -------------------------------------------------------------------------------
                 

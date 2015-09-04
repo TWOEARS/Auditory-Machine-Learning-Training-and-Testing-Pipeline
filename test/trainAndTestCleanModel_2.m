@@ -14,10 +14,11 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_80pTrain_TestSet_1.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_80pTrain_TrainSet_1.flist';
 pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_80pTrain_TestSet_1.flist';
 
-sc = sceneConfig.SceneConfiguration(); % clean
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource() );
 pipe.setSceneConfig( [sc] ); 
 
 pipe.init();

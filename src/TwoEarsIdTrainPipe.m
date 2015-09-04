@@ -14,6 +14,7 @@ classdef TwoEarsIdTrainPipe < handle
     properties (SetAccess = private)
         pipeline;
         binauralSim;
+        sceneConfBinauralSim;
         multiConfBinauralSim;
         dataSetupAlreadyDone = false;
     end
@@ -24,8 +25,10 @@ classdef TwoEarsIdTrainPipe < handle
         function obj = TwoEarsIdTrainPipe()
             obj.pipeline = core.IdentificationTrainingPipeline();
             obj.binauralSim = dataProcs.IdSimConvRoomWrapper();
+            obj.sceneConfBinauralSim = ...
+                dataProcs.SceneEarSignalProc( obj.binauralSim );
             obj.multiConfBinauralSim = ...
-                dataProcs.MultiConfigurationsEarSignalProc( obj.binauralSim );
+                dataProcs.MultiConfigurationsEarSignalProc( obj.sceneConfBinauralSim );
             obj.setSceneConfig( sceneConfig.SceneConfiguration() );
             obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
             obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...

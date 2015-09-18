@@ -90,7 +90,7 @@ classdef Base < core.IdProcInterface
                 afeBlocks{end+1} = obj.cutDataBlock( afeData, backOffset_s );
                 blockOffset = sigLen - backOffset_s;
                 labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-                y(end+1) = 0;
+                y(end+1) = -1;
                 for jj = 1 : size( onOffs_s, 1 )
                     eventOnset = onOffs_s(jj,1);
                     eventOffset = onOffs_s(jj,2);
@@ -101,15 +101,18 @@ classdef Base < core.IdProcInterface
                     maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
                     relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
                     blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
-                    y(end) = y(end) || blockIsSoundEvent;
-                    if y(end) == 1, break, end;
+                    blockIsAmbigous = relEventBlockOverlap > (1-obj.minBlockToEventRatio); 
+                    if blockIsSoundEvent
+                        y(end) = 1;
+                        break;
+                    elseif blockIsAmbigous
+                        y(end) = 0;
+                    end;
                 end
             end
             afeBlocks = fliplr( afeBlocks );
             y = fliplr( y );
             y = y';
-            %scaling to [-1..1]
-            y = (y * 2) - 1;
         end
         %% ----------------------------------------------------------------
         

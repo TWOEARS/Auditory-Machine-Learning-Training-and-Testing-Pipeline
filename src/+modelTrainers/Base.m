@@ -92,6 +92,8 @@ classdef (Abstract) Base < handle
             else
                 y = obj.trainSet(:,:,'y',obj.positiveClass);
             end
+            x(y==0,:) = [];
+            y(y==0) = [];
             permutationIdxs = randperm( length( y ) );
             x = x(permutationIdxs,:);
             y = y(permutationIdxs);

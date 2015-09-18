@@ -30,6 +30,31 @@ dataset = 'sound_databases/generalSoundsNI/piano.flist';
 
 genAzms( featureCreator, dataset );
 
+featureCreator = featureCreators.FeatureSet1Blockmean();
+dataset = 'sound_databases/generalSoundsNI/knock.flist';
+
+genAzms( featureCreator, dataset );
+
+dataset = 'sound_databases/generalSoundsNI/phone.flist';
+
+genAzms( featureCreator, dataset );
+
+dataset = 'sound_databases/generalSoundsNI/piano.flist';
+
+genAzms( featureCreator, dataset );
+
+featureCreator = featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes();
+dataset = 'sound_databases/generalSoundsNI/knock.flist';
+
+genAzms( featureCreator, dataset );
+
+dataset = 'sound_databases/generalSoundsNI/phone.flist';
+
+genAzms( featureCreator, dataset );
+
+dataset = 'sound_databases/generalSoundsNI/piano.flist';
+
+genAzms( featureCreator, dataset );
 
 end
 

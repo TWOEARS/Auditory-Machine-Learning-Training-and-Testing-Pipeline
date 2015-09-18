@@ -9,5 +9,15 @@ dataset = 'sound_databases/generalSoundsNI/general.flist';
 
 genDiffWhtNoise( featureCreator, dataset );
 
+featureCreator = featureCreators.FeatureSet1Blockmean();
+dataset = 'sound_databases/generalSoundsNI/general.flist';
+
+genDiffWhtNoise( featureCreator, dataset );
+
+featureCreator = featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes();
+dataset = 'sound_databases/generalSoundsNI/general.flist';
+
+genDiffWhtNoise( featureCreator, dataset );
+
 end
 

@@ -13,5 +13,13 @@ featureCreator = featureCreators.FeatureSet1Blockmean2Ch();
 
 genAzms( featureCreator, dataset );
 
+featureCreator = featureCreators.FeatureSet1Blockmean();
+
+genAzms( featureCreator, dataset );
+
+featureCreator = featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes();
+
+genAzms( featureCreator, dataset );
+
 end
 

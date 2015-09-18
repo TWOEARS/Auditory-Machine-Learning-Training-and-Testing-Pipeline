@@ -22,7 +22,7 @@ classdef FeatureSet1VarBlocks < featureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSet1VarBlocks( )
-            obj = obj@featureCreators.Base( 1, 0.2, 0.5, 0.2  );
+            obj = obj@featureCreators.Base( 1, 0.2, 0.75, 0.2  );
             obj.freqChannels = 16;
             obj.onsfreqChannels = 8;
             obj.amFreqChannels = 8;
@@ -85,7 +85,7 @@ classdef FeatureSet1VarBlocks < featureCreators.Base
             x = lMomentAlongDim( xBlock, [1,2,3], 1, true );
             for i = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, [2,3,4], 1, true )];
+                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1, true )];
             end
             modRL = afeData(1);
             modR = compressAndScale( modRL{1}.getSignalBlock(blLen), 0.33 );
@@ -95,7 +95,7 @@ classdef FeatureSet1VarBlocks < featureCreators.Base
             x = [x lMomentAlongDim( mod, [1,2], 1, true )];
             for i = 1:obj.deltasLevels
                 mod = mod(2:end,:) - mod(1:end-1,:);
-                x = [x lMomentAlongDim( mod, [2,3], 1, true )];
+                x = [x lMomentAlongDim( mod, [1,2,3], 1, true )];
             end
         end
         %% ----------------------------------------------------------------

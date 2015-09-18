@@ -20,7 +20,7 @@ classdef FeatureSet1Blockmean2Ch < featureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSet1Blockmean2Ch( )
-            obj = obj@featureCreators.Base( 0.5, 0.5/3, 0.5, 0.5 );
+            obj = obj@featureCreators.Base( 0.5, 0.5/3, 0.75, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;
@@ -72,7 +72,7 @@ classdef FeatureSet1Blockmean2Ch < featureCreators.Base
             x = lMomentAlongDim( xBlock, [1,2,3], 1, true );
             for i = 1:obj.deltasLevels
                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-                x = [x  lMomentAlongDim( xBlock, [2,3,4], 1, true )];
+                x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1, true )];
             end
             modRL = afeData(1);
             modR = compressAndScale( modRL{1}.Data, 0.33 );
@@ -84,8 +84,8 @@ classdef FeatureSet1Blockmean2Ch < featureCreators.Base
             for i = 1:obj.deltasLevels
                 modR = modR(2:end,:) - modR(1:end-1,:);
                 modL = modL(2:end,:) - modL(1:end-1,:);
-                x = [x lMomentAlongDim( modR, [2,3], 1, true )];
-                x = [x lMomentAlongDim( modL, [2,3], 1, true )];
+                x = [x lMomentAlongDim( modR, [1,2,3], 1, true )];
+                x = [x lMomentAlongDim( modL, [1,2,3], 1, true )];
             end
         end
         %% ----------------------------------------------------------------
@@ -100,7 +100,7 @@ classdef FeatureSet1Blockmean2Ch < featureCreators.Base
             [classname1, classname2] = strtok( classInfo.Name, '.' );
             if isempty( classname2 ), outputDeps.featureProc = classname1;
             else outputDeps.featureProc = classname2(2:end); end
-            outputDeps.v = 5;
+            outputDeps.v = 6;
         end
         %% ----------------------------------------------------------------
         

@@ -130,6 +130,15 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
+            featureCreator = obj.featureCreator;
+            lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
+            if strcmp(models{1}, 'dataStore')
+                data = obj.data;
+                save( 'dataStore.mat', ...
+                      'data', 'featureCreator', 'lastDataProcParams' );
+                return; 
+            end;
+            
             for modelName = models
                 fprintf( ['\n\n===================================\n',...
                               '##   Training model "%s"\n',...
@@ -168,10 +177,8 @@ classdef IdentificationTrainingPipeline < handle
                     testPerfresults = [];
                 end
                 model = obj.trainer.getModel();
-                featureCreator = obj.featureCreator;
                 modelFileExt = ['.model.mat'];
                 modelFilename = [modelName{1} modelFileExt];
-                lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
                 save( modelFilename, ...
                       'model', 'featureCreator', ...
                       'testPerfresults', 'trainTime', 'lastDataProcParams' );

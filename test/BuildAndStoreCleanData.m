@@ -1,0 +1,21 @@
+function BuildAndStoreCleanData( )
+
+%startTwoEars( '../IdentificationTraining.xml' );
+addpath( '..' );
+startIdentificationTraining();
+
+pipe = TwoEarsIdTrainPipe();
+pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
+pipe.modelCreator = modelTrainers.LoadModelNoopTrainer();
+
+pipe.data = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
+
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource() );
+pipe.setSceneConfig( [sc] ); 
+
+pipe.init();
+modelPath = pipe.pipeline.run( {'dataStore'}, 0 );
+
+fprintf( ' -- Data is saved at %s -- \n', modelPath );
+

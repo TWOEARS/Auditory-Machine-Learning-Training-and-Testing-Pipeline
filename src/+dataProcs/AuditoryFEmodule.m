@@ -5,6 +5,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
         managerObject;           % WP2 manager object - holds the signal buffer (data obj)
         afeDataObj;
         afeSignals;
+        afeParams;
         output;
     end
     
@@ -24,6 +25,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
                 obj.afeSignals(ii) = obj.managerObject.addProcessor( ...
                     afeRequests{ii}.name, afeRequests{ii}.params );
             end
+            obj.afeParams = obj.afeDataObj.getParameterSummary( obj.managerObject );
         end
         %% ----------------------------------------------------------------
         
@@ -40,14 +42,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            persistent afeParams;
-            if isempty( afeParams )
-                afeParams = obj.afeDataObj.getParameterSummary( obj.managerObject );
-                % this takes too long to be called often. 
-                % It should be ok to assume that the parameters don't change over calls because
-                % the requests are all set at the construction in AuditoryFEmodule().
-            end            
-            outputDeps.afeParams = afeParams;
+            outputDeps.afeParams = obj.afeParams;
         end
         %% ----------------------------------------------------------------
 

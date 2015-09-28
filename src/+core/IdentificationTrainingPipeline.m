@@ -146,6 +146,15 @@ classdef IdentificationTrainingPipeline < handle
                 save( 'dataStore.mat', ...
                       'data', 'featureCreator', 'lastDataProcParams' );
                 return; 
+            elseif strcmp(models{1}, 'dataStoreUni')
+                x = obj.data(:,:,'x');
+                classnames = obj.data.classNames;
+                for ii = 1 : length( classnames )
+                    y(:,ii) = obj.data(:,:,'y', classnames{ii});
+                end
+                save( 'dataStoreUni.mat', ...
+                      'x', 'y', 'classnames' );
+                return; 
             end;
             
             for modelName = models

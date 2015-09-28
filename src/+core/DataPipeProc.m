@@ -53,6 +53,7 @@ classdef DataPipeProc < handle
                 fprintf( '.%s\n', dataFile.wavFileName );
                 if ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName )
                     inputFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
+                    obj.dataFileProcessor.savePlaceholderFile( dataFile.wavFileName );
                     obj.dataFileProcessor.process( inputFileName );
                     obj.dataFileProcessor.saveOutput( dataFile.wavFileName );
                 end

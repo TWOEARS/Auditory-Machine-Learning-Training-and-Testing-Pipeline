@@ -15,16 +15,14 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
+        function savePlaceholderFile( obj, inFilePath )
+            obj.save( inFilePath, struct('dummy',[]) );
+        end
+        %% -----------------------------------------------------------------
+        
         function out = saveOutput( obj, inFilePath )
-%            inFilePath = which( inFilePath ); % ensure absolute path
             out = obj.getOutput();
-            if isempty( inFilePath ), return; end
-            currentFolder = obj.getCurrentFolder( inFilePath );
-            if isempty( currentFolder )
-                currentFolder = obj.createCurrentConfigFolder( inFilePath );
-            end
-            outFilename = obj.getOutputFileName( inFilePath, currentFolder );
-            save( outFilename, '-struct', 'out' );
+            obj.save( inFilePath, out );
         end
         %% -----------------------------------------------------------------
         
@@ -100,6 +98,19 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     methods (Access = private)
         
+        function out = save( obj, inFilePath, data )
+%            inFilePath = which( inFilePath ); % ensure absolute path
+            out = data;
+            if isempty( inFilePath ), return; end
+            currentFolder = obj.getCurrentFolder( inFilePath );
+            if isempty( currentFolder )
+                currentFolder = obj.createCurrentConfigFolder( inFilePath );
+            end
+            outFilename = obj.getOutputFileName( inFilePath, currentFolder );
+            save( outFilename, '-struct', 'out' );
+        end
+        %% -----------------------------------------------------------------
+
         function saveOutputConfig( obj, configFileName )
             outputDeps = obj.getOutputDependencies();
 %            outputDeps.configHash = calcDataHash( outputDeps );

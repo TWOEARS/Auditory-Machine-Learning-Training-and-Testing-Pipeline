@@ -122,6 +122,15 @@ classdef IdentificationTrainingPipeline < handle
                 if ii > 1
                     obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );
                 end
+            end
+            for ii = length( obj.dataPipeProcs ) : -1 : 1
+                if ii == length( obj.dataPipeProcs )
+                    obj.dataPipeProcs{ii}.checkDataFiles();
+                else
+                    obj.dataPipeProcs{ii}.checkDataFiles(obj.dataPipeProcs{ii+1}.fileListOverlay);
+                end
+            end
+            for ii = 1 : length( obj.dataPipeProcs )
                 obj.dataPipeProcs{ii}.run();
             end
             

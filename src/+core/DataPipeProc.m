@@ -8,6 +8,9 @@ classdef DataPipeProc < handle
         inputFileNameBuilder;
         dataFileProcessor;
     end
+    properties (SetAccess = protected, Transient)
+        fileListOverlay;
+    end
     
     %% --------------------------------------------------------------------
     methods (Access = public)
@@ -23,6 +26,7 @@ classdef DataPipeProc < handle
 
         function connectData( obj, data )
             obj.data = data;
+            obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
         end
         %% ----------------------------------------------------------------
 
@@ -46,14 +50,37 @@ classdef DataPipeProc < handle
         end
         %% ----------------------------------------------------------------
 
+        function checkDataFiles( obj, otherOverlay )
+            fprintf( '\nChecking file list: %s\n==========================================\n',...
+                obj.dataFileProcessor.procName );
+            if (nargin > 1) && ~isempty( otherOverlay ) && (length( otherOverlay ) == length( obj.data(:) ))
+                obj.fileListOverlay = otherOverlay;
+            else
+                obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
+            end
+            ii = 1;
+            data = obj.data(:)';
+            for ii = 1 : length( data )
+                if ~obj.fileListOverlay(ii), continue; end
+                dataFile = data(ii);
+                fprintf( '.%s\n', dataFile.wavFileName );
+                obj.fileListOverlay(ii) = ...
+                    ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName );
+                ii = ii + 1;
+            end
+            fprintf( ';\n' );
+        end
+        %% ----------------------------------------------------------------
+
         function run( obj )
             fprintf( '\nRunning: %s\n==========================================\n',...
                 obj.dataFileProcessor.procName );
-            for dataFile = obj.data(:)'
+            data = obj.data(:);
+            data = data(obj.fileListOverlay);
+            for dataFile = data'
                 fprintf( '.%s\n', dataFile.wavFileName );
                 if ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName )
                     inputFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
-                    obj.dataFileProcessor.savePlaceholderFile( dataFile.wavFileName );
                     obj.dataFileProcessor.process( inputFileName );
                     obj.dataFileProcessor.saveOutput( dataFile.wavFileName );
                 end

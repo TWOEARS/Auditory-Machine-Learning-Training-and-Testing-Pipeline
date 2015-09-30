@@ -19,5 +19,5 @@ end
 pipe.setSceneConfig( sceneConfig ); 
 
 pipe.init();
-savedir = pipe.pipeline.run( {'dataStore'}, 0 );
+savedir = pipe.pipeline.run( {'dataStoreUni'}, 0 );
 

@@ -59,7 +59,7 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
                 end
                 obj.singleConfFiles{ii} = obj.afeProc.getOutputFileName( in.wavFileName );
                 obj.singleConfs{ii} = obj.afeProc.getOutputDependencies;
-                fprintf( '.' );
+                fprintf( ';' );
             end
             fprintf( '\n' );
         end

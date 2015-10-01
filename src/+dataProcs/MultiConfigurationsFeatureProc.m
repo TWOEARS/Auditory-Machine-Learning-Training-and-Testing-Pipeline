@@ -58,7 +58,7 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
                 end
                 obj.x = [obj.x; xy.x];
                 obj.y = [obj.y; xy.y];
-                fprintf( '.' );
+                fprintf( ';' );
             end
             fprintf( '\n' );
         end

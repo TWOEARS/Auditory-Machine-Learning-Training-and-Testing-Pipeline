@@ -58,7 +58,6 @@ classdef DataPipeProc < handle
             else
                 obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
             end
-            ii = 1;
             data = obj.data(:)';
             for ii = 1 : length( data )
                 if ~obj.fileListOverlay(ii), continue; end
@@ -66,7 +65,6 @@ classdef DataPipeProc < handle
                 fprintf( '.%s\n', dataFile.wavFileName );
                 obj.fileListOverlay(ii) = ...
                     ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName );
-                ii = ii + 1;
             end
             fprintf( ';\n' );
         end

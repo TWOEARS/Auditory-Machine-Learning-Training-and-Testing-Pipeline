@@ -157,21 +157,21 @@ classdef (Abstract) IdProcInterface < handle
             procFoldersDir = dir( [fileBaseFolder filesep obj.procName '.*'] );
             procFolders = strcat( [fileBaseFolder filesep], {procFoldersDir.name} );
             configs = {};
-            persistent preloadedConfigs;
-            if isempty( preloadedConfigs )
-                preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-            end
-            if ~isempty( procFolders )
-                allProcFolders = strcat( procFolders{:} );
-                if preloadedConfigs.isKey( allProcFolders )
-                    configs = preloadedConfigs(allProcFolders);
-                else
+%            persistent preloadedConfigs;
+%            if isempty( preloadedConfigs )
+%                preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+%            end
+%            if ~isempty( procFolders )
+%                allProcFolders = strcat( procFolders{:} );
+%                if preloadedConfigs.isKey( allProcFolders )
+%                    configs = preloadedConfigs(allProcFolders);
+%                else
                     for ii = 1 : length( procFolders )
                         configs{ii} = obj.readConfig( procFolders{ii} );
                     end
-                    preloadedConfigs(allProcFolders) = configs;
-                end
-            end
+%                    preloadedConfigs(allProcFolders) = configs;
+%                end
+%            end
         end
         %% -----------------------------------------------------------------
         

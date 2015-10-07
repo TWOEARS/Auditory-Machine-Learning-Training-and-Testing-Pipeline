@@ -133,10 +133,10 @@ classdef (Abstract) IdProcInterface < handle
                 allProcFolders = strcat( procFolders{:} );
                 if preloadedPath.isKey( allProcFolders )
                     preloaded = preloadedPath(allProcFolders);
-                    if obj.areConfigsEqual( preloaded{2}, currentConfig )
+%                    if obj.areConfigsEqual( preloaded{2}, currentConfig )
                         currentFolder = preloaded{1};
                         return;
-                    end
+%                    end
                 end
 %                currentConfig.configHash = calcDataHash( currentConfig );
                 for ii = 1 : length( configs )

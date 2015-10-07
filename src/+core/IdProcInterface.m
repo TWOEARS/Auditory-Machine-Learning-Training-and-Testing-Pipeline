@@ -47,13 +47,16 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath )
+        function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath, createFolder )
             if isempty( filePath ), fileProcessed = false; return; end
 %            filePath = which( filePath ); % ensure absolute path
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
                 ~isempty( currentFolder )  && ...
                 exist( obj.getOutputFileName( filePath, currentFolder ), 'file' );
+            if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
+                currentFolder = obj.createCurrentConfigFolder( inFilePath );
+            end
         end
         %% -----------------------------------------------------------------
         
@@ -229,3 +232,14 @@ classdef (Abstract) IdProcInterface < handle
     
 end
 
+        
+%         function filesProcessed = haveSameConfigSameClassFilesBeenProcessed( obj, filePathes )
+%             if isempty( filePathes ), filesProcessed = false; return; end
+%             currentFolder = obj.getCurrentFolder( filePathes{1} );
+%             if isempty( currentFolder ), filesProcessed = false; return; end
+%             for ii = 1 : length( filePathes )
+%                 filesProcessed(ii) = ...
+%                     exist( obj.getOutputFileName( filePathes{ii}, currentFolder ), 'file' );
+%             end
+%         end
+%         %% -----------------------------------------------------------------

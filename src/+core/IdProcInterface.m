@@ -55,7 +55,7 @@ classdef (Abstract) IdProcInterface < handle
                 ~isempty( currentFolder )  && ...
                 exist( obj.getOutputFileName( filePath, currentFolder ), 'file' );
             if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
-                currentFolder = obj.createCurrentConfigFolder( inFilePath );
+                currentFolder = obj.createCurrentConfigFolder( filePath );
             end
         end
         %% -----------------------------------------------------------------

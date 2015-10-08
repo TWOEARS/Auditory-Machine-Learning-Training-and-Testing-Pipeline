@@ -1,12 +1,18 @@
 classdef FileListValGen < sceneConfig.ValGen
 
     %%
+    properties
+        filesepsAreUnix = false; % for compatibility with saved FileListValGens
+    end
+    
+    %%
     methods
         
         function obj = FileListValGen( val )
             if ~iscellstr( val ) && ~ischar( val )
                 error( 'FileListValGen requires [cell] array with file name[s] as input.' );
             end
+            val = strrep( val, '\', '/' );
             if ischar( val )
                 valGenArgs = {'manual', val};
             elseif numel( val ) == 1
@@ -15,6 +21,7 @@ classdef FileListValGen < sceneConfig.ValGen
                 valGenArgs = {'set', val};
             end
             obj = obj@sceneConfig.ValGen( valGenArgs{:} );
+            obj.filesepsAreUnix = true;
         end
         
         function e = isequal( obj1, obj2 )
@@ -30,13 +37,21 @@ classdef FileListValGen < sceneConfig.ValGen
                 e = false;
                 return;
             end
+            files1 = cell( size( obj1.val ) );
+            files2 = cell( size( obj2.val ) );
+            if ~obj1.filesepsAreUnix
+                obj1.val = strrep( obj1.val, '\', '/' );
+                obj1.filesepsAreUnix = true;
+            end
+            if ~obj2.filesepsAreUnix
+                obj2.val = strrep( obj2.val, '\', '/' );
+                obj2.filesepsAreUnix = true;
+            end
+            f1SepIdxs = strfind( obj1.val, '/' );
+            f2SepIdxs = strfind( obj2.val, '/' );
             for jj = 1 : length( obj1.val )
-                [bp, fn, fe] = fileparts( obj1.val{jj} );
-                [~, cp, ~] = fileparts( bp );
-                files1{jj} = fullfile( cp, [fn fe] );
-                [bp, fn, fe] = fileparts( obj2.val{jj} );
-                [~, cp, ~] = fileparts( bp );
-                files2{jj} = fullfile( cp, [fn fe] );
+                files1{jj} = obj1.val{jj}(f1SepIdxs{jj}(end-2):end);
+                files2{jj} = obj2.val{jj}(f2SepIdxs{jj}(end-2):end);
             end
             e = isequal( sort( files1 ), sort( files2 ) );
         end

@@ -187,13 +187,24 @@ classdef (Abstract) IdProcInterface < handle
         function config = readConfig( obj, procFolder )
             persistent preloadedConfigs;
             if isempty( preloadedConfigs )
-                preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+                filesepIdxs = sort( [strfind(procFolder, '\' ), strfind(procFolder, '/' )] );
+                pcFilename = [procFolder(1:filesepIdxs(end-1)) 'preloadedConfigs.mat'];
+                if exist( pcFilename, 'file' )
+                    pc = load( pcFilename );
+                    preloadedConfigs = pc.preloadedConfigs;
+                    clear pc;
+                else
+                    preloadedConfigs = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+                end
             end
             if preloadedConfigs.isKey( procFolder )
                 config = preloadedConfigs(procFolder);
             else
                 config = load( fullfile( procFolder, 'config.mat' ) );
                 preloadedConfigs(procFolder) = config;
+                filesepIdxs = sort( [strfind(procFolder, '\' ), strfind(procFolder, '/' )] );
+                pcFilename = [procFolder(1:filesepIdxs(end-1)) 'preloadedConfigs.mat'];
+                save( pcFilename, 'preloadedConfigs' );
             end
         end
         %% -----------------------------------------------------------------

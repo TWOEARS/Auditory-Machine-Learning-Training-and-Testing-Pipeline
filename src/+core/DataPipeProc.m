@@ -24,6 +24,11 @@ classdef DataPipeProc < handle
         end
         %% ----------------------------------------------------------------
 
+        function init( obj )
+            obj.dataFileProcessor.init();
+        end
+        %% ----------------------------------------------------------------
+
         function connectData( obj, data )
             obj.data = data;
             obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );

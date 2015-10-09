@@ -56,6 +56,7 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'dataProc must be of type core.IdProcInterface.' );
             end
             dataPipeProc = core.DataPipeProc( dataProc ); 
+            dataPipeProc.init();
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end

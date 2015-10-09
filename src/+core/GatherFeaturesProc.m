@@ -32,11 +32,16 @@ classdef GatherFeaturesProc < handle
         function run( obj )
             fprintf( '\nRunning: GatherFeaturesProc\n==========================================\n' );
             for dataFile = obj.data(:)'
-                fprintf( '.%s\n', dataFile.wavFileName );
-                xyFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
-                xy = load( xyFileName );
-                dataFile.x = xy.x;
-                dataFile.y = xy.y;
+                fprintf( '.%s ', dataFile.wavFileName );
+                inFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
+                in = load( inFileName );
+                for ii = 1 : numel( in.singleConfFiles )
+                    xy = load( in.singleConfFiles{ii} );
+                    dataFile.x = [dataFile.x; xy.x];
+                    dataFile.y = [dataFile.y; xy.y];
+                    fprintf( '.' );
+                end
+                fprintf( ';\n' );
             end
             fprintf( ';\n' );
         end

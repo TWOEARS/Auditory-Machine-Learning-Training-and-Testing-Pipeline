@@ -205,7 +205,7 @@ classdef (Abstract) IdProcInterface < handle
         
         function currentFolder = createCurrentConfigFolder( obj, filePath )
             fileBaseFolder = fileparts( filePath );
-            timestr = buildCurrentTimeString();
+            timestr = buildCurrentTimeString( true );
             currentFolder = [fileBaseFolder filesep obj.procName timestr];
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
@@ -218,18 +218,7 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
         
         function eq = areConfigsEqual( obj, config1, config2 )
-%            if isfield( config1, 'configHash' ) % compatibility to older versions
-%                if isfield( config2, 'configHash' )
-%                    eq = isequalDeepCompare( config1, config2 );
-%                    eq = strcmp( config1.configHash, config2.configHash );
-%                else
-%                    config1 = rmfield( config1, 'configHash' );
-%                    eq = isequalDeepCompare( config1, config2 );
-%                end
-%            else
-%                config2 = rmfield( config2, 'configHash' );
-                eq = isequalDeepCompare( config1, config2 );
-%            end
+            eq = isequalDeepCompare( config1, config2 );
         end
         %% -----------------------------------------------------------------
         

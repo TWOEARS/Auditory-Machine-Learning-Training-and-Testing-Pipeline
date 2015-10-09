@@ -133,46 +133,26 @@ classdef (Abstract) IdProcInterface < handle
         
         function currentFolder = getCurrentFolder( obj, filePath )
             currentConfig = obj.getOutputDependencies();
-%             fileClass = IdEvalFrame.readEventClass( filePath );
-%             if preloadedPathConfig.isKey( fileClass )
-%                 preloadedClassPathCfg = preloadedPathConfig(fileClass);
-                
-            procFolders = obj.getProcFolders( filePath );
-            currentFolder = [];
-            if isempty( obj.preloadedPath )
-                obj.preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-            end
-            if ~isempty( procFolders )
-                allProcFolders = strcat( procFolders{:} );
-                if obj.preloadedPath.isKey( allProcFolders )
-                    preloaded = obj.preloadedPath(allProcFolders);
-                    if obj.areConfigsEqual( preloaded{2}, currentConfig )
-                        currentFolder = preloaded{1};
-                        return;
-                    end
-                end
-                for ii = 1 : length( procFolders )
-                    cfg = obj.preloadedConfigs(procFolders{ii});
-                    if obj.areConfigsEqual( currentConfig, cfg )
-                        currentFolder = [fileparts( filePath ) filesep ...
-                            obj.procName '.' procFolders{ii}];
-                        break;
-                    end
-                end
-                if ~isempty( currentFolder )
-                    obj.preloadedPath(allProcFolders) = {currentFolder, currentConfig};
-                end
-            end
-        end
-        %% -----------------------------------------------------------------
-        
-        function [procFolders] = getProcFolders( obj, filePath )
+%             procFolders = obj.getProcFolders( filePath );
             classFolder = fileparts( filePath );
             dbFolder = fileparts( classFolder );
             procFoldersDir = dir( [classFolder filesep obj.procName '.2*'] );
             procFolders = {procFoldersDir.name};
             procFolders = cellfun( @(pfdn)(pfdn(length(obj.procName)+2:end)), ...
                 procFolders, 'UniformOutput', false );
+            currentFolder = [];
+            if isempty( obj.preloadedPath )
+                obj.preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            end
+            if isempty( procFolders ), return; end
+            allProcFolders = strcat( procFolders{:} );
+            if obj.preloadedPath.isKey( allProcFolders )
+                preloaded = obj.preloadedPath(allProcFolders);
+                if obj.areConfigsEqual( preloaded{2}, currentConfig )
+                    currentFolder = preloaded{1};
+                    return;
+                end
+            end
             if isempty( obj.preloadedConfigs )
                 pcFilename = [dbFolder filesep ...
                                 obj.procName '.preloadedConfigs.mat'];
@@ -186,12 +166,30 @@ classdef (Abstract) IdProcInterface < handle
                         containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
                 end
             end
-            for ii = 1 : length( procFolders )
-                if ~obj.preloadedConfigs.isKey( procFolders{ii} )
-                    obj.preloadedConfigs(procFolders{ii}) = load( fullfile( ...
-                        classFolder, [obj.procName '.' procFolders{ii}], 'config.mat' ) );
-                    obj.preloadedConfigsChanged = true;
+            for ii = length( procFolders ) : -1 : 1
+                if obj.preloadedConfigs.isKey( procFolders{ii} )
+                    cfg = obj.preloadedConfigs(procFolders{ii});
+                    if obj.areConfigsEqual( currentConfig, cfg )
+                        currentFolder = [classFolder filesep ...
+                            obj.procName '.' procFolders{ii}];
+                        procFolders = {};
+                        break;
+                    end
+                    procFolders(ii) = [];
                 end
+            end
+            for ii = length( procFolders ) : -1 : 1
+                cfg = load( fullfile( ...
+                    classFolder, [obj.procName '.' procFolders{ii}], 'config.mat' ) );
+                if obj.areConfigsEqual( currentConfig, cfg )
+                    currentFolder = [classFolder filesep obj.procName '.' procFolders{ii}];
+                    obj.preloadedConfigs(procFolders{ii}) = cfg;
+                    obj.preloadedConfigsChanged = true;
+                    break;
+                end
+            end
+            if ~isempty( currentFolder )
+                obj.preloadedPath(allProcFolders) = {currentFolder, currentConfig};
             end
             if obj.preloadedConfigsChanged
                 pcFilename = [dbFolder filesep obj.procName ...
@@ -201,6 +199,43 @@ classdef (Abstract) IdProcInterface < handle
                 obj.preloadedConfigsChanged = false;
             end
         end
+        %% -----------------------------------------------------------------
+        
+%         function [procFolders] = getProcFolders( obj, filePath )
+%             classFolder = fileparts( filePath );
+%             dbFolder = fileparts( classFolder );
+%             procFoldersDir = dir( [classFolder filesep obj.procName '.2*'] );
+%             procFolders = {procFoldersDir.name};
+%             procFolders = cellfun( @(pfdn)(pfdn(length(obj.procName)+2:end)), ...
+%                 procFolders, 'UniformOutput', false );
+%             if isempty( obj.preloadedConfigs )
+%                 pcFilename = [dbFolder filesep ...
+%                                 obj.procName '.preloadedConfigs.mat'];
+%                 if exist( pcFilename, 'file' )
+%                     pc = load( pcFilename );
+%                     obj.preloadedConfigs = pc.preloadedConfigs;
+%                     obj.preloadedConfigsChanged = false;
+%                     clear pc;
+%                 else
+%                     obj.preloadedConfigs = ...
+%                         containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+%                 end
+%             end
+%             for ii = 1 : length( procFolders )
+%                 if ~obj.preloadedConfigs.isKey( procFolders{ii} )
+%                     obj.preloadedConfigs(procFolders{ii}) = load( fullfile( ...
+%                         classFolder, [obj.procName '.' procFolders{ii}], 'config.mat' ) );
+%                     obj.preloadedConfigsChanged = true;
+%                 end
+%             end
+%             if obj.preloadedConfigsChanged
+%                 pcFilename = [dbFolder filesep obj.procName ...
+%                                '.preloadedConfigs.mat'];
+%                 preloadedConfigs = obj.preloadedConfigs;
+%                 save( pcFilename, 'preloadedConfigs' );
+%                 obj.preloadedConfigsChanged = false;
+%             end
+%         end
         %% -----------------------------------------------------------------
         
         function currentFolder = createCurrentConfigFolder( obj, filePath )

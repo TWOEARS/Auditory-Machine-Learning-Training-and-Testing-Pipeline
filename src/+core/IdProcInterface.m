@@ -171,10 +171,11 @@ classdef (Abstract) IdProcInterface < handle
                 pcFilename = [dbFolder filesep ...
                                 obj.procName '.preloadedConfigs.mat'];
                 if exist( pcFilename, 'file' )
+                    Parameters.dynPropsOnLoad( true, false );
                     pc = load( pcFilename );
+                    Parameters.dynPropsOnLoad( true, true );
                     obj.preloadedConfigs = pc.preloadedConfigs;
                     obj.preloadedConfigsChanged = false;
-                    clear pc;
                 else
                     obj.preloadedConfigs = ...
                         containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
@@ -262,13 +263,3 @@ classdef (Abstract) IdProcInterface < handle
 end
 
         
-%         function filesProcessed = haveSameConfigSameClassFilesBeenProcessed( obj, filePathes )
-%             if isempty( filePathes ), filesProcessed = false; return; end
-%             currentFolder = obj.getCurrentFolder( filePathes{1} );
-%             if isempty( currentFolder ), filesProcessed = false; return; end
-%             for ii = 1 : length( filePathes )
-%                 filesProcessed(ii) = ...
-%                     exist( obj.getOutputFileName( filePathes{ii}, currentFolder ), 'file' );
-%             end
-%         end
-%         %% -----------------------------------------------------------------

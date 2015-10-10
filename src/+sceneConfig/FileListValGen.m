@@ -49,10 +49,8 @@ classdef FileListValGen < sceneConfig.ValGen
             end
             f1SepIdxs = strfind( obj1.val, '/' );
             f2SepIdxs = strfind( obj2.val, '/' );
-            for jj = 1 : length( obj1.val )
-                files1{jj} = obj1.val{jj}(f1SepIdxs{jj}(end-2):end);
-                files2{jj} = obj2.val{jj}(f2SepIdxs{jj}(end-2):end);
-            end
+            files1 = cellfun( @(f,idx)( f(idx(end-2):end) ), obj1.val, f1SepIdxs, 'UniformOutput', false );
+            files2 = cellfun( @(f,idx)( f(idx(end-2):end) ), obj2.val, f2SepIdxs, 'UniformOutput', false );
             e = isequal( sort( files1 ), sort( files2 ) );
         end
         

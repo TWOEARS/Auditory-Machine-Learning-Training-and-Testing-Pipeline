@@ -140,7 +140,8 @@ classdef (Abstract) IdProcInterface < handle
         
         function currentFolder = getCurrentFolder( obj, filePath )
             classFolder = fileparts( filePath );
-            if ~obj.configChanged && strcmp( classFolder, obj.lastClassPath )
+            if ~isempty( obj.currentFolder ) && ...
+                    ~obj.configChanged && strcmp( classFolder, obj.lastClassPath )
                 currentFolder = obj.currentFolder;
                 return;
             end

@@ -218,49 +218,23 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-%         function [procFolders] = getProcFolders( obj, filePath )
-%             classFolder = fileparts( filePath );
-%             dbFolder = fileparts( classFolder );
-%             procFoldersDir = dir( [classFolder filesep obj.procName '.2*'] );
-%             procFolders = {procFoldersDir.name};
-%             procFolders = cellfun( @(pfdn)(pfdn(length(obj.procName)+2:end)), ...
-%                 procFolders, 'UniformOutput', false );
-%             if isempty( obj.preloadedConfigs )
-%                 pcFilename = [dbFolder filesep ...
-%                                 obj.procName '.preloadedConfigs.mat'];
-%                 if exist( pcFilename, 'file' )
-%                     pc = load( pcFilename );
-%                     obj.preloadedConfigs = pc.preloadedConfigs;
-%                     obj.preloadedConfigsChanged = false;
-%                     clear pc;
-%                 else
-%                     obj.preloadedConfigs = ...
-%                         containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-%                 end
-%             end
-%             for ii = 1 : length( procFolders )
-%                 if ~obj.preloadedConfigs.isKey( procFolders{ii} )
-%                     obj.preloadedConfigs(procFolders{ii}) = load( fullfile( ...
-%                         classFolder, [obj.procName '.' procFolders{ii}], 'config.mat' ) );
-%                     obj.preloadedConfigsChanged = true;
-%                 end
-%             end
-%             if obj.preloadedConfigsChanged
-%                 pcFilename = [dbFolder filesep obj.procName ...
-%                                '.preloadedConfigs.mat'];
-%                 preloadedConfigs = obj.preloadedConfigs;
-%                 save( pcFilename, 'preloadedConfigs' );
-%                 obj.preloadedConfigsChanged = false;
-%             end
-%         end
-        %% -----------------------------------------------------------------
-        
         function currentFolder = createCurrentConfigFolder( obj, filePath )
             fileBaseFolder = fileparts( filePath );
             timestr = buildCurrentTimeString( true );
             currentFolder = [fileBaseFolder filesep obj.procName timestr];
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
+            if ~isempty( obj.preloadedConfigs )
+                obj.preloadedConfigs(currentFolder) = obj.getOutputDependencies();
+                pcFilename = [fileparts( fileBaseFolder ) filesep obj.procName ...
+                    '.preloadedConfigs.mat'];
+                preloadedConfigs = obj.preloadedConfigs;
+                save( pcFilename, 'preloadedConfigs' );
+                obj.preloadedConfigsChanged = false;
+            end
+            obj.configChanged = false;
+            obj.lastClassPath = fileBaseFolder;
+            obj.currentFolder = currentFolder;
         end
         %% -----------------------------------------------------------------
         

@@ -9,6 +9,9 @@ classdef (Abstract) IdProcInterface < handle
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
         preloadedPath = [];
+        configChanged = true;
+        currentFolder = [];
+        lastClassPath = [];
     end
     
     %% -----------------------------------------------------------------------------------
@@ -22,6 +25,9 @@ classdef (Abstract) IdProcInterface < handle
             obj.preloadedConfigs = [];
             obj.preloadedConfigsChanged = false;
             obj.preloadedPath = [];
+            obj.configChanged = true;
+            obj.currentFolder = [];
+            obj.lastClassPath = [];
         end
         %% -----------------------------------------------------------------
         
@@ -71,6 +77,7 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
         
         function setExternOutputDependencies( obj, externOutputDeps )
+            obj.configChanged = true;
             obj.externOutputDeps = externOutputDeps;
         end
         %%-----------------------------------------------------------------
@@ -132,9 +139,12 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
         
         function currentFolder = getCurrentFolder( obj, filePath )
-            currentConfig = obj.getOutputDependencies();
-%             procFolders = obj.getProcFolders( filePath );
             classFolder = fileparts( filePath );
+            if ~obj.configChanged && strcmp( classFolder, obj.lastClassPath )
+                currentFolder = obj.currentFolder;
+                return;
+            end
+            currentConfig = obj.getOutputDependencies();
             dbFolder = fileparts( classFolder );
             procFoldersDir = dir( [classFolder filesep obj.procName '.2*'] );
             procFolders = {procFoldersDir.name};
@@ -150,6 +160,9 @@ classdef (Abstract) IdProcInterface < handle
                 preloaded = obj.preloadedPath(allProcFolders);
                 if obj.areConfigsEqual( preloaded{2}, currentConfig )
                     currentFolder = preloaded{1};
+                    obj.configChanged = false;
+                    obj.lastClassPath = classFolder;
+                    obj.currentFolder = currentFolder;
                     return;
                 end
             end
@@ -198,6 +211,9 @@ classdef (Abstract) IdProcInterface < handle
                 save( pcFilename, 'preloadedConfigs' );
                 obj.preloadedConfigsChanged = false;
             end
+            obj.configChanged = false;
+            obj.lastClassPath = classFolder;
+            obj.currentFolder = currentFolder;
         end
         %% -----------------------------------------------------------------
         

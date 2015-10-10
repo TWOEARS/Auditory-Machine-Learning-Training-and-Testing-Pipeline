@@ -25,6 +25,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         %% ----------------------------------------------------------------
         
         function setSceneConfig( obj, sceneConfig )
+            obj.configChanged = true;
             obj.sceneConfig = sceneConfig;
         end
         %% ----------------------------------------------------------------

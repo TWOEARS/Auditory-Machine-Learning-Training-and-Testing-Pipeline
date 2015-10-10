@@ -27,6 +27,7 @@ classdef MultiConfigurationsEarSignalProc < dataProcs.BinSimProcInterface
         %% ----------------------------------------------------------------
         
         function setSceneConfig( obj, sceneConfig )
+            obj.configChanged = true;
             obj.sceneConfigurations = sceneConfig;
         end
         %% ----------------------------------------------------------------

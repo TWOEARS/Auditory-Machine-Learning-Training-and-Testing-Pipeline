@@ -167,20 +167,7 @@ classdef (Abstract) IdProcInterface < handle
                     return;
                 end
             end
-            if isempty( obj.preloadedConfigs )
-                pcFilename = [dbFolder filesep ...
-                                obj.procName '.preloadedConfigs.mat'];
-                if exist( pcFilename, 'file' )
-                    Parameters.dynPropsOnLoad( true, false );
-                    pc = load( pcFilename );
-                    Parameters.dynPropsOnLoad( true, true );
-                    obj.preloadedConfigs = pc.preloadedConfigs;
-                    obj.preloadedConfigsChanged = false;
-                else
-                    obj.preloadedConfigs = ...
-                        containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-                end
-            end
+            obj.loadPreloadedConfigs( dbFolder );
             for ii = length( procFolders ) : -1 : 1
                 if obj.preloadedConfigs.isKey( procFolders{ii} )
                     cfg = obj.preloadedConfigs(procFolders{ii});
@@ -206,13 +193,7 @@ classdef (Abstract) IdProcInterface < handle
             if ~isempty( currentFolder )
                 obj.preloadedPath(allProcFolders) = {currentFolder, currentConfig};
             end
-            if obj.preloadedConfigsChanged
-                pcFilename = [dbFolder filesep obj.procName ...
-                               '.preloadedConfigs.mat'];
-                preloadedConfigs = obj.preloadedConfigs;
-                save( pcFilename, 'preloadedConfigs' );
-                obj.preloadedConfigsChanged = false;
-            end
+            obj.savePreloadedConfigs( dbFolder );
             obj.configChanged = false;
             obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
@@ -220,22 +201,50 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
         
         function currentFolder = createCurrentConfigFolder( obj, filePath )
-            fileBaseFolder = fileparts( filePath );
+            classFolder = fileparts( filePath );
             timestr = buildCurrentTimeString( true );
-            currentFolder = [fileBaseFolder filesep obj.procName timestr];
+            currentFolder = [classFolder filesep obj.procName timestr];
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
-            if ~isempty( obj.preloadedConfigs )
-                obj.preloadedConfigs(currentFolder) = obj.getOutputDependencies();
-                pcFilename = [fileparts( fileBaseFolder ) filesep obj.procName ...
-                    '.preloadedConfigs.mat'];
-                preloadedConfigs = obj.preloadedConfigs;
-                save( pcFilename, 'preloadedConfigs' );
-                obj.preloadedConfigsChanged = false;
-            end
+            cfg = load( fullfile( currentFolder, 'config.mat' ) );
+            dbFolder = fileparts( classFolder );
+            obj.loadPreloadedConfigs( dbFolder );
+            obj.preloadedConfigs(timestr(2:end)) = cfg;
+            obj.preloadedConfigsChanged = true;
+            obj.savePreloadedConfigs( dbFolder );
             obj.configChanged = false;
-            obj.lastClassPath = fileBaseFolder;
+            obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
+        end
+        %% -----------------------------------------------------------------
+        
+        function savePreloadedConfigs( obj, dbFolder )
+            if ~obj.preloadedConfigsChanged, return; end
+            pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
+            preloadedConfigs = obj.preloadedConfigs;
+            sema = setfilesemaphore( pcFilename );
+            save( pcFilename, 'preloadedConfigs' );
+            removefilesemaphore( sema );
+            obj.preloadedConfigsChanged = false;
+        end
+        %% -----------------------------------------------------------------
+        
+        function loadPreloadedConfigs( obj, dbFolder )
+            if isempty( obj.preloadedConfigs )
+                pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
+                if exist( pcFilename, 'file' )
+                    sema = setfilesemaphore( pcFilename );
+                    Parameters.dynPropsOnLoad( true, false );
+                    pc = load( pcFilename );
+                    Parameters.dynPropsOnLoad( true, true );
+                    removefilesemaphore( sema );
+                    obj.preloadedConfigs = pc.preloadedConfigs;
+                    obj.preloadedConfigsChanged = false;
+                else
+                    obj.preloadedConfigs = ...
+                        containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+                end
+            end
         end
         %% -----------------------------------------------------------------
         

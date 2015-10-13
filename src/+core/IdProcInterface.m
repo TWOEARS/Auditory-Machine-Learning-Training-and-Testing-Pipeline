@@ -8,6 +8,7 @@ classdef (Abstract) IdProcInterface < handle
         externOutputDeps;
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
+        pcFilename = [];
         preloadedPath = [];
         configChanged = true;
         currentFolder = [];
@@ -21,7 +22,25 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
+        function delete(obj)
+            obj.savePreloadedConfigs();
+        end
+        %% -----------------------------------------------------------------
+        
+        function savePreloadedConfigs( obj )
+            if isempty( obj.preloadedConfigs ), return; end
+            if ~obj.preloadedConfigsChanged, return; end
+            preloadedConfigs = obj.preloadedConfigs;
+            % TODO: load file if changed by other process, and merge
+            sema = setfilesemaphore( obj.pcFilename );
+            save( obj.pcFilename, 'preloadedConfigs' );
+            removefilesemaphore( sema );
+            obj.preloadedConfigsChanged = false;
+        end
+        %% -----------------------------------------------------------------
+        
         function init( obj )
+            obj.savePreloadedConfigs();
             obj.preloadedConfigs = [];
             obj.preloadedConfigsChanged = false;
             obj.preloadedPath = [];
@@ -193,7 +212,7 @@ classdef (Abstract) IdProcInterface < handle
             if ~isempty( currentFolder )
                 obj.preloadedPath(allProcFolders) = {currentFolder, currentConfig};
             end
-            obj.savePreloadedConfigs( dbFolder );
+%             obj.savePreloadedConfigs();
             obj.configChanged = false;
             obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
@@ -211,31 +230,20 @@ classdef (Abstract) IdProcInterface < handle
             obj.loadPreloadedConfigs( dbFolder );
             obj.preloadedConfigs(timestr(2:end)) = cfg;
             obj.preloadedConfigsChanged = true;
-            obj.savePreloadedConfigs( dbFolder );
+%             obj.savePreloadedConfigs();
             obj.configChanged = false;
             obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
         end
         %% -----------------------------------------------------------------
         
-        function savePreloadedConfigs( obj, dbFolder )
-            if ~obj.preloadedConfigsChanged, return; end
-            pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
-            preloadedConfigs = obj.preloadedConfigs;
-            sema = setfilesemaphore( pcFilename );
-            save( pcFilename, 'preloadedConfigs' );
-            removefilesemaphore( sema );
-            obj.preloadedConfigsChanged = false;
-        end
-        %% -----------------------------------------------------------------
-        
         function loadPreloadedConfigs( obj, dbFolder )
             if isempty( obj.preloadedConfigs )
-                pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
-                if exist( pcFilename, 'file' )
-                    sema = setfilesemaphore( pcFilename );
+                obj.pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
+                if exist( obj.pcFilename, 'file' )
+                    sema = setfilesemaphore( obj.pcFilename );
                     Parameters.dynPropsOnLoad( true, false );
-                    pc = load( pcFilename );
+                    pc = load( obj.pcFilename );
                     Parameters.dynPropsOnLoad( true, true );
                     removefilesemaphore( sema );
                     obj.preloadedConfigs = pc.preloadedConfigs;

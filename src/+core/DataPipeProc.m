@@ -71,6 +71,8 @@ classdef DataPipeProc < handle
                 obj.fileListOverlay(ii) = ...
                     ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName, true );
             end
+            fprintf( '..' );
+            obj.dataFileProcessor.savePreloadedConfigs();
             fprintf( ';\n' );
         end
         %% ----------------------------------------------------------------
@@ -88,6 +90,8 @@ classdef DataPipeProc < handle
                     obj.dataFileProcessor.saveOutput( dataFile.wavFileName );
                 end
             end
+            fprintf( '..' );
+            obj.dataFileProcessor.savePreloadedConfigs();
             fprintf( ';\n' );
         end
         %% ----------------------------------------------------------------

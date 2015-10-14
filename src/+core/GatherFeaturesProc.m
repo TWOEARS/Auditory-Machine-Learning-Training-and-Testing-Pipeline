@@ -34,7 +34,7 @@ classdef GatherFeaturesProc < handle
             for dataFile = obj.data(:)'
                 fprintf( '.%s ', dataFile.wavFileName );
                 inFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
-                in = load( inFileName );
+                in = load( inFileName, 'singleConfFiles' );
                 for ii = 1 : numel( in.singleConfFiles )
                     xy = load( in.singleConfFiles{ii} );
                     dataFile.x = [dataFile.x; xy.x];

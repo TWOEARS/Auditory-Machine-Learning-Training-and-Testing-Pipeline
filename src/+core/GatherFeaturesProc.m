@@ -36,7 +36,15 @@ classdef GatherFeaturesProc < handle
                 inFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
                 in = load( inFileName, 'singleConfFiles' );
                 for ii = 1 : numel( in.singleConfFiles )
-                    xy = load( in.singleConfFiles{ii} );
+                    try
+                        xy = load( in.singleConfFiles{ii} );
+                    catch err
+                        if strcmp( err.identifier, 'MATLAB:load:couldNotReadFile' )
+                            fprintf( '\n%s seems corrupt.\nDelete and rerun pipe.\n', ...
+                                inFileName );
+                        end
+                        rethrow( err );
+                    end
                     dataFile.x = [dataFile.x; xy.x];
                     dataFile.y = [dataFile.y; xy.y];
                     fprintf( '.' );

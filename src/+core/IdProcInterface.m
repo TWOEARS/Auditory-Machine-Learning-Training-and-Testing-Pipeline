@@ -152,7 +152,6 @@ classdef (Abstract) IdProcInterface < handle
 
         function saveOutputConfig( obj, configFileName )
             outputDeps = obj.getOutputDependencies();
-%            outputDeps.configHash = calcDataHash( outputDeps );
             save( configFileName, '-struct', 'outputDeps' );
         end
         %% -----------------------------------------------------------------
@@ -178,7 +177,7 @@ classdef (Abstract) IdProcInterface < handle
             allProcFolders = strcat( procFolders{:} );
             if obj.preloadedPath.isKey( allProcFolders )
                 preloaded = obj.preloadedPath(allProcFolders);
-                if obj.areConfigsEqual( preloaded{2}, currentConfig )
+                if isequalDeepCompare( preloaded{2}, currentConfig )
                     currentFolder = preloaded{1};
                     obj.configChanged = false;
                     obj.lastClassPath = classFolder;
@@ -190,7 +189,7 @@ classdef (Abstract) IdProcInterface < handle
             for ii = length( procFolders ) : -1 : 1
                 if obj.preloadedConfigs.isKey( procFolders{ii} )
                     cfg = obj.preloadedConfigs(procFolders{ii});
-                    if obj.areConfigsEqual( currentConfig, cfg )
+                    if isequalDeepCompare( currentConfig, cfg )
                         currentFolder = [classFolder filesep ...
                             obj.procName '.' procFolders{ii}];
                         procFolders = {};
@@ -202,7 +201,7 @@ classdef (Abstract) IdProcInterface < handle
             for ii = length( procFolders ) : -1 : 1
                 cfg = load( fullfile( ...
                     classFolder, [obj.procName '.' procFolders{ii}], 'config.mat' ) );
-                if obj.areConfigsEqual( currentConfig, cfg )
+                if isequalDeepCompare( currentConfig, cfg )
                     currentFolder = [classFolder filesep obj.procName '.' procFolders{ii}];
                     obj.preloadedConfigs(procFolders{ii}) = cfg;
                     obj.preloadedConfigsChanged = true;
@@ -212,7 +211,6 @@ classdef (Abstract) IdProcInterface < handle
             if ~isempty( currentFolder )
                 obj.preloadedPath(allProcFolders) = {currentFolder, currentConfig};
             end
-%             obj.savePreloadedConfigs();
             obj.configChanged = false;
             obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
@@ -230,7 +228,6 @@ classdef (Abstract) IdProcInterface < handle
             obj.loadPreloadedConfigs( dbFolder );
             obj.preloadedConfigs(timestr(2:end)) = cfg;
             obj.preloadedConfigsChanged = true;
-%             obj.savePreloadedConfigs();
             obj.configChanged = false;
             obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
@@ -258,11 +255,6 @@ classdef (Abstract) IdProcInterface < handle
         
         function procFileExt = getProcFileExt( obj )
             procFileExt = ['.' obj.procName '.mat'];
-        end
-        %% -----------------------------------------------------------------
-        
-        function eq = areConfigsEqual( obj, config1, config2 )
-            eq = isequalDeepCompare( config1, config2 );
         end
         %% -----------------------------------------------------------------
         

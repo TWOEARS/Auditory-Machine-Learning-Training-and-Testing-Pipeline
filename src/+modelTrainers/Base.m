@@ -5,6 +5,7 @@ classdef (Abstract) Base < handle
         trainSet;
         testSet;
         positiveClass;
+        featureMask = []; %negative mask for the columns of the feature mx
     end
     
     properties (SetAccess = {?modelTrainers.Base, ?Parameterized})
@@ -14,6 +15,16 @@ classdef (Abstract) Base < handle
     
     %% --------------------------------------------------------------------
     methods
+        
+        function setFeatureMask(obj, newmask)
+            assert(isvector(newmask));
+            if(size(newmask,2)~=1), newmask = newmask'; end;                
+            obj.featureMask = newmask;
+        end
+        
+        function mask = getFeatureMask(obj)
+            mask = obj.featureMask;
+        end
         
         function setData( obj, trainSet, testSet )
             obj.trainSet = trainSet;
@@ -92,8 +103,17 @@ classdef (Abstract) Base < handle
             else
                 y = obj.trainSet(:,:,'y',obj.positiveClass);
             end
+            % remove samples with fuzzy labels
             x(y==0,:) = [];
             y(y==0) = [];
+            % apply the mask
+            if ~isempty(obj.featureMask)
+                p_feat = size(x,2);
+                p_mask = size(obj.featureMask,1);
+                mask = obj.featureMask(1:min(p_feat,p_mask));
+                x = x(:,mask);
+            end
+            % permute data
             permutationIdxs = randperm( length( y ) );
             x = x(permutationIdxs,:);
             y = y(permutationIdxs);

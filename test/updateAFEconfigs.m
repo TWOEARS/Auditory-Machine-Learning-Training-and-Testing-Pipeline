@@ -12,9 +12,6 @@ for ii = 1 : length( classFolders )
     for jj = 1 : length( procFolders )
         afeDir = [pwd filesep classFolders(ii).name filesep procFolders(jj).name];
         cfg = load( [afeDir filesep 'config.mat'] );
-        if isfield( cfg.afeParams, 's' ) && isfield( cfg.afeParams, 'p' )
-            continue;
-        end
         if isfield( cfg, 'configHash' ) || isfield( cfg, 'reqSignals' )
             rmdir( afeDir, 's' );
             continue;
@@ -25,9 +22,14 @@ for ii = 1 : length( classFolders )
             afeParams.s(kk) = dataProcs.AuditoryFEmodule.signal2struct( ...
                 afeDat.afeData(kk) );
         end
-        afeParams.p = dataProcs.AuditoryFEmodule.parameterSummary2struct( ...
-            cfg.afeParams );
+        if isfield( cfg.afeParams, 's' ) && isfield( cfg.afeParams, 'p' )
+            afeParams.p = cfg.afeParams.p;
+        else
+            afeParams.p = dataProcs.AuditoryFEmodule.parameterSummary2struct( ...
+                cfg.afeParams );
+        end
         cfg.afeParams = afeParams;
+        clear afeParams;
         save( [afeDir filesep 'config.mat'], '-struct', 'cfg' );
         fprintf('.');
     end

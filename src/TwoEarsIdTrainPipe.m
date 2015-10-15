@@ -44,6 +44,24 @@ classdef TwoEarsIdTrainPipe < handle
             obj.multiConfBinauralSim.setSceneConfig( scArray );
         end
         %% -------------------------------------------------------------------------------
+
+        function set.trainset( obj, newTrainset )
+            obj.dataSetupAlreadyDone = strcmp(obj.trainset,newTrainset);
+            obj.trainset = newTrainset;
+        end
+        %% -------------------------------------------------------------------------------
+
+        function set.testset( obj, newTestset )
+            obj.dataSetupAlreadyDone = strcmp(obj.testset,newTestset);
+            obj.testset = newTestset;
+        end
+        %% -------------------------------------------------------------------------------
+
+        function set.data( obj, newData )
+            obj.dataSetupAlreadyDone = strcmp(obj.data,newData);
+            obj.data = newData;
+        end
+        %% -------------------------------------------------------------------------------
         
         function init( obj )
             obj.setupData( true );

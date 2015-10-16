@@ -54,6 +54,10 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
                 conf = in.singleConfs{ii};
                 obj.featProc.setExternOutputDependencies( conf );
                 if ~obj.featProc.hasFileAlreadyBeenProcessed( in.wavFileName )
+                    if ~exist( in.singleConfFiles{ii}, 'file' )
+                        error( '%s not found. \n%s corrupt -- delete and restart.', ...
+                            in.singleConfFiles{ii}, inFileName );
+                    end
                     obj.featProc.process( in.singleConfFiles{ii} );
                     obj.featProc.saveOutput( in.wavFileName );
                 end

@@ -64,7 +64,7 @@ classdef DataPipeProc < handle
                 obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
             end
             data = obj.data(:)';
-            for ii = randperm( length( data ) )
+            for ii = length( data )
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = data(ii);
                 fprintf( '.%s\n', dataFile.wavFileName );

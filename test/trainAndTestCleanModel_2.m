@@ -7,14 +7,14 @@ addpath( '..' );
 startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
-pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
+pipe.featureCreator = featureCreators.FeatureSet1VarBlocks();
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
     'cvFolds', 4, ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
+% pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
 pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TestSet.flist';
 
 sc = sceneConfig.SceneConfiguration();

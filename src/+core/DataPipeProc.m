@@ -64,7 +64,7 @@ classdef DataPipeProc < handle
                 obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
             end
             data = obj.data(:)';
-            for ii = 1 : length( data )
+            for ii = randperm( length( data ) )
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = data(ii);
                 fprintf( '.%s\n', dataFile.wavFileName );
@@ -82,7 +82,7 @@ classdef DataPipeProc < handle
                 obj.dataFileProcessor.procName );
             data = obj.data(:);
             data = data(obj.fileListOverlay);
-            for dataFile = data'
+            for dataFile = data(randperm(length(data)))'
                 fprintf( '.%s\n', dataFile.wavFileName );
                 if ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName )
                     inputFileName = obj.inputFileNameBuilder( dataFile.wavFileName );

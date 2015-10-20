@@ -65,7 +65,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             obj.createHpsTrainer();
             hps.params = obj.determineHyperparameterSets();
             hps.perfs = zeros( size( hps.params ) );
-            verboseFprintf( obj, '\nHyperparameter search CV...\n' );
+            verboseFprintf( obj, '\nHyperparameter search CV...\n===========================\n' );
             for ii = 1 : size( hps.params, 1 )
                 verboseFprintf( obj, '\nhps set %d...\n ', ii );
                 obj.coreTrainer.setParameters( false, ...
@@ -78,21 +78,25 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             end
             verboseFprintf( obj, 'Done\n' );
             if obj.hpsRefineStages > 0
-                verboseFprintf( obj, 'HPS refine stage...\n' );
+                verboseFprintf( obj, '\n== HPS refine stage...\n' );
                 refinedHpsTrainer = obj.createRefineGridTrainer( hps );
                 refinedHpsTrainer.run();
                 hps.params = [hps.params; refinedHpsTrainer.hpsSets.params];
                 hps.perfs = [hps.perfs; refinedHpsTrainer.hpsSets.perfs];
             end
             obj.hpsSets = obj.sortHpsSetsByPerformance( hps );
-            verboseFprintf( obj, 'Best HPS set performance: %f\n', obj.hpsSets.perfs(end) );
+            verboseFprintf( obj, ['\n\n==============================\n' ...
+                                      'Best HPS set performance: %f\n' ...
+                                      '==============================\n'], obj.hpsSets.perfs(end) );
             if obj.trainWithBestHps
                 obj.coreTrainer.setParameters( false, ...
                     obj.hpsSets.params(end), ...
                     'maxDataSize', inf, ...
                     obj.finalCoreTrainerParams{:} );
                 obj.coreTrainer.setData( obj.trainSet, obj.testSet );
-                verboseFprintf( obj, 'Train with best HPS set on full trainSet...\n' );
+                verboseFprintf( obj, ['\n\n ---------------------------------------->>>\n' ...
+                                           'Train with best HPS set on full trainSet...\n' ...
+                                           '-------------------------------------------\n'] );
                 obj.coreTrainer.run();
             end
         end

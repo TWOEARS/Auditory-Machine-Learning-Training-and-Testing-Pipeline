@@ -17,6 +17,6 @@ sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',daz
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
-pths{end+1} = pipe.pipeline.run( {'dataStoreUni'}, 0 );
+pths = pipe.pipeline.run( {'dataStoreUni'}, 0 );
 
 end

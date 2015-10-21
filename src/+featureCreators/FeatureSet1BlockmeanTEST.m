@@ -81,7 +81,7 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                     b2{end+1} = grps{ii};
                 end
             end
-            b{2} = repmat( {b2}, size( b{1} ) );
+%             b{2} = repmat( {b2}, size( b{1} ) );
             for ii = 1 : length( varargin )
                 vaii = varargin{ii};
                 for jj = 1 : numel( vaii )
@@ -89,8 +89,20 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                         fd = vaii{jj};
                         vaii{jj} = fd( afedat );
                     end
+                    if isnumeric( vaii{jj} )
+                        vaii{jj} = num2cell( vaii{jj}, numel( vaii{jj} ) );
+                    end
                 end
-                b{2+ii} = vaii;
+                vaii{1} = repmat( vaii(1), 1, size( b{1}, ii ) );
+                if numel( vaii ) > 1 && numel( vaii{2} ) ~= size( b{1}, ii )
+                    warning( 'dimensions not consistent' );
+                end
+                vaiic = cat( 1, vaii{:} );
+                for jj = 1 : size( vaii{1}, 2 )
+                    b1ii{1,jj} = { b2{:}, vaiic{:,jj}};
+                end
+                b{1+ii} = b1ii;
+                clear b1ii;
             end
         end
         %% ----------------------------------------------------------------
@@ -98,7 +110,46 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
         function b = concatBlocks( obj, dim, varargin )
             bs = vertcat( varargin{:} );
             b{1} = cat( dim, bs{:,1} );
-            b{2} = cat( dim, bs{:,2} );
+            if obj.descriptionBuilt, return; end
+%             b{2} = cat( dim, bs{:,2} );
+            d = 1 : size( bs, 2 ) - 1;
+            d(dim) = [];
+            for ii = d
+                bs1d = cat( 1, bs{:,1+d} );
+                for jj = 1 : size( bs1d, 2 )
+                    b1d{1,jj} = cat( 2, bs1d{:,jj} );
+                end
+                b{1+d} = b1d;
+                clear b1d;
+                strs = {};
+                nums = {};
+                dels = {};
+                for jj = 1 : size( b{1+d}, 2 )
+                for kk = 1 : size( b{1+d}{jj}, 2 )
+                    if ischar( b{1+d}{jj}{kk} )
+                        if ~any( strcmp( strs, b{1+d}{jj}{kk} ) )
+                            strs{end+1} = b{1+d}{jj}{kk};
+                        else
+                            dels{end+1} = [jj,kk];
+                        end
+                    else
+                        if ~any( cellfun( @(n)(eq(n,b{1+d}{jj}{kk})), nums ) )
+                            nums{end+1} = b{1+d}{jj}{kk};
+                        else
+                            dels{end+1} = [jj,kk];
+                        end
+                    end
+                end
+                end
+                for jj = 1 : numel( dels )
+                    b{1+d}{dels{jj}(1)}(dels{jj}(2)) = [];
+                end
+                clear dels;
+                clear strs;
+                clear nums;
+                
+            end
+            b{2+dim} = cat( dim, bs{:,2+dim} );
         end
         %% ----------------------------------------------------------------
 
@@ -111,6 +162,14 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
         %% ----------------------------------------------------------------
 
         function x = block2feat( obj, b, dim, func, grps )
+            x = func( b{1} );
+            if obj.descriptionBuilt, return; end
+            
+        end
+        %% ----------------------------------------------------------------
+
+        function b = concatFeats( obj, varargin )
+            if obj.descriptionBuilt, return; end
         end
         %% ----------------------------------------------------------------
         
@@ -134,16 +193,17 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                 @(a)(compressAndScale( a.Data, 0.33 )), ...
                 {@(a)(a.Name),@(a)(a.Channel)}, {'t'}, {'f',@(a)(a.cfHz)} );
             xb = obj.concatBlocks( 2, rmR, rmL, spfR, spfL, onsR, onsL );
-            x = obj.block2feat( xb, 2, ...
+            x = obj.block2feat( xb, 1, ...
                 @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
                 {'1.LMom','2.LMom','3.LMom'} );
             for ii = 1:obj.deltasLevels
                 xb = obj.transformBlock( xb, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
                     {[num2str(ii) '.delta']} );
-                x = [x obj.block2feat( xb, 2, ...
+                xtmp = obj.block2feat( xb, 1, ...
                     @(b)(lMomentAlongDim( b, [1,2,3,4], 1, true )), ...
-                    {'1.LMom','2.LMom','3.LMom','4.LMom'} )];
+                    {'1.LMom','2.LMom','3.LMom','4.LMom'} );
+                x = obj.concatFeats( x, xtmp );
             end
             modR = obj.makeBlockFromAfe( 1, 1, ...
                 @(a)(compressAndScale( a.Data, 0.33 )), ...
@@ -157,12 +217,12 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
             modL = obj.reshapeBlock( modL, size( modL, 1 ), [] );
 %            modR = reshape( modR, size( modR, 1 ), size( modR, 2 ) * size( modR, 3 ) );
 %            modL = reshape( modL, size( modL, 1 ), size( modL, 2 ) * size( modL, 3 ) );
-            x = [x obj.block2feat( modR, 2, ...
+            x = obj.concatFeats( x, obj.block2feat( modR, 1, ...
                 @(b)(lMomentAlongDim( b, [1,2], 1, true )), ...
-                {'1.LMom','2.LMom'} )];
-            x = [x obj.block2feat( modL, 2, ...
+                {'1.LMom','2.LMom'} ) );
+            x = obj.concatFeats( x, obj.block2feat( modL, 1, ...
                 @(b)(lMomentAlongDim( b, [1,2], 1, true )), ...
-                {'1.LMom','2.LMom'} )];
+                {'1.LMom','2.LMom'} ) );
             for ii = 1:obj.deltasLevels
                 modR = obj.transformBlock( modR, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
@@ -170,12 +230,12 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                 modL = obj.transformBlock( modL, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
                     {[num2str(ii) '.delta']} );
-                x = [x obj.block2feat( modR, 2, ...
+                x = obj.concatFeats( x, obj.block2feat( modR, 1, ...
                     @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
-                    {'1.LMom','2.LMom','3.LMom'} )];
-                x = [x obj.block2feat( modL, 2, ...
+                    {'1.LMom','2.LMom','3.LMom'} ) );
+                x = obj.concatFeats( x, obj.block2feat( modL, 1, ...
                     @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
-                    {'1.LMom','2.LMom','3.LMom'} )];
+                    {'1.LMom','2.LMom','3.LMom'} ) );
             end
         end
         %% ----------------------------------------------------------------

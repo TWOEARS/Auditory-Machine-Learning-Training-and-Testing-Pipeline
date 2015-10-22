@@ -88,8 +88,21 @@ classdef (Abstract) Base < handle
                 warning( 'There are NaNs or INFs in the data!' );
             end
             if numel( y ) > obj.maxDataSize
-                x(obj.maxDataSize+1:end,:) = [];
-                y(obj.maxDataSize+1:end) = [];
+                if modelTrainers.Base.balMaxData
+                    nPos = min( int16( obj.maxDataSize/2 ), sum( y == +1 ) );
+                    nNeg = obj.maxDataSize - nPos;
+                    posIdxs = find( y == +1 );
+                    posIdxs = posIdxs(randperm(numel(posIdxs)));
+                    posIdxs(1:nPos) = [];
+                    negIdxs = find( y == -1 );
+                    negIdxs = negIdxs(randperm(numel(negIdxs)));
+                    negIdxs(1:nNeg) = [];
+                    x([posIdxs; negIdxs],:) = [];
+                    y([posIdxs; negIdxs]) = [];
+                else
+                    x(obj.maxDataSize+1:end,:) = [];
+                    y(obj.maxDataSize+1:end) = [];
+                end
             end
             obj.buildModel( x, y );
         end
@@ -133,5 +146,21 @@ classdef (Abstract) Base < handle
         model = giveTrainedModel( obj )
     end
     
+    %% --------------------------------------------------------------------
+    methods (Static)
+
+        function b = balMaxData( setNewValue, newValue )
+            persistent balMaxD;
+            if isempty( balMaxD )
+                balMaxD = false;
+            end
+            if nargin > 0  &&  setNewValue
+                balMaxD = newValue;
+            end
+            b = balMaxD;
+        end
+        
+    end
+
 end
 

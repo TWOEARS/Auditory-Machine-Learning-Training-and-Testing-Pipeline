@@ -15,10 +15,11 @@ pipe.modelCreator = modelTrainers.SVMmodelSelectTrainer( ...
     'hpsCrange', [-6 2], ...    % define hps C range -- logspaced between 10^a and 10^b
     'hpsGammaRange', [-12 3], ... % define hps Gamma range -- logspaced between 10^a and 
                               ... % 10^b. Ignored for kernel other than rbf
-    'hpsMaxDataSize', inf, ...  % max data set size to use in hps (number of samples)
+    'hpsMaxDataSize', 50, ...  % max data set size to use in hps (number of samples)
     'hpsRefineStages', 1, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 7, ...   % number of hps grid search parameter values per dimension
     'hpsCvFolds', 4 )           % number of hps cv folds of training set
+modelTrainers.Base.balMaxData( true, true );
 pipe.modelCreator.verbose( 'on' );
 
 pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';

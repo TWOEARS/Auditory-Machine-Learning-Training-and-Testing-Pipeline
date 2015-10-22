@@ -11,6 +11,7 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
         deltasLevels;
         amChannels;
         afeData;
+        description;
         descriptionBuilt = false;
     end
     
@@ -62,7 +63,10 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
 
         function x = makeDataPoint( obj, afeData )
             obj.afeData = afeData;
-            x = obj.constructVector();
+            xd = obj.constructVector();
+            x = xd{1};
+            if obj.descriptionBuilt, return; end
+            obj.description = xd{2};
             obj.descriptionBuilt = true;
         end
         %% ----------------------------------------------------------------
@@ -81,7 +85,6 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                     b2{end+1} = grps{ii};
                 end
             end
-%             b{2} = repmat( {b2}, size( b{1} ) );
             for ii = 1 : length( varargin )
                 vaii = varargin{ii};
                 for jj = 1 : numel( vaii )
@@ -111,7 +114,6 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
             bs = vertcat( varargin{:} );
             b{1} = cat( dim, bs{:,1} );
             if obj.descriptionBuilt, return; end
-%             b{2} = cat( dim, bs{:,2} );
             d = 1 : size( bs, 2 ) - 1;
             d(dim) = [];
             for ii = d
@@ -121,55 +123,134 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                 end
                 b{1+d} = b1d;
                 clear b1d;
+                for jj = 1 : size( b{1+d}, 2 )
+                    strs = {};
+                    nums = {};
+                    dels = [];
+                    for kk = 1 : size( b{1+d}{jj}, 2 )
+                        if ischar( b{1+d}{jj}{kk} )
+                            if ~any( strcmp( strs, b{1+d}{jj}{kk} ) )
+                                strs{end+1} = b{1+d}{jj}{kk};
+                            else
+                                dels(end+1) = kk;
+                            end
+                        else
+                            if ~any( cellfun( @(n)(eq(n,b{1+d}{jj}{kk})), nums ) )
+                                nums{end+1} = b{1+d}{jj}{kk};
+                            else
+                                dels(end+1) = kk;
+                            end
+                        end
+                    end
+                    for kk = numel( dels ) : -1 : 1
+                        b{1+d}{jj}(dels(kk)) = [];
+                    end
+                    clear dels;
+                    clear strs;
+                    clear nums;
+                end
+            end
+            b{1+dim} = cat( dim, bs{:,1+dim} );
+        end
+        %% ----------------------------------------------------------------
+
+        function b = transformBlock( obj, bl, dim, func, dIdxFun, grp )
+            b{1} = func( bl{1} );
+            if obj.descriptionBuilt, return; end
+            d = 1 : size( bl, 2 ) - 1;
+            d(dim) = [];
+            for ii = d
+                b{1+ii} = bl{1+ii};
+                for jj = 1 : numel( b{1+ii} )
+                    b{1+ii}{jj}{end+1} = grp;
+                end
+            end
+            bl1dIdxs = dIdxFun( 1 : numel( bl{1+dim} ) );
+            b{1+dim} = bl{1+dim}(bl1dIdxs);
+        end
+        %% ----------------------------------------------------------------
+
+        function b = reshapeBlock( obj, bl, dim )
+            rsz = { [], [] };
+            rsz{dim} = size( bl{1}, dim );
+            b{1} = reshape( bl{1}, rsz{:} );
+            if obj.descriptionBuilt, return; end
+            d = 1 : size( bl, 2 ) - 1;
+            d(dim) = [];
+            grps = {};
+            dallidx = { ':', ':' };
+            dallidx{dim} = 1;
+            for ii = 1 : numel( d )
+                blszii = size( bl{1} );
+                blszii(d(ii)) = 1;
+                dgprs{ii} = repmat( shiftdim( bl{d(ii)+1}, 2-d(ii) ), blszii );
+                dgprs{ii} = reshape( dgprs{ii}, rsz{:} );
+                dgprs{ii} = dgprs{ii}(dallidx{1},dallidx{2});
+            end
+            grps = cat( dim, dgprs{:} );
+            odim = [2 1];
+            for ii = 1 : size( grps, odim(dim) )
+                iidim = { ':', ':' };
+                iidim{odim(dim)} = ii;
+                iidim2 = { 1, 1 };
+                iidim2{odim(dim)} = ii;
+                grps{iidim2{1},iidim2{2}} = cat( 2, grps{iidim{1},iidim{2}} );
+            end
+            ddim = { ':', ':' };
+            ddim{dim} = 2;
+            grps(ddim{1},ddim{2}) = [];
+            for jj = 1 : numel( grps )
                 strs = {};
                 nums = {};
-                dels = {};
-                for jj = 1 : size( b{1+d}, 2 )
-                for kk = 1 : size( b{1+d}{jj}, 2 )
-                    if ischar( b{1+d}{jj}{kk} )
-                        if ~any( strcmp( strs, b{1+d}{jj}{kk} ) )
-                            strs{end+1} = b{1+d}{jj}{kk};
+                dels = [];
+                for kk = 1 : size( grps{jj}, 2 )
+                    if ischar( grps{jj}{kk} )
+                        if ~any( strcmp( strs, grps{jj}{kk} ) )
+                            strs{end+1} = grps{jj}{kk};
                         else
-                            dels{end+1} = [jj,kk];
+                            dels(end+1) = kk;
                         end
                     else
-                        if ~any( cellfun( @(n)(eq(n,b{1+d}{jj}{kk})), nums ) )
-                            nums{end+1} = b{1+d}{jj}{kk};
+                        if ~any( cellfun( @(n)(eq(n,grps{jj}{kk})), nums ) )
+                            nums{end+1} = grps{jj}{kk};
                         else
-                            dels{end+1} = [jj,kk];
+                            dels(end+1) = kk;
                         end
                     end
                 end
-                end
-                for jj = 1 : numel( dels )
-                    b{1+d}{dels{jj}(1)}(dels{jj}(2)) = [];
+                for kk = numel( dels ) : -1 : 1
+                    grps{jj}(dels(kk)) = [];
                 end
                 clear dels;
                 clear strs;
                 clear nums;
-                
             end
-            b{2+dim} = cat( dim, bs{:,2+dim} );
+            b{1+odim(dim)} = grps;
+            b{1+dim} = bl{1+dim};
         end
         %% ----------------------------------------------------------------
 
-        function b = transformBlock( obj, bl, dim, func, grp )
-        end
-        %% ----------------------------------------------------------------
-
-        function b = reshapeBlock( obj, bl, varargin )
-        end
-        %% ----------------------------------------------------------------
-
-        function x = block2feat( obj, b, dim, func, grps )
-            x = func( b{1} );
+        function x = block2feat( obj, b, func, dim, grpsIdxFun, grpsFun )
+            x{1} = func( b{1} );
             if obj.descriptionBuilt, return; end
-            
+            grpsIdx = grpsIdxFun( 1:size( b{1}, dim ) );
+            grps = b{1+dim}(grpsIdx);
+            for ii = 1 : numel( grpsFun )
+                gf = grpsFun{ii}{2};
+                gfi = gf(1:numel(grps));
+                for jj = gfi
+                    grps{jj}{end+1} = grpsFun{ii}{1};
+                end
+            end
+            x{2} = grps;
         end
         %% ----------------------------------------------------------------
 
-        function b = concatFeats( obj, varargin )
+        function x = concatFeats( obj, varargin )
+            xs = cat( 1, varargin{:} );
+            x{1} = cat( 2, xs{:,1} );
             if obj.descriptionBuilt, return; end
+            x{2} = cat( 2, xs{:,2} );
         end
         %% ----------------------------------------------------------------
         
@@ -193,16 +274,24 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                 @(a)(compressAndScale( a.Data, 0.33 )), ...
                 {@(a)(a.Name),@(a)(a.Channel)}, {'t'}, {'f',@(a)(a.cfHz)} );
             xb = obj.concatBlocks( 2, rmR, rmL, spfR, spfL, onsR, onsL );
-            x = obj.block2feat( xb, 1, ...
+            x = obj.block2feat( xb, ...
                 @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
-                {'1.LMom','2.LMom','3.LMom'} );
+                2, @(idxs)(sort([idxs idxs idxs])),...
+                {{'1.LMom',@(idxs)(idxs(1:3:end))},...
+                 {'2.LMom',@(idxs)(idxs(2:3:end))},...
+                 {'3.LMom',@(idxs)(idxs(3:3:end))}} );
             for ii = 1:obj.deltasLevels
                 xb = obj.transformBlock( xb, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
+                    @(idxs)(idxs(1:end-1)),...
                     {[num2str(ii) '.delta']} );
-                xtmp = obj.block2feat( xb, 1, ...
+                xtmp = obj.block2feat( xb, ...
                     @(b)(lMomentAlongDim( b, [1,2,3,4], 1, true )), ...
-                    {'1.LMom','2.LMom','3.LMom','4.LMom'} );
+                    2, @(idxs)(sort([idxs idxs idxs idxs])),...
+                    {{'1.LMom',@(idxs)(idxs(1:4:end))},...
+                     {'2.LMom',@(idxs)(idxs(2:4:end))},...
+                     {'3.LMom',@(idxs)(idxs(3:4:end))},...
+                     {'4.LMom',@(idxs)(idxs(4:4:end))}} );
                 x = obj.concatFeats( x, xtmp );
             end
             modR = obj.makeBlockFromAfe( 1, 1, ...
@@ -213,65 +302,45 @@ classdef FeatureSet1BlockmeanTEST < featureCreators.Base
                 @(a)(compressAndScale( a.Data, 0.33 )), ...
                 {@(a)(a.Name),@(a)(a.Channel)}, ...
                 {'t'}, {'f',@(a)(a.cfHz)}, {'mf',@(a)(a.modCfHz)} );
-            modR = obj.reshapeBlock( modR, size( modR, 1 ), [] );
-            modL = obj.reshapeBlock( modL, size( modL, 1 ), [] );
+            modR = obj.reshapeBlock( modR, 1 );
+            modL = obj.reshapeBlock( modL, 1 );
 %            modR = reshape( modR, size( modR, 1 ), size( modR, 2 ) * size( modR, 3 ) );
 %            modL = reshape( modL, size( modL, 1 ), size( modL, 2 ) * size( modL, 3 ) );
-            x = obj.concatFeats( x, obj.block2feat( modR, 1, ...
+            x = obj.concatFeats( x, obj.block2feat( modR, ...
                 @(b)(lMomentAlongDim( b, [1,2], 1, true )), ...
-                {'1.LMom','2.LMom'} ) );
-            x = obj.concatFeats( x, obj.block2feat( modL, 1, ...
+                2, @(idxs)(sort([idxs idxs])),...
+                {{'1.LMom',@(idxs)(idxs(1:2:end))},...
+                 {'2.LMom',@(idxs)(idxs(2:2:end))}} ) );
+            x = obj.concatFeats( x, obj.block2feat( modL, ...
                 @(b)(lMomentAlongDim( b, [1,2], 1, true )), ...
-                {'1.LMom','2.LMom'} ) );
+                2, @(idxs)(sort([idxs idxs])),...
+                {{'1.LMom',@(idxs)(idxs(1:2:end))},...
+                 {'2.LMom',@(idxs)(idxs(2:2:end))}} ) );
             for ii = 1:obj.deltasLevels
                 modR = obj.transformBlock( modR, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
+                    @(idxs)(idxs(1:end-1)),...
                     {[num2str(ii) '.delta']} );
                 modL = obj.transformBlock( modL, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
+                    @(idxs)(idxs(1:end-1)),...
                     {[num2str(ii) '.delta']} );
-                x = obj.concatFeats( x, obj.block2feat( modR, 1, ...
+                x = obj.concatFeats( x, obj.block2feat( modR, ...
                     @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
-                    {'1.LMom','2.LMom','3.LMom'} ) );
-                x = obj.concatFeats( x, obj.block2feat( modL, 1, ...
+                    2, @(idxs)(sort([idxs idxs idxs])),...
+                    {{'1.LMom',@(idxs)(idxs(1:3:end))},...
+                     {'2.LMom',@(idxs)(idxs(2:3:end))},...
+                     {'3.LMom',@(idxs)(idxs(3:3:end))}} ) );
+                x = obj.concatFeats( x, obj.block2feat( modL, ...
                     @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
-                    {'1.LMom','2.LMom','3.LMom'} ) );
+                    2, @(idxs)(sort([idxs idxs idxs])),...
+                    {{'1.LMom',@(idxs)(idxs(1:3:end))},...
+                     {'2.LMom',@(idxs)(idxs(2:3:end))},...
+                     {'3.LMom',@(idxs)(idxs(3:3:end))}} ) );
             end
         end
         %% ----------------------------------------------------------------
-
-%         function x = makeDataPoint( obj, afeData )
-%             rmRL = afeData(2);
-%             rmR = compressAndScale( rmRL{1}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
-%             rmL = compressAndScale( rmRL{2}.Data, 0.33, @(x)(median( x(x>0.01) )), 0 );
-%             spfRL = afeData(3);
-%             spfR = compressAndScale( spfRL{1}.Data, 0.33 );
-%             spfL = compressAndScale( spfRL{2}.Data, 0.33 );
-%             onsRL = afeData(4);
-%             onsR = compressAndScale( onsRL{1}.Data, 0.33 );
-%             onsL = compressAndScale( onsRL{2}.Data, 0.33 );
-%             xBlock = [rmR, rmL, spfR, spfL, onsR, onsL];
-%             x = lMomentAlongDim( xBlock, [1,2,3], 1, true );
-%             for i = 1:obj.deltasLevels
-%                 xBlock = xBlock(2:end,:) - xBlock(1:end-1,:);
-%                 x = [x  lMomentAlongDim( xBlock, [1,2,3,4], 1, true )];
-%             end
-%             modRL = afeData(1);
-%             modR = compressAndScale( modRL{1}.Data, 0.33 );
-%             modL = compressAndScale( modRL{2}.Data, 0.33 );
-%             modR = reshape( modR, size( modR, 1 ), size( modR, 2 ) * size( modR, 3 ) );
-%             modL = reshape( modL, size( modL, 1 ), size( modL, 2 ) * size( modL, 3 ) );
-%             x = [x lMomentAlongDim( modR, [1,2], 1, true )];
-%             x = [x lMomentAlongDim( modL, [1,2], 1, true )];
-%             for i = 1:obj.deltasLevels
-%                 modR = modR(2:end,:) - modR(1:end-1,:);
-%                 modL = modL(2:end,:) - modL(1:end-1,:);
-%                 x = [x lMomentAlongDim( modR, [1,2,3], 1, true )];
-%                 x = [x lMomentAlongDim( modL, [1,2,3], 1, true )];
-%             end
-%         end
-%         %% ----------------------------------------------------------------
-        
+       
         function outputDeps = getFeatureInternOutputDependencies( obj )
             outputDeps.freqChannels = obj.freqChannels;
             outputDeps.amFreqChannels = obj.amFreqChannels;

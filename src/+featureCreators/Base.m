@@ -192,7 +192,7 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function b = transformBlock( obj, bl, dim, func, dIdxFun, grp )
+        function b = transformBlock( obj, bl, dim, func, dIdxFun, grps )
             b{1} = func( bl{1} );
             if obj.descriptionBuilt, return; end
             d = 1 : size( bl, 2 ) - 1;
@@ -200,7 +200,7 @@ classdef Base < core.IdProcInterface
             for ii = d
                 b{1+ii} = bl{1+ii};
                 for jj = 1 : numel( b{1+ii} )
-                    b{1+ii}{jj}{end+1} = grp;
+                    b{1+ii}{jj} = [b{1+ii}{jj} grps];
                 end
             end
             bl1dIdxs = dIdxFun( 1 : numel( bl{1+dim} ) );

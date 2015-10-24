@@ -2,8 +2,8 @@ classdef TwoEarsIdTrainPipe < handle
 
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = public)
-        featureCreator;
-        modelCreator;
+        featureCreator = [];
+        modelCreator = [];
         trainset = [];
         testset = [];
         data = [];
@@ -29,13 +29,7 @@ classdef TwoEarsIdTrainPipe < handle
                 dataProcs.SceneEarSignalProc( obj.binauralSim );
             obj.multiConfBinauralSim = ...
                 dataProcs.MultiConfigurationsEarSignalProc( obj.sceneConfBinauralSim );
-            obj.setSceneConfig( sceneConfig.SceneConfiguration() );
-            obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
-            obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
-                'performanceMeasure', @performanceMeasures.BAC2, ...
-                'cvFolds', 4, ...
-                'alpha', 0.99 );
-            obj.init();
+%             obj.init();
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
@@ -65,6 +59,9 @@ classdef TwoEarsIdTrainPipe < handle
         
         function init( obj )
             obj.setupData( true );
+            if isempty( obj.featureCreator )
+                obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
+            end
             obj.pipeline.featureCreator = obj.featureCreator;
             obj.pipeline.resetDataProcs();
             obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
@@ -76,6 +73,12 @@ classdef TwoEarsIdTrainPipe < handle
             obj.pipeline.addDataPipeProc( ...
                 dataProcs.MultiConfigurationsFeatureProc( obj.featureCreator ) );
             obj.pipeline.addGatherFeaturesProc( core.GatherFeaturesProc() );
+            if isempty( obj.modelCreator )
+                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
+                    'performanceMeasure', @performanceMeasures.BAC2, ...
+                    'cvFolds', 4, ...
+                    'alpha', 0.99 );
+            end
             obj.pipeline.addModelCreator( obj.modelCreator );
         end
         %% -------------------------------------------------------------------------------

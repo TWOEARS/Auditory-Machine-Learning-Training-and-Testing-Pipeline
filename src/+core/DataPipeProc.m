@@ -5,10 +5,10 @@ classdef DataPipeProc < handle
     %% --------------------------------------------------------------------
     properties (Access = protected, Transient)
         data;
-        inputFileNameBuilder;
-        dataFileProcessor;
     end
     properties (SetAccess = protected, Transient)
+        dataFileProcessor;
+        inputFileNameBuilder;
         fileListOverlay;
     end
     

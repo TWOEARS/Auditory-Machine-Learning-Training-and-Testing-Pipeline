@@ -141,6 +141,12 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             featureCreator = obj.featureCreator;
+            if isempty( featureCreator.description )
+                dummyData = obj.data(1,1);
+                dummyInput = obj.dataPipeProcs{end}.inputFileNameBuilder( dummyData.wavFileName );
+                in = load( dummyInput );
+                obj.dataPipeProcs{end}.dataFileProcessor.featProc.process( in.singleConfFiles{1} );
+            end
             lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;
@@ -150,11 +156,12 @@ classdef IdentificationTrainingPipeline < handle
             elseif strcmp(models{1}, 'dataStoreUni')
                 x = obj.data(:,:,'x');
                 classnames = obj.data.classNames;
+                featureNames = obj.featureCreator.description;
                 for ii = 1 : length( classnames )
                     y(:,ii) = obj.data(:,:,'y', classnames{ii});
                 end
                 save( 'dataStoreUni.mat', ...
-                      'x', 'y', 'classnames' );
+                      'x', 'y', 'classnames', 'featureNames' );
                 return; 
             end;
             

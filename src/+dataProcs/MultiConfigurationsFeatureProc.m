@@ -1,7 +1,7 @@
 classdef MultiConfigurationsFeatureProc < core.IdProcInterface
     
     %% --------------------------------------------------------------------
-    properties (Access = private)
+    properties (SetAccess = private)
         featProc;
         singleConfFiles;
         singleConfs;

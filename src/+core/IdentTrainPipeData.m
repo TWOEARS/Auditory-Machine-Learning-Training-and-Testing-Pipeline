@@ -45,6 +45,8 @@ classdef IdentTrainPipeData < handle
                     for c = classes
                         cIdx(end+1) = obj.getClassIdx( c{1} );
                     end
+                elseif isnumeric( classes )
+                    cIdx = classes;
                 end
                 if size( S.subs, 2 ) > 1
                     fIdx = S.subs{1,2};

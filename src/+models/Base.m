@@ -1,19 +1,29 @@
 classdef (Abstract) Base < handle
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties (SetAccess = {?modelTrainers.Base})
+        featureMask = [];
     end
     
     %% --------------------------------------------------------------------
     methods
-        
+
+        function [y,score] = applyModel( obj, x )
+            if ~isempty( obj.featureMask )
+                p_feat = size( x, 2 );
+                p_mask = size( obj.featureMask, 1 );
+                fmask = obj.featureMask( 1 : min( p_feat, p_mask ) );
+                x = x(:,fmask);
+            end
+            [y,score] = obj.applyModelMasked( x );
+        end
         % -----------------------------------------------------------------
         
     end
 
     %% --------------------------------------------------------------------
-    methods (Abstract)
-        [y,score] = applyModel( obj, x )
+    methods (Abstract, Access = protected)
+        [y,score] = applyModelMasked( obj, x )
     end
 
     %% --------------------------------------------------------------------

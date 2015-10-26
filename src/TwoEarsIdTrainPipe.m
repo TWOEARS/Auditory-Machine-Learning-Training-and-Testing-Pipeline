@@ -23,6 +23,8 @@ classdef TwoEarsIdTrainPipe < handle
     methods
         
         function obj = TwoEarsIdTrainPipe()
+            modelTrainers.Base.featureMask( true, [] );
+            warning( 'modelTrainers.Base.featureMask set to []' );
             obj.pipeline = core.IdentificationTrainingPipeline();
             obj.binauralSim = dataProcs.IdSimConvRoomWrapper();
             obj.sceneConfBinauralSim = ...

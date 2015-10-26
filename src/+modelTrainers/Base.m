@@ -5,7 +5,6 @@ classdef (Abstract) Base < handle
         trainSet;
         testSet;
         positiveClass;
-        featureMask = []; %negative mask for the columns of the feature mx
     end
     
     properties (SetAccess = {?modelTrainers.Base, ?Parameterized})
@@ -15,16 +14,6 @@ classdef (Abstract) Base < handle
     
     %% --------------------------------------------------------------------
     methods
-        
-        function setFeatureMask(obj, newmask)
-            assert(isvector(newmask));
-            if(size(newmask,2)~=1), newmask = newmask'; end;                
-            obj.featureMask = newmask;
-        end
-        
-        function mask = getFeatureMask(obj)
-            mask = obj.featureMask;
-        end
         
         function setData( obj, trainSet, testSet )
             obj.trainSet = trainSet;
@@ -53,6 +42,7 @@ classdef (Abstract) Base < handle
             if ~isa( model, 'models.Base' )
                 error( 'giveTrainedModel must produce an models.Base object.' );
             end
+            model.featureMask = modelTrainers.Base.featureMask;
         end
         %% -------------------------------------------------------------------------------
         
@@ -120,11 +110,12 @@ classdef (Abstract) Base < handle
             x(y==0,:) = [];
             y(y==0) = [];
             % apply the mask
-            if ~isempty(obj.featureMask)
-                p_feat = size(x,2);
-                p_mask = size(obj.featureMask,1);
-                mask = obj.featureMask(1:min(p_feat,p_mask));
-                x = x(:,mask);
+            fmask = modelTrainers.Base.featureMask;
+            if ~isempty( fmask )
+                p_feat = size( x, 2 );
+                p_mask = size( modelTrainers.Base.featureMask, 1 );
+                fmask = fmask( 1 : min( p_feat, p_mask ) );
+                x = x(:,fmask);
             end
             % permute data
             permutationIdxs = randperm( length( y ) );
@@ -158,6 +149,19 @@ classdef (Abstract) Base < handle
                 balMaxD = newValue;
             end
             b = balMaxD;
+        end
+        
+        function fm = featureMask( setNewMask, newmask )
+            persistent featureMask;
+            if isempty( featureMask )
+                featureMask = [];
+            end
+            if nargin > 0  &&  setNewMask
+                if ~isempty( newmask ) && size( newmask, 2 ) ~= 1, newmask = newmask'; end;
+                if ~islogical( newmask ), newmask = logical( newmask ); end
+                featureMask = newmask;
+            end
+            fm = featureMask;
         end
         
     end

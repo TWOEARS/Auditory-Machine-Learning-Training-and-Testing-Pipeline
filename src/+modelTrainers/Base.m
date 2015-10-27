@@ -79,7 +79,7 @@ classdef (Abstract) Base < handle
             end
             if numel( y ) > obj.maxDataSize
                 if modelTrainers.Base.balMaxData
-                    nPos = min( int16( obj.maxDataSize/2 ), sum( y == +1 ) );
+                    nPos = min( int32( obj.maxDataSize/2 ), sum( y == +1 ) );
                     nNeg = obj.maxDataSize - nPos;
                     posIdxs = find( y == +1 );
                     posIdxs = posIdxs(randperm(numel(posIdxs)));

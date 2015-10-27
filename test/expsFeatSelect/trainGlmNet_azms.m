@@ -8,10 +8,21 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
                    ?featureCreators.FeatureSet1Blockmean};
 azimuths = {0,45,90,180};
 
+if exist( 'glmnet_azms.mat', 'file' )
+    gmat = load( 'glmnet_azms.mat' );
+    modelpathes = gmat.modelpathes;
+end
+
 for ii = 1 : 4
 for cc = 1 : numel( classes )
 for fc = 1 : numel( featureCreators )
 for aa = 1 : numel( azimuths )
+
+if size(modelpathes,1) >= ii  &&  size(modelpathes,2) >= cc  &&...
+   size(modelpathes,3) >= fc  &&  size(modelpathes,4) >= aa ...
+   &&  ~isempty( modelpathes{ii,cc,fc,aa} )
+continue;
+end
     
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource('azimuth',...

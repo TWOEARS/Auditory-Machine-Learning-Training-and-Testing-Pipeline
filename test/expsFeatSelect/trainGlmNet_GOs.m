@@ -10,10 +10,21 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
 azimuths = {{0,0},{-45,45},{-90,90}};
 snrs = {20,10,0,-10};
 
+if exist( ['glmnet_gos_' classname '.mat'], 'file' )
+    gmat = load( ['glmnet_gos_' classname '.mat'] );
+    modelpathes = gmat.modelpathes;
+end
+
 for fc = 1 : numel( featureCreators )
 for ss = 1 : numel( snrs )
 for aa = 1 : numel( azimuths )
-    
+ 
+if size(modelpathes,1) >= ss  &&  size(modelpathes,2) >= fc  &&...
+   size(modelpathes,3) >= aa ...
+   &&  ~isempty( modelpathes{ss,fc,aa} )
+continue;
+end
+
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = feval( featureCreators{fc}.Name );
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...

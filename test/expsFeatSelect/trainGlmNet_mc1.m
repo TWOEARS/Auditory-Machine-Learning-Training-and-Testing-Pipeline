@@ -8,16 +8,24 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean,...
                    ?featureCreators.FeatureSet1VarBlocks,...
                    ?featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes};
 
+if exist( ['glmnet_mc1_' classname '.mat'], 'file' )
+    gmat = load( ['glmnet_mc1_' classname '.mat'] );
+    modelpathes = gmat.modelpathes;
+end
+
 for fc = 1 : numel( featureCreators )
     
+if exist( 'modelpathes','var' )  && size(modelpathes,1) >= fc  ...
+        &&  ~isempty( modelpathes{fc} ), continue; end
+
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = feval( featureCreators{fc}.Name );
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
     'cvFolds', 5, ...
-    'alpha', 0.99, ...
-    'maxDataSize', 111111 );
-modelTrainers.Base.balMaxData( true, true );
+    'alpha', 0.99 ); %, ...
+%     'maxDataSize', 111111 );
+% modelTrainers.Base.balMaxData( true, true );
 pipe.modelCreator.verbose( 'on' );
 
 setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
@@ -75,6 +83,7 @@ sc(9).addSource( sceneConfig.DiffuseSource( ...
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
+pipe.pipeline.gatherFeaturesProc.setConfDataUseRatio( 0.15, classname );
 modelpathes{fc} = pipe.pipeline.run( {classname}, 0 );
 
 save( ['glmnet_mc1_' classname '.mat'], 'featureCreators', 'modelpathes' );

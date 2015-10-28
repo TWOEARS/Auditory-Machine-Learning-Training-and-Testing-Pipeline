@@ -6,6 +6,8 @@ classdef GatherFeaturesProc < handle
     properties (Access = protected, Transient)
         data;
         inputFileNameBuilder;
+        confDataUseRatio = 1;
+        prioClass = [];
     end
     
     %% --------------------------------------------------------------------
@@ -18,6 +20,13 @@ classdef GatherFeaturesProc < handle
 
         function connectData( obj, data )
             obj.data = data;
+        end
+        %% ----------------------------------------------------------------
+
+        function setConfDataUseRatio( obj, confDataUseRatio, prioClass )
+            obj.confDataUseRatio = confDataUseRatio;
+            if nargin < 3, prioClass = []; end
+            obj.prioClass = prioClass;
         end
         %% ----------------------------------------------------------------
 
@@ -47,8 +56,17 @@ classdef GatherFeaturesProc < handle
                         end
                         rethrow( err );
                     end
-                    dataFile.x = [dataFile.x; xy.x];
-                    dataFile.y = [dataFile.y; xy.y];
+                    if obj.confDataUseRatio < 1  &&  ...
+                       ~strcmp( obj.prioClass, ...
+                                IdEvalFrame.readEventClass( dataFile.wavFileName ) )
+                        nUsePoints = round( numel( xy.y ) * obj.confDataUseRatio );
+                        useIdxs = randperm( numel( xy.y ) );
+                        useIdxs(nUsePoints+1:end) = [];
+                    else
+                        useIdxs = 1 : numel( xy.y );
+                    end
+                    dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
+                    dataFile.y = [dataFile.y; xy.y(useIdxs)];
                     fprintf( '.' );
                 end
                 fprintf( ';\n' );

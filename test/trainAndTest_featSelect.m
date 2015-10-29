@@ -27,7 +27,7 @@ modelPath = pipe.pipeline.run( {classname}, 0 );
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 
 m = load( [modelPath filesep classname '.model.mat'] );
-fmask = zeros( size( pipe.featureCreator.description ) );
+fmask = zeros( size( m.featureCreator.description ) );
 fmask(m.model.getBestLambdaCVresults()) = 1;
 
 pipe = TwoEarsIdTrainPipe();

@@ -197,7 +197,6 @@ if (exact && ~isempty(s))
     end
 end
 
-
 if strcmp(object.class,'elnet')
     a0 = transpose(object.a0);
     nbeta=[a0; object.beta];
@@ -299,6 +298,7 @@ if strcmp(object.class, 'lognet')
             result = 1./ (1+pp);
         case 'class'
             result = (result > 0) * 2 + (result <= 0) * 1;
+            result = object.label(result);
     end
 end
 
@@ -372,7 +372,7 @@ if strcmp(object.class, 'multnet') || strcmp(object.class,'mrelnet')
             dp=permute(dp,[3,1,2]);
             result = [];
             for i=1:size(dp,3)
-                result = [result, softmax(dp(:,:,i))];
+                result = [result, object.label(softmax(dp(:,:,i)))];
             end
     end
     

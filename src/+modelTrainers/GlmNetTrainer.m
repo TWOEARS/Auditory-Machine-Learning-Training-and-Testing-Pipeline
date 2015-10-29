@@ -43,13 +43,14 @@ classdef GlmNetTrainer < modelTrainers.Base & Parameterized
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
+            clear x;
             glmOpts.alpha = obj.alpha;
             glmOpts.nlambda = obj.nLambda;
             if ~isempty( obj.lambda )
                 glmOpts.lambda = obj.lambda;
             end
             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
-            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
+            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(xScaled,1), size(xScaled,2) );
             obj.model.model = glmnet( xScaled, y, obj.family, glmOpts );
             verboseFprintf( obj, '\n' );
         end

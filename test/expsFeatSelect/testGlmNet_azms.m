@@ -16,7 +16,7 @@ else
 end
 if exist( 'glmnet_azms_test.mat', 'file' )
     gmatt = load( 'glmnet_azms_test.mat' );
-    modelpathes_test = gmatt.modelpathes;
+    modelpathes_test = gmatt.modelpathes_test;
 end
 
 for ii = 1 : 4

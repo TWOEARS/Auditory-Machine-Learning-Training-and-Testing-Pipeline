@@ -14,8 +14,8 @@ if exist( ['glmnet_mc1_' classname '.mat'], 'file' )
 else
     return;
 end
-if exist( ['glmnet_mc1_' classname '_test.mat'], 'file' )
-    gmatt = load( ['glmnet_mc1_' classname '_test.mat'] );
+if exist( 'glmnet_mc1_test.mat', 'file' )
+    gmatt = load( 'glmnet_mc1_test.mat' );
     modelpathes_test = gmatt.modelpathes_test;
 end
 
@@ -125,7 +125,7 @@ cv_std{fc,cc} = testmodel.model.lPerfsStd;
  lambda_hws{fc,cc},...
  nCoefs_hws{fc,cc}] = testmodel.model.getHighestLambdaWithinStdCVresults();
 
-save( 'glmnet_azms_test.mat', 'classes', 'featureCreators', ...
+save( 'glmnet_mc1_test.mat', 'classes', 'featureCreators', ...
     'modelpathes_test', 'test_performances', 'cv_performances', 'cv_std',...
     'coefIdxs_b', 'impacts_b', 'perf_b', 'lambda_b', 'nCoefs_b',...
     'coefIdxs_bms', 'impacts_bms', 'perf_bms', 'lambda_bms', 'nCoefs_bms',...

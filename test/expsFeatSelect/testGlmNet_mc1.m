@@ -18,8 +18,8 @@ for fc = 1 : numel( featureCreators )
     
 fprintf( '.\n' );
 
-if exist( ['glmnet_mc1_' classname '.mat'], 'file' )
-    gmat = load( ['glmnet_mc1_' classname '.mat'] );
+if exist( ['glmnet_mc1_' classes{cc} '.mat'], 'file' )
+    gmat = load( ['glmnet_mc1_' classes{cc} '.mat'] );
     modelpathes = gmat.modelpathes;
 else
     continue;

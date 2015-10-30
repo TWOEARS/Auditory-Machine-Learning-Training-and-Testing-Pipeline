@@ -40,7 +40,7 @@ classdef GlmNetModel < models.DataScalingModel
 
         function [coefIdxs,impacts,perf,lambda,nCoefs] = getBestLambdaCVresults( obj )
             lambdasSortedByPerf = sortrows( ...
-                [obj.model.lambda,obj.lPerfsMean], [2 -1] );
+                [obj.model.lambda,obj.lPerfsMean], [2 1] );
             lambda = lambdasSortedByPerf(end,1);
             perf = lambdasSortedByPerf(end,2);
             [impact, cIdx] = obj.getCoefImpacts( lambda );
@@ -53,7 +53,7 @@ classdef GlmNetModel < models.DataScalingModel
 
         function [coefIdxs,impacts,perf,lambda,nCoefs] = getBestMinStdCVresults( obj )
             lambdasSortedByPerf = sortrows( ...
-                [obj.model.lambda,obj.lPerfsMean-obj.lPerfsStd,obj.lPerfsMean], [2 3 -1] );
+                [obj.model.lambda,obj.lPerfsMean-obj.lPerfsStd,obj.lPerfsMean], [2 3 1] );
             lambda = lambdasSortedByPerf(end,1);
             perf = lambdasSortedByPerf(end,3);
             [impact, cIdx] = obj.getCoefImpacts( lambda );
@@ -66,11 +66,12 @@ classdef GlmNetModel < models.DataScalingModel
 
         function [coefIdxs,impacts,perf,lambda,nCoefs] = getHighestLambdaWithinStdCVresults( obj )
             lambdasSortedByPerf = sortrows( ...
-                [obj.model.lambda,obj.lPerfsMean,obj.lPerfsStd], [2 -1] );
+                [obj.model.lambda,obj.lPerfsMean,obj.lPerfsStd], [2 1] );
             idx = find( lambdasSortedByPerf(:,2) >= ...
                            lambdasSortedByPerf(end,2) - lambdasSortedByPerf(end,3) );
-            lambda = lambdasSortedByPerf(idx(1),1);
-            perf = lambdasSortedByPerf(idx(1),2);
+            performingLambdasSortedByLambda = sortrows( lambdasSortedByPerf(idx,:), 1 );
+            lambda = performingLambdasSortedByLambda(end,1);
+            perf = performingLambdasSortedByLambda(end,2);
             [impact, cIdx] = obj.getCoefImpacts( lambda );
             impactsUnsorted = sortrows( [impact,cIdx], 2 );
             nCoefs = sum( impact > 0 );

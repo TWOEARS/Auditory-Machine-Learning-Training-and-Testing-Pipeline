@@ -1,6 +1,7 @@
-function trainAndTestCleanModel_2( classname )
+function trainAndTestCleanModel_2( classname, fmask )
 
 if nargin < 1, classname = 'speech'; end;
+if nargin < 2, fmask = []; end;
 
 %startTwoEars( '../IdentificationTraining.xml' );
 addpath( '..' );
@@ -12,9 +13,10 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
     'cvFolds', 4, ...
     'alpha', 0.99 );
+modelTrainers.Base.featureMask( true, fmask );
 pipe.modelCreator.verbose( 'on' );
 
-% pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
 pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TestSet.flist';
 
 sc = sceneConfig.SceneConfiguration();

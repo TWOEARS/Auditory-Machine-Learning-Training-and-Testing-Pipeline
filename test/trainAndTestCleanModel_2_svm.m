@@ -19,7 +19,7 @@ pipe.modelCreator = modelTrainers.SVMmodelSelectTrainer( ...
     'hpsRefineStages', 1, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 7, ...   % number of hps grid search parameter values per dimension
     'hpsCvFolds', 4 )           % number of hps cv folds of training set
-modelTrainers.Base.balMaxData( true, true );
+modelTrainers.Base.balMaxData( true, false );
 pipe.modelCreator.verbose( 'on' );
 
 pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';

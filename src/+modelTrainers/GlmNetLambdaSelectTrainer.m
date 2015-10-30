@@ -68,14 +68,12 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
             cvModels = obj.cvTrainer.models;
             verboseFprintf( obj, 'Calculate Performance for all lambdas...\n' );
             lPerfs = zeros( numel( lambdas ), numel( cvModels ) );
-            for ll = 1 : numel( lambdas )
-                for ii = 1 : numel( cvModels )
-                    cvModels{ii}.setLambda( lambdas(ll) );
-                    lPerfs(ll,ii) = models.Base.getPerformance( ...
-                        cvModels{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
-                        obj.performanceMeasure );
-                    verboseFprintf( obj, '.' );
-                end
+            for ii = 1 : numel( cvModels )
+                cvModels{ii}.setLambda( [] );
+                lPerfs(:,ii) = models.Base.getPerformance( ...
+                    cvModels{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
+                    obj.performanceMeasure );
+                verboseFprintf( obj, '.' );
             end
             obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
             obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );

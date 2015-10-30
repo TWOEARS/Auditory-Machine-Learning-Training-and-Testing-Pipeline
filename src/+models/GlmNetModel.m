@@ -86,7 +86,12 @@ classdef GlmNetModel < models.DataScalingModel
         
         function [y,score] = applyModelToScaledData( obj, x )
             y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
-            y = y * 2 - 3; % from 1/2 to -1/1
+            yun = unique( y );
+            if all( yun == [1;2] )
+                y = y * 2 - 3; % from 1/2 to -1/1
+            elseif any( yun ~= [-1;1] )
+                error( 'unexpected labels' );
+            end
             score = glmnetPredict( obj.model, x, obj.lambda, 'response' );
         end
         %% -----------------------------------------------------------------

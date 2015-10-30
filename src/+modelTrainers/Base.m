@@ -68,7 +68,8 @@ classdef (Abstract) Base < handle
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
             performance = models.Base.getPerformance( ...
-                model, obj.testSet, obj.positiveClass, obj.performanceMeasure );
+                model, obj.testSet, obj.positiveClass, obj.performanceMeasure, ...
+                obj.maxDataSize, true );
         end
         %% ----------------------------------------------------------------
 

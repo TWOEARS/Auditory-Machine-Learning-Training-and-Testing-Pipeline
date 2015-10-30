@@ -11,6 +11,8 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
                    ?featureCreators.FeatureSet1Blockmean};
 azimuths = {0,45,90,180};
 lambdas = {'0','b','hws'};
+azmIdxs = [reshape(repmat(1:numel(azimuths),numel(azimuths),1),1,[]);repmat(1:numel(azimuths),1,numel(azimuths))];
+azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:))];%,azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];
 
 if exist( 'glmnet_azms.mat', 'file' )
     gmat = load( 'glmnet_azms.mat' );
@@ -24,10 +26,11 @@ if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
 end
 
 for ii = 1 : 4
-for aa = 1 : numel( azimuths )
-for ll = 1 : numel( lambdas )
 for fc = 1 : numel( featureCreators )
-for aatest = 1 : numel( azimuths )
+for aai = 1 : numel( azmIdxs )
+for ll = 1 : numel( lambdas )
+aa = azmIdxs(1,aai);
+aatest = azmIdxs(2,aai);
     
 fprintf( '.\n' );
 
@@ -77,7 +80,7 @@ pipe.modelCreator = modelTrainers.SVMmodelSelectTrainer( ...
     'hpsMaxDataSize', 6000, ...  % max data set size to use in hps (number of samples)
     'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 8, ...   % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 4 )           % number of hps cv folds of training set
+    'hpsCvFolds', 4 );           % number of hps cv folds of training set
 modelTrainers.Base.featureMask( true, fmask );
 pipe.modelCreator.verbose( 'on' );
 
@@ -101,7 +104,6 @@ save( ['glmnet_azms_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azim
     'coefIdxs_bms', 'impacts_bms', 'perf_bms', 'lambda_bms', 'nCoefs_bms',...
     'coefIdxs_hws', 'impacts_hws', 'perf_hws', 'lambda_hws', 'nCoefs_hws' );
 
-end
 end
 end
 end

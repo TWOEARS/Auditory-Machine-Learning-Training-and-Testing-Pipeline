@@ -47,7 +47,7 @@ classdef SVMtrainer < modelTrainers.Base & Parameterized
             obj.model.useProbModel = obj.makeProbModel;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             m = ceil( prod( size( x ) ) * 8 / (1024 * 1024) );
-            m = min( m + mod( m, 200 ), 2000 );
+            m = min( 2*m, 2000 );
             svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m %d -b %d -h 0';
             svmParamStr = sprintf( svmParamStrScheme, ...
                 obj.kernel, obj.gamma, ...

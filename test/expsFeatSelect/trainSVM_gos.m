@@ -63,7 +63,7 @@ if exist( 'modelpathes_svm','var' )  &&  ...
     continue;
 end
     
-m = load( [modelpathes{ii,cc,fc,aa} filesep classname '.model.mat'] );
+m = load( [modelpathes{ss,fc,aa} filesep classname '.model.mat'] );
 fmask = zeros( size( m.featureCreator.description ) );
 switch lambdas{ll}
     case '0'

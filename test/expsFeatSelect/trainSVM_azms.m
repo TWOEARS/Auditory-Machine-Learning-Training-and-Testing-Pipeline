@@ -27,7 +27,7 @@ end
 
 for ii = 1 : 4
 for fc = 1 : numel( featureCreators )
-for aai = 1 : numel( azmIdxs )
+for aai = 1 : size( azmIdxs, 2 )
 for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);

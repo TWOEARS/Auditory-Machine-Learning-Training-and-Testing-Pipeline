@@ -26,8 +26,8 @@ if exist( ['glmnet_gos_' classname '_test.mat'], 'file' )
 end
 
 for fc = 1 : numel( featureCreators )
-for ssi = 1 : numel( snrIdxs )
-for aai = 1 : numel( azmIdxs )
+for ssi = 1 : size( snrIdxs, 2 )
+for aai = 1 : size( azmIdxs, 2 )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);
 ss = snrIdxs(1,ssi);

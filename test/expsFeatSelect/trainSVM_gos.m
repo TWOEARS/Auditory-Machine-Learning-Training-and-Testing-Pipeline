@@ -98,8 +98,8 @@ modelTrainers.Base.featureMask( true, fmask );
 pipe.modelCreator.verbose( 'on' );
 
 setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
-pipe.trainset = [setsBasePath 'NIGENS_75pTrain_TrainSet_' num2str(ii) '.flist'];
-pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_' num2str(ii) '.flist'];
+pipe.trainset = [setsBasePath 'NIGENS_75pTrain_TrainSet_1.flist'];
+pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
 pipe.setupData();
 
 pipe.setSceneConfig( sc ); 

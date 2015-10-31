@@ -12,6 +12,7 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
                    ?featureCreators.FeatureSet1VarBlocks,...
                    ?featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes};
 azimuths = {{0,0},{-45,45},{-90,90}};
+lambdas = {'0','b','hws'};
 snrs = {20,10,0,-10};
 azmIdxs = [reshape(repmat(1:numel(azimuths),numel(azimuths),1),1,[]);repmat(1:numel(azimuths),1,numel(azimuths))];
 azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:)),azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];

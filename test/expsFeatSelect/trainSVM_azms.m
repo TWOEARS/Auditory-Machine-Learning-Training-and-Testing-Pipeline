@@ -22,7 +22,7 @@ else
 end
 if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
     gmatt = load( ['glmnet_azms_' classname '_svm.mat'] );
-    modelpathes_svm = gmatt.modelpathes_test;
+    modelpathes_svm = gmatt.modelpathes_svm;
 end
 
 for ii = 1 : 4

@@ -74,13 +74,6 @@ switch lambdas{ll}
         fmask(m.model.getHighestLambdaWithinStdCVresults()) = 1;
 end
 
-sc = sceneConfig.SceneConfiguration();
-sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
-sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
-    'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
-    sceneConfig.ValGen( 'manual', snrs{sstest} ));
-pipe.setSceneConfig( sc ); 
-
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = feval( featureCreators{fc}.Name );
 pipe.modelCreator = modelTrainers.SVMmodelSelectTrainer( ...
@@ -99,20 +92,25 @@ pipe.modelCreator.verbose( 'on' );
 
 setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
 pipe.trainset = [setsBasePath 'NIGENS_75pTrain_TrainSet_1.flist'];
-pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
+%pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
 pipe.setupData();
 
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
+    sceneConfig.ValGen( 'manual', snrs{sstest} ));
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
 modelpathes_svm{ss,ll,fc,aa,aatest,sstest} = pipe.pipeline.run( {classname}, 0 );
 
-testmodel = load( [modelpathes_svm{ss,ll,fc,aa,aatest,sstest} filesep classname '.model.mat'] );
+%testmodel = load( [modelpathes_svm{ss,ll,fc,aa,aatest,sstest} filesep classname '.model.mat'] );
 
-test_performances{ss,ll,fc,aa,aatest,sstest} = [testmodel.testPerfresults.performance];
+%test_performances{ss,ll,fc,aa,aatest,sstest} = [testmodel.testPerfresults.performance];
 
 save( ['glmnet_gos_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
-    'modelpathes_svm', 'test_performances' );
+    'modelpathes_svm');%, 'test_performances' );
 
 end
 end

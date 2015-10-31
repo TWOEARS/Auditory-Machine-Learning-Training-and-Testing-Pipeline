@@ -9,6 +9,10 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
                    ?featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes};
 azimuths = {{0,0},{-45,45},{-90,90}};
 snrs = {20,10,0,-10};
+azmIdxs = [reshape(repmat(1:numel(azimuths),numel(azimuths),1),1,[]);repmat(1:numel(azimuths),1,numel(azimuths))];
+azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:)),azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];
+snrIdxs = [reshape(repmat(1:numel(snrs),numel(snrs),1),1,[]);repmat(1:numel(snrs),1,numel(snrs))];
+snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snrIdxs(2,:))];
 
 if exist( ['glmnet_gos_' classname '.mat'], 'file' )
     gmat = load( ['glmnet_gos_' classname '.mat'] );
@@ -21,11 +25,16 @@ if exist( ['glmnet_gos_' classname '_test.mat'], 'file' )
     modelpathes_test = gmatt.modelpathes_test;
 end
 
-for aatest = 1 : numel( azimuths )
-for sstest = 1 : numel( snrs )
 for fc = 1 : numel( featureCreators )
-for aa = 1 : numel( azimuths )
-for ss = 1 : numel( snrs )
+for ssi = 1 : numel( snrIdxs )
+for aai = 1 : numel( azmIdxs )
+aa = azmIdxs(1,aai);
+aatest = azmIdxs(2,aai);
+ss = snrIdxs(1,ssi);
+sstest = snrIdxs(2,ssi);
+    
+if aai > 3, continue; end; % uncomment to do cross-tests
+if ssi > 4, continue; end; % uncomment to do cross-tests
     
 fprintf( '.\n' );
 
@@ -99,8 +108,6 @@ save( ['glmnet_gos_' classname '_test.mat'], 'featureCreators', 'azimuths', 'snr
     'coefIdxs_bms', 'impacts_bms', 'perf_bms', 'lambda_bms', 'nCoefs_bms',...
     'coefIdxs_hws', 'impacts_hws', 'perf_hws', 'lambda_hws', 'nCoefs_hws' );
 
-end
-end
 end
 end
 end

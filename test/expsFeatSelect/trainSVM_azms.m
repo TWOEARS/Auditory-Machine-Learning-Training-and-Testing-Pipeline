@@ -12,7 +12,7 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
 azimuths = {0,45,90,180};
 lambdas = {'0','b','hws'};
 azmIdxs = [reshape(repmat(1:numel(azimuths),numel(azimuths),1),1,[]);repmat(1:numel(azimuths),1,numel(azimuths))];
-azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:))];%,azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];
+azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:)),azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];
 
 if exist( 'glmnet_azms.mat', 'file' )
     gmat = load( 'glmnet_azms.mat' );
@@ -32,6 +32,8 @@ for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);
     
+if aai > 5, continue; end; % uncomment to do cross-tests
+
 fprintf( '.\n' );
 
 if exist( 'modelpathes','var' )  &&  ...

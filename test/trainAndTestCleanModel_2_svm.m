@@ -1,4 +1,4 @@
-function trainAndTestCleanModel_2( classname )
+function trainAndTestCleanModel_2_svm( classname )
 
 if nargin < 1, classname = 'speech'; end;
 
@@ -18,7 +18,8 @@ pipe.modelCreator = modelTrainers.SVMmodelSelectTrainer( ...
     'hpsMaxDataSize', 50, ...  % max data set size to use in hps (number of samples)
     'hpsRefineStages', 1, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 7, ...   % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 4 )           % number of hps cv folds of training set
+    'hpsCvFolds', 4,...         % number of hps cv folds of training set
+    'finalMaxDataSize',111);           
 modelTrainers.Base.balMaxData( true, false );
 pipe.modelCreator.verbose( 'on' );
 

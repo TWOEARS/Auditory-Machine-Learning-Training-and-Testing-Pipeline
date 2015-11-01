@@ -11,8 +11,7 @@ azimuths = {{0,0},{-45,45},{-90,90}};
 snrs = {20,10,0,-10};
 
 if exist( ['glmnet_gos_' classname '.mat'], 'file' )
-    gmat = load( ['glmnet_gos_' classname '.mat'] );
-    modelpathes = gmat.modelpathes;
+    load( ['glmnet_gos_' classname '.mat'] );
 end
 
 for fc = 1 : numel( featureCreators )

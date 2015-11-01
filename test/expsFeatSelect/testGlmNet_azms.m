@@ -9,14 +9,12 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
 azimuths = {0,45,90,180};
 
 if exist( 'glmnet_azms.mat', 'file' )
-    gmat = load( 'glmnet_azms.mat' );
-    modelpathes = gmat.modelpathes;
+    load( 'glmnet_azms.mat' );
 else
     return;
 end
 if exist( 'glmnet_azms_test.mat', 'file' )
-    gmatt = load( 'glmnet_azms_test.mat' );
-    modelpathes_test = gmatt.modelpathes_test;
+    load( 'glmnet_azms_test.mat' );
 end
 
 for ii = 1 : 4

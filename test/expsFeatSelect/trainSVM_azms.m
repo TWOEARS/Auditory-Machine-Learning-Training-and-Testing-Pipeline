@@ -15,14 +15,12 @@ azmIdxs = [reshape(repmat(1:numel(azimuths),numel(azimuths),1),1,[]);repmat(1:nu
 azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:)),azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];
 
 if exist( 'glmnet_azms.mat', 'file' )
-    gmat = load( 'glmnet_azms.mat' );
-    modelpathes = gmat.modelpathes;
+    load( 'glmnet_azms.mat' );
 else
     return;
 end
 if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
-    gmatt = load( ['glmnet_azms_' classname '_svm.mat'] );
-    modelpathes_svm = gmatt.modelpathes_svm;
+    load( ['glmnet_azms_' classname '_svm.mat'] );
 end
 
 for ii = 1 : 4

@@ -15,14 +15,12 @@ snrIdxs = [reshape(repmat(1:numel(snrs),numel(snrs),1),1,[]);repmat(1:numel(snrs
 snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snrIdxs(2,:))];
 
 if exist( ['glmnet_gos_' classname '.mat'], 'file' )
-    gmat = load( ['glmnet_gos_' classname '.mat'] );
-    modelpathes = gmat.modelpathes;
+    load( ['glmnet_gos_' classname '.mat'] );
 else
     return;
 end
 if exist( ['glmnet_gos_' classname '_test.mat'], 'file' )
-    gmatt = load( ['glmnet_gos_' classname '_test.mat'] );
-    modelpathes_test = gmatt.modelpathes_test;
+    load( ['glmnet_gos_' classname '_test.mat'] );
 end
 
 for fc = 1 : numel( featureCreators )

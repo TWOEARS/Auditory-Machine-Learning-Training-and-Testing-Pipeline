@@ -10,14 +10,12 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean,...
 lambdas = {'0','b','hws'};
 
 if exist( ['glmnet_mc1_' classname '.mat'], 'file' )
-    gmat = load( ['glmnet_mc1_' classname '.mat'] );
-    modelpathes = gmat.modelpathes;
+    load( ['glmnet_mc1_' classname '.mat'] );
 else
     return;
 end
 if exist( ['glmnet_mc1_' classname '_svm.mat'], 'file' )
-    gmatt = load( ['glmnet_mc1_' classname '_svm.mat'] );
-    modelpathes_svm = gmatt.modelpathes_svm;
+    load( ['glmnet_mc1_' classname '_svm.mat'] );
 end
 
 for fc = 1 : numel( featureCreators )

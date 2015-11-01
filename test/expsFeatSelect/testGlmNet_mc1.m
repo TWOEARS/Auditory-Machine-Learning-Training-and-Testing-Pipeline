@@ -9,8 +9,7 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean,...
                    ?featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes};
 
 if exist( 'glmnet_mc1_test.mat', 'file' )
-    gmatt = load( 'glmnet_mc1_test.mat' );
-    modelpathes_test = gmatt.modelpathes_test;
+    load( 'glmnet_mc1_test.mat' );
 end
 
 for cc = 1 : numel( classes )
@@ -19,8 +18,7 @@ for fc = 1 : numel( featureCreators )
 fprintf( '.\n' );
 
 if exist( ['glmnet_mc1_' classes{cc} '.mat'], 'file' )
-    gmat = load( ['glmnet_mc1_' classes{cc} '.mat'] );
-    modelpathes = gmat.modelpathes;
+    load( ['glmnet_mc1_' classes{cc} '.mat'] );
 else
     continue;
 end

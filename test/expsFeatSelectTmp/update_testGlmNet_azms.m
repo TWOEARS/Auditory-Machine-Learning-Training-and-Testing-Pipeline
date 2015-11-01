@@ -63,8 +63,8 @@ cv_std{ii,cc,fc,aa,aatest} = testmodel.model.lPerfsStd;
  perf_hws{ii,cc,fc,aa,aatest},...
  lambda_hws{ii,cc,fc,aa,aatest},...
  nCoefs_hws{ii,cc,fc,aa,aatest}] = testmodel.model.getHighestLambdaWithinStdCVresults();
-lbIdx = find( testmodel.model.lambda == lambda_b );
-lhwsIdx = find( testmodel.model.lambda == lambda_hws );
+lbIdx = find( testmodel.model.lambda == lambda_b{ii,cc,fc,aa,aatest} );
+lhwsIdx = find( testmodel.model.lambda == lambda_hws{ii,cc,fc,aa,aatest} );
 test_performances_b{ii,cc,fc,aa,aatest} = test_performances{ii,cc,fc,aa,aatest}(lbIdx);
 test_performances_hws{ii,cc,fc,aa,aatest} = test_performances{ii,cc,fc,aa,aatest}(lhwsIdx);
 

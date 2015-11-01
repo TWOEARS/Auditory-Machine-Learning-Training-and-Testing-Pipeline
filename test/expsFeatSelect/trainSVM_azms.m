@@ -30,7 +30,7 @@ for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);
     
-if aai > 5, continue; end; % uncomment to do cross-tests
+if aai > 4, continue; end; % uncomment to do cross-tests
 
 fprintf( '.\n' );
 

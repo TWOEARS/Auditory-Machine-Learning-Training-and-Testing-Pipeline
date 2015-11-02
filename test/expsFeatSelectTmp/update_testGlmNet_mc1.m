@@ -8,15 +8,16 @@ featureCreators = {?featureCreators.FeatureSet1Blockmean,...
                    ?featureCreators.FeatureSet1VarBlocks,...
                    ?featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes};
 
-for cc = 1 : numel( classes )
-classname = classes{cc};
-if exist( ['glmnet_mc1_' classname '_test.mat'], 'file' )
-    load( ['glmnet_mc1_' classname '_test.mat'] );
+if exist( 'glmnet_mc1_test.mat', 'file' )
+    load( 'glmnet_mc1_test.mat' );
 else return;
 end
-if exist( ['glmnet_mc1_' classname '_test1.mat'], 'file' )
-    altmat = load( ['glmnet_mc1_' classname '_test1.mat'] );
+if exist( 'glmnet_mc1_test1.mat', 'file' )
+    altmat = load( 'glmnet_mc1_test1.mat' );
 end
+
+for cc = 1 : numel( classes )
+classname = classes{cc};
 for fc = 1 : numel( featureCreators )
         
 fprintf( '.\n' );

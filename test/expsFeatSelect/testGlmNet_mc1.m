@@ -125,8 +125,8 @@ cv_std{fc,cc} = testmodel.model.lPerfsStd;
  nCoefs_hws{fc,cc}] = testmodel.model.getHighestLambdaWithinStdCVresults();
 lbIdx = find( testmodel.model.lambda == lambda_b{fc,cc} );
 lhwsIdx = find( testmodel.model.lambda == lambda_hws{fc,cc} );
-test_performances_b{ii,cc,fc,aa,aatest} = test_performances{fc,cc}(lbIdx);
-test_performances_hws{ii,cc,fc,aa,aatest} = test_performances{fc,cc}(lhwsIdx);
+test_performances_b{fc,cc} = test_performances{fc,cc}(lbIdx);
+test_performances_hws{fc,cc} = test_performances{fc,cc}(lhwsIdx);
 
 save( 'glmnet_mc1_test.mat', 'classes', 'featureCreators', ...
     'modelpathes_test', 'test_performances', 'cv_performances', 'cv_std',...

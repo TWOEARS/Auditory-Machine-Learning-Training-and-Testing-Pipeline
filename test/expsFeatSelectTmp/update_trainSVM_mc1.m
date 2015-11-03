@@ -31,18 +31,26 @@ if exist( 'modelpathes_svm','var' )  &&  ...
             size(altmat.modelpathes_svm,1) >= fc  &&  size(altmat.modelpathes_svm,2) >= ll  ...
             &&  ~isempty( altmat.modelpathes_svm{fc,ll} )
         modelpathes_svm{fc,ll} = altmat.modelpathes_svm{fc,ll};
-        test_performances{fc,ll} = altmat.test_performances{fc,ll};
+        if isfield( altmat, 'test_performances' )  &&  ...
+                size(altmat.test_performances,1) >= fc  &&  size(altmat.test_performances,2) >= ll  ...
+                &&  ~isempty( altmat.test_performances{fc,ll} )
+            test_performances{fc,ll} = altmat.test_performances{fc,ll};
+        end
     else
         continue;
     end
 end
 if exist( 'modelpathes_svm','var' )  &&  ...
-       (size(modelpathes_svm,1) < fc  ||  size(modelpathes_svm,2) < ll)
+        (size(modelpathes_svm,1) < fc  ||  size(modelpathes_svm,2) < ll)
     if exist( 'altmat', 'var' ) && isfield( altmat, 'modelpathes_svm' )  &&  ...
             size(altmat.modelpathes_svm,1) >= fc  &&  size(altmat.modelpathes_svm,2) >= ll  ...
             &&  ~isempty( altmat.modelpathes_svm{fc,ll} )
         modelpathes_svm{fc,ll} = altmat.modelpathes_svm{fc,ll};
-        test_performances{fc,ll} = altmat.test_performances{fc,ll};
+        if isfield( altmat, 'test_performances' )  &&  ...
+                size(altmat.test_performances,1) >= fc  &&  size(altmat.test_performances,2) >= ll  ...
+                &&  ~isempty( altmat.test_performances{fc,ll} )
+            test_performances{fc,ll} = altmat.test_performances{fc,ll};
+        end
     else
         continue;
     end

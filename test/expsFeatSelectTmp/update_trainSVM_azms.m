@@ -119,3 +119,5 @@ end
 end
 end
 end
+save( ['glmnet_azms_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
+    'modelpathes_svm', 'test_performances' );

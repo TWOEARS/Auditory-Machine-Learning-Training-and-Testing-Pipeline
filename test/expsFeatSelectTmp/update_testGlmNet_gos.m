@@ -20,7 +20,7 @@ for cc = 1 : numel( classes )
 classname = classes{cc};
 if exist( ['glmnet_gos_' classname '_test.mat'], 'file' )
     load( ['glmnet_gos_' classname '_test.mat'] );
-else return;
+else continue;
 end
 if exist( ['glmnet_gos_' classname '_test1.mat'], 'file' )
     altmat = load( ['glmnet_gos_' classname '_test1.mat'] );

@@ -17,7 +17,7 @@ classname = classes{cc};
 if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
     load( ['glmnet_azms_' classname '_svm.mat'] );
 else
-    return;
+    continue;
 end
 if exist( ['glmnet_azms_' classname '_svm1.mat'], 'file' )
     altmat = load( ['glmnet_azms_' classname '_svm1.mat'] );

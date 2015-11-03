@@ -126,7 +126,7 @@ end
 end
 end
 end
-end
 save( ['glmnet_gos_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
     'modelpathes_svm', 'test_performances' );
+end
 

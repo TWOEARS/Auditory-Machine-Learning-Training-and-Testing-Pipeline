@@ -141,7 +141,7 @@ save( ['glmnet_mc1_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimu
 
 end
 end
-end
 save( ['glmnet_mc1_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
     'modelpathes_svm', 'test_performances' );
+end
 

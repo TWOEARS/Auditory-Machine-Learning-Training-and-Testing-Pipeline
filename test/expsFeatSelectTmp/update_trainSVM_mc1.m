@@ -12,6 +12,8 @@ lambdas = {'0','b','hws'};
 
 for cc = 1 : numel( classes )
 classname = classes{cc};
+clear modelpathes_svm;
+clear test_performances;
 if exist( ['glmnet_mc1_' classname '_svm.mat'], 'file' )
     load( ['glmnet_mc1_' classname '_svm.mat'] );
 else continue;

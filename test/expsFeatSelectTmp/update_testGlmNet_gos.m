@@ -18,6 +18,8 @@ snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snr
 
 for cc = 1 : numel( classes )
 classname = classes{cc};
+clear modelpathes_test;
+clear test_performances_b;
 if exist( ['glmnet_gos_' classname '_test.mat'], 'file' )
     load( ['glmnet_gos_' classname '_test.mat'] );
 else continue;

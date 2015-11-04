@@ -14,6 +14,8 @@ azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:)),azmIdxs(:,azmIdxs(1,:) ~= azm
 
 for cc = 1 : numel( classes )
 classname = classes{cc};
+clear modelpathes_svm;
+clear test_performances;
 if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
     load( ['glmnet_azms_' classname '_svm.mat'] );
 else

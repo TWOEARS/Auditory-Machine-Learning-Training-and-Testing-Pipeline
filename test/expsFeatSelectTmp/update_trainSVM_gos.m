@@ -25,6 +25,7 @@ if exist( ['glmnet_gos_' classname '_svm.mat'], 'file' )
     load( ['glmnet_gos_' classname '_svm.mat'] );
 else continue;
 end
+clear altmat;
 if exist( ['glmnet_gos_' classname '_svm1.mat'], 'file' )
     altmat = load( ['glmnet_gos_' classname '_svm1.mat'] );
 end

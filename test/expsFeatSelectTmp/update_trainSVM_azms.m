@@ -21,6 +21,7 @@ if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
 else
     continue;
 end
+clear altmat;
 if exist( ['glmnet_azms_' classname '_svm1.mat'], 'file' )
     altmat = load( ['glmnet_azms_' classname '_svm1.mat'] );
 end

@@ -23,11 +23,11 @@ for ll = 1 : numel( lambdas )
     
 fprintf( '.\n' );
 
-if exist( 'modelpathes','var' )  && size(modelpathes,1) >= fc  ...
+if exist( 'modelpathes','var' )  && size(modelpathes,2) >= fc  ...
         &&  isempty( modelpathes{fc} )
     continue; 
 end
-if exist( 'modelpathes','var' )  &&  size(modelpathes,1) < fc
+if exist( 'modelpathes','var' )  &&  size(modelpathes,2) < fc
     continue;
 end
 if exist( 'modelpathes_svm','var' )  &&  ...

@@ -14,7 +14,7 @@ end
 
 for fc = 1 : numel( featureCreators )
     
-if exist( 'modelpathes','var' )  && size(modelpathes,1) >= fc  ...
+if exist( 'modelpathes','var' )  && size(modelpathes,2) >= fc  ...
         &&  ~isempty( modelpathes{fc} ), continue; end
 
 pipe = TwoEarsIdTrainPipe();

@@ -24,10 +24,10 @@ else
 end
 
 if exist( 'modelpathes','var' )  &&  ...
-        size(modelpathes,1) >= fc  &&  isempty( modelpathes{fc} )
+        size(modelpathes,2) >= fc  &&  isempty( modelpathes{fc} )
     continue;
 end
-if exist( 'modelpathes','var' )  &&  size(modelpathes,1) < fc
+if exist( 'modelpathes','var' )  &&  size(modelpathes,2) < fc
     continue;
 end
 if exist( 'modelpathes_test','var' )  &&  ...

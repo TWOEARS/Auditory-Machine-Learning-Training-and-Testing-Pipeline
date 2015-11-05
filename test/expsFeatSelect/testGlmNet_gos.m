@@ -101,8 +101,8 @@ cv_std{ss,fc,aa,aatest,sstest} = testmodel.model.lPerfsStd;
  nCoefs_hws{ss,fc,aa,aatest,sstest}] = testmodel.model.getHighestLambdaWithinStdCVresults();
 lbIdx = find( testmodel.model.model.lambda == lambda_b{ss,fc,aa,aatest,sstest} );
 lhwsIdx = find( testmodel.model.model.lambda == lambda_hws{ss,fc,aa,aatest,sstest} );
-test_performances_b{ii,cc,fc,aa,aatest} = test_performances{ss,fc,aa,aatest,sstest}(lbIdx);
-test_performances_hws{ii,cc,fc,aa,aatest} = test_performances{ss,fc,aa,aatest,sstest}(lhwsIdx);
+test_performances_b{ss,fc,aa,aatest,sstest} = test_performances{ss,fc,aa,aatest,sstest}(lbIdx);
+test_performances_hws{ss,fc,aa,aatest,sstest} = test_performances{ss,fc,aa,aatest,sstest}(lhwsIdx);
 
 save( ['glmnet_gos_' classname '_test.mat'], 'featureCreators', 'azimuths', 'snrs', ...
     'modelpathes_test', 'test_performances', 'cv_performances', 'cv_std',...

@@ -101,6 +101,7 @@ sc(9).addSource( sceneConfig.DiffuseSource( ...
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
+pipe.pipeline.gatherFeaturesProc.setConfDataUseRatio( 0.25, classname );
 modelpathes_test{fc,cc} = pipe.pipeline.run( classes(cc), 0 );
 
 testmodel = load( [modelpathes_test{fc,cc} filesep classes{cc} '.model.mat'] );

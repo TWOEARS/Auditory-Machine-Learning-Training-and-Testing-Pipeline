@@ -23,7 +23,7 @@ if exist( ['glmnet_azms_' classname '_svm.mat'], 'file' )
     load( ['glmnet_azms_' classname '_svm.mat'] );
 end
 
-for ii = 1 : 4
+for ii = 1 : 2
 for fc = 1 : numel( featureCreators )
 for aai = 1 : size( azmIdxs, 2 )
 for ll = 1 : numel( lambdas )

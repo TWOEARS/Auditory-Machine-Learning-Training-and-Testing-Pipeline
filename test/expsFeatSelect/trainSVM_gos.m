@@ -28,8 +28,8 @@ if exist( ['glmnet_gos_' classname '_svm.mat'], 'file' )
     load( ['glmnet_gos_' classname '_svm.mat'] );
 end
 
-for fc = 1 : numel( featureCreators )
-for ssi = 1 : size( snrIdxs, 2 )
+for fc = 1 : 2 %numel( featureCreators )
+for ssi = [1,3,4,2] %1 : size( snrIdxs, 2 )
 for aai = 1 : size( azmIdxs, 2 )
 for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);

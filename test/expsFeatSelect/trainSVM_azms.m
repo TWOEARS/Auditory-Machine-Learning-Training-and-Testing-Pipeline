@@ -30,7 +30,7 @@ for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);
     
-if aai > 4, continue; end; % uncomment to do cross-tests
+if aai > 4, continue; end; 
 
 fprintf( '.\n' );
 
@@ -66,7 +66,7 @@ end
 
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource('azimuth',...
-                                      sceneConfig.ValGen('manual',azimuths{aatest})) );
+                                      sceneConfig.ValGen('manual',azimuths{aa})) );
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = feval( featureCreators{fc}.Name );
@@ -92,7 +92,7 @@ pipe.setupData();
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
-modelpathes_svm{ii,ll,fc,aa,aatest} = pipe.pipeline.run( {classname}, 0 );
+[modelpathes_svm{ii,ll,fc,aa,:}] = deal( pipe.pipeline.run( {classname}, 0 ) );
 
 testmodel = load( [modelpathes_svm{ii,ll,fc,aa,aatest} filesep classname '.model.mat'] );
 

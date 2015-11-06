@@ -38,6 +38,12 @@ aatest = azmIdxs(2,aai);
 ss = snrIdxs(1,ssi);
 sstest = snrIdxs(2,ssi);
     
+if aai > 3  &&  fc > 2, continue; end; % uncomment to do cross-tests
+if ssi > 4  &&  fc > 2, continue; end; % uncomment to do cross-tests
+if aai > 3  &&  ll ~= 2, continue; end; % uncomment to do cross-tests
+if ssi > 4  &&  ll ~= 2, continue; end; % uncomment to do cross-tests
+if ssi > 4 && (ss == 2  ||  sstest == 2), continue; end;
+
 fprintf( '.\n' );
 
 if exist( 'modelpathes_svm','var' )  &&  ...

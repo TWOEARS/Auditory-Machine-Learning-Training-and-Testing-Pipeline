@@ -94,14 +94,15 @@ pipe.trainset = [setsBasePath 'NIGENS_75pTrain_TrainSet_1.flist'];
 pipe.setupData();
 
 sc = sceneConfig.SceneConfiguration();
-sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
-sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aa}{1}) ) );
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aa}{2}), ...
     'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
-    sceneConfig.ValGen( 'manual', snrs{sstest} ));
+    sceneConfig.ValGen( 'manual', snrs{ss} ));
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
-modelpathes_svm{ss,ll,fc,aa,aatest,sstest} = pipe.pipeline.run( {classname}, 0 );
+[modelpathes_svm{ss,ll,fc,aa,1:numel(azimuths),1:numel(snrs)}] = ...
+    deal( pipe.pipeline.run( {classname}, 0 ) );
 
 %testmodel = load( [modelpathes_svm{ss,ll,fc,aa,aatest,sstest} filesep classname '.model.mat'] );
 

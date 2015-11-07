@@ -17,6 +17,8 @@ snrIdxs = [reshape(repmat(1:numel(snrs),numel(snrs),1),1,[]);repmat(1:numel(snrs
 snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snrIdxs(2,:))];
 
 
+for ssi = 1 : size( snrIdxs, 2 )
+for aai = 1 : size( azmIdxs, 2 )
 for cc = 1 : numel( classes )
 classname = classes{cc};
 clear modelpathes_svm;
@@ -30,8 +32,6 @@ if exist( ['glmnet_gos_' classname '_svm1.mat'], 'file' )
     altmat = load( ['glmnet_gos_' classname '_svm1.mat'] );
 end
 for fc = 1 : numel( featureCreators )
-for ssi = 1 : size( snrIdxs, 2 )
-for aai = 1 : size( azmIdxs, 2 )
 for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);
@@ -122,6 +122,8 @@ save( ['glmnet_gos_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimu
     'modelpathes_svm', 'test_performances' );
 
 end
+save( ['glmnet_gos_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
+    'modelpathes_svm', 'test_performances' );
 end
 end
 end

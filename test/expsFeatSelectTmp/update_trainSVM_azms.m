@@ -12,6 +12,9 @@ azmIdxs = [reshape(repmat(1:numel(azimuths),numel(azimuths),1),1,[]);repmat(1:nu
 azmIdxs = [azmIdxs(:,azmIdxs(1,:) == azmIdxs(2,:)),azmIdxs(:,azmIdxs(1,:) ~= azmIdxs(2,:))];
 
 
+for ii = 1 : 4
+for aai = 1 : size( azmIdxs, 2 )
+
 for cc = 1 : numel( classes )
 classname = classes{cc};
 clear modelpathes_svm;
@@ -26,8 +29,6 @@ if exist( ['glmnet_azms_' classname '_svm1.mat'], 'file' )
     altmat = load( ['glmnet_azms_' classname '_svm1.mat'] );
 end
 
-for ii = 1 : 4
-for aai = 1 : size( azmIdxs, 2 )
 for fc = 1 : numel( featureCreators )
 for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
@@ -112,6 +113,8 @@ test_performances{ii,ll,fc,aa,aatest} = [testmodel.testPerfresults.performance];
 save( ['glmnet_azms_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
     'modelpathes_svm', 'test_performances' );
 end
+save( ['glmnet_azms_' classname '_svm.mat'], 'lambdas', 'featureCreators', 'azimuths', ...
+    'modelpathes_svm', 'test_performances' );
 end
 end
 end

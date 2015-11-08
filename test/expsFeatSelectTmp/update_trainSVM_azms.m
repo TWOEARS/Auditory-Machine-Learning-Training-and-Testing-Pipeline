@@ -27,8 +27,8 @@ if exist( ['glmnet_azms_' classname '_svm1.mat'], 'file' )
 end
 
 for ii = 1 : 4
-for fc = 1 : numel( featureCreators )
 for aai = 1 : size( azmIdxs, 2 )
+for fc = 1 : numel( featureCreators )
 for ll = 1 : numel( lambdas )
 aa = azmIdxs(1,aai);
 aatest = azmIdxs(2,aai);
@@ -102,6 +102,7 @@ pipe.setupData();
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
+pipe.pipeline.gatherFeaturesProc.setConfDataUseRatio( 0.5, classname );
 modelpath_test = pipe.pipeline.run( {classname}, 0 );
 
 testmodel = load( [modelpath_test filesep classname '.model.mat'] );

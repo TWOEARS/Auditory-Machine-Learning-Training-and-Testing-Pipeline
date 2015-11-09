@@ -1,9 +1,11 @@
-function update_trainSVM_gos()
+function update_trainSVM_gos(ccc)
+
+classes = {'alarm','baby','femaleSpeech','fire'};
+if nargin < 1, ccc = 1 : numel( classes ); end
 
 addpath( '../..' );
 startIdentificationTraining();
 
-classes = {'alarm','baby','femaleSpeech','fire'};
 featureCreators = {?featureCreators.FeatureSet1Blockmean2Ch,...
                    ?featureCreators.FeatureSet1Blockmean,...
                    ?featureCreators.FeatureSet1VarBlocks,...
@@ -19,7 +21,7 @@ snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snr
 
 for ssi = 1 : size( snrIdxs, 2 )
 for aai = 1 : size( azmIdxs, 2 )
-for cc = 1 : numel( classes )
+for cc = 1 : ccc
 classname = classes{cc};
 clear modelpathes_svm;
 clear test_performances;

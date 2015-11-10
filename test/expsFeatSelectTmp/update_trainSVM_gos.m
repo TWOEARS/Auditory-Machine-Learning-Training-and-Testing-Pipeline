@@ -21,7 +21,7 @@ snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snr
 
 for ssi = 1 : size( snrIdxs, 2 )
 for aai = 1 : size( azmIdxs, 2 )
-for cc = 1 : ccc
+for cc = ccc
 classname = classes{cc};
 clear modelpathes_svm;
 clear test_performances;

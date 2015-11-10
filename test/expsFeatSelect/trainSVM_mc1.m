@@ -18,7 +18,7 @@ if exist( ['glmnet_mc1_' classname '_svm.mat'], 'file' )
     load( ['glmnet_mc1_' classname '_svm.mat'] );
 end
 
-for ll = [2, 3]
+for ll = 1 : 3
 for fc = 1 : numel( featureCreators )
     
 fprintf( '.\n' );

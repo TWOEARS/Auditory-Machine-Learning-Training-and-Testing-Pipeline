@@ -183,8 +183,7 @@ lhwsIdx = find( testmodel.model.model.lambda == lambda_hws{fc,cc,scii} );
 test_performances_b{fc,cc,scii} = test_performances{fc,cc,scii}(lbIdx);
 test_performances_hws{fc,cc,scii} = test_performances{fc,cc,scii}(lhwsIdx);
 [lambdas{fc,cc,scii},...
- nCoefs{fc,cc,scii},...
- cumImpacts{fc,cc,scii}] = testmodel.model.getLambdasAndNCoefs();
+ nCoefs{fc,cc,scii}] = testmodel.model.getLambdasAndNCoefs();
 trainTime{fc,cc,scii} = testmodel.trainTime;
 
 save( 'glmnet_mc1_test_sc.mat', 'classes', 'featureCreators', 'sc', ...

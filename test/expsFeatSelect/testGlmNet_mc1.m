@@ -131,8 +131,7 @@ lhwsIdx = find( testmodel.model.model.lambda == lambda_hws{fc,cc} );
 test_performances_b{fc,cc} = test_performances{fc,cc}(lbIdx);
 test_performances_hws{fc,cc} = test_performances{fc,cc}(lhwsIdx);
 [lambdas{fc,cc},...
- nCoefs{fc,cc},...
- cumImpacts{fc,cc}] = testmodel.model.getLambdasAndNCoefs();
+ nCoefs{fc,cc}] = testmodel.model.getLambdasAndNCoefs();
 trainTime{fc,cc} = testmodel.trainTime;
 
 save( 'glmnet_mc1_test.mat', 'classes', 'featureCreators', ...

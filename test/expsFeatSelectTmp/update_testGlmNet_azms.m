@@ -87,8 +87,7 @@ lhwsIdx = find( testmodel.model.model.lambda == lambda_hws{ii,cc,fc,aa,aatest} )
 test_performances_b{ii,cc,fc,aa,aatest} = test_performances{ii,cc,fc,aa,aatest}(lbIdx);
 test_performances_hws{ii,cc,fc,aa,aatest} = test_performances{ii,cc,fc,aa,aatest}(lhwsIdx);
 [lambdas{ii,cc,fc,aa,aatest},...
- nCoefs{ii,cc,fc,aa,aatest},...
- cumImpacts{ii,cc,fc,aa,aatest}] = testmodel.model.getLambdasAndNCoefs();
+ nCoefs{ii,cc,fc,aa,aatest}] = testmodel.model.getLambdasAndNCoefs();
 trainTime{ii,cc,fc,aa,aatest} = testmodel.trainTime;
 
 end

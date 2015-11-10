@@ -80,14 +80,12 @@ classdef GlmNetModel < models.DataScalingModel
         end
         %% -----------------------------------------------------------------
 
-        function [lambdas,nCoefs,cumImpacts] = getLambdasAndNCoefs( obj )
+        function [lambdas,nCoefs] = getLambdasAndNCoefs( obj )
             lambdas = obj.model.lambda;
             nCoefs = zeros( size( lambdas ) );
-            cumImpacts = zeros( size( lambdas ) );
             for ii = 1 : numel( lambdas )
                 impact = obj.getCoefImpacts( lambdas(ii) );
                 nCoefs(ii) = sum( impact > 0 );
-                cumImpacts(ii) = sum( impact );
             end
         end
         %% -----------------------------------------------------------------

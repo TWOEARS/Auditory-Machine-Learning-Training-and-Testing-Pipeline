@@ -114,6 +114,7 @@ sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azi
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
+pipe.pipeline.gatherFeaturesProc.setConfDataUseRatio( 0.5, classname );
 modelpath_test = pipe.pipeline.run( {classname}, 0 );
 
 testmodel = load( [modelpath_test filesep classname '.model.mat'] );

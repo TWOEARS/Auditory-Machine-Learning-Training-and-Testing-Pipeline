@@ -17,8 +17,26 @@ classdef (Abstract) Base < handle
             end
             [y,score] = obj.applyModelMasked( x );
         end
-        % -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
+        function v = verbose( obj, newV )
+            persistent verb;    % faking a static property
+            if isempty( verb ), verb = false; end
+            if nargin > 1
+                if islogical( newV )
+                    verb = newV;
+                elseif ischar( newV ) && any( strcmpi( newV, {'true','on','set'} ) )
+                    verb = true;
+                elseif ischar( newV ) && any( strcmpi( newV, {'false','off','unset'} ) )
+                    verb = false;
+                else
+                    error( 'wrong datatype for newV.' );
+                end
+            end
+            v = verb;
+        end
+        %% -------------------------------------------------------------------------------
+
     end
 
     %% --------------------------------------------------------------------
@@ -57,6 +75,7 @@ classdef (Abstract) Base < handle
                 end
             end
             if isempty( x ), error( 'There is no data to test the model.' ); end
+            verboseFprintf( model, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )
                 perf(ii) = perfMeasure( yTrue, yModel(:,ii) );

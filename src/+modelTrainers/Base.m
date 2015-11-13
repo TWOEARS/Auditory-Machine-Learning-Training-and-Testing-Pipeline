@@ -67,6 +67,7 @@ classdef (Abstract) Base < handle
         function performance = getPerformance( obj )
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
+            model.verbose( obj.verbose );
             performance = models.Base.getPerformance( ...
                 model, obj.testSet, obj.positiveClass, obj.performanceMeasure, ...
                 obj.maxDataSize, true );

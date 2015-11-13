@@ -187,7 +187,9 @@ classdef IdentificationTrainingPipeline < handle
                 trainTime = toc;
                 if ~isempty( obj.testSet )
                     fprintf( '\n==  Testing model on testSet... \n\n' );
+                    tic;
                     testPerfresults = obj.trainer.getPerformance();
+                    testTime = toc;
                     if numel( testPerfresults ) == 1
                         fprintf( ['\n\n===================================\n',...
                             '##   "%s" Performance: %f\n',...
@@ -207,7 +209,7 @@ classdef IdentificationTrainingPipeline < handle
                 modelFilename = [modelName{1} modelFileExt];
                 save( modelFilename, ...
                       'model', 'featureCreator', ...
-                      'testPerfresults', 'trainTime', 'lastDataProcParams' );
+                      'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );
             end;
         end
         

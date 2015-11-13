@@ -50,35 +50,73 @@ end
 testmodel = load( [modelpathes{ss,fc,aa} filesep classname '.model.mat'] );
 trainTime{cc,fc,ss,aa} = testmodel.trainTime;
 
-% pipe = TwoEarsIdTrainPipe();
-% pipe.featureCreator = feval( featureCreators{fc}.Name );
-% pipe.modelCreator = ...
-%     modelTrainers.LoadModelNoopTrainer( ...
-%         @(cn)(fullfile( modelpathes{ss,fc,aa}, [cn '.model.mat'] )), ...
-%         'performanceMeasure', @performanceMeasures.BAC2, ...
-%         'modelParams', struct('lambda', []) );
-% pipe.modelCreator.verbose( 'on' );
-% 
-% setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
-% pipe.trainset = [];
-% pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
-% pipe.setupData();
-% 
-% sc = sceneConfig.SceneConfiguration();
-% sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
-% sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
-%     'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
-%     sceneConfig.ValGen( 'manual', snrs{sstest} ));
-% pipe.setSceneConfig( sc ); 
-% 
-% pipe.init();
-% modelpathes_test{ss,fc,aa,aatest,sstest} = pipe.pipeline.run( {classname}, 0 );
+if aai > 2, continue; end
+if ssi < 2 || ssi > 3, continue; end
 
+[~,~,~,fs1lambda] = testmodel.model.getBestLambdaCVresults();
+[~,~,~,fs3lambda] = testmodel.model.getHighestLambdaWithinStdCVresults();
 
-save( ['glmnet_gos_times.mat'], 'classes', 'featureCreators', 'azimuths', 'snrs', ...
-                                'trainTime'  );
+pipe = TwoEarsIdTrainPipe();
+pipe.featureCreator = feval( featureCreators{fc}.Name );
+pipe.modelCreator = ...
+    modelTrainers.LoadModelNoopTrainer( ...
+        @(cn)(fullfile( modelpathes{ss,fc,aa}, [cn '.model.mat'] )), ...
+        'performanceMeasure', @performanceMeasures.BAC2, ...
+        'modelParams', struct('lambda', fs1lambda) );
+pipe.modelCreator.verbose( 'on' );
+
+setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
+pipe.trainset = [];
+pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
+pipe.setupData();
+
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
+    sceneConfig.ValGen( 'manual', snrs{sstest} ));
+pipe.setSceneConfig( sc ); 
+
+pipe.init();
+modelpath_test = pipe.pipeline.run( {classname}, 0 );
+
+testmodel = load( [modelpath_test filesep classes{cc} '.model.mat'] );
+testTime{1,cc,fc,ss,aa} = testmodel.testTime;
+
+rmdir( modelpath_test, 's' );
+
+pipe = TwoEarsIdTrainPipe();
+pipe.featureCreator = feval( featureCreators{fc}.Name );
+pipe.modelCreator = ...
+    modelTrainers.LoadModelNoopTrainer( ...
+        @(cn)(fullfile( modelpathes{ss,fc,aa}, [cn '.model.mat'] )), ...
+        'performanceMeasure', @performanceMeasures.BAC2, ...
+        'modelParams', struct('lambda', fs3lambda) );
+pipe.modelCreator.verbose( 'on' );
+
+setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
+pipe.trainset = [];
+pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
+pipe.setupData();
+
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
+    sceneConfig.ValGen( 'manual', snrs{sstest} ));
+pipe.setSceneConfig( sc ); 
+
+pipe.init();
+modelpath_test = pipe.pipeline.run( {classname}, 0 );
+
+testmodel = load( [modelpath_test filesep classes{cc} '.model.mat'] );
+testTime{2,cc,fc,ss,aa} = testmodel.testTime;
+
+rmdir( modelpath_test, 's' );
 
 end
+save( ['glmnet_gos_times.mat'], 'classes', 'featureCreators', 'azimuths', 'snrs', ...
+                                'trainTime', 'testTime'  );
 end
 end
 end

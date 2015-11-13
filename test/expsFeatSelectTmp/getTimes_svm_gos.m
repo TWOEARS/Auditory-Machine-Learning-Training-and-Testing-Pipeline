@@ -57,40 +57,48 @@ end
 testmodel = load( [modelpathes_svm{ss,ll,fc,aa,aatest,sstest} filesep classname '.model.mat'] );
 trainTime{cc,ll,fc,ss,aa} = testmodel.trainTime;
 
-% m = load( [modelpathes_svm{ss,ll,fc,aa,aatest,sstest} filesep classname '.model.mat'] );
-% fmask = m.model.featureMask;
-% 
-% pipe = TwoEarsIdTrainPipe();
-% pipe.featureCreator = feval( featureCreators{fc}.Name );
-% pipe.modelCreator = ...
-%     modelTrainers.LoadModelNoopTrainer( ...
-%         @(cn)(fullfile( modelpathes_svm{ss,ll,fc,aa,aatest,sstest}, [cn '.model.mat'] )), ...
-%         'performanceMeasure', @performanceMeasures.BAC2 );
-% modelTrainers.Base.featureMask( true, fmask );
-% pipe.modelCreator.verbose( 'on' );
-% 
-% setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
-% %pipe.trainset = [setsBasePath 'NIGENS_75pTrain_TrainSet_1.flist'];
-% pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
-% pipe.setupData();
-% 
-% sc = sceneConfig.SceneConfiguration();
-% sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
-% sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
-%     'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
-%     sceneConfig.ValGen( 'manual', snrs{sstest} ));
-% pipe.setSceneConfig( sc ); 
-% 
-% pipe.init();
-% pipe.pipeline.gatherFeaturesProc.setConfDataUseRatio( 0.5, classname );
-% modelpath_test = pipe.pipeline.run( {classname}, 0 );
+if aai > 2, continue; end
+if ssi < 2 || ssi > 3, continue; end
 
+m = load( [modelpathes_svm{ss,ll,fc,aa,aatest,sstest} filesep classname '.model.mat'] );
+fmask = m.model.featureMask;
+
+pipe = TwoEarsIdTrainPipe();
+pipe.featureCreator = feval( featureCreators{fc}.Name );
+pipe.modelCreator = ...
+    modelTrainers.LoadModelNoopTrainer( ...
+        @(cn)(fullfile( modelpathes_svm{ss,ll,fc,aa,aatest,sstest}, [cn '.model.mat'] )), ...
+        'performanceMeasure', @performanceMeasures.BAC2 );
+modelTrainers.Base.featureMask( true, fmask );
+pipe.modelCreator.verbose( 'on' );
+
+setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
+pipe.trainset = [];
+pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_1.flist'];
+pipe.setupData();
+
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{1}) ) );
+sc.addSource( sceneConfig.PointSource( 'azimuth',sceneConfig.ValGen('manual',azimuths{aatest}{2}), ...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')) ),...
+    sceneConfig.ValGen( 'manual', snrs{sstest} ));
+pipe.setSceneConfig( sc ); 
+
+pipe.init();
+modelpath_test = pipe.pipeline.run( {classname}, 0 );
+
+testmodel = load( [modelpath_test filesep classes{cc} '.model.mat'] );
+testTime{ii,cc,fc,aa} = testmodel.testTime;
+
+rmdir( modelpath_test, 's' );
 
 save( ['svm_gos_times.mat'], 'classes','lambdas', 'featureCreators', 'azimuths', ...
-                             'trainTime' );
+                             'trainTime', 'testTime' );
 
 end
 end
+save( ['svm_gos_times.mat'], 'classes','lambdas', 'featureCreators', 'azimuths', ...
+                             'trainTime', 'testTime' );
 end
 end
 end

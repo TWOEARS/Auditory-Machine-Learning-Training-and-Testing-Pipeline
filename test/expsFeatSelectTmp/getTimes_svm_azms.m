@@ -52,37 +52,44 @@ end
 testmodel = load( [modelpathes_svm{ii,ll,fc,aa,aatest} filesep classname '.model.mat'] );
 trainTime{ii,cc,ll,fc,aa} = testmodel.trainTime;
 
-% m = load( [modelpathes_svm{ii,ll,fc,aa,aatest} filesep classname '.model.mat'] );
-% fmask = m.model.featureMask;
-% 
-% sc = sceneConfig.SceneConfiguration();
-% sc.addSource( sceneConfig.PointSource('azimuth',...
-%                                       sceneConfig.ValGen('manual',azimuths{aatest})) );
-% 
-% pipe = TwoEarsIdTrainPipe();
-% pipe.featureCreator = feval( featureCreators{fc}.Name );
-% pipe.modelCreator = ...
-%     modelTrainers.LoadModelNoopTrainer( ...
-%         @(cn)(fullfile( modelpathes_svm{ii,ll,fc,aa,aatest}, [cn '.model.mat'] )), ...
-%         'performanceMeasure', @performanceMeasures.BAC2 );
-% modelTrainers.Base.featureMask( true, fmask );
-% pipe.modelCreator.verbose( 'on' );
-% 
-% setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
-% pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_' num2str(ii) '.flist'];
-% pipe.setupData();
-% 
-% pipe.setSceneConfig( sc ); 
-% 
-% pipe.init();
-% pipe.pipeline.gatherFeaturesProc.setConfDataUseRatio( 0.5, classname );
-% modelpath_test = pipe.pipeline.run( {classname}, 0 );
-% 
+if ii > 1, continue; end
+
+m = load( [modelpathes_svm{ii,ll,fc,aa,aatest} filesep classname '.model.mat'] );
+fmask = m.model.featureMask;
+
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.PointSource('azimuth',...
+                                      sceneConfig.ValGen('manual',azimuths{aatest})) );
+
+pipe = TwoEarsIdTrainPipe();
+pipe.featureCreator = feval( featureCreators{fc}.Name );
+pipe.modelCreator = ...
+    modelTrainers.LoadModelNoopTrainer( ...
+        @(cn)(fullfile( modelpathes_svm{ii,ll,fc,aa,aatest}, [cn '.model.mat'] )), ...
+        'performanceMeasure', @performanceMeasures.BAC2 );
+modelTrainers.Base.featureMask( true, fmask );
+pipe.modelCreator.verbose( 'on' );
+
+setsBasePath = 'learned_models/IdentityKS/trainTestSets/';
+pipe.testset = [setsBasePath 'NIGENS_75pTrain_TestSet_' num2str(ii) '.flist'];
+pipe.setupData();
+
+pipe.setSceneConfig( sc ); 
+
+pipe.init();
+modelpath_test = pipe.pipeline.run( {classname}, 0 );
+
+testmodel = load( [modelpath_test filesep classname '.model.mat'] );
+testTime{ii,cc,ll,fc,aa} = testmodel.testTime;
+
+rmdir( modelpath_test, 's' );
 
 save( ['svm_azms_times.mat'], 'classes', 'lambdas', 'featureCreators', 'azimuths', ...
-                              'trainTime' );
+                              'trainTime', 'testTime' );
 end
 end
+save( ['svm_azms_times.mat'], 'classes', 'lambdas', 'featureCreators', 'azimuths', ...
+                              'trainTime', 'testTime' );
 end
 end
 end

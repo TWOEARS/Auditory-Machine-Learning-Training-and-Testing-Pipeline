@@ -18,7 +18,7 @@ snrIdxs = [reshape(repmat(1:numel(snrs),numel(snrs),1),1,[]);repmat(1:numel(snrs
 snrIdxs = [snrIdxs(:,snrIdxs(1,:) == snrIdxs(2,:)),snrIdxs(:,snrIdxs(1,:) ~= snrIdxs(2,:))];
 
 
-for cc = ccc
+for cc = 1 : numel( classes )
 classname = classes{cc};
 clear modelpathes_svm;
 if exist( ['glmnet_gos_' classname '_svm.mat'], 'file' )

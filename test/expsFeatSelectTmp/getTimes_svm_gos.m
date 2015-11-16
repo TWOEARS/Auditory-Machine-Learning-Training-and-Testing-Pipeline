@@ -89,7 +89,7 @@ pipe.init();
 modelpath_test = pipe.pipeline.run( {classname}, 0 );
 
 testmodel = load( [modelpath_test filesep classes{cc} '.model.mat'] );
-testTime{ii,cc,fc,aa} = testmodel.testTime;
+testTime{cc,ll,fc,ss,aa} = testmodel.testTime;
 
 rmdir( modelpath_test, 's' );
 

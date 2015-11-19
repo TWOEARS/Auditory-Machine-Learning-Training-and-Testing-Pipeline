@@ -1,6 +1,6 @@
 function trainAndTestPointOvrlModel( classname )
 
-if nargin < 1, classname = 'speech'; end;
+if nargin < 1, classname = 'baby'; end;
 
 %startTwoEars( '../IdentificationTraining.xml' );
 addpath( '..' );
@@ -14,13 +14,13 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
+pipe.trainset = 'testFlists/NIGENS_trainSet_miniMini.flist';
 pipe.setupData();
 
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource() );
 sc.addSource( sceneConfig.PointSource( ...
-    'data',sceneConfig.FileListValGen(pipe.pipeline.trainSet('keys',:,'wavFileName')) ),...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.trainSet('general',:,'wavFileName')) ),...
     sceneConfig.ValGen( 'manual', 10 ));
 pipe.setSceneConfig( [sc] ); 
 
@@ -33,17 +33,17 @@ pipe.modelCreator = ...
     modelTrainers.LoadModelNoopTrainer( ...
         @(cn)(fullfile( modelPath, [cn '.model.mat'] )), ...
         'performanceMeasure', @performanceMeasures.BAC2,...
-        'maxDataSize', 15 ...
+        'maxDataSize', inf ...
         );
 
 pipe.trainset = [];
-pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TestSet.flist';
+pipe.testset = 'testFlists/NIGENS_testSet_miniMini.flist';
 pipe.setupData();
 
 sc = sceneConfig.SceneConfiguration(); % clean
 sc.addSource( sceneConfig.PointSource() );
 sc.addSource( sceneConfig.PointSource( ...
-    'data',sceneConfig.FileListValGen(pipe.pipeline.testSet('keys',:,'wavFileName')) ),...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.testSet('general',:,'wavFileName')) ),...
     sceneConfig.ValGen( 'manual', 10 ));
 pipe.setSceneConfig( [sc] ); 
 

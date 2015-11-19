@@ -62,6 +62,9 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                     srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
                 elseif isa( sceneConf.sources(1).data, 'sceneConfig.FileListValGen' )
                     wavFileName = sceneConf.sources(1).data.value;
+                    if isempty( wavFileName )
+                        error( 'Empty wav file name through use of FileListValGen!' );
+                    end
                     srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
                 else
                     wavFileName = ''; % don't save

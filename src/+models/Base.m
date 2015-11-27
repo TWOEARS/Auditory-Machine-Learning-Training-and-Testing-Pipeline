@@ -15,7 +15,7 @@ classdef (Abstract) Base < handle
                 fmask = obj.featureMask( 1 : min( p_feat, p_mask ) );
                 x = x(:,fmask);
             end
-            verboseFprintf( model, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
+            verboseFprintf( obj, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             [y,score] = obj.applyModelMasked( x );
         end
         %% -------------------------------------------------------------------------------

@@ -15,6 +15,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
         hpsSearchBudget;
         hpsCvFolds;
         hpsMethod;
+        abortPerfMin = 0;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -76,7 +77,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
                     'maxDataSize', obj.hpsMaxDataSize, ...
                     hps.params(ii), ...
                     obj.hpsCoreTrainerParams{:} );
-                obj.hpsCVtrainer.abortPerfMin = max( hps.perfs );
+                obj.hpsCVtrainer.abortPerfMin = max( max( hps.perfs ), obj.abortPerfMin );
                 obj.hpsCVtrainer.run();
                 hps.perfs(ii) = obj.hpsCVtrainer.getPerformance().avg;
             end
@@ -117,7 +118,9 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
     methods (Access = protected)
         
         function model = giveTrainedModel( obj )
-            model = obj.coreTrainer.getModel();
+            model = models.HPSmodel();
+            model.model = obj.coreTrainer.getModel();
+            model.hpsSet = obj.hpsSets;
         end
         %% -------------------------------------------------------------------------------
         
@@ -155,6 +158,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             refinedHpsTrainer.trainWithBestHps = false;
             refinedHpsTrainer.setParameters( false, ...
                 'hpsRefineStages', obj.hpsRefineStages - 1 );
+            refinedHpsTrainer.abortPerfMin = max( hps.perfs );
         end
         %% -------------------------------------------------------------------------------
         

@@ -4,14 +4,15 @@ function trainSVMrbf_mc1( classname )
 addpath( '../..' );
 startIdentificationTraining();
 
+classes = {'alarm','baby','femaleSpeech','fire'};
 featureCreators = {?featureCreators.FeatureSet1Blockmean,...
                    ?featureCreators.FeatureSet1VarBlocks,...
                    ?featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes};
 lambdas = {'0','b','hws'};
 kernels = [0, 2];
 
-if exist( ['glmnet_mc1_' classname '.mat'], 'file' )
-    load( ['glmnet_mc1_' classname '.mat'] );
+if exist( 'glmnet_mc1_test.mat', 'file' )
+    load( 'glmnet_mc1_test.mat' );
 else
     return;
 end
@@ -19,14 +20,15 @@ if exist( ['glmnet_mc1_' classname '_svm.mat'], 'file' )
     load( ['glmnet_mc1_' classname '_svm.mat'] );
 end
 
+cc = find( strcmpi( classes, classname ) );
 for ll = 3 % 1 : 3
 for fc = 1 : numel( featureCreators )
 for kk = 1 : numel( kernels )
     
 fprintf( '.\n' );
 
-if exist( 'modelpathes','var' )  && ( size(modelpathes,2) < fc  ...
-        ||  isempty( modelpathes{fc} ) )
+if exist( 'modelpathes_test','var' )  && ( size(modelpathes_test,1) < fc  ...
+        || size(modelpathes_test,2) < cc ||  isempty( modelpathes_test{fc,cc} ) )
     continue; 
 end
 if exist( 'modelpathes_svm','var' )  &&  ...
@@ -35,7 +37,7 @@ if exist( 'modelpathes_svm','var' )  &&  ...
     continue;
 end
     
-m = load( [modelpathes{fc} filesep classname '.model.mat'] );
+m = load( [modelpathes_test{fc,cc} filesep classname '.model.mat'] );
 fmask = zeros( size( m.featureCreator.description ) );
 switch lambdas{ll}
     case '0'

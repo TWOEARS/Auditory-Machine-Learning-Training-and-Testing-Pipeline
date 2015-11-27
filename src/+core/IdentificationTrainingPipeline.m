@@ -185,6 +185,8 @@ classdef IdentificationTrainingPipeline < handle
                 tic;
                 obj.trainer.run();
                 trainTime = toc;
+                testTime = nan;
+                testPerfresults = [];
                 if ~isempty( obj.testSet )
                     fprintf( '\n==  Testing model on testSet... \n\n' );
                     tic;
@@ -201,8 +203,6 @@ classdef IdentificationTrainingPipeline < handle
                             '===================================\n\n'], ...
                             modelName{1} );
                     end
-                else
-                    testPerfresults = [];
                 end
                 model = obj.trainer.getModel();
                 modelFileExt = ['.model.mat'];

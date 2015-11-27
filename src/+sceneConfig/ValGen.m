@@ -36,6 +36,7 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
                     val = obj.val;
                 case 'set'
                     setLen = length( obj.val );
+                    if setLen == 0, val = []; return; end;
                     randIdx = randi( setLen, 1 );
                     if isa( obj.val, 'cell' )
                         val = obj.val{randIdx};

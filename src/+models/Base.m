@@ -15,6 +15,7 @@ classdef (Abstract) Base < handle
                 fmask = obj.featureMask( 1 : min( p_feat, p_mask ) );
                 x = x(:,fmask);
             end
+            verboseFprintf( obj, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             [y,score] = obj.applyModelMasked( x );
         end
         %% -------------------------------------------------------------------------------
@@ -75,7 +76,6 @@ classdef (Abstract) Base < handle
                 end
             end
             if isempty( x ), error( 'There is no data to test the model.' ); end
-            verboseFprintf( model, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )
                 perf(ii) = perfMeasure( yTrue, yModel(:,ii) );

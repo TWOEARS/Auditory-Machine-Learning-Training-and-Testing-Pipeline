@@ -42,7 +42,7 @@ set( gca, 'xtick',log10(binr),'xticklabel', round(binr) );
 set( gca, 'FontSize', 12, 'YGrid', 'on' );
 xlabel( 'freq (upper end of bin)' );
 ylabel( 'impact' );
-ylim( gca, [0 0.7] );
+ylim( gca, [0 0.4] );
 xlim( gca, [1.85 4.1] );
 rotateXLabels( gca, 60 );
 legend( {'ratemap', 'onsetStrength', 'amplitude modulation'}, 'Location', 'Best' );

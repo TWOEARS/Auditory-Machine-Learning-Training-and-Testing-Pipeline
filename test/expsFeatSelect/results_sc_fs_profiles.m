@@ -14,8 +14,8 @@ load('RESULTS_feature_impact_FeatureSet1Blockmean_fs1.mat');
 impacts_dwn(2,:,2,:) = IMP;
 
 impacts_dwn_std = impacts_dwn;
-impacts_dwn = cellSqueezeFun( @(c)(mean( [c{:}],2 )), impacts_dwn, 2 );
-impacts_dwn_std = cellSqueezeFun( @(c)(std( [c{:}],[],2 )), impacts_dwn_std, 2 );
+impacts_dwn = cellSqueezeFun( @(c)(mean( [c{:}],2 )), impacts_dwn, 2, true );
+impacts_dwn_std = cellSqueezeFun( @(c)(std( [c{:}],[],2 )), impacts_dwn_std, 2, true );
 
 %% grp defs
 
@@ -90,6 +90,41 @@ ylim( [-0.05 0.8] );
 xlim( [-22 22] );
 set( gca, 'XTick', [-20 -10 0 5 10 20], 'XDir', 'reverse', 'FontSize', 14);
 legend( {'Ratemap','Onset Strength','Amplitude Modulation','Spectral'},'Location','Best' );
+
+
+%%
+
+load( '../fnames_fs1varBlocks.mat' );
+
+grpDefs = {{'blLen 0.2'},{'blLen 0.5'},{'blLen 1'}};
+grpImpact = zeros( 7, 3 );
+grpImpactStd = zeros( 7, 3 );
+grpCount = zeros( 7, 3 );
+
+
+for ss = 1 : 7
+impacts = impacts_dwn{3,1,1,ss};
+impactsStd = impacts_dwn_std{3,1,1,ss};
+
+for ii = 1 : numel( grpDefs )
+    grpIdxs = getFeatureIdxs( featureNames, grpDefs{ii} );
+    grpImpact(ss,ii) = sum( impacts(grpIdxs) );
+    grpImpactStd(ss,ii) = mean( impactsStd(grpIdxs) );
+    grpCount(ss,ii) = sum( impacts(grpIdxs) > 0 );
+end
+
+end
+
+figure( 'Name', 'Impact of feature groups over SNRs under DWN' );
+hold all;
+snrs = [inf,20,10,5,0,-10,-20];
+plot( snrs, grpImpact, 'LineWidth', 2, 'Marker', 'x' );
+xlabel( 'SNR in dB', 'FontSize', 14 );
+ylabel( 'impact of feature group', 'FontSize', 14 );
+ylim( [-0.05 0.8] );
+xlim( [-22 22] );
+set( gca, 'XTick', [-20 -10 0 5 10 20], 'XDir', 'reverse', 'FontSize', 14);
+legend( {'0.2s','0.5s','1.0s'},'Location','Best' );
 
 %% frequency profiles (fc1 vs fc3)
 

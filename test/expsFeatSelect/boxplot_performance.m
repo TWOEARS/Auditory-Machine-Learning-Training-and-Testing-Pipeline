@@ -1,9 +1,9 @@
-function boxplot_performance( figTitle, labels, cgroup, varargin )
+function boxplot_performance( figTitle, labels, cgroup, nvPairs, varargin )
 
 figure('Name', figTitle,'defaulttextfontsize', 12, ...
        'position', [0, 0, sqrt(numel( varargin )*40000), 600]);
 
-boxplot_grps( labels, cgroup, varargin{:} );
+boxplot_grps( labels, cgroup, nvPairs, varargin{:} );
 
 ylabel( 'test performance' );
 set( gca,'YGrid','on' );

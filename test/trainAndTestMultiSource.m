@@ -8,6 +8,8 @@ startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
+pipe.featureCreator.blockCreator = labelCreators.distractedBlockCreator( [2 3] );
+pipe.featureCreator.labelCreator = labelCreators.objectTypeLabeler( 'binary', 1 );
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
     'cvFolds', 4, ...
@@ -55,12 +57,14 @@ pipe.trainset = [];
 pipe.testset = 'testFlists/NIGENS_testSet_miniMini.flist';
 pipe.setupData();
 
-sc = sceneConfig.SceneConfiguration(); % clean
-sc.addSource( sceneConfig.PointSource() );
-sc.addSource( sceneConfig.PointSource( ...
-    'data',sceneConfig.FileListValGen(pipe.pipeline.testSet('general',:,'wavFileName')) ),...
-    sceneConfig.ValGen( 'manual', 10 ));
-pipe.setSceneConfig( [sc] ); 
+% TODO adapt
+%
+% sc = sceneConfig.SceneConfiguration(); % clean
+% sc.addSource( sceneConfig.PointSource() );
+% sc.addSource( sceneConfig.PointSource( ...
+%     'data',sceneConfig.FileListValGen(pipe.pipeline.testSet('general',:,'wavFileName')) ),...
+%     sceneConfig.ValGen( 'manual', 10 ));
+% pipe.setSceneConfig( [sc] ); 
 
 pipe.init();
 modelPath = pipe.pipeline.run( {classname}, 0 );

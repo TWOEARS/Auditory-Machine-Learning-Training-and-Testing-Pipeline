@@ -8,8 +8,8 @@ startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
-pipe.featureCreator.blockCreator = labelCreators.distractedBlockCreator( [2 3] );
-pipe.featureCreator.labelCreator = labelCreators.objectTypeLabeler( 'binary', 1 );
+pipe.blockCreator = blockCreators.DistractedBlockCreator( [2 3] );
+pipe.blockCreator.labelCreator = blockCreators.ObjectTypeLabeler( 'binary', 1 );
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
     'cvFolds', 4, ...

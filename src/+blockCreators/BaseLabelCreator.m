@@ -1,4 +1,4 @@
-classdef Base < core.IdProcInterface
+classdef BaseLabelCreator < core.IdProcInterface
 
     %% --------------------------------------------------------------------
     properties %(SetAccess = private)
@@ -25,7 +25,7 @@ classdef Base < core.IdProcInterface
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
+        function obj = BaseLabelCreator( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
             obj = obj@core.IdProcInterface();
             obj.blockSize_s = blockSize_s;
             obj.shiftSize_s = shiftsize_s;

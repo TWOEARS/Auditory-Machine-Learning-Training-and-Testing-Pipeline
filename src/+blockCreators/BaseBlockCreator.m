@@ -1,31 +1,26 @@
-classdef Base < core.IdProcInterface
+classdef BaseBlockCreator < core.IdProcInterface
 
     %% --------------------------------------------------------------------
     properties %(SetAccess = private)
         shiftSize_s;
         minBlockToEventRatio;
-        x;
         y;
         blockSize_s;
         labelBlockSize_s;
-        afeData;
-        description;
-        descriptionBuilt = false;
-        blockCreator;
         labelCreator;
     end
     
     %% --------------------------------------------------------------------
     methods (Abstract)
-        afeRequests = getAFErequests( obj )
         outputDeps = getFeatureInternOutputDependencies( obj )
-        x = constructVector( obj )
+        [afeDataBlocks, streamTimes] = cutInBlocks( obj, afeDataStream )
+        afeDataBlocks = chooseBlocks( obj, afeDataBlocks )
     end
 
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
+        function obj = BaseBlockCreator( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
             obj = obj@core.IdProcInterface();
             obj.blockSize_s = blockSize_s;
             obj.shiftSize_s = shiftsize_s;

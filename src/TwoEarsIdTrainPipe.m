@@ -2,6 +2,7 @@ classdef TwoEarsIdTrainPipe < handle
 
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = public)
+        blockCreator = [];
         featureCreator = [];
         modelCreator = [];
         trainset = [];
@@ -61,9 +62,14 @@ classdef TwoEarsIdTrainPipe < handle
         
         function init( obj )
             obj.setupData( true );
+            if isempty( obj.blockCreator )
+                obj.blockCreator = blockCreators.EasyBlockCreator();
+                obj.blockCreator.labelCreator = blockCreators.ObjectTypeLabeler( 'binary', 1 );
+            end
             if isempty( obj.featureCreator )
                 obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
             end
+            obj.pipeline.blockCreator = obj.blockCreator;
             obj.pipeline.featureCreator = obj.featureCreator;
             obj.pipeline.resetDataProcs();
             obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );

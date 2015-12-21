@@ -13,6 +13,7 @@ classdef IdentificationTrainingPipeline < handle
     
     %% --------------------------------------------------------------------
     properties 
+        blockCreator;
         featureCreator;
         verbose = true;
     end

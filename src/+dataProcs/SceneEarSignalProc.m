@@ -53,32 +53,48 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         %% ----------------------------------------------------------------
         
         function makeEarsignalsAndLabels( obj, wavFileName )
-            sc = obj.sceneConfig.instantiate();
             obj.onOffsOut = [];
-            for ii = 1 : numel( sc.sources )
-                sceneConf = sc.getSingleConfig(ii);
-                if ii == 1
-                    sceneConf.sources(1).data = sceneConfig.FileListValGen( wavFileName );
-                    srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
-                elseif isa( sceneConf.sources(1).data, 'sceneConfig.FileListValGen' )
-                    wavFileName = sceneConf.sources(1).data.value;
-                    if isempty( wavFileName )
-                        error( 'Empty wav file name through use of FileListValGen!' );
+            targetSignalLen = 1;
+            splitEarSignals = cell( numel( obj.sceneConfig.sources ), 1 );
+            srcClass = cell( numel( obj.sceneConfig.sources ), 1 );
+            for ii = 1 : numel( obj.sceneConfig.sources )
+                sc = obj.sceneConfig.getSingleConfig(ii);
+                iiSignalLen = 0;
+                while iiSignalLen < targetSignalLen - 0.01
+                    scInst = sc.instantiate();
+                    if ii == 1
+                        scInst.sources(1).data = sceneConfig.FileListValGen( wavFileName );
+                        srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
+                    elseif isa( scInst.sources(1).data, 'sceneConfig.FileListValGen' )
+                        wavFileName = scInst.sources(1).data.value;
+                        if isempty( wavFileName )
+                            error( 'Empty wav file name through use of FileListValGen!' );
+                        end
+                        srcClassii = IdEvalFrame.readEventClass( wavFileName );
+                        if ~isempty( srcClass{ii} ) && ~strcmp( srcClassii, srcClass{ii} )
+                            error('Different classes used in looped distractor');
+                        end
+                        srcClass{ii} = srcClassii;
+                    else
+                        wavFileName = ''; % don't save
+                        srcClass{ii} = '';
                     end
-                    srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
-                else
-                    wavFileName = ''; % don't save
-                    srcClass{ii} = '';
-                end
-                obj.binauralSim.setSceneConfig( sceneConf );
-                splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
-                splitEarSignals{ii} = splitOut.earSout;
-                if strcmpi( srcClass{ii}, srcClass{1} )
-                    maxLen = length( splitEarSignals{1} ) / obj.getDataFs();
-                    splitOnOffs = splitOut.onOffsOut;
-                    splitOnOffs( splitOnOffs(:,1) >= maxLen, : ) = [];
-                    splitOnOffs( splitOnOffs > maxLen ) = maxLen;
-                    obj.onOffsOut = sortAndMergeOnOffs( [obj.onOffsOut; splitOnOffs] );
+                    obj.binauralSim.setSceneConfig( scInst );
+                    splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
+                    splitEarSignals{ii} = [splitEarSignals{ii}; splitOut.earSout];
+                    targetSignalLen = length( splitEarSignals{1} ) / obj.getDataFs();
+                    if ii > 1 && obj.sceneConfig.loop(ii)
+                        iiSignalLen = length( splitEarSignals{ii} ) / obj.getDataFs();
+                    else
+                        iiSignalLen = targetSignalLen;
+                    end
+                    if strcmpi( srcClass{ii}, srcClass{1} )
+                        maxLen = length( splitEarSignals{1} ) / obj.getDataFs();
+                        splitOnOffs = splitOut.onOffsOut;
+                        splitOnOffs( splitOnOffs(:,1) >= maxLen, : ) = [];
+                        splitOnOffs( splitOnOffs > maxLen ) = maxLen;
+                        obj.onOffsOut = sortAndMergeOnOffs( [obj.onOffsOut; splitOnOffs] );
+                    end
                 end
                 fprintf( ':' );
             end
@@ -89,7 +105,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
                 ovrlSignal = splitEarSignals{ii};
                 ovrlSignal = obj.adjustSNR( ...
-                    splitEarSignals{1}, onOffs_samples, ovrlSignal, sc.SNRs(ii).value );
+                    splitEarSignals{1}, onOffs_samples, ovrlSignal, obj.sceneConfig.SNRs(ii).value );
                 obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) = ...
                     obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) ...
                     + ovrlSignal(1:min( length( obj.earSout ), length( ovrlSignal ) ),:);
@@ -175,8 +191,8 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             nFrames = numel(energy);
             
             % ************************  DETECT VOICE ACTIVITY  ***********************
-            % Set maximum to 0 dB
-            energy = energy - max(energy);
+            % Set 2%-maximum to 0 dB
+            energy = energy - quantile(energy,0.98);
             
             frameVAD = energy > -abs(thresdB) & energy > noiseFloor;
             

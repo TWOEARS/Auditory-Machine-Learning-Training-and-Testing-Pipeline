@@ -81,6 +81,10 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                     end
                     obj.binauralSim.setSceneConfig( scInst );
                     splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
+                    if length( splitEarSignals{ii} ) > 0
+                        splitOut.earSout = obj.adjustSNR( ...
+                            splitEarSignals{ii}, 'energy', splitOut.earSout, 0 );
+                    end
                     splitEarSignals{ii} = [splitEarSignals{ii}; splitOut.earSout];
                     targetSignalLen = length( splitEarSignals{1} ) / obj.getDataFs();
                     if ii > 1 && obj.sceneConfig.loop(ii)

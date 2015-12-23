@@ -34,7 +34,7 @@ classdef Base < core.IdProcInterface
         
         function process( obj, inputFileName )
             in = load( inputFileName );
-            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut );
+            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.afeData = afeBlock{1};
@@ -87,7 +87,7 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s )
+        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s, annotsOut )
             afeBlocks = {};
             y = [];
             afeDataNames = afeData.keys;
@@ -112,6 +112,14 @@ classdef Base < core.IdProcInterface
                     blockIsAmbigous = relEventBlockOverlap > (1-obj.minBlockToEventRatio); 
                     if blockIsSoundEvent
                         y(end) = 1;
+                        if size( annotsOut.srcEnergy, 1 ) == 2
+                            energyBlockIdxs = ...
+                                annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
+                                & annotsOut.srcEnergy_t <= blockOffset;
+                            distBlockEnergy = ...
+                                mean(mean(annotsOut.srcEnergy(2,:,energyBlockIdxs)));
+                            if distBlockEnergy < -30, y(end) = 0; end
+                        end
                         break;
                     elseif blockIsAmbigous
                         y(end) = 0;

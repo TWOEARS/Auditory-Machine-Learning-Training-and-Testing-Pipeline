@@ -116,11 +116,11 @@ elseif strcmp( choice, 'c' )
 elseif strcmp( choice, 'e' )
     fprintf( '\n' );
     pfidxs = 1 : length( procFolders );
-    for ii = pfidxs(strcmpi({procFolders.type},'IdSimConvRoomWrapper'))
+    for ii = pfidxs(strcmpi({procFolders.type},'SceneEarSignalProc'))
         procList = configSort( procFolders, ii, procList, @isequalDeepCompare );
         if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
-    for ii = pfidxs(~strcmpi({procFolders.type},'IdSimConvRoomWrapper'))
+    for ii = pfidxs(~strcmpi({procFolders.type},'SceneEarSignalProc'))
         procList = configSort( procFolders, ii, procList, @isProcConfIncludedDeepCompare );
         if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
@@ -169,7 +169,7 @@ function presentProcFolder( procFolder )
 
 cprintf( '-Blue', '\n.:%s:.\n', procFolder );
 config = load( [procFolder filesep 'config.mat'] );
-flatPrintObject( config, 10 );
+flatPrintObject( config, 4 );
 
 end
 
@@ -201,6 +201,9 @@ eq = true;
 if isequalDeepCompare( a, b ), return; end;
 if isfield( b, 'extern' )
     eq = isProcConfIncludedDeepCompare( a, b.extern );
+    return;
+elseif numel( fieldnames( b ) ) == 1  &&  isfield( b, 'sceneConfig1' )
+    eq = isProcConfIncludedDeepCompare( a, b.sceneConfig1 );
     return;
 end
 

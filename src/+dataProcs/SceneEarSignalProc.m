@@ -54,6 +54,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         
         function makeEarsignalsAndLabels( obj, wavFileName )
             obj.onOffsOut = [];
+            obj.annotsOut = [];
             targetSignalLen = 1;
             splitEarSignals = cell( numel( obj.sceneConfig.sources ), 1 );
             srcClass = cell( numel( obj.sceneConfig.sources ), 1 );
@@ -104,6 +105,11 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             end
             fprintf( ':' );
             obj.earSout = splitEarSignals{1};
+            for ii = 1 : 2
+                [energy, tFramesSec] = runningEnergy( obj, double(obj.earSout(:,ii)), 100e-3, 50e-3 );
+                obj.annotsOut.srcEnergy(1,ii,:) = single(energy);
+            end
+            obj.annotsOut.srcEnergy_t = single(tFramesSec);
             for ii = 2:length( splitEarSignals )
                 onOffs_samples = obj.onOffsOut .* obj.getDataFs();
                 if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
@@ -113,6 +119,10 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) = ...
                     obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) ...
                     + ovrlSignal(1:min( length( obj.earSout ), length( ovrlSignal ) ),:);
+                for jj = 1 : 2
+                    energy = runningEnergy( obj, double(ovrlSignal(:,jj)), 100e-3, 50e-3 );
+                    obj.annotsOut.srcEnergy(ii,jj,:) = single(energy(1:length(obj.annotsOut.srcEnergy(1,ii,:))));
+                end
                 fprintf( '.' );
             end
             fprintf( '\n' );
@@ -165,6 +175,16 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
         
+        function [energy, tFramesSec] = runningEnergy( obj, signal, blockSec, stepSec )
+            blockSize = 2 * round(obj.getDataFs() * blockSec / 2);
+            stepSize  = round(obj.getDataFs() * stepSec);
+            frames = frameData(signal,blockSize,stepSize,'rectwin');
+            energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
+            energy = energy - quantile(energy,0.98);
+            tFramesSec = (stepSize:stepSize:stepSize*numel(energy)).'/obj.getDataFs();
+        end
+        %% ----------------------------------------------------------------
+        
         function vad = detectActivity( obj, signal, thresdB, hSec, blockSec, stepSec )
             %detectActivity   Energy-based voice activity detection.
             %   This function is based on detectVoiceActivityKinnunen by
@@ -184,25 +204,9 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             
             noiseFloor = -55;    % Noise floor
             
-            % **************************  FRAME-BASED ENERGY  ************************
-            blockSize = 2 * round(obj.getDataFs() * blockSec / 2);
-            stepSize  = round(obj.getDataFs() * stepSec);
-            
-            frames = frameData(signal,blockSize,stepSize,'rectwin');
-            
-            energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
-            
-            nFrames = numel(energy);
-            
             % ************************  DETECT VOICE ACTIVITY  ***********************
-            % Set 2%-maximum to 0 dB
-            energy = energy - quantile(energy,0.98);
-            
+            [energy, tFramesSec] = runningEnergy( obj, signal, blockSec, stepSec );
             frameVAD = energy > -abs(thresdB) & energy > noiseFloor;
-            
-            % Corresponding time vector in seconds
-            tFramesSec = (stepSize:stepSize:stepSize*nFrames).'/obj.getDataFs();
-            
             % ***************************  HANGOVER SCHEME  **************************
             % Determine length of hangover scheme
             hangover = max(0,1+floor((hSec - blockSec)/stepSec));
@@ -213,7 +217,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 hangCtr = 0;
                 
                 % Loop over number of frames
-                for ii = 1 : nFrames
+                for ii = 1 : numel(energy)
                     % VAD decision
                     if frameVAD(ii) == true
                         % Speech detected, activate hangover scheme

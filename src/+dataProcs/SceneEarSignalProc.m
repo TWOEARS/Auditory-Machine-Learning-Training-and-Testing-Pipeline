@@ -96,6 +96,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                     if strcmpi( srcClass{ii}, srcClass{1} )
                         maxLen = length( splitEarSignals{1} ) / obj.getDataFs();
                         splitOnOffs = splitOut.onOffsOut;
+                        if isempty( splitOnOffs ), splitOnOffs = zeros(0,2); end
                         splitOnOffs( splitOnOffs(:,1) >= maxLen, : ) = [];
                         splitOnOffs( splitOnOffs > maxLen ) = maxLen;
                         obj.onOffsOut = sortAndMergeOnOffs( [obj.onOffsOut; splitOnOffs] );

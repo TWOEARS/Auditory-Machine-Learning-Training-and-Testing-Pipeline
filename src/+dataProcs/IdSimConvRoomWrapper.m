@@ -161,7 +161,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 snd{1} = getPointSourceSignalFromWav( ...
                     src, obj.convRoomSim.SampleRate, startOffset );
                 if strcmpi( IdEvalFrame.readEventClass( wavFile ), 'general' )
-                    onOffs = [];
+                    onOffs = zeros(0,2);
                 else
                     onOffs = IdEvalFrame.readOnOffAnnotations( wavFile ) + startOffset;
                 end

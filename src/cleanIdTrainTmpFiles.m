@@ -31,13 +31,24 @@ while true
         end
     end
     
+    makeProcList = true;
+    
     while true
-        procList = listProcFolders( procFoldersDir );
+        if ~exist( 'procList', 'var' ) || isempty( procList ) || makeProcList
+            procList = listProcFolders( procFoldersDir );
+        end
+        procNames = keys( procList );
+        for ii = 1 : length( procNames )
+            nFolders = numel( getMapStructElem( procList, procNames{ii}, 'idxs' ) );
+            sizeFolders = sum( [procFoldersDir(getMapStructElem( procList, procNames{ii}, 'idxs' )).size] ) / (1024*1000);
+            fprintf( '%i: \t%s \t(%i folders, %i MB)\n', ii, procNames{ii}, nFolders, ceil( sizeFolders ) );
+        end
         
         choice = [];
         choice = input( ['\n''q'' to quit. ' ...
                          'Enter to go back, '...
                          '''l'' nr to look, '...
+                         '''p'' nr to peek into one config, '...
                          '''L'' nr to list, '...
                          '''d'' nr to delete. '...
                          'nr can be a range as in 10-50. >> '], 's' );
@@ -59,9 +70,16 @@ while true
                     presentProcFolder( [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
                     input( 'press enter to continue', 's' );
                 end
+                makeProcList = false;
+                continue;
+            elseif strcmp( cmd, 'p' )
+                presentProcFolder( [procFoldersDir(idxs(1)).class filesep procFoldersDir(idxs(1)).name] );
+                input( 'press enter to continue', 's' );
+                makeProcList = false;
                 continue;
             elseif strcmp( cmd, 'L' )
                 procFoldersDir = [procFoldersDir(idxs)];
+                makeProcList = true;
                 continue;
             elseif strcmpi( cmd, 'd' )
                 for ii = idxs
@@ -82,7 +100,8 @@ function procList = listProcFolders( procFolders )
 
 choice = input( ['Enter to see all folders, '...
                  '''t'' to see by type, ''c'' by config,'...
-                 '''C'' by class, ''e'' by earsignal''s config >> '], 's' );
+                 '''C'' by class, ''e'' by earsignal''s config, '...
+                 '''o'' for outdated folders >> '], 's' );
 procList = containers.Map('KeyType','char','ValueType','any');
 if isempty( choice )
     for ii = 1 : length( procFolders )
@@ -109,7 +128,17 @@ elseif strcmp( choice, 'C' )
 elseif strcmp( choice, 'c' )
     fprintf( '\n' );
     for ii = 1 : length( procFolders )
-        procList = configSort( procFolders, ii, procList, @isequalDeepCompare );
+        procList = configSort( procFolders, ii, procList, @isequalDeepCompare, true );
+        if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
+    end
+    fprintf( '\n' );
+elseif strcmp( choice, 'o' )
+    fprintf( '\n' );
+    assignMapStructElem( procList, 'outdated', 'idxs', [] );
+    iiConfig.error = 'MATLAB:load:cannotInstantiateLoadedVariable';
+    assignMapStructElem( procList, 'outdated', 'config', iiConfig );
+    for ii = 1 : length( procFolders )
+        procList = configSort( procFolders, ii, procList, @isequalDeepCompare, false );
         if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
     fprintf( '\n' );
@@ -117,30 +146,34 @@ elseif strcmp( choice, 'e' )
     fprintf( '\n' );
     pfidxs = 1 : length( procFolders );
     for ii = pfidxs(strcmpi({procFolders.type},'SceneEarSignalProc'))
-        procList = configSort( procFolders, ii, procList, @isequalDeepCompare );
+        procList = configSort( procFolders, ii, procList, @isequalDeepCompare, true );
         if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
     for ii = pfidxs(~strcmpi({procFolders.type},'SceneEarSignalProc'))
-        procList = configSort( procFolders, ii, procList, @isProcConfIncludedDeepCompare );
+        procList = configSort( procFolders, ii, procList, @isProcConfIncludedDeepCompare, false );
         if mod( ceil( 100 * ii/length( procFolders ) ), 5 ) == 0, fprintf( '.' ); end
     end
     fprintf( '\n' );
 end
-procNames = keys( procList );
-for ii = 1 : length( procNames )
-    nFolders = numel( getMapStructElem( procList, procNames{ii}, 'idxs' ) );
-    sizeFolders = sum( [procFolders(getMapStructElem( procList, procNames{ii}, 'idxs' )).size] ) / (1024*1000);
-    fprintf( '%i: \t%s \t(%i folders, %i MB)\n', ii, procNames{ii}, nFolders, ceil( sizeFolders ) );
-end
-
 
 end
 
 % ---------------------------------------------------------------------------------------%
 
-function procList = configSort( procFolders, ii, procList, compFunc )
+function procList = configSort( procFolders, ii, procList, compFunc, addIfNotFound )
 
-iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );
+warning('error','MATLAB:load:cannotInstantiateLoadedVariable');
+try
+    iiConfig = load( [procFolders(ii).class filesep procFolders(ii).name filesep 'config.mat'] );
+catch err
+    if strcmp( err.identifier, 'MATLAB:load:cannotInstantiateLoadedVariable' )
+        fprintf( '\n%s: config is of old class definition.', ...
+            [procFolders(ii).class filesep procFolders(ii).name] );
+        iiConfig.error = 'MATLAB:load:cannotInstantiateLoadedVariable';
+    else
+        rethrow( err );
+    end
+end
 if isempty( procList )
     assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
     assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
@@ -155,7 +188,7 @@ else
             break;
         end
     end
-    if ~configFound
+    if addIfNotFound && ~configFound
         assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'idxs', ii );
         assignMapStructElem( procList, [procFolders(ii).class filesep procFolders(ii).name], 'config', iiConfig );
     end
@@ -169,7 +202,10 @@ function presentProcFolder( procFolder )
 
 cprintf( '-Blue', '\n.:%s:.\n', procFolder );
 config = load( [procFolder filesep 'config.mat'] );
-flatPrintObject( config, 4 );
+%flatPrintObject( config, 4 );
+%openvar( 'config' );
+%disp( 'press key to continue' );
+pause;
 
 end
 

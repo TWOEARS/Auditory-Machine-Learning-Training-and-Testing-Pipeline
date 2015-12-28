@@ -20,12 +20,20 @@ datasets = {'learned_models/IdentityKS/trainTestSets/NIGENS_75pTrain_TestSet_1.f
             'learned_models/IdentityKS/trainTestSets/NIGENS_75pTrain_TestSet_4.flist'
             };
 
+doneCfgs = {};
+if exist( ['pdCfgsDone_' strrep(num2str(azmCfgIdxs),' ','_') '.mat'], 'file' )
+    load( ['pdCfgsDone_' strrep(num2str(azmCfgIdxs),' ','_')], 'doneCfgs' );
+end
+
 for dd = 1 : numel( datasets )
 for ss = 1 : numel( snrs )
 for ff = 1 : numel( featureCreators )
 for aa = azmCfgIdxs
 
 fprintf( '\n\n==============\nStarting; dd = %d, ff = %d, ss = %d, aa = %d.==============\n\n', dd, ff, ss, aa );
+if any( cellfun( @(x)(all(x==[dd ss ff aa])), doneCfgs ) )
+    continue;
+end
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = feval( featureCreators{ff}.Name );
@@ -49,6 +57,10 @@ pipe.setSceneConfig( [sc] );
 
 pipe.init();
 pipe.pipeline.run( {'donttrain'}, 0 );
+
+doneCfgs{end+1} = [dd ss ff aa];
+
+save( ['pdCfgsDone_' strrep(num2str(azmCfgIdxs),' ','_')], 'doneCfgs' );
 
 end
 end

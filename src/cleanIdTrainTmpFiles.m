@@ -202,10 +202,123 @@ function presentProcFolder( procFolder )
 
 cprintf( '-Blue', '\n.:%s:.\n', procFolder );
 config = load( [procFolder filesep 'config.mat'] );
-%flatPrintObject( config, 4 );
-%openvar( 'config' );
-%disp( 'press key to continue' );
-pause;
+presentCfg( config );
+
+end
+
+% ---------------------------------------------------------------------------------------%
+
+function presentCfg( config )
+
+if isfield( config, 'featureProc' ) && isfield( config, 'blockSize' )
+    fprintf( '..:: featureCreator.cfg ::..\n' );
+    fprintf( '     %s\n', config.featureProc.featureProc );
+    choice = input( ['Enter: next category, '...
+                     '''d'': details >> '], 's' );
+    if strcmp( choice, 'd' )
+        fn = fieldnames( config.featureProc );
+        for ii = 1 : length( fn )
+            if strcmp( fn{ii}, 'featureProc' ), continue; end
+            fprintf( '        %s: %s\n', fn{ii}, mat2str( config.featureProc.(fn{ii}) ) );
+        end
+        fprintf( '        blockSize: %f; labelBlockSize: %f\n',...
+            config.blockSize, config.labelBlockSize );
+        fprintf( '        shiftSize: %f; minBlockEventRatio: %f\n',...
+            config.shiftSize, config.minBlockEventRatio );
+        disp( 'press key to continue' ); pause;
+    end
+elseif isfield( config, 'afeParams' )
+    fprintf( '..:: AFE.cfg ::..\n' );
+    fprintf( '     ' );
+    for ii = 1 : numel( config.afeParams.s )
+        if isfield( config.afeParams.s(ii).a, 'cfHz' )
+            nCh = numel( config.afeParams.s(ii).a.cfHz );
+        elseif isfield( config.afeParams.s(ii).a, 'flist' )
+            nCh = numel( config.afeParams.s(ii).a.flist );
+        else
+            error( 'not implemented case' );
+        end
+        fprintf( '- %d-ch %s -', nCh, config.afeParams.s(ii).a.name );
+    end
+    choice = input( ['\nEnter: next category, '...
+                     '''d'': details >> '], 's' );
+    if strcmp( choice, 'd' )
+        fprintf( 'TODO\n' );
+        disp( 'press key to continue' ); pause;
+    end
+elseif isfield( config, 'binSimCfg' ) && isfield( config, 'sc' )
+    fprintf( '..:: earSig.cfg ::..\n' );
+    if isempty( config.sc.room ), fprintf( '     no room\n' ); 
+    else fprintf( '     ROOM' ); end
+    if strcmpi( config.sc.sources(1).azimuth.type, 'manual' )
+        azm = config.sc.sources(1).azimuth.value;
+    else
+        azm = nan;
+    end
+    fprintf( '     target@%d°\n', azm );
+    for ii = 2 : numel( config.sc.sources )
+        if strcmpi( config.sc.SNRs(ii).type, 'manual' )
+            snr = config.sc.SNRs(ii).value;
+        else
+            snr = nan;
+        end
+        if isa( config.sc.sources(ii), 'sceneConfig.PointSource' )
+            if strcmpi( config.sc.sources(ii).azimuth.type, 'manual' )
+                azm = config.sc.sources(ii).azimuth.value;
+            else
+                azm = nan;
+            end
+            fprintf( '     distractor@%d°@%ddB', azm, snr );
+        else
+            fprintf( '     ambient distractor@%ddB', snr );
+        end
+        if numel( config.sc.loop ) >= ii  &&  config.sc.loop(ii)
+            fprintf( ' (looped)' );
+        end
+        fprintf( '\n' );
+    end
+    choice = input( ['Enter: next category, '...
+                     '''d'': details >> '], 's' );
+    if strcmp( choice, 'd' )
+        fprintf( '        SampleRate: %f; ReverbMaxOrder: %f\n',...
+            config.binSimCfg.SampleRate, config.binSimCfg.ReverberationMaxOrder );
+        fprintf( '        hrir: %s\n', config.binSimCfg.hrir );
+        disp( 'press key to continue' ); pause;
+    end
+elseif isfield( config, 'sceneConfig' ) && isfield( config, 'hrir' )
+    fprintf( '..:: binSim.cfg ::..\n' );
+    if isempty( config.sceneConfig.room ), fprintf( '     no room\n' ); 
+    else fprintf( 'ROOM' ); end
+    if isa( config.sceneConfig.sources(1), 'sceneConfig.PointSource' )
+        if strcmpi( config.sceneConfig.sources(1).azimuth.type, 'manual' )
+            azm = config.sceneConfig.sources(1).azimuth.value;
+        else
+            azm = nan;
+        end
+        fprintf( '     source@%d°', azm );
+    else
+        fprintf( '     ambient distractor' );
+    end
+    fprintf( '\n' );
+    choice = input( ['Enter: next category, '...
+                     '''d'': details >> '], 's' );
+    if strcmp( choice, 'd' )
+        fprintf( '        SampleRate: %f; ReverbMaxOrder: %f\n',...
+            config.SampleRate, config.ReverberationMaxOrder );
+        fprintf( '        hrir: %s\n', config.hrir );
+        disp( 'press key to continue' ); pause;
+    end
+end
+if isfield( config, 'extern' )
+    presentCfg( config.extern );
+else
+    for ii = 1 : length( fieldnames( config ) )
+        if isfield( config, ['sceneConfig' num2str(ii)] )
+            fprintf( '..:: Multi.cfg.%d ::..\n', ii );
+            presentCfg( config.(['sceneConfig' num2str(ii)]) );
+        end
+    end
+end
 
 end
 

@@ -82,10 +82,14 @@ while true
                 makeProcList = true;
                 continue;
             elseif strcmpi( cmd, 'd' )
-                for ii = idxs
+                for ii = flip( idxs )
                     fprintf( 'Deleting %s...\n', [procFoldersDir(ii).class filesep procFoldersDir(ii).name] );
                     rmdir( [procFoldersDir(ii).class filesep procFoldersDir(ii).name], 's' );
+%                    procList(proc
+%                    procFoldersDir(ii) = [];
                 end
+                makeProcList = false;
+                continue;
             end
         end
         break;

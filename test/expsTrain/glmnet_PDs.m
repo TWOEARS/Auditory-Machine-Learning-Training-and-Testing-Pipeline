@@ -27,6 +27,9 @@ modelpathes = {};
 % eval = {};
 if exist( ['pds_' strrep(num2str(azmCfgIdxs),' ','_') '_glmnet.mat'], 'file' )
     load( ['pds_' strrep(num2str(azmCfgIdxs),' ','_') '_glmnet'] );
+else
+    warning( 'mat file not found' );
+    pause;
 end
 
 for dd = [1 3 5]
@@ -80,7 +83,7 @@ end
             modelpathes{cc,dd,ss,ff,aa} = pipe.pipeline.run( classes(cc), 0 );
             doneCfgs{end+1} = [cc dd ss ff aa];
             
-            save( ['pds_' strrep(num2str(azmCfgIdxs),' ','_') '_glmnet'], ...
+            save( ['pds_' strrep(num2str(aa),' ','_') '_glmnet'], ...
                 'doneCfgs', 'modelpathes' );
         end
         end

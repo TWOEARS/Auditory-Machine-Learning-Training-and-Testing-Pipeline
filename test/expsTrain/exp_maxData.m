@@ -75,7 +75,8 @@ end
             pipe.setSceneConfig( sc );
             
             pipe.init();
-            modelpathes{cc,dd,ss,ff,aa,mds,bd} = pipe.pipeline.run( classes(cc), 0 );
+            modelpathes{cc,dd,ss,ff,aa,find(mds==[5000 15000 30000 50000]),bd+1} = ...
+                pipe.pipeline.run( classes(cc), 0 );
             doneCfgs{end+1} = [cc dd ss ff aa mds bd];
             
             save( ['pds_expsMaxData' num2str(cc) '.mat'], ...

@@ -1,4 +1,4 @@
-function exp_maxData()
+function exp_maxData( cc )
 
 addpath( '../..' );
 startIdentificationTraining();
@@ -25,17 +25,15 @@ classes = {'alarm','baby','femaleSpeech','fire','crash','dog','engine','footstep
 doneCfgs = {};
 modelpathes = {};
 % eval = {};
-if exist( 'pds_expsMaxData.mat', 'file' )
-    load( 'pds_expsMaxData' );
+if exist( ['pds_expsMaxData' num2str(cc) '.mat'], 'file' )
+    load( ['pds_expsMaxData' num2str(cc) '.mat'] );
 else
     warning( 'mat file not found' );
     pause;
 end
 
 for dd = 1
-for cc = 1 : 2
     pdTrain(cc,dd);
-end
 end
 
 
@@ -43,7 +41,7 @@ end
         for ss = 1
         for ff = 2
         for aa = [1 4 9]
-        for mds = [50000 30000 15000 5000]
+        for mds = [5000 15000 30000 50000]
         for bd = [0 1]
             
             fprintf( '\n\n==============\nTraining; cc = %d, dd = %d, ff = %d, ss = %d, aa = %d, mds = %d, bd = %d.==============\n\n', ...
@@ -80,7 +78,7 @@ end
             modelpathes{cc,dd,ss,ff,aa,mds,bd} = pipe.pipeline.run( classes(cc), 0 );
             doneCfgs{end+1} = [cc dd ss ff aa mds bd];
             
-            save( 'pds_expsMaxData', ...
+            save( ['pds_expsMaxData' num2str(cc) '.mat'], ...
                 'doneCfgs', 'modelpathes' );
         end
         end

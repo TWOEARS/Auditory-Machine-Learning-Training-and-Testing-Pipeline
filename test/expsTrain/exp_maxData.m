@@ -24,7 +24,6 @@ classes = {'alarm','baby','femaleSpeech','fire','crash','dog','engine','footstep
 
 doneCfgs = {};
 modelpathes = {};
-% eval = {};
 if exist( ['pds_expsMaxData' num2str(cc) '.mat'], 'file' )
     load( ['pds_expsMaxData' num2str(cc) '.mat'] );
 else
@@ -87,48 +86,6 @@ end
         end
         end
     end
-%     function pdTest(cc,dd)
-%         for ss = 1 : numel( snrs )
-%         for ff = 1 : numel( featureCreators )
-%         for aa = azmCfgIdxs
-%             
-%             fprintf( '\n\n==============\nTesting; cc = %d, dd = %d, ff = %d, ss = %d, aa = %d.==============\n\n', ...
-%                 cc, dd, ff, ss, aa );
-%             if any( cellfun( @(x)(all(x==[cc dd ss ff aa])), doneCfgs ) )
-%                 continue;
-%             end
-%             
-%             pipe = TwoEarsIdTrainPipe();
-%             pipe.featureCreator = feval( featureCreators{ff}.Name );
-%             pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
-%                 'performanceMeasure', @performanceMeasures.BAC2, ...
-%                 'cvFolds', 7, ...
-%                 'alpha', 0.99 );
-%             pipe.modelCreator.verbose( 'on' );
-%             
-%             pipe.trainset = datasets{dd};
-%             pipe.setupData();
-%             
-%             sc = sceneConfig.SceneConfiguration();
-%             sc.addSource( sceneConfig.PointSource( ...
-%                 'azimuth',sceneConfig.ValGen('manual',azimuths{aa}{1}) ) );
-%             sc.addSource( sceneConfig.PointSource( ...
-%                 'azimuth',sceneConfig.ValGen('manual',azimuths{aa}{2}), ...
-%                 'data',sceneConfig.FileListValGen(pipe.pipeline.data('general',:,'wavFileName')),...
-%                 'offset', sceneConfig.ValGen('manual',0.0) ),...
-%                 sceneConfig.ValGen( 'manual', snrs{ss} ),...
-%                 true ); % loop
-%             pipe.setSceneConfig( sc );
-%             
-%             pipe.init();
-%             modelpathes{cc,dd,ss,ff,aa} = pipe.pipeline.run( classes(cc), 0 );
-%             doneCfgs{end+1} = [cc dd ss ff aa];
-%             
-%             save( ['pds_' strrep(num2str(azmCfgIdxs),' ','_') '_glmnet'], ...
-%                 'doneCfgs', 'modelpathes' );
-%         end
-%         end
-%         end
-%     end
+
 
 end

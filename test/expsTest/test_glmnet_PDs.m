@@ -82,7 +82,7 @@ sc.addSource( sceneConfig.PointSource( ...
 pipe.setSceneConfig( sc );
 
 pipe.init();
-modelpathes_test{cc,ddt,ss,ff,aa,sst,aat} = pipe.pipeline.run( {classname}, 0 );
+modelpathes_test{cc,ddt,ss,ff,aa,sst,aat} = pipe.pipeline.run( classes(cc), 0 );
 
 testmodel = load( [modelpathes_test{cc,ddt,ss,ff,aa,sst,aat} filesep classname '.model.mat'] );
 

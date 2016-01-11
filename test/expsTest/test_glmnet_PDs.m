@@ -84,7 +84,7 @@ pipe.setSceneConfig( sc );
 pipe.init();
 modelpathes_test{cc,ddt,ss,ff,aa,sst,aat} = pipe.pipeline.run( classes(cc), 0 );
 
-testmodel = load( [modelpathes_test{cc,ddt,ss,ff,aa,sst,aat} filesep classname '.model.mat'] );
+testmodel = load( [modelpathes_test{cc,ddt,ss,ff,aa,sst,aat} filesep classes{cc} '.model.mat'] );
 
 test_performances{cc,ddt,ss,ff,aa,sst,aat} = [testmodel.testPerfresults.performance];
 cv_performances{cc,ddt,ss,ff,aa,sst,aat} = testmodel.model.lPerfsMean;
@@ -112,7 +112,7 @@ test_performances_hws{cc,ddt,ss,ff,aa,sst,aat} = test_performances{cc,ddt,ss,ff,
  nCoefs{cc,ddt,ss,ff,aa,sst,aat}] = testmodel.model.getLambdasAndNCoefs();
 testTime{cc,ddt,ss,ff,aa,sst,aat} = testmodel.trainTime;
 trainTime{cc,ddt,ss,ff,aa,sst,aat} = ...
-    load( [modelpathes{cc,dd,ss,ff,aa} filesep classname '.model.mat'], 'trainTime' );
+    load( [modelpathes{cc,dd,ss,ff,aa} filesep classes{cc} '.model.mat'], 'trainTime' );
 
 doneCfgsTest{end+1} = [cc ddt ss ff aa sst aat];
 

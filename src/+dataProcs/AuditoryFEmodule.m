@@ -36,7 +36,11 @@ classdef AuditoryFEmodule < core.IdProcInterface
             in = load( inputFileName );
             obj.output.afeData = obj.makeAFEdata( in.earSout );
             obj.output.onOffsOut = in.onOffsOut;
-            obj.output.annotsOut = in.annotsOut;
+            if isfield( in, 'annotsOut' )
+                obj.output.annotsOut = in.annotsOut;
+            else
+                obj.output.annotsOut = [];
+            end
         end
         %% ----------------------------------------------------------------
 

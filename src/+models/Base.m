@@ -58,6 +58,9 @@ classdef (Abstract) Base < handle
             if nargin < 6, balMaxData = false; end
             x = testSet(:,:,'x');
             yTrue = testSet(:,:,'y',positiveClass);
+            % remove samples with fuzzy labels
+            x(yTrue==0,:) = [];
+            yTrue(yTrue==0) = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData
                     nPos = min( int32( maxDataSize/2 ), sum( yTrue == +1 ) );

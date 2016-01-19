@@ -7,6 +7,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
               % all others are in relation to sources(1)
               % length(sources) must be == length(SNRs)
         room;
+        loop; % loop sources that are shorter than the main source
     end
 
     %% -----------------------------------------------------------------------------------
@@ -16,15 +17,21 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             obj.room = sceneConfig.RoomValGen.empty;
             obj.SNRs = sceneConfig.ValGen.empty;
             obj.sources = sceneConfig.SourceBase.empty;
+            obj.loop = [];
         end
         %% -------------------------------------------------------------------------------
         
-        function addSource( obj, source, snr )
+        function addSource( obj, source, snr, loop )
             obj.sources(end+1) = source;
             if numel( obj.SNRs ) == 0  || nargin < 3
                 obj.SNRs(end+1) = sceneConfig.ValGen( 'manual', 0 );
             else
                 obj.SNRs(end+1) = snr;
+            end
+            if numel( obj.loop ) == 0  || nargin < 4
+                obj.loop(end+1) = false;
+            else
+                obj.loop(end+1) = loop;
             end
         end
         %% -------------------------------------------------------------------------------
@@ -41,6 +48,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 confInst.sources(kk) = obj.sources(kk).instantiate();
                 confInst.SNRs(kk) = obj.SNRs(kk).instantiate();
             end
+            confInst.loop = obj.loop;
         end
         %% -------------------------------------------------------------------------------
 
@@ -49,6 +57,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             singleConfig.room = obj.room;
             singleConfig.sources = obj.sources(srcIdx);
             singleConfig.SNRs = sceneConfig.ValGen( 'manual', 0 );
+            singleConfig.loop = false; % there is only one source
         end
         %% -------------------------------------------------------------------------------
         
@@ -57,6 +66,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if isempty( obj1 ) && isempty( obj2 ), e = true; return; end
             if isempty( obj1 ) || isempty( obj2 ), return; end
             if numel( obj1.sources ) ~= numel( obj2.sources ), return; end
+            if numel( obj1.loop ) ~= numel( obj2.loop ), return; end
+            if obj1.loop ~= obj2.loop, return; end
             obj2srcsInCmpIdxs = ones( size( obj2.sources ) );
             for kk = 1 : numel( obj1.sources )
                 sequal = sceneConfig.SourceBase.isequalHetrgn( obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
@@ -85,6 +96,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 csc.SNRs(ii) = copy( obj.SNRs(ii) );
             end
             csc.room = copy( obj.room );
+            csc.loop = obj.loop;
         end
         %% -------------------------------------------------------------------------------
     end

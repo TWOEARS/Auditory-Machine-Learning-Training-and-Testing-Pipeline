@@ -34,7 +34,7 @@ classdef Base < core.IdProcInterface
         
         function process( obj, inputFileName )
             in = load( inputFileName );
-            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut );
+            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.afeData = afeBlock{1};
@@ -87,7 +87,7 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s )
+        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s, annotsOut )
             afeBlocks = {};
             y = [];
             afeDataNames = afeData.keys;
@@ -112,6 +112,14 @@ classdef Base < core.IdProcInterface
                     blockIsAmbigous = relEventBlockOverlap > (1-obj.minBlockToEventRatio); 
                     if blockIsSoundEvent
                         y(end) = 1;
+                        if size( annotsOut.srcEnergy, 1 ) == 2 % there is ONE distractor
+                            energyBlockIdxs = ...
+                                annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
+                                & annotsOut.srcEnergy_t <= blockOffset;
+                            distBlockEnergy = ...
+                                mean(mean(annotsOut.srcEnergy(2,:,energyBlockIdxs)));
+                            if distBlockEnergy < -30, y(end) = 0; end
+                        end
                         break;
                     elseif blockIsAmbigous
                         y(end) = 0;
@@ -205,6 +213,25 @@ classdef Base < core.IdProcInterface
             end
             bl1dIdxs = dIdxFun( 1 : numel( bl{1+dim} ) );
             b{1+dim} = bl{1+dim}(bl1dIdxs);
+        end
+        %% ----------------------------------------------------------------
+
+        function b = reshape2featVec( obj, bl )
+            b{1} = reshape( bl{1}, 1, [] );
+            if obj.descriptionBuilt, return; end
+            for ii = 1 : size( bl, 2 ) - 1
+                blszii = size( bl{1} );
+                blszii(ii) = 1;
+                dgprs{ii} = repmat( shiftdim( bl{ii+1}, 2-ii ), blszii );
+                dgprs{ii} = reshape( dgprs{ii}, 1, [] );
+            end
+            grps = cat( 1, dgprs{:} );
+            for ii = 1 : size( grps, 2 )
+                grps{1,ii} = cat( 2, grps{:,ii} );
+            end
+            grps(2,:) = [];
+            grps = featureCreators.Base.removeGrpDuplicates( grps );
+            b{2} = grps;
         end
         %% ----------------------------------------------------------------
 

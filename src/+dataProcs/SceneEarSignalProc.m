@@ -53,46 +53,77 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         %% ----------------------------------------------------------------
         
         function makeEarsignalsAndLabels( obj, wavFileName )
-            sc = obj.sceneConfig.instantiate();
             obj.onOffsOut = [];
-            for ii = 1 : numel( sc.sources )
-                sceneConf = sc.getSingleConfig(ii);
-                if ii == 1
-                    sceneConf.sources(1).data = sceneConfig.FileListValGen( wavFileName );
-                    srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
-                elseif isa( sceneConf.sources(1).data, 'sceneConfig.FileListValGen' )
-                    wavFileName = sceneConf.sources(1).data.value;
-                    if isempty( wavFileName )
-                        error( 'Empty wav file name through use of FileListValGen!' );
+            obj.annotsOut = [];
+            targetSignalLen = 1;
+            splitEarSignals = cell( numel( obj.sceneConfig.sources ), 1 );
+            srcClass = cell( numel( obj.sceneConfig.sources ), 1 );
+            for ii = 1 : numel( obj.sceneConfig.sources )
+                sc = obj.sceneConfig.getSingleConfig(ii);
+                iiSignalLen = 0;
+                while iiSignalLen < targetSignalLen - 0.01
+                    scInst = sc.instantiate();
+                    if ii == 1
+                        scInst.sources(1).data = sceneConfig.FileListValGen( wavFileName );
+                        srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
+                    elseif isa( scInst.sources(1).data, 'sceneConfig.FileListValGen' )
+                        wavFileName = scInst.sources(1).data.value;
+                        if isempty( wavFileName )
+                            error( 'Empty wav file name through use of FileListValGen!' );
+                        end
+                        srcClassii = IdEvalFrame.readEventClass( wavFileName );
+                        if ~isempty( srcClass{ii} ) && ~strcmp( srcClassii, srcClass{ii} )
+                            error('Different classes used in looped distractor');
+                        end
+                        srcClass{ii} = srcClassii;
+                    else
+                        wavFileName = ''; % don't save
+                        srcClass{ii} = '';
                     end
-                    srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
-                else
-                    wavFileName = ''; % don't save
-                    srcClass{ii} = '';
-                end
-                obj.binauralSim.setSceneConfig( sceneConf );
-                splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
-                splitEarSignals{ii} = splitOut.earSout;
-                if strcmpi( srcClass{ii}, srcClass{1} )
-                    maxLen = length( splitEarSignals{1} ) / obj.getDataFs();
-                    splitOnOffs = splitOut.onOffsOut;
-                    splitOnOffs( splitOnOffs(:,1) >= maxLen, : ) = [];
-                    splitOnOffs( splitOnOffs > maxLen ) = maxLen;
-                    obj.onOffsOut = sortAndMergeOnOffs( [obj.onOffsOut; splitOnOffs] );
+                    obj.binauralSim.setSceneConfig( scInst );
+                    splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
+                    if length( splitEarSignals{ii} ) > 0
+                        splitOut.earSout = obj.adjustSNR( ...
+                            splitEarSignals{ii}, 'energy', splitOut.earSout, 0 );
+                    end
+                    splitEarSignals{ii} = [splitEarSignals{ii}; splitOut.earSout];
+                    targetSignalLen = length( splitEarSignals{1} ) / obj.getDataFs();
+                    if ii > 1 && obj.sceneConfig.loop(ii)
+                        iiSignalLen = length( splitEarSignals{ii} ) / obj.getDataFs();
+                    else
+                        iiSignalLen = targetSignalLen;
+                    end
+                    if strcmpi( srcClass{ii}, srcClass{1} )
+                        maxLen = length( splitEarSignals{1} ) / obj.getDataFs();
+                        splitOnOffs = splitOut.onOffsOut;
+                        if isempty( splitOnOffs ), splitOnOffs = zeros(0,2); end
+                        splitOnOffs( splitOnOffs(:,1) >= maxLen, : ) = [];
+                        splitOnOffs( splitOnOffs > maxLen ) = maxLen;
+                        obj.onOffsOut = sortAndMergeOnOffs( [obj.onOffsOut; splitOnOffs] );
+                    end
                 end
                 fprintf( ':' );
             end
             fprintf( ':' );
             obj.earSout = splitEarSignals{1};
+            for ii = 1 : 2
+                [energy, tFramesSec] = runningEnergy( obj, double(obj.earSout(:,ii)), 100e-3, 50e-3 );
+                obj.annotsOut.srcEnergy(1,ii,:) = single(energy);
+            end
+            obj.annotsOut.srcEnergy_t = single(tFramesSec);
             for ii = 2:length( splitEarSignals )
                 onOffs_samples = obj.onOffsOut .* obj.getDataFs();
                 if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
                 ovrlSignal = splitEarSignals{ii};
                 ovrlSignal = obj.adjustSNR( ...
-                    splitEarSignals{1}, onOffs_samples, ovrlSignal, sc.SNRs(ii).value );
+                    splitEarSignals{1}, onOffs_samples, ovrlSignal, obj.sceneConfig.SNRs(ii).value );
                 obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) = ...
                     obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) ...
                     + ovrlSignal(1:min( length( obj.earSout ), length( ovrlSignal ) ),:);
+                for jj = 1 : 2
+                    energy = runningEnergy( obj, double(ovrlSignal(:,jj)), 100e-3, 50e-3 );
+                    obj.annotsOut.srcEnergy(ii,jj,:) = single(energy(1:length(obj.annotsOut.srcEnergy(1,ii,:))));
+                end
                 fprintf( '.' );
             end
             fprintf( '\n' );
@@ -145,6 +176,16 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
         
+        function [energy, tFramesSec] = runningEnergy( obj, signal, blockSec, stepSec )
+            blockSize = 2 * round(obj.getDataFs() * blockSec / 2);
+            stepSize  = round(obj.getDataFs() * stepSec);
+            frames = frameData(signal,blockSize,stepSize,'rectwin');
+            energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
+            energy = energy - quantile(energy,0.98);
+            tFramesSec = (stepSize:stepSize:stepSize*numel(energy)).'/obj.getDataFs();
+        end
+        %% ----------------------------------------------------------------
+        
         function vad = detectActivity( obj, signal, thresdB, hSec, blockSec, stepSec )
             %detectActivity   Energy-based voice activity detection.
             %   This function is based on detectVoiceActivityKinnunen by
@@ -164,25 +205,9 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             
             noiseFloor = -55;    % Noise floor
             
-            % **************************  FRAME-BASED ENERGY  ************************
-            blockSize = 2 * round(obj.getDataFs() * blockSec / 2);
-            stepSize  = round(obj.getDataFs() * stepSec);
-            
-            frames = frameData(signal,blockSize,stepSize,'rectwin');
-            
-            energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
-            
-            nFrames = numel(energy);
-            
             % ************************  DETECT VOICE ACTIVITY  ***********************
-            % Set maximum to 0 dB
-            energy = energy - max(energy);
-            
+            [energy, tFramesSec] = runningEnergy( obj, signal, blockSec, stepSec );
             frameVAD = energy > -abs(thresdB) & energy > noiseFloor;
-            
-            % Corresponding time vector in seconds
-            tFramesSec = (stepSize:stepSize:stepSize*nFrames).'/obj.getDataFs();
-            
             % ***************************  HANGOVER SCHEME  **************************
             % Determine length of hangover scheme
             hangover = max(0,1+floor((hSec - blockSec)/stepSec));
@@ -193,7 +218,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 hangCtr = 0;
                 
                 % Loop over number of frames
-                for ii = 1 : nFrames
+                for ii = 1 : numel(energy)
                     % VAD decision
                     if frameVAD(ii) == true
                         % Speech detected, activate hangover scheme

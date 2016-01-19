@@ -160,7 +160,11 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
             if ischar( src ) % then it is a filename
                 snd{1} = getPointSourceSignalFromWav( ...
                     src, obj.convRoomSim.SampleRate, startOffset );
-                onOffs = IdEvalFrame.readOnOffAnnotations( wavFile ) + startOffset;
+                if strcmpi( IdEvalFrame.readEventClass( wavFile ), 'general' )
+                    onOffs = zeros(0,2);
+                else
+                    onOffs = IdEvalFrame.readOnOffAnnotations( wavFile ) + startOffset;
+                end
             elseif isfloat( src ) && size( src, 2 ) == 1
                 snd{1} = src;
                 nZeros = floor( obj.convRoomSim.SampleRate * startOffset );

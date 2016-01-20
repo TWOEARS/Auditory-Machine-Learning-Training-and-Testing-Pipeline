@@ -9,6 +9,7 @@ classdef (Abstract) IdProcInterface < handle
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
         pcFilename = [];
+        pcFileInfo = [];
         preloadedPath = [];
         configChanged = true;
         currentFolder = [];
@@ -31,8 +32,20 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( obj.preloadedConfigs ), return; end
             if ~obj.preloadedConfigsChanged, return; end
             preloadedConfigs = obj.preloadedConfigs;
-            % TODO: load file if changed by other process, and merge
             sema = setfilesemaphore( obj.pcFilename );
+            new_pcFileInfo = dir( obj.pcFilename );
+            if new_pcFileInfo.bytes ~= obj.pcFileInfo.bytes  || ...
+               new_pcFileInfo.datenum ~= obj.pcFileInfo.datenum
+                new_pc = load( obj.pcFilename, 'preloadedConfigs' );
+                new_pcKeys = new_pc.preloadedConfigs.keys;
+                my_pcKeys = preloadedConfigs.keys;
+                for jj = length( new_pcKeys ) : -1 : 1
+                    k = new_pcKeys{jj};
+                    if ~any( strcmp( k, my_pcKeys ) )
+                        preloadedConfigs(k) = new_pc.preloadedConfigs(k);
+                    end
+                end
+            end
             save( obj.pcFilename, 'preloadedConfigs' );
             removefilesemaphore( sema );
             obj.preloadedConfigsChanged = false;
@@ -240,6 +253,7 @@ classdef (Abstract) IdProcInterface < handle
                 if exist( obj.pcFilename, 'file' )
                     sema = setfilesemaphore( obj.pcFilename );
                     Parameters.dynPropsOnLoad( true, false );
+                    obj.pcFileInfo = dir( obj.pcFilename );
                     pc = load( obj.pcFilename );
                     Parameters.dynPropsOnLoad( true, true );
                     removefilesemaphore( sema );

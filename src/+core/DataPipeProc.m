@@ -31,7 +31,7 @@ classdef DataPipeProc < handle
 
         function connectData( obj, data )
             obj.data = data;
-            obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
+            obj.fileListOverlay =  true( 1, length( obj.data(:) ) ) ;
         end
         %% ----------------------------------------------------------------
 
@@ -61,7 +61,7 @@ classdef DataPipeProc < handle
             if (nargin > 1) && ~isempty( otherOverlay ) && (length( otherOverlay ) == length( obj.data(:) ))
                 obj.fileListOverlay = otherOverlay;
             else
-                obj.fileListOverlay = logical( ones( 1, length( obj.data(:) ) ) );
+                obj.fileListOverlay =  true( 1, length( obj.data(:) ) ) ;
             end
             data = obj.data(:)';
             for ii = 1 : length( data )

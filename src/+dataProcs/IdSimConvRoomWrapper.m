@@ -5,6 +5,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
         convRoomSim;
         sceneConfig;
         IRDataset;
+        irType;
         reverberationMaxOrder = 5;
     end
     
@@ -14,52 +15,29 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
-%----        
-set(sim, ...
-    'Sources',              {simulator.source.Point()}, ...
-    );
-    brir = SOFAload(xml.dbGetFile(brirs{ii}), 'nodata');
-
-    % Get listener head orientation from BRIR
-    tmp = SOFAconvertCoordinates(brir.ListenerView(40,:),'cartesian','spherical');
-    headOrientation = tmp(1);
-
-    for jj = 1:size(brir.EmitterPosition,1); % loop over all loudspeakers
-
-        % Get source direction from BRIR
-        y = brir.EmitterPosition(jj, 2) - brir.ListenerPosition(2);
-        x = brir.EmitterPosition(jj, 1) - brir.ListenerPosition(1);
-        direction = atan2d(y, x) - headOrientation;
-
-        sim.Sources{1}.IRDataset = obj.IRDataset;
-        sim.rotateHead(headOrientation, 'absolute');
-        sim.Init = true;
-    end
-%----
         function obj = IdSimConvRoomWrapper( irFile, irType, multispeaker_id )
             obj = obj@dataProcs.BinSimProcInterface();
+            obj.irType = irType;
             obj.convRoomSim = simulator.SimulatorConvexRoom();
-            if strcmpi( irType, 'hrir' )
-                renderer = @ssr_binaural;
-                obj.IRDataset = simulator.DirectionalIR( irFile );
-            elseif strcmpi( irType, 'brir' )
-                renderer = @ssr_brs;
+            set(obj.convRoomSim, ...
+                'BlockSize', 4096, ...
+                'SampleRate', 44100, ...
+                'MaximumDelay', 0.05 ... % for distances up to ~15m
+                );
+            if strcmpi( obj.irType, 'hrir' )
+                set( obj.convRoomSim, 'Renderer', @ssr_binaural );
+                obj.IRDataset.dir = simulator.DirectionalIR( xml.dbGetFile( irFile ) );
+            elseif strcmpi( obj.irType, 'brir' )
+                set( obj.convRoomSim, 'Renderer', @ssr_brs );
                 if nargin < 3
-                    obj.IRDataset = simulator.DirectionalIR( irFile );
+                    obj.IRDataset.dir = simulator.DirectionalIR( irFile );
                 else
-                    obj.IRDataset = simulator.DirectionalIR( irFile, multispeaker_id );
+                    obj.IRDataset.dir = simulator.DirectionalIR( irFile, multispeaker_id );
                 end
             else
                 error( 'Unrecognized irType' );
             end
-            set(obj.convRoomSim, ...
-                'BlockSize', 4096, ...
-                'SampleRate', 44100, ...
-                'MaximumDelay', 0.05, ... % for distances up to ~15m
-                'Renderer', renderer, ...
-                'HRIRDataset', simulator.DirectionalIR( xml.dbGetFile( irFile )) ...
-...%                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')) ...
-                );
+            obj.IRDataset.fname = irFile;
             set(obj.convRoomSim, ...
                 'Sinks', simulator.AudioSink(2) ...
                 );
@@ -111,8 +89,8 @@ set(sim, ...
             persistent hrirHash;
             persistent hrirFName;
             if isempty( hrirFName )  || ...
-                    ~strcmpi( hrirFName, obj.convRoomSim.HRIRDataset.Filename )
-                hrirFName = obj.convRoomSim.HRIRDataset.Filename;
+                    ~strcmpi( hrirFName, obj.IRDataset.dir.Filename )
+                hrirFName = obj.IRDataset.dir.Filename;
                 hrirHash = calcDataHash( audioread( hrirFName ) );
             end
             outputDeps.hrir = hrirHash;
@@ -157,31 +135,45 @@ set(sim, ...
             end
         end
         %% ----------------------------------------------------------------
-
+        
         function setupSceneConfig( obj, sceneConfig )
             obj.convRoomSim.set( 'ShutDown', true );
             if ~isempty(obj.convRoomSim.Sources), obj.convRoomSim.Sources(2:end) = []; end;
-            useReverb = ~isempty( sceneConfig.room );
-            if useReverb
+            useSimReverb = ~isempty( sceneConfig.room );
+            if useSimReverb
+                if strcmpi( obj.irType, 'brir' )
+                    error( 'usage of BRIR collides with simulating a room' );
+                end
                 obj.convRoomSim.Room = sceneConfig.room.value; 
                 obj.convRoomSim.Room.set( 'ReverberationMaxOrder', ...
                                           obj.reverberationMaxOrder );
             end
             if isa( sceneConfig.sources(1), 'sceneConfig.PointSource' ) 
-                if useReverb
+                if useSimReverb
                     obj.convRoomSim.Sources{1} = simulator.source.ISMGroup();
                     obj.convRoomSim.Sources{1}.set( 'Room', obj.convRoomSim.Room );
                 else
                     obj.convRoomSim.Sources{1} = simulator.source.Point();
                 end
-                channelMapping = [1];
-                obj.convRoomSim.Sources{1}.set( 'Radius', ...
-                                                sceneConfig.sources(1).distance.value );
-                obj.convRoomSim.Sources{1}.set( 'Azimuth', ...
-                                                sceneConfig.sources(1).azimuth.value );
+                channelMapping = 1;
+                if strcmpi( obj.irType, 'hrir' )
+                    obj.convRoomSim.Sources{1}.Radius = ...
+                        sceneConfig.sources(1).distance.value;
+                    obj.convRoomSim.Sources{1}.Azimuth = ...
+                        sceneConfig.sources(1).azimuth.value;
+                elseif strcmpi( obj.irType, 'brir' )
+                    brirSofa = SOFAload(xml.dbGetFile(obj.IRDataset.fname), 'nodata');
+                    headOrientation = SOFAconvertCoordinates( ...
+                        brirSofa.ListenerView(40,:),'cartesian','spherical' );
+                    obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
+                    obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
+                end
             else % ~is diffuse
                 obj.convRoomSim.Sources{1} = simulator.source.Binaural();
                 channelMapping = [1 2];
+            end
+            if strcmpi( obj.irType, 'hrir' )
+                set( obj.convRoomSim, 'HRIRDataset', obj.IRDataset.dir );
             end
             obj.convRoomSim.Sources{1}.AudioBuffer = simulator.buffer.FIFO( channelMapping );
             obj.convRoomSim.set('Init',true);

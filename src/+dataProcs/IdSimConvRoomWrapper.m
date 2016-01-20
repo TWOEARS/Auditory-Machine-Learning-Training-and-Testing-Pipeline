@@ -4,6 +4,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     properties (Access = protected)
         convRoomSim;
         sceneConfig;
+        IRDataset;
         reverberationMaxOrder = 5;
     end
     
@@ -13,17 +14,51 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
-        
-        function obj = IdSimConvRoomWrapper()
+%----        
+set(sim, ...
+    'Sources',              {simulator.source.Point()}, ...
+    );
+    brir = SOFAload(xml.dbGetFile(brirs{ii}), 'nodata');
+
+    % Get listener head orientation from BRIR
+    tmp = SOFAconvertCoordinates(brir.ListenerView(40,:),'cartesian','spherical');
+    headOrientation = tmp(1);
+
+    for jj = 1:size(brir.EmitterPosition,1); % loop over all loudspeakers
+
+        % Get source direction from BRIR
+        y = brir.EmitterPosition(jj, 2) - brir.ListenerPosition(2);
+        x = brir.EmitterPosition(jj, 1) - brir.ListenerPosition(1);
+        direction = atan2d(y, x) - headOrientation;
+
+        sim.Sources{1}.IRDataset = obj.IRDataset;
+        sim.rotateHead(headOrientation, 'absolute');
+        sim.Init = true;
+    end
+%----
+        function obj = IdSimConvRoomWrapper( irFile, irType, multispeaker_id )
             obj = obj@dataProcs.BinSimProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
+            if strcmpi( irType, 'hrir' )
+                renderer = @ssr_binaural;
+                obj.IRDataset = simulator.DirectionalIR( irFile );
+            elseif strcmpi( irType, 'brir' )
+                renderer = @ssr_brs;
+                if nargin < 3
+                    obj.IRDataset = simulator.DirectionalIR( irFile );
+                else
+                    obj.IRDataset = simulator.DirectionalIR( irFile, multispeaker_id );
+                end
+            else
+                error( 'Unrecognized irType' );
+            end
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...
                 'SampleRate', 44100, ...
                 'MaximumDelay', 0.05, ... % for distances up to ~15m
-                'Renderer', @ssr_binaural, ...
-                'HRIRDataset', simulator.DirectionalIR( xml.dbGetFile( ...
-                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')) ...
+                'Renderer', renderer, ...
+                'HRIRDataset', simulator.DirectionalIR( xml.dbGetFile( irFile )) ...
+...%                'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa')) ...
                 );
             set(obj.convRoomSim, ...
                 'Sinks', simulator.AudioSink(2) ...

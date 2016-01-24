@@ -36,8 +36,8 @@ for aa = [1,3,4,5,10,12,13,14,15,17,19]
 for cc = 1 : 4 %numel( classes )
 for ff = 1 : numel( featureCreators )
 for ssc = 1 : size( crossSnrs, 2 )
-ss = snrs(crossSnrs(1,ssc));
-sst = snrs(crossSnrs(2,ssc));
+ss = crossSnrs(1,ssc);
+sst = crossSnrs(2,ssc);
 
 dd = ddt-1;
 aat = aa;

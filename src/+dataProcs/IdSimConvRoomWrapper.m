@@ -15,7 +15,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
-        function obj = IdSimConvRoomWrapper( irFile, irType, multispeaker_id )
+        function obj = IdSimConvRoomWrapper( hrirFile )
             obj = obj@dataProcs.BinSimProcInterface();
             obj.irType = irType;
             obj.convRoomSim = simulator.SimulatorConvexRoom();
@@ -26,18 +26,18 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 );
             if strcmpi( obj.irType, 'hrir' )
                 set( obj.convRoomSim, 'Renderer', @ssr_binaural );
-                obj.IRDataset.dir = simulator.DirectionalIR( xml.dbGetFile( irFile ) );
+                obj.IRDataset.dir = simulator.DirectionalIR( xml.dbGetFile( hrirFile ) );
             elseif strcmpi( obj.irType, 'brir' )
                 set( obj.convRoomSim, 'Renderer', @ssr_brs );
                 if nargin < 3
-                    obj.IRDataset.dir = simulator.DirectionalIR( irFile );
+                    obj.IRDataset.dir = simulator.DirectionalIR( hrirFile );
                 else
-                    obj.IRDataset.dir = simulator.DirectionalIR( irFile, multispeaker_id );
+                    obj.IRDataset.dir = simulator.DirectionalIR( hrirFile, multispeaker_id );
                 end
             else
                 error( 'Unrecognized irType' );
             end
-            obj.IRDataset.fname = irFile;
+            obj.IRDataset.fname = hrirFile;
             set(obj.convRoomSim, ...
                 'Sinks', simulator.AudioSink(2) ...
                 );

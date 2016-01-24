@@ -1,4 +1,4 @@
-function test_glmnet_PDs_cross_azm(ddt,ss)
+function test_glmnet_PDs_cross_azm(ss)
     
 addpath( '../..' );
 startIdentificationTraining();
@@ -26,15 +26,15 @@ crossAzms(2,:) = [4,12,19,1,12,19,01,04,19,01,04,12];
 crossAzms(1,:) = [crossAzms(1,:),ones(1,18)];
 crossAzms(2,:) = [crossAzms(2,:),2:19];
        
-if exist( ['pds_glmnet_test_crossAzm' strrep(num2str([ddt,ss]),' ','_') '.mat'], 'file' )
-    load( ['pds_glmnet_test_crossAzm' strrep(num2str([ddt,ss]),' ','_') '.mat'] );
+if exist( ['pds_glmnet_test_crossAzm' strrep(num2str(ss),' ','_') '.mat'], 'file' )
+    load( ['pds_glmnet_test_crossAzm' strrep(num2str(ss),' ','_') '.mat'] );
 else
     doneCfgsTest = {};
 end
 
 
 for aac = 1 : size( crossAzms, 2 )
-%for ddt = [2 4 6]
+for ddt = [2 4 6]
 for cc = 1 : 4 %numel( classes )
 for ff = 1 : numel( featureCreators )
 aa = crossAzms(1,aac);
@@ -102,7 +102,7 @@ test_performances_hws{cc,ddt,ss,ff,aa,sst,aat} = test_performances{cc,ddt,ss,ff,
 
 doneCfgsTest{end+1} = [cc ddt ss ff aa sst aat];
 
-save( ['pds_glmnet_test_crossAzm' strrep(num2str([ddt,ss]),' ','_') '.mat'], ...
+save( ['pds_glmnet_test_crossAzm' strrep(num2str(ss),' ','_') '.mat'], ...
     'modelpathes_test', 'doneCfgsTest', ...
     'test_performances', ...
     'lambda_b', ...
@@ -111,7 +111,7 @@ save( ['pds_glmnet_test_crossAzm' strrep(num2str([ddt,ss]),' ','_') '.mat'], ...
 
 end
 end
-%end
+end
 %end
 end
 

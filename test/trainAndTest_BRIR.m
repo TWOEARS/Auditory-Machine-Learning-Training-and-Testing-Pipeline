@@ -23,7 +23,7 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
 pipe.modelCreator.verbose( 'on' );
 
 pipe.trainset = 'learned_models/IdentityKS/trainTestSets/trainSet_miniMini1.flist';
-pipe.testset = 'learned_models/IdentityKS/trainTestSets/testSet_miniMini1.flist';
+pipe.testset = [];
 pipe.setupData();
 
 sc = sceneConfig.SceneConfiguration();
@@ -40,7 +40,34 @@ sc.setBRIRazm( 0.4 ); % point of recorded azm range (0..1)
 pipe.setSceneConfig( sc ); 
 
 pipe.init();
-%modelPath = pipe.pipeline.run( {classname}, 0 );
-modelPath = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
+modelPath = pipe.pipeline.run( {classname}, 0 );
 
-fprintf( ' -- Saved at %s -- \n\n', modelPath );
+
+pipe.modelCreator = ...
+    modelTrainers.LoadModelNoopTrainer( ...
+        @(cn)(fullfile( modelPath, [cn '.model.mat'] )), ...
+        'performanceMeasure', @performanceMeasures.BAC2,...
+        'maxDataSize', inf ...
+        );
+
+pipe.trainset = [];
+pipe.testset = 'learned_models/IdentityKS/trainTestSets/testSet_miniMini1.flist';
+pipe.setupData();
+
+sc = sceneConfig.SceneConfiguration();
+sc.addSource( sceneConfig.BRIRsource( ...
+    brirs{1}, 'speakerId', 1 )...
+    );
+sc.addSource( sceneConfig.BRIRsource( brirs{1}, ...
+    'data',sceneConfig.FileListValGen(pipe.pipeline.testSet('general',:,'wavFileName')),...
+    'offset', sceneConfig.ValGen('manual',0.0),...
+    'speakerId', 2 ),... 
+    sceneConfig.ValGen( 'manual', 10 ),...
+    true );
+sc.setBRIRazm( 0.4 ); % point of recorded azm range (0..1)
+pipe.setSceneConfig( sc ); 
+
+modelPath1 = pipe.pipeline.run( {classname}, 0 );
+
+fprintf( ' Training -- Saved at %s -- \n\n', modelPath );
+fprintf( ' Testing -- Saved at %s -- \n\n', modelPath1 );

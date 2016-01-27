@@ -1,7 +1,7 @@
 classdef MultiConfigurationsAFEmodule < core.IdProcInterface
     
     %% --------------------------------------------------------------------
-    properties (Access = private)
+    properties (SetAccess = private)
         afeProc;
         singleConfFiles;
         singleConfs;
@@ -46,22 +46,28 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
         %% ----------------------------------------------------------------
         
         function makeAFEdata( obj, inFileName )
-            in = load( inFileName );
-            obj.outputWavFileName = in.wavFileName;
+            [p,wavFileName,~] = fileparts( inFileName );
+            [~,wavFileName,~] = fileparts( wavFileName );
+            soundDir = fileparts( p );
+            wavFileName = fullfile( soundDir, wavFileName );
+            obj.outputWavFileName = wavFileName;
             obj.singleConfFiles = {};
             obj.singleConfs = [];
-            for ii = 1 : numel( in.singleScFiles )
-                conf = in.singleSCs{ii};
+            multiCfg = obj.getOutputDependencies();
+            scFieldNames = fieldnames( multiCfg.extern );
+            for ii = 1 : numel( scFieldNames )
+                conf = multiCfg.extern.(scFieldNames{ii});
                 obj.afeProc.setExternOutputDependencies( conf );
-                if ~obj.afeProc.hasFileAlreadyBeenProcessed( in.wavFileName )
+                if ~obj.afeProc.hasFileAlreadyBeenProcessed( wavFileName )
+                    in = load( inFileName );
                     if ~exist( in.singleScFiles{ii}, 'file' )
                         error( '%s not found. \n%s corrupt -- delete and restart.', ...
                             in.singleScFiles{ii}, inFileName );
                     end
                     obj.afeProc.process( in.singleScFiles{ii} );
-                    obj.afeProc.saveOutput( in.wavFileName );
+                    obj.afeProc.saveOutput( wavFileName );
                 end
-                obj.singleConfFiles{ii} = obj.afeProc.getOutputFileName( in.wavFileName );
+                obj.singleConfFiles{ii} = obj.afeProc.getOutputFileName( wavFileName );
                 obj.singleConfs{ii} = obj.afeProc.getOutputDependencies;
                 fprintf( ';' );
             end
@@ -69,6 +75,20 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
+        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+            precProcFileNeeded = false; 
+            multiCfg = obj.getOutputDependencies();
+            scFieldNames = fieldnames( multiCfg.extern );
+            for ii = 1 : numel( scFieldNames )
+                conf = multiCfg.extern.(scFieldNames{ii});
+                obj.afeProc.setExternOutputDependencies( conf );
+                if ~obj.afeProc.hasFileAlreadyBeenProcessed( wavFileName )
+                    precProcFileNeeded = true;
+                    return;
+                end
+            end
+        end
+        %% -----------------------------------------------------------------
     end
     
     %% --------------------------------------------------------------------

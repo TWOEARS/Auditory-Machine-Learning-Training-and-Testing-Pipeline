@@ -128,7 +128,8 @@ classdef IdentificationTrainingPipeline < handle
                 if ii == length( obj.dataPipeProcs )
                     obj.dataPipeProcs{ii}.checkDataFiles();
                 else
-                    obj.dataPipeProcs{ii}.checkDataFiles(obj.dataPipeProcs{ii+1}.fileListOverlay);
+                    obj.dataPipeProcs{ii}.checkDataFiles(...
+                        obj.dataPipeProcs{ii+1}.precedingFileNeededList);
                 end
             end
             for ii = 1 : length( obj.dataPipeProcs )
@@ -140,13 +141,11 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
-            featureCreator = obj.featureCreator;
-            if isempty( featureCreator.description )
-                dummyData = obj.data(1,1);
-                dummyInput = obj.dataPipeProcs{end}.inputFileNameBuilder( dummyData.wavFileName );
-                in = load( dummyInput );
-                obj.dataPipeProcs{end}.dataFileProcessor.featProc.process( in.singleConfFiles{1} );
+            if isempty( obj.featureCreator.description )
+                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.afeProc;
+                obj.featureCreator.dummyProcess( afe.makeDummyData );
             end
+            featureCreator = obj.featureCreator;
             lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;

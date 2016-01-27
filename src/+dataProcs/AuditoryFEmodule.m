@@ -43,6 +43,13 @@ classdef AuditoryFEmodule < core.IdProcInterface
             end
         end
         %% ----------------------------------------------------------------
+        
+        function afeDummy = makeDummyData ( obj )
+            afeDummy.afeData = obj.makeAFEdata( rand( 4100, 2 ) );
+            afeDummy.onOffsOut = zeros(0,2);
+            afeDummy.annotsOut = [];
+        end
+        %% ----------------------------------------------------------------
 
     end
     

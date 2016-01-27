@@ -85,9 +85,11 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
         
         function outFileName = getOutputFileName( obj, inFilePath, currentFolder )
-%            inFilePath = which( inFilePath ); % ensure absolute path
             if nargin < 3
                 currentFolder = obj.getCurrentFolder( inFilePath );
+            end
+            if isempty( currentFolder )
+                currentFolder = obj.createCurrentConfigFolder( inFilePath );
             end
             [~, fileName, fileExt] = fileparts( inFilePath );
             fileName = [fileName fileExt];
@@ -95,9 +97,8 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath, createFolder )
+        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder )
             if isempty( filePath ), fileProcessed = false; return; end
-%            filePath = which( filePath ); % ensure absolute path
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
                 ~isempty( currentFolder )  && ...
@@ -105,9 +106,14 @@ classdef (Abstract) IdProcInterface < handle
             if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
                 currentFolder = obj.createCurrentConfigFolder( filePath );
             end
+            if ~fileProcessed
+                precProcFileNeeded = obj.needsPrecedingProcResult( filePath );
+            else
+                precProcFileNeeded = false;
+            end
         end
         %% -----------------------------------------------------------------
-        
+
         function setExternOutputDependencies( obj, externOutputDeps )
             obj.configChanged = true;
             obj.externOutputDeps = externOutputDeps;
@@ -144,7 +150,12 @@ classdef (Abstract) IdProcInterface < handle
             end
             obj.externOutputDeps = [];
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
+        
+        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+            precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
+        end
+        %% -----------------------------------------------------------------
     end
     
     %% -----------------------------------------------------------------------------------

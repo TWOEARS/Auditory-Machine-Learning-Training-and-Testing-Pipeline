@@ -80,6 +80,18 @@ classdef MultiConfigurationsEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
         
+        function precProcFileNeeded = needsPrecedingProcResult( obj, inFileName )
+            precProcFileNeeded = false; 
+            for ii = 1 : numel( obj.sceneConfigurations )
+                obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
+                if ~obj.sceneProc.hasFileAlreadyBeenProcessed( inFileName )
+                    precProcFileNeeded = true;
+                    return;
+                end
+            end
+        end
+        %% -----------------------------------------------------------------
+        
     end
     
     %% -----------------------------------------------------------------------------------

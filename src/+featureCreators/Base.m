@@ -47,6 +47,16 @@ classdef Base < core.IdProcInterface
             end
         end
         %% ----------------------------------------------------------------
+        
+        function dummyProcess( obj, afeDummy )
+            [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
+            obj.afeData = afeBlocks{1};
+            xd = obj.constructVector();
+            obj.description = xd{2};
+            obj.descriptionBuilt = true;
+        end
+            
+        %% ----------------------------------------------------------------
 
         function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
             afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
@@ -94,7 +104,7 @@ classdef Base < core.IdProcInterface
             anyAFEsignal = afeData(afeDataNames{1});
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
             sigLen = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
-            for backOffset_s = 0.0 : obj.shiftSize_s : sigLen - obj.shiftSize_s
+            for backOffset_s = 0.0 : obj.shiftSize_s : max(sigLen+0.01,obj.shiftSize_s) - obj.shiftSize_s
                 afeBlocks{end+1} = obj.cutDataBlock( afeData, backOffset_s );
                 blockOffset = sigLen - backOffset_s;
                 labelBlockOnset = blockOffset - obj.labelBlockSize_s;
@@ -112,7 +122,8 @@ classdef Base < core.IdProcInterface
                     blockIsAmbigous = relEventBlockOverlap > (1-obj.minBlockToEventRatio); 
                     if blockIsSoundEvent
                         y(end) = 1;
-                        if size( annotsOut.srcEnergy, 1 ) == 2 % there is ONE distractor
+                        if isfield( annotsOut, 'srcEnergy' ) && ...
+                           size( annotsOut.srcEnergy, 1 ) == 2 % there is ONE distractor
                             energyBlockIdxs = ...
                                 annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
                                 & annotsOut.srcEnergy_t <= blockOffset;

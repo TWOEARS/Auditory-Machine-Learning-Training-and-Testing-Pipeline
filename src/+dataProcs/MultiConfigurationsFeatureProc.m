@@ -46,28 +46,53 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
         %% ----------------------------------------------------------------
         
         function makeFeatures( obj, inFileName )
-            in = load( inFileName );
-            obj.outputWavFileName = in.wavFileName;
+            [p,wavFileName,~] = fileparts( inFileName );
+            [~,wavFileName,~] = fileparts( wavFileName );
+            soundDir = fileparts( p );
+            wavFileName = fullfile( soundDir, wavFileName );
+            obj.outputWavFileName = wavFileName;
             obj.singleConfFiles = {};
             obj.singleConfs = [];
-            for ii = 1 : numel( in.singleConfFiles )
-                conf = in.singleConfs{ii};
+            multiCfg = obj.getOutputDependencies();
+            scFieldNames = fieldnames( multiCfg.extern.extern );
+            for ii = 1 : numel( scFieldNames )
+                conf = [];
+                conf.afeParams = multiCfg.extern.afeDeps.afeParams;
+                conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
                 obj.featProc.setExternOutputDependencies( conf );
-                if ~obj.featProc.hasFileAlreadyBeenProcessed( in.wavFileName )
+                if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
+                    in = load( inFileName );
                     if ~exist( in.singleConfFiles{ii}, 'file' )
                         error( '%s not found. \n%s corrupt -- delete and restart.', ...
                             in.singleConfFiles{ii}, inFileName );
                     end
                     obj.featProc.process( in.singleConfFiles{ii} );
-                    obj.featProc.saveOutput( in.wavFileName );
+                    obj.featProc.saveOutput( wavFileName );
                 end
-                obj.singleConfFiles{ii} = obj.featProc.getOutputFileName( in.wavFileName );
+                obj.singleConfFiles{ii} = obj.featProc.getOutputFileName( wavFileName );
                 obj.singleConfs{ii} = obj.featProc.getOutputDependencies;
                 fprintf( ';' );
             end
             fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
+        
+        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+            precProcFileNeeded = false; 
+            multiCfg = obj.getOutputDependencies();
+            scFieldNames = fieldnames( multiCfg.extern.extern );
+            for ii = 1 : numel( scFieldNames )
+                conf = [];
+                conf.afeParams = multiCfg.extern.afeDeps.afeParams;
+                conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
+                obj.featProc.setExternOutputDependencies( conf );
+                if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
+                    precProcFileNeeded = true;
+                    return;
+                end
+            end
+        end
+        %% -----------------------------------------------------------------
         
     end
     

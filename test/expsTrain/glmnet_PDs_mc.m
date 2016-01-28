@@ -1,5 +1,7 @@
 function glmnet_PDs_mc( dd,ff )
 
+if nargin < 2, ff = 1; end
+
 addpath( '../..' );
 startIdentificationTraining();
 
@@ -51,7 +53,7 @@ for cc = 1 : 11
     pipe.trainset = datasets{dd};
     pipe.setupData();
     
-    mcsc = [];
+    clear mcsc;
     for aa = [1,4,12,19,14,6,7,9,10,13]
         for ss = 1:4
             sc = sceneConfig.SceneConfiguration();

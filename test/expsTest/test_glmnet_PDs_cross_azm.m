@@ -23,6 +23,7 @@ classes = {'alarm','baby','femaleSpeech','fire','crash','dog','engine','footstep
            'knock','phone','piano'};
 crossAzms(1,:) = [1,01,01,4,04,04,12,12,12,19,19,19,12,12,12,12,12,12,19,19,19,19,4,4,4,4,1,1,01,2,2,02,7,7,07,15,15,15];
 crossAzms(2,:) = [4,12,19,1,12,19,01,04,19,01,04,12,07,08,09,10,11,14,18,17,16,15,2,3,5,6,2,7,15,1,7,15,1,2,15,01,02,07];
+rng( 192100 );
 crossAzms = [crossAzms,randi( 19, 2, 100 )];
        
 if exist( ['pds_glmnet_test_crossAzm' strrep(num2str(ss),' ','_') '.mat'], 'file' )

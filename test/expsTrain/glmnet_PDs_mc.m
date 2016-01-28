@@ -53,7 +53,7 @@ for cc = 1 : 11
     pipe.trainset = datasets{dd};
     pipe.setupData();
     
-    clear mcsc;
+    mcsc = sceneConfig.SceneConfiguration.empty;
     for aa = [1,4,12,19,14,6,7,9,10,13]
         for ss = 1:4
             sc = sceneConfig.SceneConfiguration();

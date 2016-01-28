@@ -8,7 +8,9 @@ classdef (Abstract) IdProcInterface < handle
         externOutputDeps;
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
+        pcRWsema = [];
         pcFilename = [];
+        pcWriteFilename = [];
         pcFileInfo = [];
         preloadedPath = [];
         configChanged = true;
@@ -32,11 +34,15 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( obj.preloadedConfigs ), return; end
             if ~obj.preloadedConfigsChanged, return; end
             preloadedConfigs = obj.preloadedConfigs;
-            sema = setfilesemaphore( obj.pcFilename );
+            sema = setfilesemaphore( obj.pcWriteFilename );
             new_pcFileInfo = dir( obj.pcFilename );
-            if new_pcFileInfo.bytes ~= obj.pcFileInfo.bytes  || ...
-               new_pcFileInfo.datenum ~= obj.pcFileInfo.datenum
+            if ~isempty( new_pcFileInfo ) && ...
+                    ~isequalDeepCompare( new_pcFileInfo, obj.pcFileInfo )
+                obj.pcRWsema.getReadAccess();
+                Parameters.dynPropsOnLoad( true, false );
                 new_pc = load( obj.pcFilename, 'preloadedConfigs' );
+                Parameters.dynPropsOnLoad( true, true );
+                obj.pcRWsema.releaseReadAccess();
                 new_pcKeys = new_pc.preloadedConfigs.keys;
                 my_pcKeys = preloadedConfigs.keys;
                 for jj = length( new_pcKeys ) : -1 : 1
@@ -46,7 +52,11 @@ classdef (Abstract) IdProcInterface < handle
                     end
                 end
             end
-            save( obj.pcFilename, 'preloadedConfigs' );
+            save( obj.pcWriteFilename, 'preloadedConfigs' );
+            obj.pcRWsema.getWriteAccess();
+            copyfile( obj.pcWriteFilename, obj.pcFilename ); % this blocks pcFilename much shorter
+            obj.pcRWsema.releaseWriteAccess();
+            delete( obj.pcWriteFilename );
             removefilesemaphore( sema );
             obj.preloadedConfigsChanged = false;
         end
@@ -261,13 +271,15 @@ classdef (Abstract) IdProcInterface < handle
         function loadPreloadedConfigs( obj, dbFolder )
             if isempty( obj.preloadedConfigs )
                 obj.pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
+                obj.pcWriteFilename = [dbFolder filesep obj.procName '.preloadedConfigs.write.mat'];
+                obj.pcRWsema = ReadersWritersFileSemaphore( obj.pcFilename );
                 if exist( obj.pcFilename, 'file' )
-                    sema = setfilesemaphore( obj.pcFilename );
+                    obj.pcRWsema.getReadAccess();
                     Parameters.dynPropsOnLoad( true, false );
                     obj.pcFileInfo = dir( obj.pcFilename );
                     pc = load( obj.pcFilename );
                     Parameters.dynPropsOnLoad( true, true );
-                    removefilesemaphore( sema );
+                    obj.pcRWsema.releaseReadAccess();
                     obj.preloadedConfigs = pc.preloadedConfigs;
                     obj.preloadedConfigsChanged = false;
                 else

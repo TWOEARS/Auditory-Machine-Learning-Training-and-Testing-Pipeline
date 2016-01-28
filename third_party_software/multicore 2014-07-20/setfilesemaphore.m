@@ -43,8 +43,8 @@ function semaphoreCell = setfilesemaphore(fileList, semaphoreMode)
 % the machine where the temporary directory lies?
 
 % set parameters (all times in seconds)
-semaphoreOldTime    = 600;   % other semaphore files are deleted if found longer than this time
-semaphoreOldTime2   = 666;   % other semaphore files are deleted if older than this time
+semaphoreOldTime    = inf;   % other semaphore files are deleted if found longer than this time
+semaphoreOldTime2   = inf;   % other semaphore files are deleted if older than this time
 fixedWaitTime       = 0.02; % wait after generating semaphore to check if access is exclusive
 checkAgainWaitTime  = 0.02; % wait before checking again if semaphore files are already existing
 retryWaitTime       = 0.4;  % random wait time after removing own semaphore file again 
@@ -214,6 +214,15 @@ for fileNr = 1:nOfFiles
               
               % semaphore file must be respected
               anySemaphoreExisting = true;
+              
+              checkAgainWaitTime = checkAgainWaitTime + 0.01;
+              
+              if checkAgainWaitTime > 100
+                  checkAgainWaitTime = checkAgainWaitTime + 0.99;
+                  fprintf('Respecting semaphore file %s for %d minutes now.\n', ...
+                      currSemaphoreFileName,...
+                      ceil((mbtime - semaphoreStartWaitTimes(currSemaphoreIndex))/60));
+              end
               
               if debugMode
                 fprintf('Respecting semaphore file %s.\n', currSemaphoreFileName);

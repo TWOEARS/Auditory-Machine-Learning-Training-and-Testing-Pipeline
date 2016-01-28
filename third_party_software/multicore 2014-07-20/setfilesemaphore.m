@@ -43,13 +43,13 @@ function semaphoreCell = setfilesemaphore(fileList, semaphoreMode)
 % the machine where the temporary directory lies?
 
 % set parameters (all times in seconds)
-semaphoreOldTime    = 120;   % other semaphore files are deleted if found longer than this time
-semaphoreOldTime2   = 160;   % other semaphore files are deleted if older than this time
+semaphoreOldTime    = 600;   % other semaphore files are deleted if found longer than this time
+semaphoreOldTime2   = 666;   % other semaphore files are deleted if older than this time
 fixedWaitTime       = 0.02; % wait after generating semaphore to check if access is exclusive
 checkAgainWaitTime  = 0.02; % wait before checking again if semaphore files are already existing
 retryWaitTime       = 0.4;  % random wait time after removing own semaphore file again 
 waitInfoTime        = 10;
-removeOldSemaphores = 0;    % try to remove old semaphore files or not
+removeOldSemaphores = 1;    % try to remove old semaphore files or not
 
 % debug options
 showWarnings = 0;

@@ -6,6 +6,7 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
         singleConfFiles;
         singleConfs;
         outputWavFileName;
+        precollected;
     end
     
     %% --------------------------------------------------------------------
@@ -21,6 +22,7 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
                 error( 'featProc must implement core.IdProcInterface.' );
             end
             obj.featProc = featProc;
+            obj.precollected = containers.Map('KeyType','char','ValueType','any');
         end
         %% ----------------------------------------------------------------
 
@@ -51,26 +53,35 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
             soundDir = fileparts( p );
             wavFileName = fullfile( soundDir, wavFileName );
             obj.outputWavFileName = wavFileName;
+            precoll = [];
+            if obj.precollected.isKey( wavFileName )
+                precoll = obj.precollected(wavFileName);
+            end
             obj.singleConfFiles = {};
             obj.singleConfs = [];
             multiCfg = obj.getOutputDependencies();
             scFieldNames = fieldnames( multiCfg.extern.extern );
             for ii = 1 : numel( scFieldNames )
-                conf = [];
-                conf.afeParams = multiCfg.extern.afeDeps.afeParams;
-                conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
-                obj.featProc.setExternOutputDependencies( conf );
-                if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
-                    in = load( inFileName );
-                    if ~exist( in.singleConfFiles{ii}, 'file' )
-                        error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                            in.singleConfFiles{ii}, inFileName );
+                if ~isempty( precoll ) && isfield( precoll, scFieldNames{ii} )
+                    obj.singleConfFiles{ii} = precoll.(scFieldNames{ii}).fname;
+                    obj.singleConfs{ii} = precoll.(scFieldNames{ii}).cfg;
+                else
+                    conf = [];
+                    conf.afeParams = multiCfg.extern.afeDeps.afeParams;
+                    conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
+                    obj.featProc.setExternOutputDependencies( conf );
+                    if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
+                        in = load( inFileName );
+                        if ~exist( in.singleConfFiles{ii}, 'file' )
+                            error( '%s not found. \n%s corrupt -- delete and restart.', ...
+                                in.singleConfFiles{ii}, inFileName );
+                        end
+                        obj.featProc.process( in.singleConfFiles{ii} );
+                        obj.featProc.saveOutput( wavFileName );
                     end
-                    obj.featProc.process( in.singleConfFiles{ii} );
-                    obj.featProc.saveOutput( wavFileName );
+                    obj.singleConfFiles{ii} = obj.featProc.getOutputFileName( wavFileName );
+                    obj.singleConfs{ii} = obj.featProc.getOutputDependencies;
                 end
-                obj.singleConfFiles{ii} = obj.featProc.getOutputFileName( wavFileName );
-                obj.singleConfs{ii} = obj.featProc.getOutputDependencies;
                 fprintf( ';' );
             end
             fprintf( '\n' );
@@ -80,7 +91,9 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
         function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
             precProcFileNeeded = false; 
             multiCfg = obj.getOutputDependencies();
+            precoll = [];
             scFieldNames = fieldnames( multiCfg.extern.extern );
+            fprintf( '#' );
             for ii = 1 : numel( scFieldNames )
                 conf = [];
                 conf.afeParams = multiCfg.extern.afeDeps.afeParams;
@@ -88,9 +101,14 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
                 obj.featProc.setExternOutputDependencies( conf );
                 if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
                     precProcFileNeeded = true;
-                    return;
+                    break;
                 end
+                precoll.(scFieldNames{ii}).fname = obj.featProc.getOutputFileName( wavFileName );
+                precoll.(scFieldNames{ii}).cfg = obj.featProc.getOutputDependencies;
+                fprintf( '.' );
             end
+            obj.precollected(wavFileName) = precoll;
+            fprintf( '\n' );
         end
         %% -----------------------------------------------------------------
         

@@ -74,7 +74,7 @@ classdef DataPipeProc < handle
                 fprintf( '.%s\n', dataFile.wavFileName );
                 [obj.fileListOverlay(ii), obj.precedingFileNeededList(ii)] = ...
                     obj.dataFileProcessor.hasFileAlreadyBeenProcessed( ...
-                    dataFile.wavFileName, true );
+                    dataFile.wavFileName, true, true );
                 obj.fileListOverlay(ii) = ~obj.fileListOverlay(ii);
             end
             fprintf( '..' );

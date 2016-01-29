@@ -107,7 +107,7 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder )
+        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder, checkPrecNeed )
             if isempty( filePath ), fileProcessed = false; return; end
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
@@ -116,7 +116,7 @@ classdef (Abstract) IdProcInterface < handle
             if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
                 currentFolder = obj.createCurrentConfigFolder( filePath );
             end
-            if ~fileProcessed
+            if ~fileProcessed && nargin > 3 && checkPrecNeed
                 precProcFileNeeded = obj.needsPrecedingProcResult( filePath );
             else
                 precProcFileNeeded = false;

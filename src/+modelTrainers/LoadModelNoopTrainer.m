@@ -40,7 +40,7 @@ classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
             if ~exist( obj.modelPathBuilder( obj.positiveClass ), 'file' )
                 error( 'Could not find "%s".', obj.modelPathBuilder( obj.positiveClass ) );
             end
-            ms = load( obj.modelPathBuilder( obj.positiveClass ) );
+            ms = load( obj.modelPathBuilder( obj.positiveClass ), 'model' );
             model = ms.model;
             fieldsModelParams = fieldnames( obj.modelParams );
             for ii = 1: length( fieldsModelParams )

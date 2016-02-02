@@ -1,4 +1,4 @@
-function test_glmnet_PDs_mc_sc( )
+function test_glmnet_PDs_mc_sc( ccp )
     
 addpath( '../..' );
 startIdentificationTraining();
@@ -22,14 +22,14 @@ datasets = {'learned_models/IdentityKS/trainTestSets/NIGENS_75pTrain_TrainSet_1.
 classes = {'alarm','baby','femaleSpeech','fire','crash','dog','engine','footsteps',...
            'knock','phone','piano'};
        
-if exist( 'pds_glmnet_mc_sc_test.mat', 'file' )
-    load( 'pds_glmnet_mc_sc_test.mat' );
+if exist( ['pds_glmnet_mc_sc_' strrep(num2str(ccp),' ','_') '_test.mat'], 'file' )
+    load( ['pds_glmnet_mc_sc_' strrep(num2str(ccp),' ','_') '_test.mat'] );
 else
     doneCfgsTest = {};
 end
 
 for aa = [1,4,12,19,14,6,7,9,10,13,2,3,5,8,11,15,16,17,18]
-for cc = 1 : 4 %numel( classes )
+for cc = ccp % 1 : 4 %numel( classes )
 for ff = 1 %: numel( featureCreators )
 for ddt = [2,4,6]
 for ss = 1:4
@@ -115,7 +115,7 @@ trainTime{cc,ddt,ff,aa,ss} = ...
 
 doneCfgsTest{end+1} = [cc ddt ff aa ss];
 
-save( 'pds_glmnet_mc_sc_test.mat', ...
+save( ['pds_glmnet_mc_sc_' strrep(num2str(ccp),' ','_') '_test.mat'], ...
     'modelpathes_test', 'doneCfgsTest', ...
     'test_performances', 'cv_performances', 'cv_std',...
     'coefIdxs_b', 'impacts_b', 'perf_b', 'lambda_b', 'nCoefs_b',...

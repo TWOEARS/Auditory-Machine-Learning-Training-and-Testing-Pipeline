@@ -99,7 +99,7 @@ classdef GlmNetModel < models.DataScalingModel
             yun = unique( y );
             if all( yun == [1;2] )
                 y = y * 2 - 3; % from 1/2 to -1/1
-            elseif any( yun ~= [-1;1] )
+            elseif sum( yun==[-1,1] ) ~= numel(yun)
                 error( 'unexpected labels' );
             end
             score = glmnetPredict( obj.model, x, obj.lambda, 'response' );

@@ -177,8 +177,8 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
         
         function [sig, timeIncSec, timeIncSamples] = getSignal(obj, timeIncSec)
             timeIncSamples = timeIncSec * obj.SampleRate;
-%             maxEarSoutSamples = min( length( obj.earSout ), obj.currentEarSoutPos + timeIncSamples );
-            sig = obj.earSout(obj.currentEarSoutPos:obj.currentEarSoutPos + timeIncSamples,:);
+            maxEarSoutSamples = min( length( obj.earSout ), obj.currentEarSoutPos + timeIncSamples - 1 );
+            sig = obj.earSout(obj.currentEarSoutPos:maxEarSoutSamples,:);
             obj.currentEarSoutPos = obj.currentEarSoutPos + timeIncSamples;
         end
         %% ----------------------------------------------------------------

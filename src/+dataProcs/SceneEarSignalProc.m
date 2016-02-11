@@ -8,10 +8,6 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
     end
     
     %% --------------------------------------------------------------------
-    methods (Static)
-    end
-    
-    %% --------------------------------------------------------------------
     methods (Access = public)
         
         function obj = SceneEarSignalProc( binauralSim )
@@ -83,8 +79,8 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                     obj.binauralSim.setSceneConfig( scInst );
                     splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
                     if length( splitEarSignals{ii} ) > 0
-                        splitOut.earSout = obj.adjustSNR( ...
-                            splitEarSignals{ii}, 'energy', splitOut.earSout, 0 );
+                        splitOut.earSout = dataProcs.SceneEarSignalProc.adjustSNR( ...
+                            obj.getDataFs(), splitEarSignals{ii}, 'energy', splitOut.earSout, 0 );
                     end
                     splitEarSignals{ii} = [splitEarSignals{ii}; splitOut.earSout];
                     targetSignalLen = length( splitEarSignals{1} ) / obj.getDataFs();
@@ -107,7 +103,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             fprintf( ':' );
             obj.earSout = splitEarSignals{1};
             for ii = 1 : 2
-                [energy, tFramesSec] = runningEnergy( obj, double(obj.earSout(:,ii)), 100e-3, 50e-3 );
+                [energy, tFramesSec] = dataProcs.SceneEarSignalProc.runningEnergy( obj.getDataFs(), double(obj.earSout(:,ii)), 100e-3, 50e-3 );
                 obj.annotsOut.srcEnergy(1,ii,:) = single(energy);
             end
             obj.annotsOut.srcEnergy_t = single(tFramesSec);
@@ -115,13 +111,13 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 onOffs_samples = obj.onOffsOut .* obj.getDataFs();
                 if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
                 ovrlSignal = splitEarSignals{ii};
-                ovrlSignal = obj.adjustSNR( ...
+                ovrlSignal = dataProcs.SceneEarSignalProc.adjustSNR( obj.getDataFs(), ...
                     splitEarSignals{1}, onOffs_samples, ovrlSignal, obj.sceneConfig.SNRs(ii).value );
                 obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) = ...
                     obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) ...
                     + ovrlSignal(1:min( length( obj.earSout ), length( ovrlSignal ) ),:);
                 for jj = 1 : 2
-                    energy = runningEnergy( obj, double(ovrlSignal(:,jj)), 100e-3, 50e-3 );
+                    energy = dataProcs.SceneEarSignalProc.runningEnergy( obj.getDataFs(), double(ovrlSignal(:,jj)), 100e-3, 50e-3 );
                     obj.annotsOut.srcEnergy(ii,jj,:) = single(energy(1:length(obj.annotsOut.srcEnergy(1,ii,:))));
                 end
                 fprintf( '.' );
@@ -130,17 +126,25 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function signal2 = adjustSNR( obj, signal1, sig1OnOffs, signal2, snrdB )
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Static)
+        function signal2 = adjustSNR( fs, signal1, sig1OnOffs, signal2, snrdB )
             %adjustSNR   Adjust SNR between two signals. Only parts of the
             %signal that actually exhibit energy are factored into the SNR
             %computation.
             %   This function is based on adjustSNR by Tobias May.
 
             signal1(:,1) = signal1(:,1) - mean( signal1(:,1) );
-            signal1(:,2) = signal1(:,2) - mean( signal1(:,2) );
+            if size( signal1, 2 ) == 1
+                signal1(:,2) = signal1(:,1);
+            else
+                signal1(:,2) = signal1(:,2) - mean( signal1(:,2) );
+            end
             if isa( sig1OnOffs, 'char' ) && strcmpi( sig1OnOffs, 'energy' )
-                s1actL = obj.detectActivity( double(signal1(:,1)), 40, 50e-3, 50e-3, 10e-3 );
-                s1actR = obj.detectActivity( double(signal1(:,2)), 40, 50e-3, 50e-3, 10e-3 );
+                s1actL = dataProcs.SceneEarSignalProc.detectActivity( fs, double(signal1(:,1)), 40, 50e-3, 50e-3, 10e-3 );
+                s1actR = dataProcs.SceneEarSignalProc.detectActivity( fs, double(signal1(:,2)), 40, 50e-3, 50e-3, 10e-3 );
                 signal1 = signal1(s1actL | s1actR,:);
             else
                 sig1OnOffs(sig1OnOffs>length(signal1)) = length(signal1);
@@ -150,9 +154,13 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 signal1 = vertcat( signal1activePieces{:} );
             end
             signal2(:,1) = signal2(:,1) - mean( signal2(:,1) );
-            signal2(:,2) = signal2(:,2) - mean( signal2(:,2) );
-            s2actL = obj.detectActivity( double(signal2(:,1)), 40, 50e-3, 50e-3, 10e-3 );
-            s2actR = obj.detectActivity( double(signal2(:,2)), 40, 50e-3, 50e-3, 10e-3 );
+            s2actL = dataProcs.SceneEarSignalProc.detectActivity( fs, double(signal2(:,1)), 40, 50e-3, 50e-3, 10e-3 );
+            if size( signal2, 2 ) > 1
+                signal2(:,2) = signal2(:,2) - mean( signal2(:,2) );
+                s2actR = dataProcs.SceneEarSignalProc.detectActivity( fs, double(signal2(:,2)), 40, 50e-3, 50e-3, 10e-3 );
+            else
+                s2actR = zeros( size( s2actL ) );
+            end
             signal2act = signal2(s2actL | s2actR,:);
             
             if isfinite(snrdB)
@@ -176,17 +184,17 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function [energy, tFramesSec] = runningEnergy( obj, signal, blockSec, stepSec )
-            blockSize = 2 * round(obj.getDataFs() * blockSec / 2);
-            stepSize  = round(obj.getDataFs() * stepSec);
+        function [energy, tFramesSec] = runningEnergy( fs, signal, blockSec, stepSec )
+            blockSize = 2 * round(fs * blockSec / 2);
+            stepSize  = round(fs * stepSec);
             frames = frameData(signal,blockSize,stepSize,'rectwin');
             energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
             energy = energy - quantile(energy,0.98);
-            tFramesSec = (stepSize:stepSize:stepSize*numel(energy)).'/obj.getDataFs();
+            tFramesSec = (stepSize:stepSize:stepSize*numel(energy)).'/fs;
         end
         %% ----------------------------------------------------------------
         
-        function vad = detectActivity( obj, signal, thresdB, hSec, blockSec, stepSec )
+        function vad = detectActivity( fs, signal, thresdB, hSec, blockSec, stepSec )
             %detectActivity   Energy-based voice activity detection.
             %   This function is based on detectVoiceActivityKinnunen by
             %   Tobias May.
@@ -206,7 +214,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             noiseFloor = -55;    % Noise floor
             
             % ************************  DETECT VOICE ACTIVITY  ***********************
-            [energy, tFramesSec] = runningEnergy( obj, signal, blockSec, stepSec );
+            [energy, tFramesSec] = dataProcs.SceneEarSignalProc.runningEnergy( fs, signal, blockSec, stepSec );
             frameVAD = energy > -abs(thresdB) & energy > noiseFloor;
             % ***************************  HANGOVER SCHEME  **************************
             % Determine length of hangover scheme
@@ -237,7 +245,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             
             % *************************  RETURN VAD DECISION  ************************
             % Time vector in seconds
-            tSec = (1:length(signal)).'/obj.getDataFs();
+            tSec = (1:length(signal)).'/fs;
             
             % Convert frame-based VAD decision to samples
             vad = interp1(tFramesSec,double(frameVAD),tSec,'nearest','extrap');
@@ -245,10 +253,6 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             % Return logical VAD decision
             vad = logical(vad).';
         end
-    end
-    
-    %% --------------------------------------------------------------------
-    methods (Access = private)
     end
     
 end

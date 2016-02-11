@@ -6,6 +6,10 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         externOutputDeps;
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    properties (SetAccess = protected, Transient = true)
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
         pcRWsema = [];
@@ -29,7 +33,7 @@ classdef (Abstract) IdProcInterface < handle
             obj.savePreloadedConfigs();
         end
         %% -----------------------------------------------------------------
-        
+
         function savePreloadedConfigs( obj )
             if isempty( obj.preloadedConfigs ), return; end
             if ~obj.preloadedConfigsChanged, return; end

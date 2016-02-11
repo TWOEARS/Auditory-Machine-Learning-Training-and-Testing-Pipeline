@@ -27,9 +27,11 @@ sc.addSource( sceneConfig.PointSource( ...
 pipe.setSceneConfig( [sc] ); 
 
 pipe.init();
-%modelPath = pipe.pipeline.run( {classname}, 0 );
-modelPath = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
+modelPath = pipe.pipeline.run( {classname}, 0 );
+%modelPath = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
 
+pipe = TwoEarsIdTrainPipe();
+pipe.featureCreator = featureCreators.FeatureSetRawRmAms();
 pipe.modelCreator = ...
     modelTrainers.LoadModelNoopTrainer( ...
         @(cn)(fullfile( modelPath, [cn '.model.mat'] )), ...
@@ -51,8 +53,8 @@ sc.addSource( sceneConfig.PointSource( ...
 pipe.setSceneConfig( [sc] ); 
 
 pipe.init();
-%modelPath = pipe.pipeline.run( {classname}, 0 );
-modelPath1 = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
+modelPath1 = pipe.pipeline.run( {classname}, 0 );
+%modelPath1 = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
 
 fprintf( ' -- Training: Saved at %s -- \n\n', modelPath );
 fprintf( ' -- Testing: Saved at %s -- \n\n', modelPath1 );

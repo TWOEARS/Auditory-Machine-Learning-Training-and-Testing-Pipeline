@@ -21,7 +21,7 @@ classdef Base < core.IdProcInterface
     end
 
     %% --------------------------------------------------------------------
-    methods (Access = public)
+    methods
         
         function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
             obj = obj@core.IdProcInterface();
@@ -29,6 +29,11 @@ classdef Base < core.IdProcInterface
             obj.shiftSize_s = shiftsize_s;
             obj.minBlockToEventRatio = minBlockToEventRatio;
             obj.labelBlockSize_s = labelBlockSize_s;
+        end
+        %% ----------------------------------------------------------------
+        
+        function setAfeData( obj, afeData )
+            obj.afeData = afeData;
         end
         %% ----------------------------------------------------------------
         

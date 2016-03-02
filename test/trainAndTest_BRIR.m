@@ -67,6 +67,7 @@ sc.addSource( sceneConfig.BRIRsource( brirs{1}, ...
 sc.setBRIRazm( 0.4 ); % point of recorded azm range (0..1)
 pipe.setSceneConfig( sc ); 
 
+pipe.init();
 modelPath1 = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' Training -- Saved at %s -- \n\n', modelPath );

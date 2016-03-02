@@ -117,7 +117,7 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
                 end
                 obj.targetLabels = labels;
                 audiohash = calcDataHash( wavs );
-                obj.targetWav = [pwd filesep 'targets' filesep audiohash '_target.wav'];
+                obj.targetWav = ['targets/' audiohash '_target.wav'];
                 audiowrite( obj.targetWav, sourceSignal, obj.SampleRate );
                 targetWav = obj.targetWav;
                 targetOnOffs = obj.targetOnOffs;
@@ -132,7 +132,7 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
         %% ----------------------------------------------------------------
 
         function preprocessScene( obj )
-            mcbfsOut = obj.multiConfBinauralSim.processSaveAndGetOutput( obj.targetWav );
+            mcbfsOut = obj.multiConfBinauralSim.processSaveAndGetOutput( [pwd filesep obj.targetWav] );
             if numel( obj.multiConfBinauralSim.singleScFiles ) > 1
                 error( 'TODO' );
             end

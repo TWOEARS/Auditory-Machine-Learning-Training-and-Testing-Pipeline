@@ -6,6 +6,10 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         externOutputDeps;
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    properties (SetAccess = protected, Transient = true)
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
         pcRWsema = [];
@@ -29,7 +33,7 @@ classdef (Abstract) IdProcInterface < handle
             obj.savePreloadedConfigs();
         end
         %% -----------------------------------------------------------------
-        
+
         function savePreloadedConfigs( obj )
             if isempty( obj.preloadedConfigs ), return; end
             if ~obj.preloadedConfigsChanged, return; end
@@ -107,7 +111,7 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder )
+        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder, checkPrecNeed )
             if isempty( filePath ), fileProcessed = false; return; end
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
@@ -116,7 +120,7 @@ classdef (Abstract) IdProcInterface < handle
             if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
                 currentFolder = obj.createCurrentConfigFolder( filePath );
             end
-            if ~fileProcessed
+            if ~fileProcessed && nargin > 3 && checkPrecNeed
                 precProcFileNeeded = obj.needsPrecedingProcResult( filePath );
             else
                 precProcFileNeeded = false;

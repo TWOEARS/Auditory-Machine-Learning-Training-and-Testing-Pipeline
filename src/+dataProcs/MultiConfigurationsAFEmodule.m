@@ -6,6 +6,7 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
         singleConfFiles;
         singleConfs;
         outputWavFileName;
+        precollected;
     end
     
     %% --------------------------------------------------------------------
@@ -21,6 +22,7 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
                 error( 'afeProc must implement core.IdProcInterface.' );
             end
             obj.afeProc = afeProc;
+            obj.precollected = containers.Map('KeyType','char','ValueType','any');
         end
         %% ----------------------------------------------------------------
 
@@ -51,24 +53,33 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
             soundDir = fileparts( p );
             wavFileName = fullfile( soundDir, wavFileName );
             obj.outputWavFileName = wavFileName;
+            precoll = [];
+            if obj.precollected.isKey( wavFileName )
+                precoll = obj.precollected(wavFileName);
+            end
             obj.singleConfFiles = {};
             obj.singleConfs = [];
             multiCfg = obj.getOutputDependencies();
             scFieldNames = fieldnames( multiCfg.extern );
             for ii = 1 : numel( scFieldNames )
-                conf = multiCfg.extern.(scFieldNames{ii});
-                obj.afeProc.setExternOutputDependencies( conf );
-                if ~obj.afeProc.hasFileAlreadyBeenProcessed( wavFileName )
-                    in = load( inFileName );
-                    if ~exist( in.singleScFiles{ii}, 'file' )
-                        error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                            in.singleScFiles{ii}, inFileName );
+                if ~isempty( precoll ) && isfield( precoll, scFieldNames{ii} )
+                    obj.singleConfFiles{ii} = precoll.(scFieldNames{ii}).fname;
+                    obj.singleConfs{ii} = precoll.(scFieldNames{ii}).cfg;
+                else
+                    conf = multiCfg.extern.(scFieldNames{ii});
+                    obj.afeProc.setExternOutputDependencies( conf );
+                    if ~obj.afeProc.hasFileAlreadyBeenProcessed( wavFileName )
+                        in = load( inFileName );
+                        if ~exist( in.singleScFiles{ii}, 'file' )
+                            error( '%s not found. \n%s corrupt -- delete and restart.', ...
+                                in.singleScFiles{ii}, inFileName );
+                        end
+                        obj.afeProc.process( in.singleScFiles{ii} );
+                        obj.afeProc.saveOutput( wavFileName );
                     end
-                    obj.afeProc.process( in.singleScFiles{ii} );
-                    obj.afeProc.saveOutput( wavFileName );
+                    obj.singleConfFiles{ii} = obj.afeProc.getOutputFileName( wavFileName );
+                    obj.singleConfs{ii} = obj.afeProc.getOutputDependencies;
                 end
-                obj.singleConfFiles{ii} = obj.afeProc.getOutputFileName( wavFileName );
-                obj.singleConfs{ii} = obj.afeProc.getOutputDependencies;
                 fprintf( ';' );
             end
             fprintf( '\n' );
@@ -78,15 +89,22 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
         function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
             precProcFileNeeded = false; 
             multiCfg = obj.getOutputDependencies();
+            precoll = [];
             scFieldNames = fieldnames( multiCfg.extern );
+            fprintf( '#' );
             for ii = 1 : numel( scFieldNames )
                 conf = multiCfg.extern.(scFieldNames{ii});
                 obj.afeProc.setExternOutputDependencies( conf );
                 if ~obj.afeProc.hasFileAlreadyBeenProcessed( wavFileName )
                     precProcFileNeeded = true;
-                    return;
+                    break;
                 end
+                precoll.(scFieldNames{ii}).fname = obj.afeProc.getOutputFileName( wavFileName );
+                precoll.(scFieldNames{ii}).cfg = obj.afeProc.getOutputDependencies;
+                fprintf( '.' );
             end
+            obj.precollected(wavFileName) = precoll;
+            fprintf( '\n' );
         end
         %% -----------------------------------------------------------------
     end

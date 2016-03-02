@@ -108,9 +108,13 @@ classdef IdentificationTrainingPipeline < handle
         %           set of models
         %   trainSetShare:  value between 0 and 1. testSet gets share of
         %                   1 - trainSetShare.
-        %   nGenAssessFolds: number of folds of generalization assessment cross validation
+        %   nGenAssessFolds: number of folds of generalization assessment
+        %   cross validation (default: 0 - no folds)
         %
         function modelPath = run( obj, models, nGenAssessFolds )
+            if nargin < 3
+                nGenAssessFolds = 0;
+            end
             cleaner = onCleanup( @() obj.finish() );
             modelPath = obj.createFilesDir();
             
@@ -150,7 +154,7 @@ classdef IdentificationTrainingPipeline < handle
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;
                 save( 'dataStore.mat', ...
-                      'data', 'featureCreator', 'lastDataProcParams' );
+                      'data', 'featureCreator', 'lastDataProcParams', '-v7.3' );
                 return; 
             elseif strcmp(models{1}, 'dataStoreUni')
                 x = obj.data(:,:,'x');
@@ -160,7 +164,7 @@ classdef IdentificationTrainingPipeline < handle
                     y(:,ii) = obj.data(:,:,'y', classnames{ii});
                 end
                 save( 'dataStoreUni.mat', ...
-                      'x', 'y', 'classnames', 'featureNames' );
+                      'x', 'y', 'classnames', 'featureNames', '-v7.3' );
                 return; 
             end;
             

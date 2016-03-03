@@ -23,7 +23,7 @@ classdef Base < core.IdProcInterface
     end
 
     %% --------------------------------------------------------------------
-    methods (Access = public)
+    methods
         
         function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
             obj = obj@core.IdProcInterface();
@@ -34,9 +34,14 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
+        function setAfeData( obj, afeData )
+            obj.afeData = afeData;
+        end
+        %% ----------------------------------------------------------------
+        
         function process( obj, inputFileName )
             in = load( inputFileName );
-            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut );
+            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.afeData = afeBlock{1};
@@ -48,6 +53,16 @@ classdef Base < core.IdProcInterface
                 obj.descriptionBuilt = true;
             end
         end
+        %% ----------------------------------------------------------------
+        
+        function dummyProcess( obj, afeDummy )
+            [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
+            obj.afeData = afeBlocks{1};
+            xd = obj.constructVector();
+            obj.description = xd{2};
+            obj.descriptionBuilt = true;
+        end
+            
         %% ----------------------------------------------------------------
 
         function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
@@ -89,14 +104,14 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s )
+        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s, annotsOut )
             afeBlocks = {};
             y = [];
             afeDataNames = afeData.keys;
             anyAFEsignal = afeData(afeDataNames{1});
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
             sigLen = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
-            for backOffset_s = 0.0 : obj.shiftSize_s : sigLen - obj.shiftSize_s
+            for backOffset_s = 0.0 : obj.shiftSize_s : max(sigLen+0.01,obj.shiftSize_s) - obj.shiftSize_s
                 afeBlocks{end+1} = obj.cutDataBlock( afeData, backOffset_s );
                 blockOffset = sigLen - backOffset_s;
                 labelBlockOnset = blockOffset - obj.labelBlockSize_s;
@@ -114,6 +129,15 @@ classdef Base < core.IdProcInterface
                     blockIsAmbigous = relEventBlockOverlap > (1-obj.minBlockToEventRatio); 
                     if blockIsSoundEvent
                         y(end) = 1;
+                        if isfield( annotsOut, 'srcEnergy' ) && ...
+                           size( annotsOut.srcEnergy, 1 ) == 2 % there is ONE distractor
+                            energyBlockIdxs = ...
+                                annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
+                                & annotsOut.srcEnergy_t <= blockOffset;
+                            distBlockEnergy = ...
+                                mean(mean(annotsOut.srcEnergy(2,:,energyBlockIdxs)));
+                            if distBlockEnergy < -30, y(end) = 0; end
+                        end
                         break;
                     elseif blockIsAmbigous
                         y(end) = 0;
@@ -207,6 +231,25 @@ classdef Base < core.IdProcInterface
             end
             bl1dIdxs = dIdxFun( 1 : numel( bl{1+dim} ) );
             b{1+dim} = bl{1+dim}(bl1dIdxs);
+        end
+        %% ----------------------------------------------------------------
+
+        function b = reshape2featVec( obj, bl )
+            b{1} = reshape( bl{1}, 1, [] );
+            if obj.descriptionBuilt, return; end
+            for ii = 1 : size( bl, 2 ) - 1
+                blszii = size( bl{1} );
+                blszii(ii) = 1;
+                dgprs{ii} = repmat( shiftdim( bl{ii+1}, 2-ii ), blszii );
+                dgprs{ii} = reshape( dgprs{ii}, 1, [] );
+            end
+            grps = cat( 1, dgprs{:} );
+            for ii = 1 : size( grps, 2 )
+                grps{1,ii} = cat( 2, grps{:,ii} );
+            end
+            grps(2,:) = [];
+            grps = featureCreators.Base.removeGrpDuplicates( grps );
+            b{2} = grps;
         end
         %% ----------------------------------------------------------------
 

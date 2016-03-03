@@ -6,9 +6,16 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         externOutputDeps;
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    properties (SetAccess = protected, Transient = true)
         preloadedConfigs = [];
         preloadedConfigsChanged = false;
+        pcRWsema = [];
         pcFilename = [];
+        pcWriteFilename = [];
+        pcFileInfo = [];
         preloadedPath = [];
         configChanged = true;
         currentFolder = [];
@@ -26,14 +33,34 @@ classdef (Abstract) IdProcInterface < handle
             obj.savePreloadedConfigs();
         end
         %% -----------------------------------------------------------------
-        
+
         function savePreloadedConfigs( obj )
             if isempty( obj.preloadedConfigs ), return; end
             if ~obj.preloadedConfigsChanged, return; end
             preloadedConfigs = obj.preloadedConfigs;
-            % TODO: load file if changed by other process, and merge
-            sema = setfilesemaphore( obj.pcFilename );
-            save( obj.pcFilename, 'preloadedConfigs' );
+            sema = setfilesemaphore( obj.pcWriteFilename );
+            new_pcFileInfo = dir( obj.pcFilename );
+            if ~isempty( new_pcFileInfo ) && ...
+                    ~isequalDeepCompare( new_pcFileInfo, obj.pcFileInfo )
+                obj.pcRWsema.getReadAccess();
+                Parameters.dynPropsOnLoad( true, false );
+                new_pc = load( obj.pcFilename, 'preloadedConfigs' );
+                Parameters.dynPropsOnLoad( true, true );
+                obj.pcRWsema.releaseReadAccess();
+                new_pcKeys = new_pc.preloadedConfigs.keys;
+                my_pcKeys = preloadedConfigs.keys;
+                for jj = length( new_pcKeys ) : -1 : 1
+                    k = new_pcKeys{jj};
+                    if ~any( strcmp( k, my_pcKeys ) )
+                        preloadedConfigs(k) = new_pc.preloadedConfigs(k);
+                    end
+                end
+            end
+            save( obj.pcWriteFilename, 'preloadedConfigs' );
+            obj.pcRWsema.getWriteAccess();
+            copyfile( obj.pcWriteFilename, obj.pcFilename ); % this blocks pcFilename much shorter
+            obj.pcRWsema.releaseWriteAccess();
+            delete( obj.pcWriteFilename );
             removefilesemaphore( sema );
             obj.preloadedConfigsChanged = false;
         end
@@ -72,9 +99,11 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
         
         function outFileName = getOutputFileName( obj, inFilePath, currentFolder )
-%            inFilePath = which( inFilePath ); % ensure absolute path
             if nargin < 3
                 currentFolder = obj.getCurrentFolder( inFilePath );
+            end
+            if isempty( currentFolder )
+                currentFolder = obj.createCurrentConfigFolder( inFilePath );
             end
             [~, fileName, fileExt] = fileparts( inFilePath );
             fileName = [fileName fileExt];
@@ -82,9 +111,8 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function fileProcessed = hasFileAlreadyBeenProcessed( obj, filePath, createFolder )
+        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder, checkPrecNeed )
             if isempty( filePath ), fileProcessed = false; return; end
-%            filePath = which( filePath ); % ensure absolute path
             currentFolder = obj.getCurrentFolder( filePath );
             fileProcessed = ...
                 ~isempty( currentFolder )  && ...
@@ -92,9 +120,14 @@ classdef (Abstract) IdProcInterface < handle
             if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
                 currentFolder = obj.createCurrentConfigFolder( filePath );
             end
+            if ~fileProcessed && nargin > 3 && checkPrecNeed
+                precProcFileNeeded = obj.needsPrecedingProcResult( filePath );
+            else
+                precProcFileNeeded = false;
+            end
         end
         %% -----------------------------------------------------------------
-        
+
         function setExternOutputDependencies( obj, externOutputDeps )
             obj.configChanged = true;
             obj.externOutputDeps = externOutputDeps;
@@ -131,7 +164,12 @@ classdef (Abstract) IdProcInterface < handle
             end
             obj.externOutputDeps = [];
         end
-        %%-----------------------------------------------------------------
+        %% -----------------------------------------------------------------
+        
+        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+            precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
+        end
+        %% -----------------------------------------------------------------
     end
     
     %% -----------------------------------------------------------------------------------
@@ -237,12 +275,15 @@ classdef (Abstract) IdProcInterface < handle
         function loadPreloadedConfigs( obj, dbFolder )
             if isempty( obj.preloadedConfigs )
                 obj.pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
+                obj.pcWriteFilename = [dbFolder filesep obj.procName '.preloadedConfigs.write.mat'];
+                obj.pcRWsema = ReadersWritersFileSemaphore( obj.pcFilename );
                 if exist( obj.pcFilename, 'file' )
-                    sema = setfilesemaphore( obj.pcFilename );
+                    obj.pcRWsema.getReadAccess();
                     Parameters.dynPropsOnLoad( true, false );
+                    obj.pcFileInfo = dir( obj.pcFilename );
                     pc = load( obj.pcFilename );
                     Parameters.dynPropsOnLoad( true, true );
-                    removefilesemaphore( sema );
+                    obj.pcRWsema.releaseReadAccess();
                     obj.preloadedConfigs = pc.preloadedConfigs;
                     obj.preloadedConfigsChanged = false;
                 else

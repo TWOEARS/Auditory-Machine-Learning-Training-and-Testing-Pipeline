@@ -36,6 +36,18 @@ classdef AuditoryFEmodule < core.IdProcInterface
             in = load( inputFileName );
             obj.output.afeData = obj.makeAFEdata( in.earSout );
             obj.output.onOffsOut = in.onOffsOut;
+            if isfield( in, 'annotsOut' )
+                obj.output.annotsOut = in.annotsOut;
+            else
+                obj.output.annotsOut = [];
+            end
+        end
+        %% ----------------------------------------------------------------
+        
+        function afeDummy = makeDummyData ( obj )
+            afeDummy.afeData = obj.makeAFEdata( rand( 4100, 2 ) );
+            afeDummy.onOffsOut = zeros(0,2);
+            afeDummy.annotsOut = [];
         end
         %% ----------------------------------------------------------------
 

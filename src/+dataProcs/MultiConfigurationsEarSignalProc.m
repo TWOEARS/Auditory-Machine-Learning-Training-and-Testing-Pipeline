@@ -80,6 +80,11 @@ classdef MultiConfigurationsEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
         
+        function precProcFileNeeded = needsPrecedingProcResult( obj, inFileName )
+            precProcFileNeeded = true; % it's the first proc in the pipe.
+        end
+        %% -----------------------------------------------------------------
+        
     end
     
     %% -----------------------------------------------------------------------------------

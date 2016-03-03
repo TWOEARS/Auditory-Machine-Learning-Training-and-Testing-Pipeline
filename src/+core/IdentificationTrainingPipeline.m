@@ -109,9 +109,13 @@ classdef IdentificationTrainingPipeline < handle
         %           set of models
         %   trainSetShare:  value between 0 and 1. testSet gets share of
         %                   1 - trainSetShare.
-        %   nGenAssessFolds: number of folds of generalization assessment cross validation
+        %   nGenAssessFolds: number of folds of generalization assessment
+        %   cross validation (default: 0 - no folds)
         %
         function modelPath = run( obj, models, nGenAssessFolds )
+            if nargin < 3
+                nGenAssessFolds = 0;
+            end
             cleaner = onCleanup( @() obj.finish() );
             modelPath = obj.createFilesDir();
             
@@ -129,7 +133,8 @@ classdef IdentificationTrainingPipeline < handle
                 if ii == length( obj.dataPipeProcs )
                     obj.dataPipeProcs{ii}.checkDataFiles();
                 else
-                    obj.dataPipeProcs{ii}.checkDataFiles(obj.dataPipeProcs{ii+1}.fileListOverlay);
+                    obj.dataPipeProcs{ii}.checkDataFiles(...
+                        obj.dataPipeProcs{ii+1}.precedingFileNeededList);
                 end
             end
             for ii = 1 : length( obj.dataPipeProcs )
@@ -141,18 +146,16 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
-            featureCreator = obj.featureCreator;
-            if isempty( featureCreator.description )
-                dummyData = obj.data(1,1);
-                dummyInput = obj.dataPipeProcs{end}.inputFileNameBuilder( dummyData.wavFileName );
-                in = load( dummyInput );
-                obj.dataPipeProcs{end}.dataFileProcessor.featProc.process( in.singleConfFiles{1} );
+            if isempty( obj.featureCreator.description )
+                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.afeProc;
+                obj.featureCreator.dummyProcess( afe.makeDummyData );
             end
+            featureCreator = obj.featureCreator;
             lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;
                 save( 'dataStore.mat', ...
-                      'data', 'featureCreator', 'lastDataProcParams' );
+                      'data', 'featureCreator', 'lastDataProcParams', '-v7.3' );
                 return; 
             elseif strcmp(models{1}, 'dataStoreUni')
                 x = obj.data(:,:,'x');
@@ -162,7 +165,7 @@ classdef IdentificationTrainingPipeline < handle
                     y(:,ii) = obj.data(:,:,'y', classnames{ii});
                 end
                 save( 'dataStoreUni.mat', ...
-                      'x', 'y', 'classnames', 'featureNames' );
+                      'x', 'y', 'classnames', 'featureNames', '-v7.3' );
                 return; 
             end;
             

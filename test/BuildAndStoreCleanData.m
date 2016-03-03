@@ -5,7 +5,7 @@ addpath( '..' );
 startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
-pipe.featureCreator = featureCreators.FeatureSet1BlockmeanLowVsHighFreqRes();
+pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.LoadModelNoopTrainer( 'noop' );
 
 pipe.data = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';

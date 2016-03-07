@@ -39,13 +39,30 @@ classdef Base < core.IdProcInterface
         
         function process( obj, inputFileName )
             in = load( inputFileName );
+            if ~isfield( in, 'afeData' )
+                if isfield( in, 'indFile' )
+                    in.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
+                    for ii = 1 : numel( in.indFile )
+                        if ~exist( in.indFile{ii}, 'file' )
+                            error( '%s not found. \n%s corrupt -- delete and restart.', ...
+                                in.indFile{ii}, inputFileName );
+                        end
+                        tmp = load( in.indFile{ii} );
+                        in.afeData(ii) = tmp.afeData(1);
+                    end
+                    in.annotsOut = tmp.annotsOut;
+                    in.onOffsOut = tmp.onOffsOut;
+                else
+                    error( 'Unforeseen' );
+                end
+            end
             [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};
-                fprintf( '.' );
+                fprintf( ':' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
                 obj.descriptionBuilt = true;

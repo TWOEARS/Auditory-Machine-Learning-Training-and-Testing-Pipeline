@@ -189,7 +189,12 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             stepSize  = round(fs * stepSec);
             frames = frameData(signal,blockSize,stepSize,'rectwin');
             energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
-            energy = energy - quantile(energy,0.98);
+            cp = 0.98; % cumulative probability for quantile computation
+            energySorted = sort(energy');
+            nEnergy = numel(energy);
+            q = interp1q([0 (0.5:(nEnergy-0.5))./nEnergy 1]',...
+                         energySorted([1 1:nEnergy nEnergy],:),cp);
+            energy = energy - q;
             tFramesSec = (stepSize:stepSize:stepSize*numel(energy)).'/fs;
         end
         %% ----------------------------------------------------------------

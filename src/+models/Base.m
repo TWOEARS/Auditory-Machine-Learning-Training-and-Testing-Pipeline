@@ -61,9 +61,11 @@ classdef (Abstract) Base < handle
             x = testSet(:,:,'x');
             yTrue = testSet(:,:,'y',positiveClass);
             dpi.mc = testSet(:,:,'mc');
+            dpi.wavIdxs = testSet(:,:,'pointwiseWavfilenames');
             % remove samples with fuzzy labels
             x(yTrue==0,:) = [];
             dpi.mc(yTrue==0) = [];
+            dpi.wavIdxs(yTrue==0,:) = [];
             yTrue(yTrue==0) = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData
@@ -87,6 +89,10 @@ classdef (Abstract) Base < handle
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             if strcmpi( getDatapointInfo, 'datapointInfo' )
+                [uniqueDpiWavIdxs, ~, dpi.wavIdxs] = unique( dpi.wavIdxs, 'rows' );
+                for ii = 1 : size( uniqueDpiWavIdxs, 1 )
+                    dpi.wavs(ii,1) = testSet(uniqueDpiWavIdxs(ii,1),uniqueDpiWavIdxs(ii,2),'wavFileName');
+                end
                 dpiarg = {dpi};
             else
                 dpiarg = {};

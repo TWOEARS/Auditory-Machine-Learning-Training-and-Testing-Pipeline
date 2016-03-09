@@ -42,7 +42,10 @@ classdef BAC2 < performanceMeasures.Base
         % -----------------------------------------------------------------
     
         function s = char( obj )
-            s = num2str( obj.performance );
+            if numel( obj ) > 1
+                warning( 'only returning first object''s performance' );
+            end
+            s = num2str( obj(1).performance );
         end
         % -----------------------------------------------------------------
     
@@ -65,13 +68,13 @@ classdef BAC2 < performanceMeasures.Base
             tn_fp = sum( yTrue == -1 );
             if tp_fn == 0;
                 warning( 'No positive true label.' );
-                obj.sensitivity = 0;
+                obj.sensitivity = nan;
             else
                 obj.sensitivity = obj.tp / tp_fn;
             end
             if tn_fp == 0;
                 warning( 'No negative true label.' );
-                obj.specificity = 0;
+                obj.specificity = nan;
             else
                 obj.specificity = obj.tn / tn_fp;
             end
@@ -80,11 +83,12 @@ classdef BAC2 < performanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [dpiext, compiled] = makeDatapointInfoStats( obj, fieldname )
+        function [dpiext, compiled] = makeDatapointInfoStats( obj, fieldname, compiledPerfField )
             if isempty( obj.datapointInfo ), dpiext = []; return; end
             if ~isfield( obj.datapointInfo, fieldname )
                 error( '%s is not a field of datapointInfo', fieldname );
             end
+            if nargin < 3, compiledPerfField = 'performance'; end
             uniqueDpiFieldElems = unique( obj.datapointInfo.(fieldname) );
             for ii = 1 : numel( uniqueDpiFieldElems )
                 if iscell( uniqueDpiFieldElems )
@@ -96,13 +100,17 @@ classdef BAC2 < performanceMeasures.Base
                     udfeIdxs = obj.datapointInfo.(fieldname) == udfe;
                 end
                 for fn = fieldnames( obj.datapointInfo )'
+                    if any( size( obj.datapointInfo.(fn{1}) ) ~= size( udfeIdxs ) )
+                        iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1});
+                        continue
+                    end
                     iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1})(udfeIdxs);
                 end
                 dpiext(ii) = performanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
                                                        iiDatapointInfo.yPred,...
                                                        iiDatapointInfo );
                 compiled{ii,1} = udfe;
-                compiled{ii,2} = dpiext(ii).performance;
+                compiled{ii,2} = dpiext(ii).(compiledPerfField);
             end
         end
         % -----------------------------------------------------------------

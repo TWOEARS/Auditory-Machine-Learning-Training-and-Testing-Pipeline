@@ -80,7 +80,7 @@ classdef BAC2 < performanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function dpiext = makeDatapointInfoStats( obj, fieldname )
+        function [dpiext, compiled] = makeDatapointInfoStats( obj, fieldname )
             if isempty( obj.datapointInfo ), dpiext = []; return; end
             if ~isfield( obj.datapointInfo, fieldname )
                 error( '%s is not a field of datapointInfo', fieldname );
@@ -88,10 +88,12 @@ classdef BAC2 < performanceMeasures.Base
             uniqueDpiFieldElems = unique( obj.datapointInfo.(fieldname) );
             for ii = 1 : numel( uniqueDpiFieldElems )
                 if iscell( uniqueDpiFieldElems )
+                    udfe = uniqueDpiFieldElems{ii};
                     udfeIdxs = strcmp( obj.datapointInfo.(fieldname), ...
-                                       uniqueDpiFieldElems{ii} );
+                                       udfe );
                 else
-                    udfeIdxs = obj.datapointInfo.(fieldname) == uniqueDpiFieldElems(ii);
+                    udfe = uniqueDpiFieldElems(ii);
+                    udfeIdxs = obj.datapointInfo.(fieldname) == udfe;
                 end
                 for fn = fieldnames( obj.datapointInfo )'
                     iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1})(udfeIdxs);
@@ -99,6 +101,8 @@ classdef BAC2 < performanceMeasures.Base
                 dpiext(ii) = performanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
                                                        iiDatapointInfo.yPred,...
                                                        iiDatapointInfo );
+                compiled{ii,1} = udfe;
+                compiled{ii,2} = dpiext(ii).performance;
             end
         end
         % -----------------------------------------------------------------

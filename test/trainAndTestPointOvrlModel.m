@@ -14,7 +14,7 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'testFlists/NIGENS_trainSet_miniMini.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/trainSet_miniMini1.flist';
 pipe.setupData();
 
 sc = sceneConfig.SceneConfiguration();
@@ -39,7 +39,7 @@ pipe.modelCreator = ...
         );
 
 pipe.trainset = [];
-pipe.testset = 'testFlists/NIGENS_testSet_miniMini.flist';
+pipe.testset = 'learned_models/IdentityKS/trainTestSets/testSet_miniMini1.flist';
 pipe.setupData();
 
 sc = sceneConfig.SceneConfiguration(); % clean

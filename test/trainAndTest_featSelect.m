@@ -42,7 +42,7 @@ pipe.modelCreator = modelTrainers.SVMmodelSelectTrainer( ...
 ...%     'hpsMaxDataSize', 50, ...  % max data set size to use in hps (number of samples)
     'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 9, ...   % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 4 )           % number of hps cv folds of training set
+    'hpsCvFolds', 4 );           % number of hps cv folds of training set
 modelTrainers.Base.featureMask( true, fmask );
 pipe.modelCreator.verbose( 'on' );
 

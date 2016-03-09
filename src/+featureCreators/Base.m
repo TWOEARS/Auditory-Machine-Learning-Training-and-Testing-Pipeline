@@ -109,6 +109,7 @@ classdef Base < core.IdProcInterface
             outputDeps.labelBlockSize = obj.labelBlockSize_s;
             outputDeps.shiftSize = obj.shiftSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
+            outputDeps.v = 2;
             outputDeps.featureProc = obj.getFeatureInternOutputDependencies();
         end
         %% ----------------------------------------------------------------
@@ -131,33 +132,41 @@ classdef Base < core.IdProcInterface
                 blockOffset = sigLen - backOffset_s;
                 labelBlockOnset = blockOffset - obj.labelBlockSize_s;
                 y(end+1) = -1;
+                eventBlockOverlapLen = 0;
+                eventLength = 0;
                 for jj = 1 : size( onOffs_s, 1 )
-                    eventOnset = onOffs_s(jj,1);
-                    eventOffset = onOffs_s(jj,2);
-                    eventBlockOverlapLen = ...
-                        min( blockOffset, eventOffset ) - ...
-                        max( labelBlockOnset, eventOnset );
-                    eventLength = eventOffset - eventOnset;
-                    maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
-                    relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
-                    blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
-                    blockIsAmbigous = relEventBlockOverlap > (1-obj.minBlockToEventRatio); 
-                    if blockIsSoundEvent
-                        y(end) = 1;
-                        if isfield( annotsOut, 'srcEnergy' ) && ...
-                           size( annotsOut.srcEnergy, 1 ) == 2 % there is ONE distractor
-                            energyBlockIdxs = ...
-                                annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
-                                & annotsOut.srcEnergy_t <= blockOffset;
-                            distBlockEnergy = ...
-                                mean(mean(annotsOut.srcEnergy(2,:,energyBlockIdxs)));
-                            if distBlockEnergy < -30, y(end) = 0; end
-                        end
-                        break;
-                    elseif blockIsAmbigous
-                        y(end) = 0;
-                    end;
+                    thisEventOnset = onOffs_s(jj,1);
+                    if thisEventOnset >= blockOffset, continue; end
+                    thisEventOffset = onOffs_s(jj,2);
+                    if thisEventOffset <= labelBlockOnset, continue; end
+                    thisEventBlockOverlapLen = ...
+                        min( blockOffset, thisEventOffset ) - ...
+                        max( labelBlockOnset, thisEventOnset );
+                    isEventBlockOverlap = thisEventBlockOverlapLen > 0;
+                    if isEventBlockOverlap
+                        eventBlockOverlapLen = ...
+                            eventBlockOverlapLen + thisEventBlockOverlapLen;
+                        eventLength = eventLength + thisEventOffset - thisEventOnset;
+                    end
                 end
+                maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
+                relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
+                blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
+                blockIsNoClearNegative = relEventBlockOverlap > (1-obj.minBlockToEventRatio);
+                if blockIsSoundEvent
+                    y(end) = 1;
+                    if isfield( annotsOut, 'srcEnergy' ) && ...
+                            size( annotsOut.srcEnergy, 1 ) == 2 % there is ONE distractor
+                        energyBlockIdxs = ...
+                            annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
+                            & annotsOut.srcEnergy_t <= blockOffset;
+                        distBlockEnergy = ...
+                            mean(mean(annotsOut.srcEnergy(2,:,energyBlockIdxs)));
+                        if distBlockEnergy < -30, y(end) = 0; end
+                    end
+                elseif blockIsNoClearNegative
+                    y(end) = 0;
+                end;
             end
             afeBlocks = fliplr( afeBlocks );
             y = fliplr( y );

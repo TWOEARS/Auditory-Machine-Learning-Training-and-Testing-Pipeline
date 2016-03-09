@@ -4,6 +4,7 @@ classdef Base < core.IdProcInterface
     properties (SetAccess = private)
         shiftSize_s;
         minBlockToEventRatio;
+        maxNegBlockToEventRatio = 0;
         x;
         y;
         blockSize_s;
@@ -109,6 +110,7 @@ classdef Base < core.IdProcInterface
             outputDeps.labelBlockSize = obj.labelBlockSize_s;
             outputDeps.shiftSize = obj.shiftSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
+            outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
             outputDeps.v = 2;
             outputDeps.featureProc = obj.getFeatureInternOutputDependencies();
         end
@@ -152,7 +154,7 @@ classdef Base < core.IdProcInterface
                 maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
                 relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
                 blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
-                blockIsNoClearNegative = relEventBlockOverlap > (1-obj.minBlockToEventRatio);
+                blockIsNoClearNegative = relEventBlockOverlap > obj.maxNegBlockToEventRatio;
                 if blockIsSoundEvent
                     y(end) = 1;
                     if isfield( annotsOut, 'srcEnergy' ) && ...

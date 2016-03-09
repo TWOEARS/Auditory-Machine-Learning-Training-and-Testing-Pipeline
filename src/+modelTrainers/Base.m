@@ -64,13 +64,14 @@ classdef (Abstract) Base < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function performance = getPerformance( obj )
+        function performance = getPerformance( obj, getDatapointInfo )
+            if nargin < 2, getDatapointInfo = 'noInfo'; end
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
             model.verbose( obj.verbose );
             performance = models.Base.getPerformance( ...
                 model, obj.testSet, obj.positiveClass, obj.performanceMeasure, ...
-                obj.maxDataSize, true );
+                obj.maxDataSize, true, getDatapointInfo );
         end
         %% ----------------------------------------------------------------
 

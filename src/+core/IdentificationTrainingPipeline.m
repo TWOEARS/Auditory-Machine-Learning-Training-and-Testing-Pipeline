@@ -193,7 +193,7 @@ classdef IdentificationTrainingPipeline < handle
                 if ~isempty( obj.testSet )
                     fprintf( '\n==  Testing model on testSet... \n\n' );
                     tic;
-                    testPerfresults = obj.trainer.getPerformance();
+                    testPerfresults = obj.trainer.getPerformance( 'datapointInfo' );
                     testTime = toc;
                     if numel( testPerfresults ) == 1
                         fprintf( ['\n\n===================================\n',...

@@ -14,8 +14,13 @@ classdef BAC2 < performanceMeasures.Base
     %% --------------------------------------------------------------------
     methods
         
-        function obj = BAC2( yTrue, yPred )
-            obj = obj@performanceMeasures.Base( yTrue, yPred );
+        function obj = BAC2( yTrue, yPred, datapointInfo )
+           if nargin < 3
+                dpiarg = {};
+            else
+                dpiarg = {datapointInfo};
+            end
+            obj = obj@performanceMeasures.Base( yTrue, yPred, dpiarg{:} );
         end
         % -----------------------------------------------------------------
     
@@ -41,11 +46,21 @@ classdef BAC2 < performanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance] = calcPerformance( obj, yTrue, yPred )
-            obj.tp = sum( yTrue == 1 & yPred > 0 );
-            obj.tn = sum( yTrue == -1 & yPred < 0 );
-            obj.fp = sum( yTrue == -1 & yPred > 0 );
-            obj.fn = sum( yTrue == 1 & yPred < 0 );
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpi )
+            tps = yTrue == 1 & yPred > 0;
+            tns = yTrue == -1 & yPred < 0;
+            fps = yTrue == -1 & yPred > 0;
+            fns = yTrue == 1 & yPred < 0;
+            if nargin < 4
+                dpi = struct.empty;
+            else
+                dpi.yTrue = yTrue;
+                dpi.yPred = yPred;
+            end
+            obj.tp = sum( tps );
+            obj.tn = sum( tns );
+            obj.fp = sum( fps );
+            obj.fn = sum( fns );
             tp_fn = sum( yTrue == 1 );
             tn_fp = sum( yTrue == -1 );
             if tp_fn == 0;
@@ -62,6 +77,29 @@ classdef BAC2 < performanceMeasures.Base
             end
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
             obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
+        end
+        % -----------------------------------------------------------------
+    
+        function dpiext = makeDatapointInfoStats( obj, fieldname )
+            if isempty( obj.datapointInfo ), dpiext = []; return; end
+            if ~isfield( obj.datapointInfo, fieldname )
+                error( '%s is not a field of datapointInfo', fieldname );
+            end
+            uniqueDpiFieldElems = unique( obj.datapointInfo.(fieldname) );
+            for ii = 1 : numel( uniqueDpiFieldElems )
+                if iscell( uniqueDpiFieldElems )
+                    udfeIdxs = strcmp( obj.datapointInfo.(fieldname), ...
+                                       uniqueDpiFieldElems{ii} );
+                else
+                    udfeIdxs = obj.datapointInfo.(fieldname) == uniqueDpiFieldElems(ii);
+                end
+                for fn = fieldnames( obj.datapointInfo )'
+                    iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1})(udfeIdxs);
+                end
+                dpiext(ii) = performanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
+                                                       iiDatapointInfo.yPred,...
+                                                       iiDatapointInfo );
+            end
         end
         % -----------------------------------------------------------------
 

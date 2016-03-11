@@ -89,7 +89,9 @@ classdef (Abstract) Base < handle
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             if strcmpi( getDatapointInfo, 'datapointInfo' )
+                dpi.classIdxs = dpi.wavIdxs(:,1);
                 [uniqueDpiWavIdxs, ~, dpi.wavIdxs] = unique( dpi.wavIdxs, 'rows' );
+                dpi.classes = testSet.classNames;
                 for ii = 1 : size( uniqueDpiWavIdxs, 1 )
                     dpi.wavs(ii,1) = testSet(uniqueDpiWavIdxs(ii,1),uniqueDpiWavIdxs(ii,2),'wavFileName');
                 end

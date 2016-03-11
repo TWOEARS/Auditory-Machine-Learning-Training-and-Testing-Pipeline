@@ -111,7 +111,7 @@ classdef Base < core.IdProcInterface
             outputDeps.shiftSize = obj.shiftSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
-            outputDeps.v = 2;
+            outputDeps.v = 3;
             outputDeps.featureProc = obj.getFeatureInternOutputDependencies();
         end
         %% ----------------------------------------------------------------
@@ -165,8 +165,8 @@ classdef Base < core.IdProcInterface
                         energyFramesInBlock = ...
                             annotsOut.srcEnergy(2:end,:,energyFramesInBlockIdxs);
                         distBlockEnergy = ...
-                            mean( mean( mean( energyFramesInBlock ) ) );
-                        if distBlockEnergy < -20, y(end) = 0; end
+                            sum( log(30) - log( -mean( mean( energyFramesInBlock, 3 ), 2 ) ) );
+                        if distBlockEnergy < 0, y(end) = 0; end
                     end
                 elseif blockIsNoClearNegative
                     y(end) = 0;

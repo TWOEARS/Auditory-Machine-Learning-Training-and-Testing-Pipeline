@@ -160,6 +160,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 s2actR = dataProcs.SceneEarSignalProc.detectActivity( fs, double(signal2(:,2)), 40, 50e-3, 50e-3, 10e-3 );
             else
                 s2actR = zeros( size( s2actL ) );
+                signal2(:,2) = signal2(:,1);
             end
             signal2act = signal2(s2actL | s2actR,:);
             

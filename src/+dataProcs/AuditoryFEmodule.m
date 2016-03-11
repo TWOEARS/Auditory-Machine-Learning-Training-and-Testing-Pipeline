@@ -1,7 +1,7 @@
 classdef AuditoryFEmodule < core.IdProcInterface
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = private)
+    properties (SetAccess = {?dataProcs.ParallelRequestsAFEmodule})
         managerObject;           % WP2 manager object - holds the signal buffer (data obj)
         afeDataObj;
         afeSignals;
@@ -51,21 +51,6 @@ classdef AuditoryFEmodule < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-    end
-    
-    %% --------------------------------------------------------------------
-    methods (Access = protected)
-        
-        function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.afeParams = obj.afeParams;
-        end
-        %% ----------------------------------------------------------------
-
-        function out = getOutput( obj )
-            out = obj.output;
-        end
-        %% ----------------------------------------------------------------
-
         function afeData = makeAFEdata( obj, earSignals )
             obj.managerObject.reset();
             obj.afeDataObj.clearData();
@@ -88,6 +73,21 @@ classdef AuditoryFEmodule < core.IdProcInterface
             end
             afeData = obj.afeSignals;
             fprintf( '\n' );
+        end
+        %% ----------------------------------------------------------------
+
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function outputDeps = getInternOutputDependencies( obj )
+            outputDeps.afeParams = obj.afeParams;
+        end
+        %% ----------------------------------------------------------------
+
+        function out = getOutput( obj )
+            out = obj.output;
         end
         %% ----------------------------------------------------------------
         

@@ -106,11 +106,6 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
             end
         end
         %% -------------------------------------------------------------------------------
-        
-        function performance = getPerformance( obj )
-            performance = obj.coreTrainer.getPerformance();
-        end
-        %% -------------------------------------------------------------------------------
 
     end
     

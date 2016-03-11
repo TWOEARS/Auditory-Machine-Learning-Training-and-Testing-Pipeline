@@ -84,6 +84,18 @@ classdef IdentTrainPipeData < handle
                             out = [out, { obj.data(c).files(fIdx).(dIdx) }];
                         end
                         varargout{1:nargout} = out';
+                    elseif strcmp( dIdx, 'pointwiseWavfilenames' )
+                        out = [];
+                        for c = cIdx(1:end)
+                            if ischar( fIdx ) && fIdx == ':'
+                                ffs = 1 : numel( obj.data(c).files );
+                            end
+                            for ff = ffs
+                                out = [out; repmat( [c,ff],...
+                                                    size( obj.data(c).files(ff).y ) )];
+                            end
+                        end
+                        varargout{1:nargout} = out;
                     else
                         out = [];
                         for c = cIdx(1:end)

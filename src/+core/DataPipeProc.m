@@ -89,7 +89,7 @@ classdef DataPipeProc < handle
             data = obj.data(:);
             data = data(obj.fileListOverlay);
             for dataFile = data(randperm(length(data)))'
-                fprintf( '.%s\n', dataFile.wavFileName );
+                fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.wavFileName );
                 if ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName )
                     inputFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
                     obj.dataFileProcessor.process( inputFileName );

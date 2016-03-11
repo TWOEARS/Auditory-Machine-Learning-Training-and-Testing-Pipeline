@@ -1,4 +1,4 @@
-function trainAndTestPointOvrlModel( classname )
+function trainAndTestMcModel( classname )
 
 if nargin < 1, classname = 'baby'; end;
 
@@ -17,14 +17,16 @@ pipe.modelCreator.verbose( 'on' );
 pipe.trainset = 'learned_models/IdentityKS/trainTestSets/trainSet_miniMini1.flist';
 pipe.setupData();
 
-sc = sceneConfig.SceneConfiguration();
-sc.addSource( sceneConfig.PointSource() );
-sc.addSource( sceneConfig.PointSource( ...
+sc(1) = sceneConfig.SceneConfiguration();
+sc(1).addSource( sceneConfig.PointSource() );
+sc(1).addSource( sceneConfig.PointSource( ...
     'data',sceneConfig.FileListValGen(pipe.pipeline.trainSet('general',:,'wavFileName')),...
     'offset', sceneConfig.ValGen('manual',0.0) ),...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
-pipe.setSceneConfig( [sc] ); 
+sc(2) = sceneConfig.SceneConfiguration();
+sc(2).addSource( sceneConfig.PointSource() );
+pipe.setSceneConfig( sc ); 
 
 pipe.init();
 modelPath = pipe.pipeline.run( {classname}, 0 );
@@ -42,14 +44,16 @@ pipe.trainset = [];
 pipe.testset = 'learned_models/IdentityKS/trainTestSets/testSet_miniMini1.flist';
 pipe.setupData();
 
-sc = sceneConfig.SceneConfiguration(); % clean
-sc.addSource( sceneConfig.PointSource() );
-sc.addSource( sceneConfig.PointSource( ...
+sc(1) = sceneConfig.SceneConfiguration();
+sc(1).addSource( sceneConfig.PointSource() );
+sc(1).addSource( sceneConfig.PointSource( ...
     'data',sceneConfig.FileListValGen(pipe.pipeline.testSet('general',:,'wavFileName')),...
     'offset', sceneConfig.ValGen('manual',0.0) ),...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
-pipe.setSceneConfig( [sc] ); 
+sc(2) = sceneConfig.SceneConfiguration();
+sc(2).addSource( sceneConfig.PointSource() );
+pipe.setSceneConfig( sc ); 
 
 pipe.init();
 modelPath = pipe.pipeline.run( {classname}, 0 );

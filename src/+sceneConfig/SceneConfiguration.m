@@ -7,6 +7,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
               % all others are in relation to sources(1)
               % length(sources) must be == length(SNRs)
         room;
+        brirAzmIdx = 1;
         loop; % loop sources that are shorter than the main source
     end
 
@@ -40,6 +41,11 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             obj.room = room;
         end
         %% -------------------------------------------------------------------------------
+        
+        function setBRIRazm( obj, azmIdx )
+            obj.brirAzmIdx = azmIdx;
+        end
+        %% -------------------------------------------------------------------------------
 
         function confInst = instantiate( obj )
             confInst = sceneConfig.SceneConfiguration();
@@ -48,6 +54,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 confInst.sources(kk) = obj.sources(kk).instantiate();
                 confInst.SNRs(kk) = obj.SNRs(kk).instantiate();
             end
+            confInst.brirAzmIdx = obj.brirAzmIdx;
             confInst.loop = obj.loop;
         end
         %% -------------------------------------------------------------------------------
@@ -58,6 +65,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             singleConfig.sources = obj.sources(srcIdx);
             singleConfig.SNRs = sceneConfig.ValGen( 'manual', 0 );
             singleConfig.loop = false; % there is only one source
+            singleConfig.brirAzmIdx = obj.brirAzmIdx;
         end
         %% -------------------------------------------------------------------------------
         
@@ -68,6 +76,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if numel( obj1.sources ) ~= numel( obj2.sources ), return; end
             if numel( obj1.loop ) ~= numel( obj2.loop ), return; end
             if obj1.loop ~= obj2.loop, return; end
+            if obj1.brirAzmIdx ~= obj2.brirAzmIdx, return; end
             obj2srcsInCmpIdxs = ones( size( obj2.sources ) );
             for kk = 1 : numel( obj1.sources )
                 sequal = sceneConfig.SourceBase.isequalHetrgn( obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
@@ -97,6 +106,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             end
             csc.room = copy( obj.room );
             csc.loop = obj.loop;
+            csc.brirAzmIdx = obj.brirAzmIdx;
         end
         %% -------------------------------------------------------------------------------
     end

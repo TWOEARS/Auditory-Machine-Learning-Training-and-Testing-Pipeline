@@ -9,6 +9,7 @@ classdef IdentificationTrainingPipeline < handle
         data;       
         trainSet;
         testSet;
+        cacheSystemDir;
     end
     
     %% --------------------------------------------------------------------
@@ -25,7 +26,11 @@ classdef IdentificationTrainingPipeline < handle
     methods
         
         %% Constructor.
-        function obj = IdentificationTrainingPipeline()
+        function obj = IdentificationTrainingPipeline( varargin )
+            ip = inputParser;
+            ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.parse( varargin{:} );
+            obj.cacheSystemDir = ip.Results.cacheSystemDir;
             obj.dataPipeProcs = {};
             obj.data = core.IdentTrainPipeData();
             obj.trainSet = core.IdentTrainPipeData();
@@ -55,6 +60,7 @@ classdef IdentificationTrainingPipeline < handle
             if ~isa( dataProc, 'core.IdProcInterface' )
                 error( 'dataProc must be of type core.IdProcInterface.' );
             end
+            dataProc.setCacheSystemDir( obj.cacheSystemDir );
             dataPipeProc = core.DataPipeProc( dataProc ); 
             dataPipeProc.init();
             dataPipeProc.connectData( obj.data );

@@ -4,7 +4,7 @@ function BuildAndStoreCleanData( )
 addpath( '..' );
 startIdentificationTraining();
 
-pipe = TwoEarsIdTrainPipe();
+pipe = TwoEarsIdTrainPipe( );
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.LoadModelNoopTrainer( 'noop' );
 

@@ -22,14 +22,18 @@ classdef TwoEarsIdTrainPipe < handle
     %% -----------------------------------------------------------------------------------
     methods
 
-        function obj = TwoEarsIdTrainPipe( hrir )
-            if nargin < 1
-                hrir = 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa';
-            end
+        function obj = TwoEarsIdTrainPipe( varargin )
+            ip = inputParser;
+            ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.addOptional( 'hrir', ...
+                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
+                            @(fn)(exist( fn, 'file' )) );
+            ip.parse( varargin{:} );
             modelTrainers.Base.featureMask( true, [] );
             warning( 'modelTrainers.Base.featureMask set to []' );
-            obj.pipeline = core.IdentificationTrainingPipeline();
-            obj.binauralSim = dataProcs.IdSimConvRoomWrapper( hrir );
+            obj.pipeline = core.IdentificationTrainingPipeline( 'cacheSystemDir', ...
+                                                                ip.Results.cacheSystemDir );
+            obj.binauralSim = dataProcs.IdSimConvRoomWrapper( ip.Results.hrir );
             obj.sceneConfBinauralSim = ...
                 dataProcs.SceneEarSignalProc( obj.binauralSim );
             obj.multiConfBinauralSim = ...

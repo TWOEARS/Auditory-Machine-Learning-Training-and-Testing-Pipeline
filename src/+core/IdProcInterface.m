@@ -5,6 +5,7 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
         procName;
+        cacheSystemDir;
         externOutputDeps;
     end
     
@@ -147,6 +148,15 @@ classdef (Abstract) IdProcInterface < handle
             end
         end
         %% -----------------------------------------------------------------
+
+        function setCacheSystemDir( obj, cacheSystemDir )
+            if exist( cacheSystemDir, 'dir' )
+                obj.cacheSystemDir = which( cacheSystemDir ); % absolute path
+            else
+                error( 'cannot find direcotry "%s": does it exist?', cacheSystemDir ); 
+            end
+        end
+        %% -----------------------------------------------------------------
         
     end
     
@@ -154,7 +164,7 @@ classdef (Abstract) IdProcInterface < handle
     methods (Access = protected)
         
         function obj = IdProcInterface( procName )
-            if nargin < 1,
+            if nargin < 1
                 classInfo = metaclass( obj );
                 [classname1, classname2] = strtok( classInfo.Name, '.' );
                 if isempty( classname2 ), obj.procName = classname1;

@@ -82,13 +82,6 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
             obj.fullSetModel.setLambda( lambdasSortedByPerf(end,1) );
         end
         %% -------------------------------------------------------------------------------
-        
-        function performance = getPerformance( obj )
-            performance = models.Base.getPerformance( ...
-                obj.fullSetModel, obj.testSet, obj.positiveClass, ...
-                obj.performanceMeasure );
-        end
-        %% -------------------------------------------------------------------------------
 
     end
     

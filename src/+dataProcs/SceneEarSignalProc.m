@@ -103,22 +103,35 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             fprintf( ':' );
             obj.earSout = splitEarSignals{1};
             for ii = 1 : 2
-                [energy, tFramesSec] = dataProcs.SceneEarSignalProc.runningEnergy( obj.getDataFs(), double(obj.earSout(:,ii)), 100e-3, 50e-3 );
+                [energy, tFramesSec] = dataProcs.SceneEarSignalProc.runningEnergy( ...
+                                                             obj.getDataFs(), ...
+                                                             double(obj.earSout(:,ii)), ...
+                                                             100e-3, 50e-3 );
                 obj.annotsOut.srcEnergy(1,ii,:) = single(energy);
             end
             obj.annotsOut.srcEnergy_t = single(tFramesSec);
+            nTargetEnergyFrames = size( obj.annotsOut.srcEnergy, 3 );
+            targetSignal = splitEarSignals{1}; % as in "S" in "SNR"
             for ii = 2:length( splitEarSignals )
+                ovrlSignal = splitEarSignals{ii}; % as in "N" in "SNR"
                 onOffs_samples = obj.onOffsOut .* obj.getDataFs();
                 if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
-                ovrlSignal = splitEarSignals{ii};
-                ovrlSignal = dataProcs.SceneEarSignalProc.adjustSNR( obj.getDataFs(), ...
-                    splitEarSignals{1}, onOffs_samples, ovrlSignal, obj.sceneConfig.SNRs(ii).value );
-                obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) = ...
-                    obj.earSout(1:min( length( obj.earSout ), length( ovrlSignal ) ),:) ...
-                    + ovrlSignal(1:min( length( obj.earSout ), length( ovrlSignal ) ),:);
+                ovrlSignal = dataProcs.SceneEarSignalProc.adjustSNR( ...
+                                                            obj.getDataFs(), ...
+                                                            targetSignal, ...
+                                                            onOffs_samples, ...
+                                                            ovrlSignal, ...
+                                                            obj.sceneConfig.SNRs(ii).value );
+                maxSignalsLen = min( length( obj.earSout ), length( ovrlSignal ) );
+                obj.earSout(1:maxSignalsLen,:) = ...
+                    obj.earSout(1:maxSignalsLen,:) + ovrlSignal(1:maxSignalsLen,:);
                 for jj = 1 : 2
-                    energy = dataProcs.SceneEarSignalProc.runningEnergy( obj.getDataFs(), double(ovrlSignal(:,jj)), 100e-3, 50e-3 );
-                    obj.annotsOut.srcEnergy(ii,jj,:) = single(energy(1:length(obj.annotsOut.srcEnergy(1,ii,:))));
+                    energy = dataProcs.SceneEarSignalProc.runningEnergy( ...
+                                                            obj.getDataFs(), ...
+                                                            double(ovrlSignal(:,jj)), ...
+                                                            100e-3, 50e-3 );
+                    obj.annotsOut.srcEnergy(ii,jj,:) = ...
+                        single( energy(1:nTargetEnergyFrames) );
                 end
                 fprintf( '.' );
             end
@@ -160,6 +173,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 s2actR = dataProcs.SceneEarSignalProc.detectActivity( fs, double(signal2(:,2)), 40, 50e-3, 50e-3, 10e-3 );
             else
                 s2actR = zeros( size( s2actL ) );
+                signal2(:,2) = signal2(:,1);
             end
             signal2act = signal2(s2actL | s2actR,:);
             
@@ -189,7 +203,12 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             stepSize  = round(fs * stepSec);
             frames = frameData(signal,blockSize,stepSize,'rectwin');
             energy = 10 * log10(squeeze(mean(power(frames,2),1) + eps));
-            energy = energy - quantile(energy,0.98);
+            cp = 0.98; % cumulative probability for quantile computation
+            energySorted = sort(energy');
+            nEnergy = numel(energy);
+            q = interp1q([0 (0.5:(nEnergy-0.5))./nEnergy 1]',...
+                         energySorted([1 1:nEnergy nEnergy],:),cp);
+            energy = energy - q;
             tFramesSec = (stepSize:stepSize:stepSize*numel(energy)).'/fs;
         end
         %% ----------------------------------------------------------------

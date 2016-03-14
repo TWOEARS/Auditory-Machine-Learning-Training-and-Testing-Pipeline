@@ -67,7 +67,7 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
                     obj.singleConfs{ii} = precoll.(scFieldNames{ii}).cfg;
                 else
                     conf = [];
-                    conf.afeParams = multiCfg.extern.afeDeps.afeParams;
+                    conf.afeParams = multiCfg.extern.afeDeps;
                     conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
                     obj.featProc.setExternOutputDependencies( conf );
                     if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
@@ -96,7 +96,7 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
             fprintf( '#' );
             for ii = 1 : numel( scFieldNames )
                 conf = [];
-                conf.afeParams = multiCfg.extern.afeDeps.afeParams;
+                conf.afeParams = multiCfg.extern.afeDeps;
                 conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
                 obj.featProc.setExternOutputDependencies( conf );
                 if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )

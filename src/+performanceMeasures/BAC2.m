@@ -14,8 +14,13 @@ classdef BAC2 < performanceMeasures.Base
     %% --------------------------------------------------------------------
     methods
         
-        function obj = BAC2( yTrue, yPred )
-            obj = obj@performanceMeasures.Base( yTrue, yPred );
+        function obj = BAC2( yTrue, yPred, datapointInfo )
+           if nargin < 3
+                dpiarg = {};
+            else
+                dpiarg = {datapointInfo};
+            end
+            obj = obj@performanceMeasures.Base( yTrue, yPred, dpiarg{:} );
         end
         % -----------------------------------------------------------------
     
@@ -37,31 +42,76 @@ classdef BAC2 < performanceMeasures.Base
         % -----------------------------------------------------------------
     
         function s = char( obj )
-            s = num2str( obj.performance );
+            if numel( obj ) > 1
+                warning( 'only returning first object''s performance' );
+            end
+            s = num2str( obj(1).performance );
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance] = calcPerformance( obj, yTrue, yPred )
-            obj.tp = sum( yTrue == 1 & yPred > 0 );
-            obj.tn = sum( yTrue == -1 & yPred < 0 );
-            obj.fp = sum( yTrue == -1 & yPred > 0 );
-            obj.fn = sum( yTrue == 1 & yPred < 0 );
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpi )
+            tps = yTrue == 1 & yPred > 0;
+            tns = yTrue == -1 & yPred < 0;
+            fps = yTrue == -1 & yPred > 0;
+            fns = yTrue == 1 & yPred < 0;
+            if nargin < 4
+                dpi = struct.empty;
+            else
+                dpi.yTrue = yTrue;
+                dpi.yPred = yPred;
+            end
+            obj.tp = sum( tps );
+            obj.tn = sum( tns );
+            obj.fp = sum( fps );
+            obj.fn = sum( fns );
             tp_fn = sum( yTrue == 1 );
             tn_fp = sum( yTrue == -1 );
             if tp_fn == 0;
                 warning( 'No positive true label.' );
-                obj.sensitivity = 0;
+                obj.sensitivity = nan;
             else
                 obj.sensitivity = obj.tp / tp_fn;
             end
             if tn_fp == 0;
                 warning( 'No negative true label.' );
-                obj.specificity = 0;
+                obj.specificity = nan;
             else
                 obj.specificity = obj.tn / tn_fp;
             end
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
             obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
+        end
+        % -----------------------------------------------------------------
+    
+        function [dpiext, compiled] = makeDatapointInfoStats( obj, fieldname, compiledPerfField )
+            if isempty( obj.datapointInfo ), dpiext = []; return; end
+            if ~isfield( obj.datapointInfo, fieldname )
+                error( '%s is not a field of datapointInfo', fieldname );
+            end
+            if nargin < 3, compiledPerfField = 'performance'; end
+            uniqueDpiFieldElems = unique( obj.datapointInfo.(fieldname) );
+            for ii = 1 : numel( uniqueDpiFieldElems )
+                if iscell( uniqueDpiFieldElems )
+                    udfe = uniqueDpiFieldElems{ii};
+                    udfeIdxs = strcmp( obj.datapointInfo.(fieldname), ...
+                                       udfe );
+                else
+                    udfe = uniqueDpiFieldElems(ii);
+                    udfeIdxs = obj.datapointInfo.(fieldname) == udfe;
+                end
+                for fn = fieldnames( obj.datapointInfo )'
+                    if any( size( obj.datapointInfo.(fn{1}) ) ~= size( udfeIdxs ) )
+                        iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1});
+                        continue
+                    end
+                    iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1})(udfeIdxs);
+                end
+                dpiext(ii) = performanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
+                                                       iiDatapointInfo.yPred,...
+                                                       iiDatapointInfo );
+                compiled{ii,1} = udfe;
+                compiled{ii,2} = dpiext(ii).(compiledPerfField);
+            end
         end
         % -----------------------------------------------------------------
 

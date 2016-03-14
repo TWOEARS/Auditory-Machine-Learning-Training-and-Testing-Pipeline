@@ -1,6 +1,4 @@
-function trainAndTestPointOvrlModel( classname )
-
-if nargin < 1, classname = 'baby'; end;
+function trainAndTestSeveralModels()
 
 %startTwoEars( '../IdentificationTraining.xml' );
 addpath( '..' );
@@ -27,7 +25,7 @@ sc.addSource( sceneConfig.PointSource( ...
 pipe.setSceneConfig( [sc] ); 
 
 pipe.init();
-modelPath = pipe.pipeline.run( {classname}, 0 );
+modelPath = pipe.pipeline.run( {'femaleSpeech','baby'}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
@@ -52,4 +50,4 @@ sc.addSource( sceneConfig.PointSource( ...
 pipe.setSceneConfig( [sc] ); 
 
 pipe.init();
-modelPath = pipe.pipeline.run( {classname}, 0 );
+modelPath = pipe.pipeline.run( {'femaleSpeech','baby'}, 0 );

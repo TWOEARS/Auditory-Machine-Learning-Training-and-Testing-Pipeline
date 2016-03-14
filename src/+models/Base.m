@@ -48,7 +48,8 @@ classdef (Abstract) Base < handle
     %% --------------------------------------------------------------------
     methods (Static)
         
-        function perf = getPerformance( model, testSet, positiveClass, perfMeasure, maxDataSize, balMaxData )
+        function perf = getPerformance( model, testSet, positiveClass, perfMeasure, ...
+                                        maxDataSize, balMaxData, getDatapointInfo )
             if isempty( testSet )
                 warning( 'There is no testset to test on.' ); 
                 perf = 0;
@@ -56,10 +57,15 @@ classdef (Abstract) Base < handle
             end
             if nargin < 5, maxDataSize = inf; end
             if nargin < 6, balMaxData = false; end
+            if nargin < 7, getDatapointInfo = 'noInfo'; end
             x = testSet(:,:,'x');
             yTrue = testSet(:,:,'y',positiveClass);
+            dpi.mc = testSet(:,:,'mc');
+            dpi.wavIdxs = testSet(:,:,'pointwiseWavfilenames');
             % remove samples with fuzzy labels
             x(yTrue==0,:) = [];
+            dpi.mc(yTrue==0) = [];
+            dpi.wavIdxs(yTrue==0,:) = [];
             yTrue(yTrue==0) = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData
@@ -73,15 +79,28 @@ classdef (Abstract) Base < handle
                     negIdxs(1:nNeg) = [];
                     x([posIdxs; negIdxs],:) = [];
                     yTrue([posIdxs; negIdxs]) = [];
+                    dpi.mc([posIdxs; negIdxs],:) = [];
                 else
                     x(maxDataSize+1:end,:) = [];
                     yTrue(maxDataSize+1:end) = [];
+                    dpi.mc(maxDataSize+1:end,:) = [];
                 end
             end
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
+            if strcmpi( getDatapointInfo, 'datapointInfo' )
+                dpi.classIdxs = dpi.wavIdxs(:,1);
+                [uniqueDpiWavIdxs, ~, dpi.wavIdxs] = unique( dpi.wavIdxs, 'rows' );
+                dpi.classes = testSet.classNames;
+                for ii = 1 : size( uniqueDpiWavIdxs, 1 )
+                    dpi.wavs(ii,1) = testSet(uniqueDpiWavIdxs(ii,1),uniqueDpiWavIdxs(ii,2),'wavFileName');
+                end
+                dpiarg = {dpi};
+            else
+                dpiarg = {};
+            end
             for ii = 1 : size( yModel, 2 )
-                perf(ii) = perfMeasure( yTrue, yModel(:,ii) );
+                perf(ii) = perfMeasure( yTrue, yModel(:,ii), dpiarg{:} );
             end
         end
         %% ----------------------------------------------------------------

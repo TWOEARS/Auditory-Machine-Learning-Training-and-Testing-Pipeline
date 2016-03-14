@@ -3,17 +3,24 @@ classdef (Abstract) Base
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
         performance;
+        datapointInfo;
     end
     
     %% --------------------------------------------------------------------
     methods
         
-        function obj = Base( yTrue, yPred )
+        function obj = Base( yTrue, yPred, datapointInfo )
             if nargin < 2
                 error( ['Subclass of performanceMeasures.Base must call superconstructor ',...
                         'and pass yTrue and yPred.'] );
             end
-            [obj, obj.performance] = obj.calcPerformance( yTrue, yPred );
+            if nargin < 3
+                dpiarg = {};
+            else
+                dpiarg = {datapointInfo};
+            end
+            [obj, obj.performance, obj.datapointInfo] = ...
+                obj.calcPerformance( yTrue, yPred, dpiarg{:} );
         end
         % -----------------------------------------------------------------
     
@@ -68,7 +75,7 @@ classdef (Abstract) Base
 
     %% --------------------------------------------------------------------
     methods (Abstract)
-        [obj, performance] = calcPerformance( obj, yTrue, yPred )
+        [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpiarg )
         b = eqPm( obj, otherPm )
         b = gtPm( obj, otherPm )
         s = char( obj )

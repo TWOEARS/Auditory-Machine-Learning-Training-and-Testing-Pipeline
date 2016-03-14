@@ -6,21 +6,19 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         cacheSystemDir;
+        precedingProcCacheDir;
         externOutputDeps;
     end
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected, Transient = true)
-        preloadedConfigs = [];
-        preloadedConfigsChanged = false;
+        preloadedConfigs;
+        preloadedConfigsChanged;
+        pcFileInfo;
         pcRWsema = [];
-        pcFilename = [];
-        pcWriteFilename = [];
-        pcFileInfo = [];
-        preloadedPath = [];
         configChanged = true;
         currentFolder = [];
-        lastClassPath = [];
+        preloadedPath = [];
     end
     
     %% -----------------------------------------------------------------------------------
@@ -36,45 +34,50 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
 
         function savePreloadedConfigs( obj )
-            if isempty( obj.preloadedConfigs ), return; end
-            if ~obj.preloadedConfigsChanged, return; end
-            preloadedConfigs = obj.preloadedConfigs;
-            sema = setfilesemaphore( obj.pcWriteFilename );
-            new_pcFileInfo = dir( obj.pcFilename );
-            if ~isempty( new_pcFileInfo ) && ...
-                    ~isequalDeepCompare( new_pcFileInfo, obj.pcFileInfo )
-                obj.pcRWsema.getReadAccess();
-                Parameters.dynPropsOnLoad( true, false );
-                new_pc = load( obj.pcFilename, 'preloadedConfigs' );
-                Parameters.dynPropsOnLoad( true, true );
-                obj.pcRWsema.releaseReadAccess();
-                new_pcKeys = new_pc.preloadedConfigs.keys;
-                my_pcKeys = preloadedConfigs.keys;
-                for jj = length( new_pcKeys ) : -1 : 1
-                    k = new_pcKeys{jj};
-                    if ~any( strcmp( k, my_pcKeys ) )
-                        preloadedConfigs(k) = new_pc.preloadedConfigs(k);
+            pcFolders = obj.preloadedConfigs.keys;
+            for dd = 1 : numel( pcFolders )
+                if ~obj.preloadedConfigsChanged(pcFolders{dd}), return; end
+                pc = obj.preloadedConfigs(pcFolders{dd});
+                [pcFilename, pcWriteFilename] = obj.getPreloadedCfgsFilenames( pcFolders{dd} );
+                sema = setfilesemaphore( pcWriteFilename );
+                new_pcFileInfo = dir( pcFilename );
+                if ~isempty( new_pcFileInfo ) && ...
+                        ~isequalDeepCompare( new_pcFileInfo, obj.pcFileInfo(pcFolders{dd}) )
+                    obj.pcRWsema.getReadAccess();
+                    Parameters.dynPropsOnLoad( true, false );
+                    new_pc = load( pcFilename, 'preloadedConfigs' );
+                    Parameters.dynPropsOnLoad( true, true );
+                    obj.pcRWsema.releaseReadAccess();
+                    new_pcKeys = new_pc.preloadedConfigs.keys;
+                    for jj = length( new_pcKeys ) : -1 : 1
+                        k = new_pcKeys{jj};
+                        if ~any( strcmp( k, pc.keys ) )
+                            pc(k) = new_pc.preloadedConfigs(k);
+                        end
                     end
                 end
+                save( pcWriteFilename, 'preloadedConfigs' );
+                obj.pcRWsema.getWriteAccess();
+                copyfile( pcWriteFilename, pcFilename ); % this blocks pcFilename much shorter
+                obj.pcRWsema.releaseWriteAccess();
+                delete( pcWriteFilename );
+                removefilesemaphore( sema );
+                obj.preloadedConfigsChanged(pcFolders{dd}) = false;
             end
-            save( obj.pcWriteFilename, 'preloadedConfigs' );
-            obj.pcRWsema.getWriteAccess();
-            copyfile( obj.pcWriteFilename, obj.pcFilename ); % this blocks pcFilename much shorter
-            obj.pcRWsema.releaseWriteAccess();
-            delete( obj.pcWriteFilename );
-            removefilesemaphore( sema );
-            obj.preloadedConfigsChanged = false;
         end
         %% -----------------------------------------------------------------
         
         function init( obj )
             obj.savePreloadedConfigs();
-            obj.preloadedConfigs = [];
-            obj.preloadedConfigsChanged = false;
+            obj.preloadedConfigs( pcFolder ) = ...
+                containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            obj.preloadedConfigsChanged = ...
+                containers.Map( 'KeyType', 'char', 'ValueType', 'logical' );
+            obj.pcFileInfo( pcFolder ) = ...
+                containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             obj.preloadedPath = [];
             obj.configChanged = true;
             obj.currentFolder = [];
-            obj.lastClassPath = [];
         end
         %% -----------------------------------------------------------------
         
@@ -204,102 +207,120 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function currentFolder = getCurrentFolder( obj, filePath )
-            classFolder = fileparts( filePath );
-            if ~isempty( obj.currentFolder ) && ...
-                    ~obj.configChanged && strcmp( classFolder, obj.lastClassPath )
+        function currentFolder = getCurrentFolder( obj )
+            if ~isempty( obj.currentFolder ) && ~obj.configChanged
                 currentFolder = obj.currentFolder;
                 return;
             end
             currentConfig = obj.getOutputDependencies();
-            dbFolder = fileparts( classFolder );
-            procFoldersDir = dir( [classFolder filesep obj.procName '.2*'] );
-            procFolders = {procFoldersDir.name};
-            procFolders = cellfun( @(pfdn)(pfdn(length(obj.procName)+2:end)), ...
-                procFolders, 'UniformOutput', false );
+            cacheFoldersDirResult = dir( [obj.cacheSystemDir filesep obj.procName '.2*'] );
+            cacheFolders = {cacheFoldersDirResult.name};
+            % shorten folderNames for faster processing (still unique)
+            cacheFolders = cellfun( @(cf)(cf(length(obj.procName)+2:end)), ...
+                                    cacheFolders, 'UniformOutput', false );
             currentFolder = [];
+            if isempty( cacheFolders ), return; end
+            % first: check to see whether the current search inquiry just resolves to the
+            % last one that checked on the same cache folders
             if isempty( obj.preloadedPath )
                 obj.preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             end
-            if isempty( procFolders ), return; end
-            allProcFolders = strcat( procFolders{:} );
-            if obj.preloadedPath.isKey( allProcFolders )
-                preloaded = obj.preloadedPath(allProcFolders);
-                if isequalDeepCompare( preloaded{2}, currentConfig )
-                    currentFolder = preloaded{1};
+            allCacheFolders = strcat( cacheFolders{:} );
+            if obj.preloadedPath.isKey( allCacheFolders )
+                preloadedCfg = obj.preloadedPath(allCacheFolders);
+                if isequalDeepCompare( preloadedCfg{2}, currentConfig )
+                    currentFolder = preloadedCfg{1};
                     obj.configChanged = false;
-                    obj.lastClassPath = classFolder;
                     obj.currentFolder = currentFolder;
                     return;
                 end
             end
-            obj.loadPreloadedConfigs( dbFolder );
-            for ii = length( procFolders ) : -1 : 1
-                if obj.preloadedConfigs.isKey( procFolders{ii} )
-                    cfg = obj.preloadedConfigs(procFolders{ii});
+            % second: check cache folders whose configs are preloaded via preloadedConfigs
+            for ii = length( cacheFolders ) : -1 : 1
+                cfg = obj.getPreloadedCfg( obj.cacheSystemDir, cacheFolders{ii} );
+                if ~isempty( cfg )
                     if isequalDeepCompare( currentConfig, cfg )
-                        currentFolder = [classFolder filesep ...
-                            obj.procName '.' procFolders{ii}];
-                        procFolders = {};
+                        currentFolder = [obj.cacheSystemDir filesep ...
+                                         obj.procName '.' cacheFolders{ii}];
+                        cacheFolders = {}; % to completely avoid step three
                         break;
                     end
-                    procFolders(ii) = [];
+                    cacheFolders(ii) = []; % don't check in step three anymore
                 end
             end
-            for ii = length( procFolders ) : -1 : 1
+            % third: load configs and check
+            for ii = length( cacheFolders ) : -1 : 1
                 cfg = load( fullfile( ...
-                    classFolder, [obj.procName '.' procFolders{ii}], 'config.mat' ) );
+                    obj.cacheSystemDir, [obj.procName '.' cacheFolders{ii}], 'config.mat' ) );
                 if isequalDeepCompare( currentConfig, cfg )
-                    currentFolder = [classFolder filesep obj.procName '.' procFolders{ii}];
-                    obj.preloadedConfigs(procFolders{ii}) = cfg;
-                    obj.preloadedConfigsChanged = true;
+                    currentFolder = [obj.cacheSystemDir filesep ...
+                                     obj.procName '.' cacheFolders{ii}];
+                    obj.setPreloadedCfg( obj.cacheSystemDir, cacheFolders{ii}, cfg );
                     break;
                 end
             end
             if ~isempty( currentFolder )
-                obj.preloadedPath(allProcFolders) = {currentFolder, currentConfig};
+                obj.preloadedPath(allCacheFolders) = {currentFolder, currentConfig};
             end
             obj.configChanged = false;
-            obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
         end
         %% -----------------------------------------------------------------
         
-        function currentFolder = createCurrentConfigFolder( obj, filePath )
-            classFolder = fileparts( filePath );
+        function currentFolder = createCurrentConfigFolder( obj )
             timestr = buildCurrentTimeString( true );
-            currentFolder = [classFolder filesep obj.procName timestr];
+            currentFolder = [obj.cacheSystemDir filesep obj.procName timestr];
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
             cfg = load( fullfile( currentFolder, 'config.mat' ) );
-            dbFolder = fileparts( classFolder );
-            obj.loadPreloadedConfigs( dbFolder );
-            obj.preloadedConfigs(timestr(2:end)) = cfg;
-            obj.preloadedConfigsChanged = true;
+            obj.setPreloadedCfg( obj.cacheSystemDir, cfgFolder, cfg );
             obj.configChanged = false;
-            obj.lastClassPath = classFolder;
             obj.currentFolder = currentFolder;
         end
         %% -----------------------------------------------------------------
         
-        function loadPreloadedConfigs( obj, dbFolder )
-            if isempty( obj.preloadedConfigs )
-                obj.pcFilename = [dbFolder filesep obj.procName '.preloadedConfigs.mat'];
-                obj.pcWriteFilename = [dbFolder filesep obj.procName '.preloadedConfigs.write.mat'];
-                obj.pcRWsema = ReadersWritersFileSemaphore( obj.pcFilename );
-                if exist( obj.pcFilename, 'file' )
+        function loadPreloadedConfigs( obj, pcFolder )
+            if ~isKey( obj.preloadedConfigs, pcFolder )
+                pcFilename = obj.getPreloadedCfgsFilenames( pcFolder );
+                obj.pcRWsema = ReadersWritersFileSemaphore( pcFilename );
+                if exist( pcFilename, 'file' )
                     obj.pcRWsema.getReadAccess();
-                    Parameters.dynPropsOnLoad( true, false );
-                    obj.pcFileInfo = dir( obj.pcFilename );
-                    pc = load( obj.pcFilename );
+                    Parameters.dynPropsOnLoad( true, false ); % unnecessary stuff, don't load
+                    obj.pcFileInfo( pcFolder ) = dir( pcFilename ); % for later comparison
+                    pc = load( pcFilename );
                     Parameters.dynPropsOnLoad( true, true );
                     obj.pcRWsema.releaseReadAccess();
-                    obj.preloadedConfigs = pc.preloadedConfigs;
-                    obj.preloadedConfigsChanged = false;
+                    obj.preloadedConfigs( pcFolder ) = pc.preloadedConfigs;
+                    obj.preloadedConfigsChanged( pcFolder ) = false;
                 else
-                    obj.preloadedConfigs = ...
+                    obj.preloadedConfigs( pcFolder ) = ...
                         containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
                 end
+            end
+        end
+        %% -----------------------------------------------------------------
+        
+        function [pcFn, pcwFn] = getPreloadedCfgsFilenames( obj, pcFolder )
+            pcFn = [pcFolder filesep obj.procName '.preloadedConfigs.mat'];
+            pcwFn = [pcFolder filesep obj.procName '.preloadedConfigs.write.mat'];
+        end
+        %% -----------------------------------------------------------------
+        
+        function setPreloadedCfg( obj, pcFolder, cfgFolder, cfg )
+            obj.loadPreloadedConfigs( pcFolder );
+            pc = obj.preloadedConfigs(pcFolder);
+            pc(cfgFolder) = cfg;
+            obj.preloadedConfigs(pcFolder) = pc;
+            obj.preloadedConfigsChanged(pcFolder) = true;
+        end
+        %% -----------------------------------------------------------------
+        
+        function cfg = getPreloadedCfg( obj, pcFolder, cfgFolder )
+            obj.loadPreloadedConfigs( pcFolder );
+            pc = obj.preloadedConfigs(pcFolder);
+            cfg = [];
+            if pc.isKey( cfgFolder )
+                cfg = pc(cfgFolder);
             end
         end
         %% -----------------------------------------------------------------

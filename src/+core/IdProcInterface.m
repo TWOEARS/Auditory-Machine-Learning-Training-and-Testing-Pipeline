@@ -34,6 +34,7 @@ classdef (Abstract) IdProcInterface < handle
         %% -----------------------------------------------------------------
 
         function savePreloadedConfigs( obj )
+            if isempty( obj.preloadedConfigs ), return; end
             pcFolders = obj.preloadedConfigs.keys;
             for dd = 1 : numel( pcFolders )
                 if ~obj.preloadedConfigsChanged(pcFolders{dd}), return; end
@@ -69,11 +70,11 @@ classdef (Abstract) IdProcInterface < handle
         
         function init( obj )
             obj.savePreloadedConfigs();
-            obj.preloadedConfigs( pcFolder ) = ...
+            obj.preloadedConfigs = ...
                 containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             obj.preloadedConfigsChanged = ...
                 containers.Map( 'KeyType', 'char', 'ValueType', 'logical' );
-            obj.pcFileInfo( pcFolder ) = ...
+            obj.pcFileInfo = ...
                 containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             obj.preloadedPath = [];
             obj.configChanged = true;
@@ -102,29 +103,17 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function outFileName = getOutputFileName( obj, inFilePath, currentFolder )
-            if nargin < 3
-                currentFolder = obj.getCurrentFolder( inFilePath );
-            end
-            if isempty( currentFolder )
-                currentFolder = obj.createCurrentConfigFolder( inFilePath );
-            end
+        function outFileName = getOutputFileName( obj, inFilePath )
             [~, fileName, fileExt] = fileparts( inFilePath );
-            fileName = [fileName fileExt];
-            outFileName = fullfile( currentFolder, [fileName obj.getProcFileExt] );
+            outFileName = ...
+                fullfile( obj.getCurrentFolder(), [fileName fileExt obj.getProcFileExt] );
         end
         %% -----------------------------------------------------------------
         
-        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, createFolder, checkPrecNeed )
+        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, checkPrecNeed )
             if isempty( filePath ), fileProcessed = false; return; end
-            currentFolder = obj.getCurrentFolder( filePath );
-            fileProcessed = ...
-                ~isempty( currentFolder )  && ...
-                exist( obj.getOutputFileName( filePath, currentFolder ), 'file' );
-            if nargin > 2  &&  createFolder  &&  isempty( currentFolder )
-                currentFolder = obj.createCurrentConfigFolder( filePath );
-            end
-            if ~fileProcessed && nargin > 3 && checkPrecNeed
+            fileProcessed = exist( obj.getOutputFileName( filePath ), 'file' );
+            if ~fileProcessed && nargin > 2 && checkPrecNeed
                 precProcFileNeeded = obj.needsPrecedingProcResult( filePath );
             else
                 precProcFileNeeded = false;
@@ -154,56 +143,10 @@ classdef (Abstract) IdProcInterface < handle
 
         function setCacheSystemDir( obj, cacheSystemDir )
             if exist( cacheSystemDir, 'dir' )
-                obj.cacheSystemDir = which( cacheSystemDir ); % absolute path
+                obj.cacheSystemDir = cleanPathFromRelativeRefs( cacheSystemDir ); 
             else
                 error( 'cannot find direcotry "%s": does it exist?', cacheSystemDir ); 
             end
-        end
-        %% -----------------------------------------------------------------
-        
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
-        
-        function obj = IdProcInterface( procName )
-            if nargin < 1
-                classInfo = metaclass( obj );
-                [classname1, classname2] = strtok( classInfo.Name, '.' );
-                if isempty( classname2 ), obj.procName = classname1;
-                else obj.procName = classname2(2:end); end
-            else
-                obj.procName = procName;
-            end
-            obj.externOutputDeps = [];
-        end
-        %% -----------------------------------------------------------------
-        
-        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
-            precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
-        end
-        %% -----------------------------------------------------------------
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = private)
-        
-        function out = save( obj, inFilePath, data )
-%            inFilePath = which( inFilePath ); % ensure absolute path
-            out = data;
-            if isempty( inFilePath ), return; end
-            currentFolder = obj.getCurrentFolder( inFilePath );
-            if isempty( currentFolder )
-                currentFolder = obj.createCurrentConfigFolder( inFilePath );
-            end
-            outFilename = obj.getOutputFileName( inFilePath, currentFolder );
-            save( outFilename, '-struct', 'out' );
-        end
-        %% -----------------------------------------------------------------
-
-        function saveOutputConfig( obj, configFileName )
-            outputDeps = obj.getOutputDependencies();
-            save( configFileName, '-struct', 'outputDeps' );
         end
         %% -----------------------------------------------------------------
         
@@ -219,20 +162,21 @@ classdef (Abstract) IdProcInterface < handle
             cacheFolders = cellfun( @(cf)(cf(length(obj.procName)+2:end)), ...
                                     cacheFolders, 'UniformOutput', false );
             currentFolder = [];
-            if isempty( cacheFolders ), return; end
-            % first: check to see whether the current search inquiry just resolves to the
-            % last one that checked on the same cache folders
-            if isempty( obj.preloadedPath )
-                obj.preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-            end
-            allCacheFolders = strcat( cacheFolders{:} );
-            if obj.preloadedPath.isKey( allCacheFolders )
-                preloadedCfg = obj.preloadedPath(allCacheFolders);
-                if isequalDeepCompare( preloadedCfg{2}, currentConfig )
-                    currentFolder = preloadedCfg{1};
-                    obj.configChanged = false;
-                    obj.currentFolder = currentFolder;
-                    return;
+            if ~isempty( cacheFolders )
+                % first: check to see whether the current search inquiry just resolves to the
+                % last one that checked on the same cache folders
+                if isempty( obj.preloadedPath )
+                    obj.preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+                end
+                allCacheFolders = strcat( cacheFolders{:} );
+                if obj.preloadedPath.isKey( allCacheFolders )
+                    preloadedCfg = obj.preloadedPath(allCacheFolders);
+                    if isequalDeepCompare( preloadedCfg{2}, currentConfig )
+                        currentFolder = preloadedCfg{1};
+                        obj.configChanged = false;
+                        obj.currentFolder = currentFolder;
+                        return;
+                    end
                 end
             end
             % second: check cache folders whose configs are preloaded via preloadedConfigs
@@ -259,11 +203,50 @@ classdef (Abstract) IdProcInterface < handle
                     break;
                 end
             end
-            if ~isempty( currentFolder )
+            % found or create
+            if isempty( currentFolder )
+                currentFolder = obj.createCurrentConfigFolder();
+            else
+                obj.currentFolder = currentFolder;
                 obj.preloadedPath(allCacheFolders) = {currentFolder, currentConfig};
             end
             obj.configChanged = false;
-            obj.currentFolder = currentFolder;
+        end
+        %% -----------------------------------------------------------------
+        
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function obj = IdProcInterface( procName )
+            if nargin < 1
+                classInfo = metaclass( obj );
+                [classname1, classname2] = strtok( classInfo.Name, '.' );
+                if isempty( classname2 ), obj.procName = classname1;
+                else obj.procName = classname2(2:end); end
+            else
+                obj.procName = procName;
+            end
+            obj.externOutputDeps = [];
+        end
+        %% -----------------------------------------------------------------
+        
+        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+            precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
+        end
+        %% -----------------------------------------------------------------
+        
+        function out = save( obj, inFilePath, data )
+            out = data;
+            if isempty( inFilePath ), return; end
+            save( obj.getOutputFileName( inFilePath ), '-struct', 'out' );
+        end
+        %% -----------------------------------------------------------------
+
+        function saveOutputConfig( obj, configFileName )
+            outputDeps = obj.getOutputDependencies();
+            save( configFileName, '-struct', 'outputDeps' );
         end
         %% -----------------------------------------------------------------
         
@@ -273,7 +256,7 @@ classdef (Abstract) IdProcInterface < handle
             mkdir( currentFolder );
             obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
             cfg = load( fullfile( currentFolder, 'config.mat' ) );
-            obj.setPreloadedCfg( obj.cacheSystemDir, cfgFolder, cfg );
+            obj.setPreloadedCfg( obj.cacheSystemDir, currentFolder, cfg );
             obj.configChanged = false;
             obj.currentFolder = currentFolder;
         end

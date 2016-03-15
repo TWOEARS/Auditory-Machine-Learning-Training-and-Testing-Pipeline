@@ -44,6 +44,8 @@ classdef DataPipeProc < handle
             obj.inputFileNameBuilder = outputtingProc.getOutputFileNameBuilder();
             obj.dataFileProcessor.setExternOutputDependencies( ...
                 outputtingProc.getOutputDependencies() );
+            obj.dataFileProcessor.setCacheSystemDir( ...
+                outputtingProc.dataFileProcessor.getCurrentFolder() );
         end
         %% ----------------------------------------------------------------
 
@@ -74,7 +76,7 @@ classdef DataPipeProc < handle
                 fprintf( '.%s\n', dataFile.wavFileName );
                 [obj.fileListOverlay(ii), obj.precedingFileNeededList(ii)] = ...
                     obj.dataFileProcessor.hasFileAlreadyBeenProcessed( ...
-                    dataFile.wavFileName, true, true );
+                    dataFile.wavFileName, true );
                 obj.fileListOverlay(ii) = ~obj.fileListOverlay(ii);
             end
             fprintf( '..' );

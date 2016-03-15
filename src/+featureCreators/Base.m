@@ -1,15 +1,16 @@
 classdef Base < core.IdProcInterface
-
+    % Base Abstract base class for specifying features sets with which features
+    % are extracted.
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
-        shiftSize_s;
+        shiftSize_s;                % shift between blocks
         minBlockToEventRatio;
         maxNegBlockToEventRatio = 0;
         x;
         y;
-        blockSize_s;
+        blockSize_s;                % size of the AFE data block in seconds
         labelBlockSize_s;
-        afeData;
+        afeData;                    % AFE signals
         description;
         descriptionBuilt = false;
     end
@@ -179,6 +180,8 @@ classdef Base < core.IdProcInterface
         %% ----------------------------------------------------------------
 
         function b = makeBlockFromAfe( obj, afeIdx, chIdx, func, grps, varargin )
+            % makeBlockFromAfe transform AFE data into a featrue block
+            %
             afedat = obj.afeData(afeIdx);
             afedat = afedat{chIdx};
             b{1} = func( afedat );
@@ -211,7 +214,7 @@ classdef Base < core.IdProcInterface
                 end
                 vaiic = cat( 1, vaii{:} );
                 for jj = 1 : size( vaii{1}, 2 )
-                    b1ii{1,jj} = { b2{:}, vaiic{:,jj}};
+                    b1ii{1,jj} = { b2{:}, vaiic{:,jj} };
                 end
                 b{1+ii} = b1ii;
                 clear b1ii;

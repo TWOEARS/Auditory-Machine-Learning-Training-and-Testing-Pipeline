@@ -9,6 +9,8 @@ classdef IdCacheDirectory < handle
         cacheDirectoryFilename;
         cacheFileInfo;
         cacheFileRWsema;
+        cacheDirChanged;
+        cacheSingleProcessSema;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -17,6 +19,7 @@ classdef IdCacheDirectory < handle
         function obj = IdCacheDirectory()
             obj.treeRoot = core.IdCacheTreeElem();
             obj.cacheFileInfo = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            obj.cacheDirChanged = false;
         end
         %% -------------------------------------------------------------------------------
         
@@ -40,7 +43,7 @@ classdef IdCacheDirectory < handle
         function filepath = getCacheFilepath( obj, cfg, createIfnExist )
             if isempty( cfg ), filepath = obj.topCacheDirectory; return; end
             filepath = [];
-            if nargin < 3, createIfnExist = false; end
+            if nargin < 3, createIfnExist = true; end
             treeNode = obj.findCfgTreeNode( cfg, createIfnExist );
             if ~isempty( treeNode ) 
                 if isempty( treeNode.path ) && nargin > 2 && createIfnExist
@@ -49,24 +52,32 @@ classdef IdCacheDirectory < handle
                     mkdir( currentFolder );
                     treeNode.path = currentFolder;
                     save( [currentFolder filesep 'cfg.mat'], 'cfg' );
+                    obj.cacheDirChanged = true;
                 end
                 filepath = treeNode.path;
-                obj.cacheDirChanged = true;
             end
         end
         %% -------------------------------------------------------------------------------
         
         function getSingleProcessCacheAccess( obj )
+            cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
+            cacheSpFilepath = [cacheFilepath '.singleProcess'];
+            obj.cacheSingleProcessSema = setfilesemaphore( cacheSpFilepath );
         end
         %% -------------------------------------------------------------------------------
         
         function releaseSingleProcessCacheAccess( obj )
+            removefilesemaphore( obj.cacheSingleProcessSema );
         end
         %% -------------------------------------------------------------------------------
         
         function saveCacheDirectory( obj, filename )
-            if nargin < 2 && isempty( obj.cacheDirectoryFilename )
-                filename = 'cacheDirectory.mat';
+            if nargin < 2 
+                if isempty( obj.cacheDirectoryFilename )
+                    filename = 'cacheDirectory.mat';
+                else
+                    filename = obj.cacheDirectoryFilename;
+                end
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
                 error( 'filename supposed to be only file name without any path' );
@@ -90,6 +101,7 @@ classdef IdCacheDirectory < handle
             save( cacheWriteFilepath, 'cacheTree' );
             obj.cacheFileRWsema.getWriteAccess();
             copyfile( cacheWriteFilepath, cacheFilepath ); % this blocks cacheFile shorter
+            obj.cacheFileInfo(cacheFilepath) = dir( cacheFilepath );
             obj.cacheFileRWsema.releaseWriteAccess();
             delete( cacheWriteFilepath );
             removefilesemaphore( cacheWriteSema );

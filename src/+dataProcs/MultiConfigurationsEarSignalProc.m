@@ -25,6 +25,12 @@ classdef MultiConfigurationsEarSignalProc < dataProcs.BinSimProcInterface
             obj.sceneConfigurations = sceneConfig.SceneConfiguration.empty;
         end
         %% ----------------------------------------------------------------
+
+        function setCacheSystemDir( obj, cacheSystemDir )
+            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir );
+            obj.sceneProc.setCacheSystemDir( cacheSystemDir );
+        end
+        %% -----------------------------------------------------------------
         
         function setSceneConfig( obj, sceneConfig )
             obj.configChanged = true;
@@ -79,11 +85,11 @@ classdef MultiConfigurationsEarSignalProc < dataProcs.BinSimProcInterface
             fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
-        
-        function precProcFileNeeded = needsPrecedingProcResult( obj, inFileName )
-            precProcFileNeeded = true; % it's the first proc in the pipe.
-        end
-        %% -----------------------------------------------------------------
+%         
+%         function precProcFileNeeded = needsPrecedingProcResult( obj, inFileName )
+%             precProcFileNeeded = true; % it's the first proc in the pipe.
+%         end
+%         %% -----------------------------------------------------------------
         
     end
     

@@ -19,6 +19,12 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
             obj.sceneConfig = sceneConfig.SceneConfiguration.empty;
         end
         %% ----------------------------------------------------------------
+
+        function setCacheSystemDir( obj, cacheSystemDir )
+            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir );
+            obj.binauralSim.setCacheSystemDir( cacheSystemDir );
+        end
+        %% -----------------------------------------------------------------
         
         function setSceneConfig( obj, sceneConfig )
             obj.configChanged = true;

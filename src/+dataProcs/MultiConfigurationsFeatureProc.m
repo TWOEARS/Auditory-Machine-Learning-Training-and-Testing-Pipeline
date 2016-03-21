@@ -87,30 +87,30 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
             fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
-        
-        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
-            precProcFileNeeded = false; 
-            multiCfg = obj.getOutputDependencies();
-            precoll = [];
-            scFieldNames = fieldnames( multiCfg.extern.extern );
-            fprintf( '#' );
-            for ii = 1 : numel( scFieldNames )
-                conf = [];
-                conf.afeParams = multiCfg.extern.afeDeps;
-                conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
-                obj.featProc.setExternOutputDependencies( conf );
-                if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
-                    precProcFileNeeded = true;
-                    break;
-                end
-                precoll.(scFieldNames{ii}).fname = obj.featProc.getOutputFileName( wavFileName );
-                precoll.(scFieldNames{ii}).cfg = obj.featProc.getOutputDependencies;
-                fprintf( '.' );
-            end
-            obj.precollected(wavFileName) = precoll;
-            fprintf( '\n' );
-        end
-        %% -----------------------------------------------------------------
+%         
+%         function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+%             precProcFileNeeded = false; 
+%             multiCfg = obj.getOutputDependencies();
+%             precoll = [];
+%             scFieldNames = fieldnames( multiCfg.extern.extern );
+%             fprintf( '#' );
+%             for ii = 1 : numel( scFieldNames )
+%                 conf = [];
+%                 conf.afeParams = multiCfg.extern.afeDeps;
+%                 conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
+%                 obj.featProc.setExternOutputDependencies( conf );
+%                 if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
+%                     precProcFileNeeded = true;
+%                     break;
+%                 end
+%                 precoll.(scFieldNames{ii}).fname = obj.featProc.getOutputFileName( wavFileName );
+%                 precoll.(scFieldNames{ii}).cfg = obj.featProc.getOutputDependencies;
+%                 fprintf( '.' );
+%             end
+%             obj.precollected(wavFileName) = precoll;
+%             fprintf( '\n' );
+%         end
+%         %% -----------------------------------------------------------------
         
     end
     

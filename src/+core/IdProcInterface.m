@@ -103,18 +103,18 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -----------------------------------------------------------------
         
-        function outFileName = getOutputFileName( obj, inFilePath )
-            [~, fileName, fileExt] = fileparts( inFilePath );
+        function outFileName = getOutputFileName( obj, wavFilename )
+            [~, fileName, fileExt] = fileparts( wavFilename );
             outFileName = ...
                 fullfile( obj.getCurrentFolder(), [fileName fileExt obj.getProcFileExt] );
         end
         %% -----------------------------------------------------------------
         
-        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, filePath, checkPrecNeed )
-            if isempty( filePath ), fileProcessed = false; return; end
-            fileProcessed = exist( obj.getOutputFileName( filePath ), 'file' );
+        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, wavFilename, checkPrecNeed )
+            if isempty( wavFilename ), fileProcessed = false; return; end
+            fileProcessed = exist( obj.getOutputFileName( wavFilename ), 'file' );
             if ~fileProcessed && nargin > 2 && checkPrecNeed
-                precProcFileNeeded = obj.needsPrecedingProcResult( filePath );
+                precProcFileNeeded = obj.needsPrecedingProcResult( wavFilename );
             else
                 precProcFileNeeded = false;
             end

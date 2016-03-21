@@ -6,6 +6,9 @@ classdef IdCacheDirectory < handle
     properties (Access = protected)
         treeRoot;
         topCacheDirectory;
+        cacheDirectoryFilename;
+        cacheFileInfo;
+        cacheFileRWsema;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -13,6 +16,12 @@ classdef IdCacheDirectory < handle
         
         function obj = IdCacheDirectory()
             obj.treeRoot = core.IdCacheTreeElem();
+            obj.cacheFileInfo = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function delete( obj )
+            obj.saveCacheDirectory();
         end
         %% -------------------------------------------------------------------------------
         
@@ -24,7 +33,7 @@ classdef IdCacheDirectory < handle
                     error( '"%s" cannot be found', topDir );
                 end
             end
-            obj.topCacheDirectory = topDir;
+            obj.topCacheDirectory = cleanPathFromRelativeRefs( topDir );
         end
         %% -------------------------------------------------------------------------------
         
@@ -42,7 +51,81 @@ classdef IdCacheDirectory < handle
                     save( [currentFolder filesep 'cfg.mat'], 'cfg' );
                 end
                 filepath = treeNode.path;
+                obj.cacheDirChanged = true;
             end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function getSingleProcessCacheAccess( obj )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function releaseSingleProcessCacheAccess( obj )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function saveCacheDirectory( obj, filename )
+            if nargin < 2 && isempty( obj.cacheDirectoryFilename )
+                filename = 'cacheDirectory.mat';
+            end
+            if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
+                error( 'filename supposed to be only file name without any path' );
+            end
+            obj.cacheDirectoryFilename = filename;
+            if ~obj.cacheDirChanged, return; end
+            cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
+            cacheWriteFilepath = [cacheFilepath '.write'];
+            cacheWriteSema = setfilesemaphore( cacheWriteFilepath );
+            newCacheFileInfo = dir( cacheFilepath );
+            if ~isempty( newCacheFileInfo ) && ...
+                    ~isequalDeepCompare( newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
+                obj.cacheFileRWsema.getReadAccess();
+                Parameters.dynPropsOnLoad( true, false );
+                newCacheFile = load( cacheFilepath );
+                Parameters.dynPropsOnLoad( true, true );
+                obj.cacheFileRWsema.releaseReadAccess();
+                obj.integrateOtherCacheDirectory( newCacheFile );
+            end
+            cacheTree = obj.treeRoot;
+            save( cacheWriteFilepath, 'cacheTree' );
+            obj.cacheFileRWsema.getWriteAccess();
+            copyfile( cacheWriteFilepath, cacheFilepath ); % this blocks cacheFile shorter
+            obj.cacheFileRWsema.releaseWriteAccess();
+            delete( cacheWriteFilepath );
+            removefilesemaphore( cacheWriteSema );
+            obj.cacheDirChanged = false;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function loadCacheDirectory( obj, filename )
+            if nargin < 2 && isempty( obj.cacheDirectoryFilename )
+                filename = 'cacheDirectory.mat';
+            end
+            if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
+                error( 'filename supposed to be only file name without any path' );
+            end
+            obj.cacheDirectoryFilename = filename;
+            cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
+            if ~obj.cacheFileInfo.isKey( cacheFilepath )
+                obj.cacheFileRWsema = ReadersWritersFileSemaphore( cacheFilepath );
+                if exist( cacheFilepath, 'file' )
+                    obj.cacheFileRWsema.getReadAccess();
+                    Parameters.dynPropsOnLoad( true, false ); % don't load unnecessary stuff
+                    obj.cacheFileInfo(cacheFilepath) = dir( cacheFilepath ); % for later comparison
+                    cacheFile = load( cacheFilepath );
+                    Parameters.dynPropsOnLoad( true, true );
+                    obj.cacheFileRWsema.releaseReadAccess();
+                    obj.treeRoot = cacheFile.cacheTree;
+                    obj.cacheDirChanged = false;
+                else
+                    error( 'could not load %s', cacheFilepath );
+                end
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function integrateOtherCacheDirectory( otherCacheDir )
+            error( 'TODO' );
         end
         %% -------------------------------------------------------------------------------
     end
@@ -76,7 +159,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
     end
-    
+
     %% -----------------------------------------------------------------------------------
     methods (Static)
         

@@ -72,7 +72,7 @@ classdef IdentificationTrainingPipeline < handle
         %   -------------------
         
         function addGatherFeaturesProc( obj, gatherFeaturesProc )
-            gatherFeaturesProc.connectData( obj.data );
+            gatherFeaturesProc.connectIdData( obj.data );
             obj.gatherFeaturesProc = core.DataPipeProc( gatherFeaturesProc );
             obj.gatherFeaturesProc.init();
             obj.gatherFeaturesProc.connectData( obj.data );
@@ -98,7 +98,11 @@ classdef IdentificationTrainingPipeline < handle
             obj.testSet = testData;
             obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
         end
+        %   -------------------
         
+        function splitIntoTrainAndTestSets( obj, trainSetShare )
+            [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
+        end
         %% ------------------------------------------------------------------------------- 
         
         %   --------------------
@@ -134,7 +138,7 @@ classdef IdentificationTrainingPipeline < handle
             successiveProcFileList = [];
             for ii = length( obj.dataPipeProcs ) : -1 : 1
                 obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileList );
-                successiveProcFileList = obj.dataPipeProcs{ii+1}.fileListOverlay;
+                successiveProcFileList = obj.dataPipeProcs{ii}.fileListOverlay;
             end
             for ii = 1 : length( obj.dataPipeProcs )
                 obj.dataPipeProcs{ii}.run();

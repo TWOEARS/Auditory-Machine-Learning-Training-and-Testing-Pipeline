@@ -16,6 +16,7 @@ classdef (Abstract) IdProcInterface < handle
         cacheDirectory;
         soundDbBaseDir;
         inputProc;
+        idData;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -42,6 +43,11 @@ classdef (Abstract) IdProcInterface < handle
         
         function releaseSingleProcessCacheAccess( obj )
             obj.cacheDirectory.releaseSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+
+        function connectIdData( obj, idData )
+            obj.idData = idData;
         end
         %% -------------------------------------------------------------------------------
         
@@ -162,7 +168,7 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
         
         function setInputProc( obj, inputProc )
-            if ~isa( inputProc, 'core.IdProcInterface' )
+            if ~isempty( inputProc ) && ~isa( inputProc, 'core.IdProcInterface' )
                 error( 'inputProc must be of type core.IdProcInterface' );
             end
             obj.inputProc = inputProc;

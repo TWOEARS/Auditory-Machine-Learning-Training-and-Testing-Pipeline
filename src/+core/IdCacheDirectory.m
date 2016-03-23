@@ -134,7 +134,7 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function integrateOtherCacheDirectory( otherCacheDir )
+        function integrateOtherCacheDirectory( obj, otherCacheDir )
             warning( 'TODO' );
         end
         %% -------------------------------------------------------------------------------

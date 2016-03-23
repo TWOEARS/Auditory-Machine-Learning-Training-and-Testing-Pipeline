@@ -2,10 +2,8 @@ classdef GatherFeaturesProc < core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private, Transient)
-        data;
         sceneCfgDataUseRatio = 1;
         prioClass = [];
-        inputProc;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -20,11 +18,6 @@ classdef GatherFeaturesProc < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function connectData( obj, data )
-            obj.data = data;
-        end
-        %% -------------------------------------------------------------------------------
-
         function setSceneCfgDataUseRatio( obj, sceneCfgDataUseRatio, prioClass )
             obj.sceneCfgDataUseRatio = sceneCfgDataUseRatio;
             if nargin < 3, prioClass = []; end
@@ -34,7 +27,7 @@ classdef GatherFeaturesProc < core.IdProcInterface
 
         function process( obj, wavFilepath )
             xy = obj.loadInputData( wavFilepath );
-            dataFile = obj.data(':',wavFilepath);
+            dataFile = obj.idData(':',wavFilepath);
             fprintf( '.' );
             if obj.sceneCfgDataUseRatio < 1  &&  ...
                     ~strcmp( obj.prioClass, IdEvalFrame.readEventClass( wavFilepath ) )
@@ -56,10 +49,12 @@ classdef GatherFeaturesProc < core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
+            outputDeps = [];
         end
         %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj )
+            out = [];
         end
         %% -------------------------------------------------------------------------------
     end

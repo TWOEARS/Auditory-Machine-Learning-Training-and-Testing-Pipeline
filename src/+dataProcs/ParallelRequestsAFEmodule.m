@@ -63,7 +63,7 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         
         % override of core.IdProcInterface's method
         function setInputProc( obj, inputProc )
-            setInputProc@core.IdProcInterface( obj, [] );
+            setInputProc@core.IdProcInterface( obj, inputProc );
             for ii = 1 : numel( obj.individualAfeProcs )
                 obj.individualAfeProcs{ii}.setInputProc( inputProc );
             end
@@ -99,7 +99,7 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
             end
             for ii = 1 : numel( obj.individualAfeProcs )
                 obj.indFile{ii} = ...
-                    obj.individualAfeProcs{ii}.getOutputFileName( wavFilepath ) ;
+                    obj.individualAfeProcs{ii}.getOutputFilepath( wavFilepath ) ;
             end
         end
         %% ----------------------------------------------------------------

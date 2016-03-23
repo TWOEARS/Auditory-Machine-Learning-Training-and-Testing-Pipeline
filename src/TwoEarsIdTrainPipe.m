@@ -14,8 +14,7 @@ classdef TwoEarsIdTrainPipe < handle
     properties (SetAccess = private)
         pipeline;
         binauralSim;
-        sceneConfBinauralSim;
-        multiConfBinauralSim;
+        multiCfgProcs;
         dataSetupAlreadyDone = false;
     end
     
@@ -32,21 +31,51 @@ classdef TwoEarsIdTrainPipe < handle
             ip.parse( varargin{:} );
             modelTrainers.Base.featureMask( true, [] );
             fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
-            obj.pipeline = core.IdentificationTrainingPipeline( 'cacheSystemDir', ...
-                                                                ip.Results.cacheSystemDir, ...
-                                                                'soundDbBaseDir', ...
-                                                                ip.Results.soundDbBaseDir );
-            obj.binauralSim = dataProcs.IdSimConvRoomWrapper( ip.Results.hrir );
-            obj.sceneConfBinauralSim = dataProcs.SceneEarSignalProc( obj.binauralSim );
-            obj.multiConfBinauralSim = ...
-                dataProcs.MultiSceneConfigurationsIdProcWrapper( ...
-                                     obj.sceneConfBinauralSim, obj.sceneConfBinauralSim );
+            obj.pipeline = core.IdentificationTrainingPipeline( ...
+                                          'cacheSystemDir', ip.Results.cacheSystemDir, ...
+                                          'soundDbBaseDir', ip.Results.soundDbBaseDir );
+            binSim = dataProcs.IdSimConvRoomWrapper( ip.Results.hrir );
+            obj.binauralSim = dataProcs.SceneEarSignalProc( binSim );
+            obj.multiCfgProcs{1} = ...
+                dataProcs.MultiSceneCfgsIdProcWrapper( obj.binauralSim, obj.binauralSim );
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
+        
+        function init( obj )
+            obj.setupData( true );
+            if isempty( obj.featureCreator )
+                obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
+            end
+            obj.pipeline.featureCreator = obj.featureCreator;
+            obj.pipeline.resetDataProcs();
+            obj.multiCfgProcs{2} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                obj.binauralSim, ...
+                dataProcs.ParallelRequestsAFEmodule( obj.binauralSim.getDataFs(), ...
+                                                     obj.featureCreator.getAFErequests() ...
+                                                   ) );
+            obj.multiCfgProcs{3} =  dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                                                    obj.binauralSim, obj.featureCreator );
+            obj.multiCfgProcs{4} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                                        obj.binauralSim, dataProcs.GatherFeaturesProc() );
+            obj.pipeline.addDataPipeProc( obj.multiCfgProcs{1} );
+            obj.pipeline.addDataPipeProc( obj.multiCfgProcs{2} );
+            obj.pipeline.addDataPipeProc( obj.multiCfgProcs{3} );
+            obj.pipeline.addGatherFeaturesProc( obj.multiCfgProcs{4} );
+            if isempty( obj.modelCreator )
+                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
+                    'performanceMeasure', @performanceMeasures.BAC2, ...
+                    'cvFolds', 4, ...
+                    'alpha', 0.99 );
+            end
+            obj.pipeline.addModelCreator( obj.modelCreator );
+        end
+        %% -------------------------------------------------------------------------------
 
-        function setSceneConfig( obj, scArray )
-            obj.multiConfBinauralSim.setSceneConfig( scArray );
+        function setSceneConfig( obj, sceneCfgs )
+            for ii = 1 : numel( obj.multiCfgProcs )
+                obj.multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -65,36 +94,6 @@ classdef TwoEarsIdTrainPipe < handle
         function set.data( obj, newData )
             obj.dataSetupAlreadyDone = strcmp(obj.data,newData);
             obj.data = newData;
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function init( obj )
-            obj.setupData( true );
-            if isempty( obj.featureCreator )
-                obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
-            end
-            obj.pipeline.featureCreator = obj.featureCreator;
-            obj.pipeline.resetDataProcs();
-            obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
-            obj.pipeline.addDataPipeProc( ...
-                dataProcs.MultiSceneConfigurationsIdProcWrapper( ...
-                    obj.sceneConfBinauralSim, ...
-                    dataProcs.ParallelRequestsAFEmodule( ...
-                        obj.binauralSim.getDataFs(), obj.featureCreator.getAFErequests() ...
-                        ) ) );
-            obj.pipeline.addDataPipeProc( ...
-                dataProcs.MultiSceneConfigurationsIdProcWrapper( ...
-                                         obj.sceneConfBinauralSim, obj.featureCreator ) );
-            obj.pipeline.addGatherFeaturesProc( ...
-                dataProcs.MultiSceneConfigurationsIdProcWrapper( ...
-                    obj.sceneConfBinauralSim, dataProcs.GatherFeaturesProc ) );
-            if isempty( obj.modelCreator )
-                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
-                    'performanceMeasure', @performanceMeasures.BAC2, ...
-                    'cvFolds', 4, ...
-                    'alpha', 0.99 );
-            end
-            obj.pipeline.addModelCreator( obj.modelCreator );
         end
         %% -------------------------------------------------------------------------------
 

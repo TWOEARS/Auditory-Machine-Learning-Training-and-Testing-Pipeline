@@ -1,4 +1,4 @@
-classdef MultiSceneConfigurationsIdProcWrapper < core.IdProcInterface
+classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
@@ -14,7 +14,7 @@ classdef MultiSceneConfigurationsIdProcWrapper < core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = MultiSceneConfigurationsIdProcWrapper( sceneProc, wrappedProc,...
+        function obj = MultiSceneCfgsIdProcWrapper( sceneProc, wrappedProc,...
                                                               multiSceneCfgs )
             obj = obj@core.IdProcInterface();
             obj.procName = [obj.procName '(' wrappedProc.procName ')'];
@@ -58,6 +58,13 @@ classdef MultiSceneConfigurationsIdProcWrapper < core.IdProcInterface
             obj.wrappedProc.releaseSingleProcessCacheAccess();
         end
         %% -----------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function connectIdData( obj, idData )
+            connectIdData@core.IdProcInterface( obj, idData );
+            obj.wrappedProc.connectIdData( idData );
+        end
+        %% -------------------------------------------------------------------------------
         
         function setSceneConfig( obj, multiSceneCfgs )
             obj.sceneConfigurations = multiSceneCfgs;
@@ -70,6 +77,7 @@ classdef MultiSceneConfigurationsIdProcWrapper < core.IdProcInterface
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
                 if ~obj.wrappedProc.hasFileAlreadyBeenProcessed( wavFilepath )
                     obj.wrappedProc.process( wavFilepath );
+                    obj.wrappedProc.saveOutput( wavFilepath );
                 end
                 fprintf( '#' );
             end
@@ -99,8 +107,9 @@ classdef MultiSceneConfigurationsIdProcWrapper < core.IdProcInterface
             fileProcessed = true;
             for ii = 1 : numel( obj.sceneConfigurations )
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                fileProcessed = fileProcessed & ...
-                               obj.wrappedProc.hasFileAlreadyBeenProcessed( wavFilepath );
+                if ~obj.wrappedProc.hasFileAlreadyBeenProcessed( wavFilepath )
+                    fileProcessed = false; return;
+                end
             end
         end
         %% -------------------------------------------------------------------------------

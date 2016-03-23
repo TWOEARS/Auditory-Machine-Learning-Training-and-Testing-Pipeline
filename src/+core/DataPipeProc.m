@@ -60,8 +60,9 @@ classdef DataPipeProc < handle
 %         %% ----------------------------------------------------------------
 
         function checkDataFiles( obj, otherOverlay )
-            fprintf( '\nChecking file list: %s\n==========================================\n',...
-                obj.dataFileProcessor.procName );
+            fprintf( '\nChecking file list: %s\n%s\n', ...
+                     obj.dataFileProcessor.procName, ...
+                     repmat( '=', 1, 20 + numel( obj.dataFileProcessor.procName ) ) );
             if (nargin > 1) && ~isempty( otherOverlay ) && ...
                     (length( otherOverlay ) == length( obj.data(:) ))
                 obj.fileListOverlay = otherOverlay;
@@ -75,7 +76,7 @@ classdef DataPipeProc < handle
             for ii = 1 : length( datalist )
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = datalist(ii);
-                fprintf( '.%s\n', dataFile.wavFileName );
+                fprintf( '%s\n', dataFile.wavFileName );
                 fileHasBeenProcessed = ...
                     obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName );
                 obj.fileListOverlay(ii) = ~fileHasBeenProcessed;
@@ -88,8 +89,9 @@ classdef DataPipeProc < handle
         %% ----------------------------------------------------------------
 
         function run( obj )
-            fprintf( '\nRunning: %s\n==========================================\n',...
-                obj.dataFileProcessor.procName );
+            fprintf( '\nRunning: %s\n%s\n', ...
+                     obj.dataFileProcessor.procName, ...
+                     repmat( '=', 1, 9 + numel( obj.dataFileProcessor.procName ) ) );
             datalist = obj.data(:);
             datalist = datalist(obj.fileListOverlay);
             for dataFile = datalist(randperm(length(datalist)))'

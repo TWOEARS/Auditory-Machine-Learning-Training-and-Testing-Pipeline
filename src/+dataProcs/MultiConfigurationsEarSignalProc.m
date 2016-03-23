@@ -26,14 +26,32 @@ classdef MultiConfigurationsEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function setCacheSystemDir( obj, cacheSystemDir )
-            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir );
-            obj.sceneProc.setCacheSystemDir( cacheSystemDir );
+        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
+            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir, soundDbBaseDir );
+            obj.sceneProc.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
+        end
+        %% -----------------------------------------------------------------
+        
+        function saveCacheDirectory( obj )
+            saveCacheDirectory@dataProcs.BinSimProcInterface( obj );
+            obj.sceneProc.saveCacheDirectory();
+        end
+        %% -----------------------------------------------------------------        
+
+        function getSingleProcessCacheAccess( obj )
+            getSingleProcessCacheAccess@dataProcs.BinSimProcInterface( obj );
+            obj.sceneProc.getSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function releaseSingleProcessCacheAccess( obj )
+            releaseSingleProcessCacheAccess@dataProcs.BinSimProcInterface( obj );
+            obj.sceneProc.releaseSingleProcessCacheAccess();
         end
         %% -----------------------------------------------------------------
         
         function setSceneConfig( obj, sceneConfig )
-            obj.configChanged = true;
+%             obj.configChanged = true;
             obj.sceneConfigurations = sceneConfig;
         end
         %% ----------------------------------------------------------------

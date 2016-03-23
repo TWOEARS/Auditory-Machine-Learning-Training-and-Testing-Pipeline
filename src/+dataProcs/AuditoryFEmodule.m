@@ -32,8 +32,8 @@ classdef AuditoryFEmodule < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function process( obj, inputFileName )
-            in = load( inputFileName );
+        function process( obj, wavFilepath )
+            in = obj.loadInputData( wavFilepath );
             obj.output.afeData = obj.makeAFEdata( in.earSout );
             obj.output.onOffsOut = in.onOffsOut;
             if isfield( in, 'annotsOut' )
@@ -72,7 +72,6 @@ classdef AuditoryFEmodule < core.IdProcInterface
                 fprintf( '.' );
             end
             afeData = obj.afeSignals;
-            fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
 

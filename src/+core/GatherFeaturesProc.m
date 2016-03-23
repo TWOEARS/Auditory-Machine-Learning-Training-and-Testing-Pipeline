@@ -5,16 +5,17 @@ classdef GatherFeaturesProc < handle
     %% --------------------------------------------------------------------
     properties (Access = protected, Transient)
         data;
-        inputFileNameBuilder;
+%         inputFileNameBuilder;
         confDataUseRatio = 1;
         prioClass = [];
+        inputProc;
     end
     
     %% --------------------------------------------------------------------
     methods (Access = public)
         
         function obj = GatherFeaturesProc()
-            obj.inputFileNameBuilder = @(inFileName)(inFileName);
+%             obj.inputFileNameBuilder = @(inFileName)(inFileName);
         end
         %% ----------------------------------------------------------------
 
@@ -34,7 +35,8 @@ classdef GatherFeaturesProc < handle
             if ~isa( outputtingProc, 'core.DataPipeProc' )
                 error( 'outputtingProc must be of type core.DataPipeProc' );
             end
-            obj.inputFileNameBuilder = outputtingProc.getOutputFileNameBuilder();
+%             obj.inputFileNameBuilder = outputtingProc.getOutputFileNameBuilder();
+            obj.inputProc = outputtingProc.dataFileProcessor;
         end
         %% ----------------------------------------------------------------
 
@@ -42,8 +44,8 @@ classdef GatherFeaturesProc < handle
             fprintf( '\nRunning: GatherFeaturesProc\n==========================================\n' );
             for dataFile = obj.data(:)'
                 fprintf( '.%s ', dataFile.wavFileName );
-                inFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
-                in = load( inFileName, 'singleConfFiles' );
+                inFilepath = obj.inputProc.getOutputFilepath( dataFile.wavFileName );
+                in = load( inFilepath, 'singleConfFiles' );
                 dataFile.x = [];
                 dataFile.y = [];
                 for ii = 1 : numel( in.singleConfFiles )
@@ -52,7 +54,7 @@ classdef GatherFeaturesProc < handle
                     catch err
                         if strcmp( err.identifier, 'MATLAB:load:couldNotReadFile' )
                             fprintf( '\n%s seems corrupt.\nDelete and rerun pipe.\n', ...
-                                inFileName );
+                                inFilepath );
                         end
                         rethrow( err );
                     end

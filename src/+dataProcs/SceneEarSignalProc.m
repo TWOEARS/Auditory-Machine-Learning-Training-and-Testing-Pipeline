@@ -4,7 +4,6 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
     properties (SetAccess = private)
         sceneConfig;
         binauralSim;
-        outputWavFileName;
     end
     
     %% --------------------------------------------------------------------
@@ -20,14 +19,36 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function setCacheSystemDir( obj, cacheSystemDir )
-            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir );
-            obj.binauralSim.setCacheSystemDir( cacheSystemDir );
+        % override of core.IdProcInterface's method
+        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
+            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir, soundDbBaseDir );
+            obj.binauralSim.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
         end
         %% -----------------------------------------------------------------
         
+        % override of core.IdProcInterface's method
+        function saveCacheDirectory( obj )
+            saveCacheDirectory@dataProcs.BinSimProcInterface( obj );
+            obj.binauralSim.saveCacheDirectory();
+        end
+        %% -----------------------------------------------------------------        
+
+        % override of core.IdProcInterface's method
+        function getSingleProcessCacheAccess( obj )
+            getSingleProcessCacheAccess@dataProcs.BinSimProcInterface( obj );
+            obj.binauralSim.getSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of core.IdProcInterface's method
+        function releaseSingleProcessCacheAccess( obj )
+            releaseSingleProcessCacheAccess@dataProcs.BinSimProcInterface( obj );
+            obj.binauralSim.releaseSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+        
         function setSceneConfig( obj, sceneConfig )
-            obj.configChanged = true;
+%             obj.configChanged = true;
             obj.sceneConfig = sceneConfig;
         end
         %% ----------------------------------------------------------------
@@ -37,24 +58,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function process( obj, inputFileName )
-            obj.makeEarsignalsAndLabels( inputFileName );
-            obj.outputWavFileName = inputFileName;
-        end
-        
-    end
-
-    %% --------------------------------------------------------------------
-    methods (Access = protected)
-        
-        function outputDeps = getInternOutputDependencies( obj )
-            obj.binauralSim.setSceneConfig( sceneConfig.SceneConfiguration.empty );
-            outputDeps.binSimCfg = obj.binauralSim.getInternOutputDependencies;
-            outputDeps.sc = obj.sceneConfig;
-        end
-        %% ----------------------------------------------------------------
-        
-        function makeEarsignalsAndLabels( obj, wavFileName )
+        function process( obj, wavFilepath )
             obj.onOffsOut = [];
             obj.annotsOut = [];
             targetSignalLen = 1;
@@ -66,25 +70,25 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 while iiSignalLen < targetSignalLen - 0.01
                     scInst = sc.instantiate();
                     if ii == 1
-                        scInst.sources(1).data = sceneConfig.FileListValGen( wavFileName );
-                        srcClass{ii} = IdEvalFrame.readEventClass( wavFileName );
+                        scInst.sources(1).data = sceneConfig.FileListValGen( wavFilepath );
+                        srcClass{ii} = IdEvalFrame.readEventClass( wavFilepath );
                     elseif isa( scInst.sources(1).data, 'sceneConfig.FileListValGen' )
-                        wavFileName = scInst.sources(1).data.value;
-                        if isempty( wavFileName )
+                        wavFilepath = scInst.sources(1).data.value;
+                        if isempty( wavFilepath )
                             error( 'Empty wav file name through use of FileListValGen!' );
                         end
-                        srcClassii = IdEvalFrame.readEventClass( wavFileName );
+                        srcClassii = IdEvalFrame.readEventClass( wavFilepath );
                         if ~isempty( srcClass{ii} ) && ~strcmp( srcClassii, srcClass{ii} )
                             error('Different classes used in looped distractor');
                         end
                         srcClass{ii} = srcClassii;
                     else
-                        wavFileName = ''; % don't save
+                        wavFilepath = ''; % don't save
                         srcClass{ii} = '';
                     end
                     obj.binauralSim.setSceneConfig( scInst );
-                    splitOut = obj.binauralSim.processSaveAndGetOutput( wavFileName );
-                    if length( splitEarSignals{ii} ) > 0
+                    splitOut = obj.binauralSim.processSaveAndGetOutput( wavFilepath );
+                    if ~isempty( splitEarSignals{ii} )
                         splitOut.earSout = dataProcs.SceneEarSignalProc.adjustSNR( ...
                             obj.getDataFs(), splitEarSignals{ii}, 'energy', splitOut.earSout, 0 );
                     end
@@ -106,7 +110,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 end
                 fprintf( ':' );
             end
-            fprintf( ':' );
+            fprintf( '::' );
             obj.earSout = splitEarSignals{1};
             for ii = 1 : 2
                 [energy, tFramesSec] = dataProcs.SceneEarSignalProc.runningEnergy( ...
@@ -141,7 +145,18 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
                 end
                 fprintf( '.' );
             end
-            fprintf( '\n' );
+        end
+        
+    end
+
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function outputDeps = getInternOutputDependencies( obj )
+            obj.binauralSim.setSceneConfig( sceneConfig.SceneConfiguration.empty );
+            % SceneEarSignalProc doesn't (/must not) depend on the binSim's sceneConfig
+            outputDeps.binSimCfg = obj.binauralSim.getInternOutputDependencies;
+            outputDeps.sceneCfg = obj.sceneConfig;
         end
         %% ----------------------------------------------------------------
 

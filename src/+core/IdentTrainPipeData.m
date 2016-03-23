@@ -49,7 +49,11 @@ classdef IdentTrainPipeData < handle
                     cIdx = classes;
                 end
                 if size( S.subs, 2 ) > 1
-                    fIdx = S.subs{1,2};
+                    if ischar( S.subs{1,2} )
+                        [cIdx,fIdx] = obj.getFileIdx( S.subs{1,2} );
+                    else
+                        fIdx = S.subs{1,2};
+                    end
                 else
                     fIdx = ':';
                 end
@@ -146,8 +150,7 @@ classdef IdentTrainPipeData < handle
                 else
                     dIdx = 'wavFileName';
                 end
-                if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) ...
-                        && size( S.subs, 2 ) > 3
+                if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) && size( S.subs, 2 ) > 3
                     xIdx = S.subs{1,4};
                     if isa( xIdx, 'char' )
                         dIdxLen = length( obj.data(cIdx).files(fIdx).(dIdx) );
@@ -363,5 +366,17 @@ classdef IdentTrainPipeData < handle
         end
         %% ----------------------------------------------------------------
         
+        function [cIdx,fIdx] = getFileIdx( obj, wavFileName )
+            for cc = 1 : numel( obj.data )
+                for ff = 1 : numel( obj.data(cc).files )
+                    if strcmp( wavFileName, obj.data(cc).files(ff).wavFileName )
+                        cIdx = cc; fIdx = ff; return;
+                    end
+                end
+            end
+            cIdx = []; fIdx = [];
+        end
+        %% ----------------------------------------------------------------
+
     end
 end

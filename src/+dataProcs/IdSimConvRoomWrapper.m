@@ -47,7 +47,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
         %% ----------------------------------------------------------------
         
         function setSceneConfig( obj, sceneConfig )
-            obj.configChanged = true;
+%             obj.configChanged = true;
             obj.sceneConfig = sceneConfig;
         end
         %% ----------------------------------------------------------------
@@ -58,8 +58,8 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
         
         %% ----------------------------------------------------------------
 
-        function process( obj, inputFileName )
-            [obj.earSout, obj.onOffsOut] = obj.makeEarSignalsAndLabels( inputFileName );
+        function process( obj, wavFilepath )
+            [obj.earSout, obj.onOffsOut] = obj.makeEarSignalsAndLabels( wavFilepath );
         end
         %% ----------------------------------------------------------------
         
@@ -96,9 +96,9 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = private)
         
-        function [earSignals, earsOnOffs] = makeEarSignalsAndLabels( obj, wavFileName )
+        function [earSignals, earsOnOffs] = makeEarSignalsAndLabels( obj, wavFilepath )
             sceneConfigInst = obj.sceneConfig.instantiate();
-            [snd, earsOnOffs] = obj.loadSound( sceneConfigInst, wavFileName );
+            [snd, earsOnOffs] = obj.loadSound( sceneConfigInst, wavFilepath );
             obj.setupSceneConfig( sceneConfigInst );
             if isa( sceneConfigInst.sources(1), 'sceneConfig.DiffuseSource' )
                 earSignals = snd{1};
@@ -107,7 +107,6 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 obj.simulate();
                 earSignals = obj.convRoomSim.Sinks.getData();
             end
-            fprintf( '\n' );
             earSignals = earSignals / max( abs( earSignals(:) ) ); % normalize
         end
         %% ----------------------------------------------------------------
@@ -186,17 +185,17 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function [snd, onOffs] = loadSound( obj, sceneConfig, wavFile )
+        function [snd, onOffs] = loadSound( obj, sceneConfig, wavFilepath )
             startOffset = sceneConfig.sources(1).offset.value;
             src = sceneConfig.sources(1).data.value;
             onOffs = [];
             if ischar( src ) % then it is a filename
                 snd{1} = getPointSourceSignalFromWav( ...
                     src, obj.convRoomSim.SampleRate, startOffset );
-                if strcmpi( IdEvalFrame.readEventClass( wavFile ), 'general' )
+                if strcmpi( IdEvalFrame.readEventClass( wavFilepath ), 'general' )
                     onOffs = zeros(0,2);
                 else
-                    onOffs = IdEvalFrame.readOnOffAnnotations( wavFile ) + startOffset;
+                    onOffs = IdEvalFrame.readOnOffAnnotations( wavFilepath ) + startOffset;
                 end
             elseif isfloat( src ) && size( src, 2 ) == 1
                 snd{1} = src;

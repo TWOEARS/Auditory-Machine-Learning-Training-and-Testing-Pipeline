@@ -38,15 +38,15 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function process( obj, inputFileName )
-            in = load( inputFileName );
+        function process( obj, wavFilepath )
+            in = obj.loadInputData( wavFilepath );
             if ~isfield( in, 'afeData' )
                 if isfield( in, 'indFile' )
                     in.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
                     for ii = 1 : numel( in.indFile )
                         if ~exist( in.indFile{ii}, 'file' )
                             error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                                in.indFile{ii}, inputFileName );
+                                in.indFile{ii}, wavFilepath );
                         end
                         tmp = load( in.indFile{ii} );
                         in.afeData(ii) = tmp.afeData(1);
@@ -54,7 +54,7 @@ classdef Base < core.IdProcInterface
                     in.annotsOut = tmp.annotsOut;
                     in.onOffsOut = tmp.onOffsOut;
                 else
-                    error( 'Unforeseen' );
+                    error( 'unexpected input data' );
                 end
             end
             [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );

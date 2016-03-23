@@ -5,7 +5,6 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
         featProc;
         singleConfFiles;
         singleConfs;
-        outputWavFileName;
         precollected;
     end
     
@@ -26,8 +25,32 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function process( obj, inputFileName )
-            obj.makeFeatures( inputFileName );
+        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
+            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, soundDbBaseDir );
+            obj.featProc.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
+        end
+        %% -----------------------------------------------------------------
+        
+        function saveCacheDirectory( obj )
+            saveCacheDirectory@core.IdProcInterface( obj );
+            obj.featProc.saveCacheDirectory();
+        end
+        %% -----------------------------------------------------------------        
+
+        function getSingleProcessCacheAccess( obj )
+            getSingleProcessCacheAccess@core.IdProcInterface( obj );
+            obj.featProc.getSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function releaseSingleProcessCacheAccess( obj )
+            releaseSingleProcessCacheAccess@core.IdProcInterface( obj );
+            obj.featProc.releaseSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+
+        function process( obj, wavFilepath )
+            obj.makeFeatures( wavFilepath );
         end
         
     end
@@ -43,43 +66,38 @@ classdef MultiConfigurationsFeatureProc < core.IdProcInterface
         function out = getOutput( obj )
             out.singleConfFiles = obj.singleConfFiles;
             out.singleConfs = obj.singleConfs;
-            out.wavFileName = obj.outputWavFileName;
         end
         %% ----------------------------------------------------------------
         
-        function makeFeatures( obj, inFileName )
-            [p,wavFileName,~] = fileparts( inFileName );
-            [~,wavFileName,~] = fileparts( wavFileName );
-            soundDir = fileparts( p );
-            wavFileName = fullfile( soundDir, wavFileName );
-            obj.outputWavFileName = wavFileName;
+        function makeFeatures( obj, wavFilepath )
             precoll = [];
-            if obj.precollected.isKey( wavFileName )
-                precoll = obj.precollected(wavFileName);
+            if obj.precollected.isKey( wavFilepath )
+                precoll = obj.precollected(wavFilepath);
             end
             obj.singleConfFiles = {};
             obj.singleConfs = [];
             multiCfg = obj.getOutputDependencies();
-            scFieldNames = fieldnames( multiCfg.extern.extern );
+            scFieldNames = fieldnames( multiCfg.preceding.preceding );
             for ii = 1 : numel( scFieldNames )
                 if ~isempty( precoll ) && isfield( precoll, scFieldNames{ii} )
                     obj.singleConfFiles{ii} = precoll.(scFieldNames{ii}).fname;
                     obj.singleConfs{ii} = precoll.(scFieldNames{ii}).cfg;
                 else
-                    conf = [];
-                    conf.afeParams = multiCfg.extern.afeDeps;
-                    conf.extern = multiCfg.extern.extern.(scFieldNames{ii});
-                    obj.featProc.setExternOutputDependencies( conf );
-                    if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFileName )
-                        in = load( inFileName );
+%                     conf = [];
+%                     conf.afeParams = multiCfg.preceding.afeDeps;
+%                     conf.extern = multiCfg.preceding.preceding.(scFieldNames{ii});
+%                     obj.featProc.setExternOutputDependencies( conf );
+                    if ~obj.featProc.hasFileAlreadyBeenProcessed( wavFilepath )
+                        in = obj.loadInputData( wavFilepath );
                         if ~exist( in.singleConfFiles{ii}, 'file' )
                             error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                                in.singleConfFiles{ii}, inFileName );
+                                in.singleConfFiles{ii}, ...
+                                obj.inputProc.getOutputFilepath( wavFilepath ) );
                         end
-                        obj.featProc.process( in.singleConfFiles{ii} );
-                        obj.featProc.saveOutput( wavFileName );
+                        obj.featProc.process( wavFilepath );
+                        obj.featProc.saveOutput( wavFilepath );
                     end
-                    obj.singleConfFiles{ii} = obj.featProc.getOutputFileName( wavFileName );
+                    obj.singleConfFiles{ii} = obj.featProc.getOutputFileName( wavFilepath );
                     obj.singleConfs{ii} = obj.featProc.getOutputDependencies;
                 end
                 fprintf( ';' );

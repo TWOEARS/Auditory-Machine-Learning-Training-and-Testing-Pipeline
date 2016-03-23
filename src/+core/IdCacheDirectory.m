@@ -6,7 +6,7 @@ classdef IdCacheDirectory < handle
     properties (Access = protected)
         treeRoot;
         topCacheDirectory;
-        cacheDirectoryFilename;
+        cacheDirectoryFilename = 'cacheDirectory.mat';
         cacheFileInfo;
         cacheFileRWsema;
         cacheDirChanged;
@@ -25,6 +25,7 @@ classdef IdCacheDirectory < handle
         
         function delete( obj )
             obj.saveCacheDirectory();
+            obj.releaseSingleProcessCacheAccess();
         end
         %% -------------------------------------------------------------------------------
         
@@ -73,11 +74,7 @@ classdef IdCacheDirectory < handle
         
         function saveCacheDirectory( obj, filename )
             if nargin < 2 
-                if isempty( obj.cacheDirectoryFilename )
-                    filename = 'cacheDirectory.mat';
-                else
-                    filename = obj.cacheDirectoryFilename;
-                end
+                filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
                 error( 'filename supposed to be only file name without any path' );
@@ -110,8 +107,8 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
         function loadCacheDirectory( obj, filename )
-            if nargin < 2 && isempty( obj.cacheDirectoryFilename )
-                filename = 'cacheDirectory.mat';
+            if nargin < 2
+                filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
                 error( 'filename supposed to be only file name without any path' );
@@ -130,14 +127,15 @@ classdef IdCacheDirectory < handle
                     obj.treeRoot = cacheFile.cacheTree;
                     obj.cacheDirChanged = false;
                 else
-                    error( 'could not load %s', cacheFilepath );
+                    warning( 'could not load %s', cacheFilepath );
+                    obj.cacheFileInfo(cacheFilepath) = [];
                 end
             end
         end
         %% -------------------------------------------------------------------------------
         
         function integrateOtherCacheDirectory( otherCacheDir )
-            error( 'TODO' );
+            warning( 'TODO' );
         end
         %% -------------------------------------------------------------------------------
     end

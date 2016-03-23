@@ -3,10 +3,8 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         individualAfeProcs;
-        newAfeProc;
         fs;
         afeRequests;
-        outputWavFileName;
         indFile;
     end
     
@@ -27,41 +25,81 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function process( obj, inFileName )
-            [p,wavFileName,~] = fileparts( inFileName );
-            [~,wavFileName,~] = fileparts( wavFileName );
-            soundDir = fileparts( p );
-            wavFileName = fullfile( soundDir, wavFileName );
-            ownCfg = obj.getOutputDependencies();
+        % override of core.IdProcInterface's method
+        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
+            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, soundDbBaseDir );
+            for ii = 1 : numel( obj.individualAfeProcs )
+                obj.individualAfeProcs{ii}.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
+            end
+        end
+        %% -----------------------------------------------------------------
+        
+        % override of core.IdProcInterface's method
+        function saveCacheDirectory( obj )
+            saveCacheDirectory@core.IdProcInterface( obj );
+            for ii = 1 : numel( obj.individualAfeProcs )
+                obj.individualAfeProcs{ii}.saveCacheDirectory();
+            end
+        end
+        %% -----------------------------------------------------------------        
+
+        % override of core.IdProcInterface's method
+        function getSingleProcessCacheAccess( obj )
+            getSingleProcessCacheAccess@core.IdProcInterface( obj );
+%             for ii = 1 : numel( obj.individualAfeProcs )
+                obj.individualAfeProcs{1}.getSingleProcessCacheAccess();
+%             end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of core.IdProcInterface's method
+        function releaseSingleProcessCacheAccess( obj )
+            releaseSingleProcessCacheAccess@core.IdProcInterface( obj );
+%             for ii = 1 : numel( obj.individualAfeProcs )
+                obj.individualAfeProcs{1}.releaseSingleProcessCacheAccess();
+%             end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of core.IdProcInterface's method
+        function setInputProc( obj, inputProc )
+            setInputProc@core.IdProcInterface( obj, [] );
+            for ii = 1 : numel( obj.individualAfeProcs )
+                obj.individualAfeProcs{ii}.setInputProc( inputProc );
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
+        function process( obj, wavFilepath )
             newAfeRequests = {};
             newAfeRequestsIdx = [];
             for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{ii}.setExternOutputDependencies( ownCfg.extern );
-                afePartProcessed = obj.individualAfeProcs{ii}.hasFileAlreadyBeenProcessed( wavFileName );
+                afePartProcessed = ...
+                    obj.individualAfeProcs{ii}.hasFileAlreadyBeenProcessed( wavFilepath );
                 if ~afePartProcessed
                     newAfeRequests(end+1) = obj.afeRequests(ii);
                     newAfeRequestsIdx(end+1) = ii;
                 end
             end
-            obj.outputWavFileName = wavFileName;
             if ~isempty( newAfeRequestsIdx )
-                obj.newAfeProc = dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
-                obj.newAfeProc.setExternOutputDependencies( ownCfg.extern );
-                obj.newAfeProc.process( inFileName );
+                newAfeProc = dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
+                newAfeProc.setInputProc( obj.inputProc );
+                newAfeProc.cacheSystemDir = obj.cacheSystemDir;
+                newAfeProc.soundDbBaseDir = obj.soundDbBaseDir;
+                newAfeProc.process( wavFilepath );
                 for jj = 1 : numel( newAfeRequestsIdx )
                     ii = newAfeRequestsIdx(jj);
-                    obj.individualAfeProcs{ii}.output = obj.newAfeProc.output;
+                    obj.individualAfeProcs{ii}.output = newAfeProc.output;
                     obj.individualAfeProcs{ii}.output.afeData = ...
                         containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
                     obj.individualAfeProcs{ii}.output.afeData(1) = ...
-                        obj.newAfeProc.output.afeData(jj);
-                    obj.individualAfeProcs{ii}.saveOutput( wavFileName );
+                        newAfeProc.output.afeData(jj);
+                    obj.individualAfeProcs{ii}.saveOutput( wavFilepath );
                 end
             end
-            fprintf( '*\n' );
             for ii = 1 : numel( obj.individualAfeProcs )
                 obj.indFile{ii} = ...
-                    obj.individualAfeProcs{ii}.getOutputFileName( wavFileName ) ;
+                    obj.individualAfeProcs{ii}.getOutputFileName( wavFilepath ) ;
             end
         end
         %% ----------------------------------------------------------------

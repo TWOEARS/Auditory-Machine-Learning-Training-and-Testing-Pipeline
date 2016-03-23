@@ -26,6 +26,30 @@ classdef MultiConfigurationsAFEmodule < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
+        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
+            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, soundDbBaseDir );
+            obj.afeProc.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
+        end
+        %% -----------------------------------------------------------------
+        
+        function saveCacheDirectory( obj )
+            saveCacheDirectory@core.IdProcInterface( obj );
+            obj.afeProc.saveCacheDirectory();
+        end
+        %% -----------------------------------------------------------------        
+
+        function getSingleProcessCacheAccess( obj )
+            getSingleProcessCacheAccess@core.IdProcInterface( obj );
+            obj.afeProc.getSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function releaseSingleProcessCacheAccess( obj )
+            releaseSingleProcessCacheAccess@core.IdProcInterface( obj );
+            obj.afeProc.releaseSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
+
         function process( obj, inputFileName )
             obj.makeAFEdata( inputFileName );
         end

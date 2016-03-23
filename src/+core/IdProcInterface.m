@@ -6,19 +6,16 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         cacheSystemDir;
-        precedingProcCacheDir;
-        externOutputDeps;
+%         externOutputDeps;
     end
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected, Transient = true)
-        preloadedConfigs;
-        preloadedConfigsChanged;
-        pcFileInfo;
-        pcRWsema = [];
-        configChanged = true;
-        currentFolder = [];
-        preloadedPath = [];
+%         configChanged = true;
+%         currentFolder = [];
+        cacheDirectory;
+        soundDbBaseDir;
+        inputProc;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -28,191 +25,155 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
-        function delete(obj)
-            obj.savePreloadedConfigs();
+        function delete( obj )
+            obj.saveCacheDirectory();
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
+        
+        function saveCacheDirectory( obj )
+            obj.cacheDirectory.saveCacheDirectory();
+        end
+        %% -------------------------------------------------------------------------------
 
-        function savePreloadedConfigs( obj )
-            if isempty( obj.preloadedConfigs ), return; end
-            pcFolders = obj.preloadedConfigs.keys;
-            for dd = 1 : numel( pcFolders )
-                if ~obj.preloadedConfigsChanged(pcFolders{dd}), return; end
-                pc = obj.preloadedConfigs(pcFolders{dd});
-                [pcFilename, pcWriteFilename] = obj.getPreloadedCfgsFilenames( pcFolders{dd} );
-                sema = setfilesemaphore( pcWriteFilename );
-                new_pcFileInfo = dir( pcFilename );
-                if ~isempty( new_pcFileInfo ) && ...
-                        ~isequalDeepCompare( new_pcFileInfo, obj.pcFileInfo(pcFolders{dd}) )
-                    obj.pcRWsema.getReadAccess();
-                    Parameters.dynPropsOnLoad( true, false );
-                    new_pc = load( pcFilename, 'preloadedConfigs' );
-                    Parameters.dynPropsOnLoad( true, true );
-                    obj.pcRWsema.releaseReadAccess();
-                    new_pcKeys = new_pc.preloadedConfigs.keys;
-                    for jj = length( new_pcKeys ) : -1 : 1
-                        k = new_pcKeys{jj};
-                        if ~any( strcmp( k, pc.keys ) )
-                            pc(k) = new_pc.preloadedConfigs(k);
-                        end
-                    end
-                end
-                save( pcWriteFilename, 'preloadedConfigs' );
-                obj.pcRWsema.getWriteAccess();
-                copyfile( pcWriteFilename, pcFilename ); % this blocks pcFilename much shorter
-                obj.pcRWsema.releaseWriteAccess();
-                delete( pcWriteFilename );
-                removefilesemaphore( sema );
-                obj.preloadedConfigsChanged(pcFolders{dd}) = false;
-            end
+        function getSingleProcessCacheAccess( obj )
+            obj.cacheDirectory.getSingleProcessCacheAccess();
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
+        
+        function releaseSingleProcessCacheAccess( obj )
+            obj.cacheDirectory.releaseSingleProcessCacheAccess();
+        end
+        %% -------------------------------------------------------------------------------
         
         function init( obj )
-            obj.savePreloadedConfigs();
-            obj.preloadedConfigs = ...
-                containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-            obj.preloadedConfigsChanged = ...
-                containers.Map( 'KeyType', 'char', 'ValueType', 'logical' );
-            obj.pcFileInfo = ...
-                containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-            obj.preloadedPath = [];
-            obj.configChanged = true;
-            obj.currentFolder = [];
+%             obj.cacheDirectory.loadCacheDirectory();
+%             obj.configChanged = true;
+%             obj.currentFolder = [];
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
-        function savePlaceholderFile( obj, inFilePath )
-            obj.save( inFilePath, struct('dummy',[]) );
-        end
-        %% -----------------------------------------------------------------
+%         function savePlaceholderFile( obj, inFilePath )
+%             error('remind me, where is this used?');
+%             obj.save( inFilePath, struct('dummy',[]) );
+%         end
+%         %% -------------------------------------------------------------------------------
         
-        function out = saveOutput( obj, inFilePath )
+        function out = saveOutput( obj, wavFilepath )
             out = obj.getOutput();
-            obj.save( inFilePath, out );
+            obj.save( wavFilepath, out );
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
-        function out = processSaveAndGetOutput( obj, inFileName )
-            if ~obj.hasFileAlreadyBeenProcessed( inFileName )
-                obj.process( inFileName );
-                out = obj.saveOutput( inFileName );
+        function out = processSaveAndGetOutput( obj, wavFilepath )
+            if ~obj.hasFileAlreadyBeenProcessed( wavFilepath )
+                obj.process( wavFilepath );
+                out = obj.saveOutput( wavFilepath );
             else
-                out = load( obj.getOutputFileName( inFileName ) );
+                out = obj.loadProcessedData( wavFilepath );
             end
         end
-        %% -----------------------------------------------------------------
-        
-        function outFileName = getOutputFileName( obj, wavFilename )
-            [~, fileName, fileExt] = fileparts( wavFilename );
-            outFileName = ...
-                fullfile( obj.getCurrentFolder(), [fileName fileExt obj.getProcFileExt] );
-        end
-        %% -----------------------------------------------------------------
-        
-        function [fileProcessed,precProcFileNeeded] = hasFileAlreadyBeenProcessed( obj, wavFilename, checkPrecNeed )
-            if isempty( wavFilename ), fileProcessed = false; return; end
-            fileProcessed = exist( obj.getOutputFileName( wavFilename ), 'file' );
-            if ~fileProcessed && nargin > 2 && checkPrecNeed
-                precProcFileNeeded = obj.needsPrecedingProcResult( wavFilename );
-            else
-                precProcFileNeeded = false;
-            end
-        end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
-        function setExternOutputDependencies( obj, externOutputDeps )
-            obj.configChanged = true;
-            obj.externOutputDeps = externOutputDeps;
+        function out = loadProcessedData( obj, wavFilepath )
+            out = load( obj.getOutputFilepath( wavFilepath ) );
         end
-        %%-----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
+        
+        function inData = loadInputData( obj, wavFilepath, dataLabels )
+            if nargin < 3, dataLabels = {}; end
+            inFilepath = obj.inputProc.getOutputFilepath( wavFilepath );
+            inData = load( inFilepath, dataLabels{:} );
+        end
+        %% -------------------------------------------------------------------------------
+
+        function outFilepath = getOutputFilepath( obj, wavFilepath )
+            fileName = wavFilepath(numel(obj.soundDbBaseDir)+1:end);
+            fileName = strrep( fileName, '/', '.' );
+            fileName = strrep( fileName, '\', '.' );
+            fileName = strrep( fileName, ':', '.' );
+            fileName = strrep( fileName, ' ', '.' );
+            outFilepath = ...
+                fullfile( obj.getCurrentFolder(), [fileName obj.getProcFileExt] );
+        end
+        %% -------------------------------------------------------------------------------
+
+        function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath ) %, checkPrecNeed )
+            if isempty( wavFilepath ), fileProcessed = false; return; end
+            fileProcessed = exist( obj.getOutputFilepath( wavFilepath ), 'file' );
+%             if ~fileProcessed && nargin > 2 && checkPrecNeed
+%                 precProcFileNeeded = obj.needsPrecedingProcResult( wavFilepath );
+%             else
+%                 precProcFileNeeded = false;
+%             end
+        end
+        %% -------------------------------------------------------------------------------
+
+%         function setExternOutputDependencies( obj, externOutputDeps )
+%             obj.externOutputDeps = externOutputDeps;
+% %             obj.configChanged = true;
+%         end
+        %% -------------------------------------------------------------------------------
         
         function outputDeps = getOutputDependencies( obj )
             outputDeps = obj.getInternOutputDependencies();
             if ~isa( outputDeps, 'struct' )
                 error( 'getInternOutputDependencies must combine values in a struct.' );
             end
-            if isfield( outputDeps, 'extern' )
-                error( 'Intern output dependencies must not contain field of name "extern".' );
+            if isfield( outputDeps, 'preceding' )
+                error( 'Intern output dependencies must not contain field named "preceding"' );
             end
-            if ~isempty( obj.externOutputDeps )
-                outputDeps.extern = obj.externOutputDeps;
+%             if ~isempty( obj.externOutputDeps )
+%                 outputDeps.extern = obj.externOutputDeps;
+%             end
+            if ~isempty( obj.inputProc )
+                outputDeps.preceding = obj.inputProc.getOutputDependencies();
             end
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
-        function setCacheSystemDir( obj, cacheSystemDir )
+        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
             if exist( cacheSystemDir, 'dir' )
-                obj.cacheSystemDir = cleanPathFromRelativeRefs( cacheSystemDir ); 
+                obj.cacheSystemDir = fullfile( cacheSystemDir, obj.procName );
+                obj.cacheDirectory.setCacheTopDir( obj.cacheSystemDir, true );
             else
-                error( 'cannot find direcotry "%s": does it exist?', cacheSystemDir ); 
+                error( 'cannot find directory "%s": does it exist?', cacheSystemDir ); 
+            end
+            if isempty( soundDbBaseDir ) 
+                obj.soundDbBaseDir = soundDbBaseDir;
+            elseif exist( soundDbBaseDir, 'dir' )
+                obj.soundDbBaseDir = fullfile( soundDbBaseDir, filesep );
+            else
+                error( 'cannot find directory "%s": does it exist?', soundDbBaseDir ); 
             end
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function currentFolder = getCurrentFolder( obj )
-            if ~isempty( obj.currentFolder ) && ~obj.configChanged
-                currentFolder = obj.currentFolder;
-                return;
-            end
+%             if ~isempty( obj.currentFolder ) && ~obj.configChanged
+%                 currentFolder = obj.currentFolder;
+%                 return;
+%             end
             currentConfig = obj.getOutputDependencies();
-            cacheFoldersDirResult = dir( [obj.cacheSystemDir filesep obj.procName '.2*'] );
-            cacheFolders = {cacheFoldersDirResult.name};
-            % shorten folderNames for faster processing (still unique)
-            cacheFolders = cellfun( @(cf)(cf(length(obj.procName)+2:end)), ...
-                                    cacheFolders, 'UniformOutput', false );
-            currentFolder = [];
-            if ~isempty( cacheFolders )
-                % first: check to see whether the current search inquiry just resolves to the
-                % last one that checked on the same cache folders
-                if isempty( obj.preloadedPath )
-                    obj.preloadedPath = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-                end
-                allCacheFolders = strcat( cacheFolders{:} );
-                if obj.preloadedPath.isKey( allCacheFolders )
-                    preloadedCfg = obj.preloadedPath(allCacheFolders);
-                    if isequalDeepCompare( preloadedCfg{2}, currentConfig )
-                        currentFolder = preloadedCfg{1};
-                        obj.configChanged = false;
-                        obj.currentFolder = currentFolder;
-                        return;
-                    end
-                end
-            end
-            % second: check cache folders whose configs are preloaded via preloadedConfigs
-            for ii = length( cacheFolders ) : -1 : 1
-                cfg = obj.getPreloadedCfg( obj.cacheSystemDir, cacheFolders{ii} );
-                if ~isempty( cfg )
-                    if isequalDeepCompare( currentConfig, cfg )
-                        currentFolder = [obj.cacheSystemDir filesep ...
-                                         obj.procName '.' cacheFolders{ii}];
-                        cacheFolders = {}; % to completely avoid step three
-                        break;
-                    end
-                    cacheFolders(ii) = []; % don't check in step three anymore
-                end
-            end
-            % third: load configs and check
-            for ii = length( cacheFolders ) : -1 : 1
-                cfg = load( fullfile( ...
-                    obj.cacheSystemDir, [obj.procName '.' cacheFolders{ii}], 'config.mat' ) );
-                if isequalDeepCompare( currentConfig, cfg )
-                    currentFolder = [obj.cacheSystemDir filesep ...
-                                     obj.procName '.' cacheFolders{ii}];
-                    obj.setPreloadedCfg( obj.cacheSystemDir, cacheFolders{ii}, cfg );
-                    break;
-                end
-            end
-            % found or create
-            if isempty( currentFolder )
-                currentFolder = obj.createCurrentConfigFolder();
-            else
-                obj.currentFolder = currentFolder;
-                obj.preloadedPath(allCacheFolders) = {currentFolder, currentConfig};
-            end
-            obj.configChanged = false;
+            obj.cacheDirectory.loadCacheDirectory();
+            currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
+%             obj.currentFolder = currentFolder;
+%             obj.configChanged = false;
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
+        
+        function setInputProc( obj, inputProc )
+            if ~isa( inputProc, 'core.IdProcInterface' )
+                error( 'inputProc must be of type core.IdProcInterface' );
+            end
+            obj.inputProc = inputProc;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % this can be overridden in subclasses
+        function outObj = getOutputObject( obj )
+            outObj = obj;
+        end
+        %% -------------------------------------------------------------------------------
         
     end
     
@@ -228,96 +189,33 @@ classdef (Abstract) IdProcInterface < handle
             else
                 obj.procName = procName;
             end
-            obj.externOutputDeps = [];
+%             obj.externOutputDeps = [];
+            obj.cacheDirectory = core.IdCacheDirectory();
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
-        function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
-            precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
-        end
-        %% -----------------------------------------------------------------
+%         function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
+%             precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
+%         end
+%         %% -------------------------------------------------------------------------------
         
-        function out = save( obj, inFilePath, data )
+        function out = save( obj, wavFilepath, data )
             out = data;
-            if isempty( inFilePath ), return; end
-            save( obj.getOutputFileName( inFilePath ), '-struct', 'out' );
+            if isempty( wavFilepath ), return; end
+            save( obj.getOutputFilepath( wavFilepath ), '-struct', 'out' );
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
-        function saveOutputConfig( obj, configFileName )
-            outputDeps = obj.getOutputDependencies();
-            save( configFileName, '-struct', 'outputDeps' );
-        end
-        %% -----------------------------------------------------------------
-        
-        function currentFolder = createCurrentConfigFolder( obj )
-            timestr = buildCurrentTimeString( true );
-            currentFolder = [obj.cacheSystemDir filesep obj.procName timestr];
-            mkdir( currentFolder );
-            obj.saveOutputConfig( fullfile( currentFolder, 'config.mat' ) );
-            cfg = load( fullfile( currentFolder, 'config.mat' ) );
-            obj.setPreloadedCfg( obj.cacheSystemDir, currentFolder, cfg );
-            obj.configChanged = false;
-            obj.currentFolder = currentFolder;
-        end
-        %% -----------------------------------------------------------------
-        
-        function loadPreloadedConfigs( obj, pcFolder )
-            if ~isKey( obj.preloadedConfigs, pcFolder )
-                pcFilename = obj.getPreloadedCfgsFilenames( pcFolder );
-                obj.pcRWsema = ReadersWritersFileSemaphore( pcFilename );
-                if exist( pcFilename, 'file' )
-                    obj.pcRWsema.getReadAccess();
-                    Parameters.dynPropsOnLoad( true, false ); % unnecessary stuff, don't load
-                    obj.pcFileInfo( pcFolder ) = dir( pcFilename ); % for later comparison
-                    pc = load( pcFilename );
-                    Parameters.dynPropsOnLoad( true, true );
-                    obj.pcRWsema.releaseReadAccess();
-                    obj.preloadedConfigs( pcFolder ) = pc.preloadedConfigs;
-                    obj.preloadedConfigsChanged( pcFolder ) = false;
-                else
-                    obj.preloadedConfigs( pcFolder ) = ...
-                        containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
-                end
-            end
-        end
-        %% -----------------------------------------------------------------
-        
-        function [pcFn, pcwFn] = getPreloadedCfgsFilenames( obj, pcFolder )
-            pcFn = [pcFolder filesep obj.procName '.preloadedConfigs.mat'];
-            pcwFn = [pcFolder filesep obj.procName '.preloadedConfigs.write.mat'];
-        end
-        %% -----------------------------------------------------------------
-        
-        function setPreloadedCfg( obj, pcFolder, cfgFolder, cfg )
-            obj.loadPreloadedConfigs( pcFolder );
-            pc = obj.preloadedConfigs(pcFolder);
-            pc(cfgFolder) = cfg;
-            obj.preloadedConfigs(pcFolder) = pc;
-            obj.preloadedConfigsChanged(pcFolder) = true;
-        end
-        %% -----------------------------------------------------------------
-        
-        function cfg = getPreloadedCfg( obj, pcFolder, cfgFolder )
-            obj.loadPreloadedConfigs( pcFolder );
-            pc = obj.preloadedConfigs(pcFolder);
-            cfg = [];
-            if pc.isKey( cfgFolder )
-                cfg = pc(cfgFolder);
-            end
-        end
-        %% -----------------------------------------------------------------
-        
         function procFileExt = getProcFileExt( obj )
             procFileExt = ['.' obj.procName '.mat'];
         end
-        %% -----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
     end
     
     %% -----------------------------------------------------------------------------------
     methods (Abstract)
-        process( obj, inputFileName )
+        process( obj, wavFilepath )
     end
     methods (Abstract, Access = protected)
         outputDeps = getInternOutputDependencies( obj )

@@ -18,7 +18,12 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         function obj = ParallelRequestsAFEmodule( fs, afeRequests )
             obj = obj@core.IdProcInterface();
             for ii = 1:length( afeRequests )
-                obj.individualAfeProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
+                obj.individualAfeProcs{ii} = ...
+                                        dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
+            end
+            for ii = 2:length( afeRequests )
+                obj.individualAfeProcs{ii}.cacheDirectory = ...
+                                                 obj.individualAfeProcs{1}.cacheDirectory;
             end
             obj.afeRequests = afeRequests;
             obj.fs = fs;

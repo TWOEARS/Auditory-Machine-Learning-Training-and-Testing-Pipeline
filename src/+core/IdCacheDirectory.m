@@ -47,7 +47,7 @@ classdef IdCacheDirectory < handle
             if nargin < 3, createIfnExist = true; end
             treeNode = obj.findCfgTreeNode( cfg, createIfnExist );
             if ~isempty( treeNode ) 
-                if isempty( treeNode.path ) && nargin > 2 && createIfnExist
+                if isempty( treeNode.path ) && createIfnExist
                     timestr = buildCurrentTimeString( true );
                     currentFolder = [obj.topCacheDirectory filesep 'cache' timestr];
                     mkdir( currentFolder );
@@ -131,11 +131,6 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileInfo(cacheFilepath) = [];
                 end
             end
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function integrateOtherCacheDirectory( obj, otherCacheDir )
-            
         end
         %% -------------------------------------------------------------------------------
     end

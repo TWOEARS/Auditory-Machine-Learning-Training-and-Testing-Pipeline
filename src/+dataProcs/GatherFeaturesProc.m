@@ -39,8 +39,32 @@ classdef GatherFeaturesProc < core.IdProcInterface
             end
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
             dataFile.y = [dataFile.y; xy.y(useIdxs)];
-%             dataFile.mc = [dataFile.mc; repmat( ii, size( xy.y(useIdxs) ) )];
+warning('            dataFile.mc = [dataFile.mc; repmat( ii, size( xy.y(useIdxs) ) )];');
             fprintf( '.' );
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function out = loadProcessedData( ~, ~ ) 
+            out = [];
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function outFilepath = getOutputFilepath( ~, ~ )
+            outFilepath = [];
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function fileProcessed = hasFileAlreadyBeenProcessed( ~, ~ )
+            fileProcessed = false;
+        end
+        %% -------------------------------------------------------------------------------
+       
+        % override of core.IdProcInterface's method
+        function currentFolder = getCurrentFolder( ~ )
+            currentFolder = [];
         end
         %% -------------------------------------------------------------------------------
     end
@@ -48,12 +72,18 @@ classdef GatherFeaturesProc < core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        function outputDeps = getInternOutputDependencies( obj )
+        function outputDeps = getInternOutputDependencies( ~ )
             outputDeps = [];
         end
         %% -------------------------------------------------------------------------------
 
-        function out = getOutput( obj )
+        function out = getOutput( ~ )
+            out = [];
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of core.IdProcInterface's method
+        function out = save( ~, ~, ~ )
             out = [];
         end
         %% -------------------------------------------------------------------------------

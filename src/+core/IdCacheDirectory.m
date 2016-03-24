@@ -92,7 +92,7 @@ classdef IdCacheDirectory < handle
                 newCacheFile = load( cacheFilepath );
                 Parameters.dynPropsOnLoad( true, true );
                 obj.cacheFileRWsema.releaseReadAccess();
-                obj.integrateOtherCacheDirectory( newCacheFile );
+                obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
             end
             cacheTree = obj.treeRoot;
             save( cacheWriteFilepath, 'cacheTree' );
@@ -135,7 +135,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
         function integrateOtherCacheDirectory( obj, otherCacheDir )
-            warning( 'TODO' );
+            
         end
         %% -------------------------------------------------------------------------------
     end

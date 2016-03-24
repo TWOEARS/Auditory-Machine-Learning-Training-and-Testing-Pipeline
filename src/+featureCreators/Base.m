@@ -63,7 +63,7 @@ classdef Base < core.IdProcInterface
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};
-                fprintf( ':' );
+                fprintf( '*' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
                 obj.descriptionBuilt = true;

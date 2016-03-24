@@ -103,6 +103,7 @@ classdef DataPipeProc < handle
                 end
                 fprintf( '\n' );
             end
+            obj.dataFileProcessor.saveCacheDirectory();
             fprintf( '..;\n' );
         end
         %% ----------------------------------------------------------------

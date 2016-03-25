@@ -46,20 +46,23 @@ classdef IdCacheDirectory < handle
             filepath = [];
             if nargin < 3, createIfnExist = true; end
             treeNode = obj.findCfgTreeNode( cfg, createIfnExist );
-            if ~isempty( treeNode ) 
-                if isempty( treeNode.path ) && createIfnExist
-                    timestr = buildCurrentTimeString( true );
-                    currentFolder = [obj.topCacheDirectory filesep 'cache' timestr];
-                    mkdir( currentFolder );
-                    treeNode.path = currentFolder;
-                    save( [currentFolder filesep 'cfg.mat'], 'cfg' );
-                    obj.cacheDirChanged = true;
-                end
-                filepath = treeNode.path;
+            if isempty( treeNode ), return; end
+            if isempty( treeNode.path ) && createIfnExist
+                treeNode.path = obj.makeNewCacheFolder( cfg );
+                obj.cacheDirChanged = true;
             end
+            filepath = treeNode.path;
         end
         %% -------------------------------------------------------------------------------
         
+        function folderName = makeNewCacheFolder( obj, cfg )
+            timestr = buildCurrentTimeString( true );
+            folderName = [obj.topCacheDirectory filesep 'cache' timestr];
+            mkdir( folderName );
+            save( [folderName filesep 'cfg.mat'], 'cfg' );
+        end
+        %% -------------------------------------------------------------------------------
+
         function getSingleProcessCacheAccess( obj )
             cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
             cacheSpFilepath = [cacheFilepath '.singleProcess'];
@@ -140,26 +143,7 @@ classdef IdCacheDirectory < handle
         
         function treeNode = findCfgTreeNode( obj, cfg, createIfMissing )
             ucfg = core.IdCacheDirectory.unfoldCfgStruct( cfg );
-            cfgFields = fieldnames( ucfg );
-            treeNode = obj.treeRoot;
-            for ff = 1 : numel( cfgFields )
-                cfgFieldName = cfgFields{ff};
-                cfgField = ucfg.(cfgFieldName); % is "leaf": matrix, cell, or object
-                nextTreeNode = core.IdCacheDirectory.getCfgSubtree( treeNode, cfgFieldName, cfgField );
-                if ~isempty( nextTreeNode )
-                    treeNode = nextTreeNode;
-                else
-                    if nargin > 2 && createIfMissing
-                        for rf = ff : numel( cfgFields )
-                            restUcfg.(cfgFields{rf}) = ucfg.(cfgFields{rf});
-                        end
-                        treeNode = core.IdCacheDirectory.createCfgTree( treeNode, restUcfg );
-                    else
-                        treeNode = [];
-                    end
-                    return;
-                end
-            end
+            treeNode = obj.treeRoot.findCfg( ucfg, createIfMissing );
         end
         %% -------------------------------------------------------------------------------
         
@@ -189,37 +173,6 @@ classdef IdCacheDirectory < handle
                 end
             end
             ucfg = orderfields( ucfg );
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function treeNode = createCfgTree( treeRoot, ucfg )
-            cfgFields = fieldnames( ucfg );
-            treeNode = treeRoot;
-            for ff = 1 : numel( cfgFields )
-                cfgFieldName = cfgFields{ff};
-                nextTreeNode = core.IdCacheTreeElem();
-                nextTreeNode.cfg = ucfg.(cfgFieldName);
-                if isKey( treeNode.cfgSubs, cfgFieldName )
-                    existingTreeNodes = treeNode.cfgSubs(cfgFieldName);
-                    nextTreeNode(2:1+numel( existingTreeNodes )) = existingTreeNodes;
-                end
-                treeNode.cfgSubs(cfgFieldName) = nextTreeNode;
-                treeNode = nextTreeNode(1);
-            end
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function subTreeNode = getCfgSubtree( treeNode, cfgFieldName, cfgField )
-            subTreeNode = [];
-            if isKey( treeNode.cfgSubs, cfgFieldName )
-                curSubTreeNodes = treeNode.cfgSubs(cfgFieldName);
-                for ii = 1 : numel( curSubTreeNodes )
-                    if isequalDeepCompare( curSubTreeNodes(ii).cfg, cfgField )
-                        subTreeNode = curSubTreeNodes(ii);
-                        return;
-                    end
-                end
-            end
         end
         %% -------------------------------------------------------------------------------
         

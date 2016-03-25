@@ -1,8 +1,5 @@
 classdef IdCacheDirectory < handle
     
-    properties (SetAccess = protected)
-    end
-    
     properties (Access = protected)
         treeRoot;
         topCacheDirectory;
@@ -43,23 +40,14 @@ classdef IdCacheDirectory < handle
         
         function filepath = getCacheFilepath( obj, cfg, createIfnExist )
             if isempty( cfg ), filepath = obj.topCacheDirectory; return; end
-            filepath = [];
-            if nargin < 3, createIfnExist = true; end
+            if nargin < 3, createIfnExist = false; end
             treeNode = obj.findCfgTreeNode( cfg, createIfnExist );
-            if isempty( treeNode ), return; end
+            if isempty( treeNode ), filepath = []; return; end
             if isempty( treeNode.path ) && createIfnExist
                 treeNode.path = obj.makeNewCacheFolder( cfg );
                 obj.cacheDirChanged = true;
             end
             filepath = treeNode.path;
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function folderName = makeNewCacheFolder( obj, cfg )
-            timestr = buildCurrentTimeString( true );
-            folderName = [obj.topCacheDirectory filesep 'cache' timestr];
-            mkdir( folderName );
-            save( [folderName filesep 'cfg.mat'], 'cfg' );
         end
         %% -------------------------------------------------------------------------------
 
@@ -142,8 +130,17 @@ classdef IdCacheDirectory < handle
     methods (Access = protected)
         
         function treeNode = findCfgTreeNode( obj, cfg, createIfMissing )
+            if nargin < 3, createIfMissing = false; end
             ucfg = core.IdCacheDirectory.unfoldCfgStruct( cfg );
-            treeNode = obj.treeRoot.findCfg( ucfg, createIfMissing );
+            treeNode = obj.treeRoot.getCfg( ucfg, createIfMissing );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function folderName = makeNewCacheFolder( obj, cfg )
+            timestr = buildCurrentTimeString( true );
+            folderName = [obj.topCacheDirectory filesep 'cache' timestr];
+            mkdir( folderName );
+            save( [folderName filesep 'cfg.mat'], 'cfg' );
         end
         %% -------------------------------------------------------------------------------
         

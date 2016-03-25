@@ -18,44 +18,21 @@ classdef IdCacheTreeElem < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function treeNode = findCfg( obj, cfgList, createIfMissing )
+        function treeNode = getCfg( obj, cfgList, createIfMissing )
+            if nargin < 3, createIfMissing = false; end
+            if isempty( cfgList ), treeNode = obj; return; end
             cfgFieldNames = fieldnames( cfgList );
-            treeNode = obj;
-            for ff = 1 : numel( cfgFieldNames )
-                cfgFieldName = cfgFieldNames{ff};
-                cfgField = cfgList.(cfgFieldName);
-                subTreeNode = treeNode.getCfgSubtree( treeNode, cfgFieldName, cfgField );
-                if ~isempty( subTreeNode )
-                    treeNode = subTreeNode;
-                else
-                    if nargin > 2 && createIfMissing
-                        restCfgList = rmfield( cfgList, cfgFieldNames(1:ff-1) );
-                        treeNode = core.IdCacheDirectory.createCfgTree( treeNode, restCfgList );
-                    else
-                        treeNode = [];
-                    end
-                    return;
-                end
-            end
-        end
-        %% -------------------------------------------------------------------------------
-         
-        function cfgLeafNode = createCfgTree( obj, cfgList )
-            cfgFieldNames = fieldnames( cfgList );
-            treeNode = obj;
-            for ff = 1 : numel( cfgFieldNames )
-                cfgFieldName = cfgFieldNames{ff};
-                cfgField = cfgList.(cfgFieldName);
-                existingTreeNodes = treeNode.getCfgSubtrees( cfgFieldName );
-                newSubTrees = [core.IdCacheTreeElem( cfgField ) existingTreeNodes];
-                treeNode.cfgSubs(cfgFieldName) = newSubTrees;
-                treeNode = newSubTrees(1);
-            end
-            cfgLeafNode = treeNode;
+            if isempty( cfgFieldNames ), treeNode = obj; return; end
+            cfgField = cfgList.(cfgFieldNames{1});
+            treeNode = obj.getCfgSubtree( cfgFieldNames{1}, cfgField, createIfMissing );
+            if isempty( treeNode ), return; end
+            restCfgList = rmfield( cfgList, cfgFieldNames{1} );
+            treeNode = treeNode.getCfg( restCfgList, createIfMissing );
         end
         %% -------------------------------------------------------------------------------
         
-        function subTreeNode = getCfgSubtree( obj, cfgFieldName, cfg )
+        function subTreeNode = getCfgSubtree( obj, cfgFieldName, cfg, createIfMissing )
+            if nargin < 4, createIfMissing = false; end
             subTreeNode = [];
             subTreeNodes = obj.getCfgSubtrees( cfgFieldName );
             for ii = 1 : numel( subTreeNodes )
@@ -63,6 +40,11 @@ classdef IdCacheTreeElem < handle
                     subTreeNode = subTreeNodes(ii);
                     return;
                 end
+            end
+            if createIfMissing
+                newSubTrees = [core.IdCacheTreeElem( cfg ) subTreeNodes];
+                obj.cfgSubs(cfgFieldName) = newSubTrees;
+                subTreeNode = newSubTrees(1);
             end
         end
         %% -------------------------------------------------------------------------------

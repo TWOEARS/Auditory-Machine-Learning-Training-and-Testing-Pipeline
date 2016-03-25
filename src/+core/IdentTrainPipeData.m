@@ -49,7 +49,7 @@ classdef IdentTrainPipeData < handle
                     cIdx = classes;
                 end
                 if size( S.subs, 2 ) > 1
-                    if ischar( S.subs{1,2} )
+                    if ischar( S.subs{1,2} ) && ~all( S.subs{1,2} == ':' )
                         [cIdx,fIdx] = obj.getFileIdx( S.subs{1,2} );
                     else
                         fIdx = S.subs{1,2};

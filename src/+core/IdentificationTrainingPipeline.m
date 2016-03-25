@@ -150,11 +150,11 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             if isempty( obj.featureCreator.description )
-                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.afeProc;
+                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.wrappedProc;
                 obj.featureCreator.dummyProcess( afe.makeDummyData );
             end
             featureCreator = obj.featureCreator;
-            lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
+            lastDataProcParams = obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;
                 save( 'dataStore.mat', ...

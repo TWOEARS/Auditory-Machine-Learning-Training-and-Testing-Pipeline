@@ -6,17 +6,16 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         cacheSystemDir;
-%         externOutputDeps;
     end
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected, Transient = true)
-%         configChanged = true;
-%         currentFolder = [];
         cacheDirectory;
         soundDbBaseDir;
         inputProc;
         idData;
+        lastFolder;
+        lastConfig;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -52,17 +51,10 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
         
         function init( obj )
-%             obj.cacheDirectory.loadCacheDirectory();
-%             obj.configChanged = true;
-%             obj.currentFolder = [];
+            obj.lastFolder = '';
+            obj.lastConfig = [];
         end
         %% -------------------------------------------------------------------------------
-        
-%         function savePlaceholderFile( obj, inFilePath )
-%             error('remind me, where is this used?');
-%             obj.save( inFilePath, struct('dummy',[]) );
-%         end
-%         %% -------------------------------------------------------------------------------
         
         function out = saveOutput( obj, wavFilepath )
             out = obj.getOutput();
@@ -74,7 +66,7 @@ classdef (Abstract) IdProcInterface < handle
             if ~obj.hasFileAlreadyBeenProcessed( wavFilepath )
                 obj.process( wavFilepath );
                 out = obj.saveOutput( wavFilepath );
-            else
+            elseif nargout > 0
                 out = obj.loadProcessedData( wavFilepath );
             end
         end
@@ -103,21 +95,10 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath ) %, checkPrecNeed )
+        function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath )
             if isempty( wavFilepath ), fileProcessed = false; return; end
             fileProcessed = exist( obj.getOutputFilepath( wavFilepath ), 'file' );
-%             if ~fileProcessed && nargin > 2 && checkPrecNeed
-%                 precProcFileNeeded = obj.needsPrecedingProcResult( wavFilepath );
-%             else
-%                 precProcFileNeeded = false;
-%             end
         end
-        %% -------------------------------------------------------------------------------
-
-%         function setExternOutputDependencies( obj, externOutputDeps )
-%             obj.externOutputDeps = externOutputDeps;
-% %             obj.configChanged = true;
-%         end
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getOutputDependencies( obj )
@@ -128,9 +109,6 @@ classdef (Abstract) IdProcInterface < handle
             if isfield( outputDeps, 'preceding' )
                 error( 'Intern output dependencies must not contain field named "preceding"' );
             end
-%             if ~isempty( obj.externOutputDeps )
-%                 outputDeps.extern = obj.externOutputDeps;
-%             end
             if ~isempty( obj.inputProc )
                 outputDeps.preceding = obj.inputProc.getOutputDependencies();
             end
@@ -155,15 +133,16 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
         
         function currentFolder = getCurrentFolder( obj )
-%             if ~isempty( obj.currentFolder ) && ~obj.configChanged
-%                 currentFolder = obj.currentFolder;
-%                 return;
-%             end
             currentConfig = obj.getOutputDependencies();
+            if ~isempty( obj.lastFolder ) ...
+                    && isequalDeepCompare( currentConfig, obj.lastConfig )
+                currentFolder = obj.lastFolder;
+                return;
+            end
             obj.cacheDirectory.loadCacheDirectory();
             currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
-%             obj.currentFolder = currentFolder;
-%             obj.configChanged = false;
+            obj.lastFolder = currentFolder;
+            obj.lastConfig = currentConfig;
         end
         %% -------------------------------------------------------------------------------
         
@@ -195,15 +174,9 @@ classdef (Abstract) IdProcInterface < handle
             else
                 obj.procName = procName;
             end
-%             obj.externOutputDeps = [];
             obj.cacheDirectory = core.IdCacheDirectory();
         end
         %% -------------------------------------------------------------------------------
-        
-%         function precProcFileNeeded = needsPrecedingProcResult( obj, wavFileName )
-%             precProcFileNeeded = true; % this method is overwritten in Multi... subclasses
-%         end
-%         %% -------------------------------------------------------------------------------
         
         function out = save( obj, wavFilepath, data )
             out = data;

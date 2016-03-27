@@ -96,11 +96,8 @@ classdef DataPipeProc < handle
             datalist = datalist(obj.fileListOverlay);
             for dataFile = datalist(randperm(length(datalist)))'
                 fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.wavFileName );
-                if ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName )
-                    obj.dataFileProcessor.process( dataFile.wavFileName );
-                    obj.dataFileProcessor.saveOutput( dataFile.wavFileName );
-                    % TODO: semaphore
-                end
+                obj.dataFileProcessor.processSaveAndGetOutput( dataFile.wavFileName );
+                % TODO: semaphore
                 fprintf( '\n' );
             end
             obj.dataFileProcessor.saveCacheDirectory();

@@ -1,6 +1,6 @@
 classdef IdCacheTreeElem < handle
     
-    properties
+    properties (Access = {?core.IdCacheDirectory})
         cfg;
         cfgSubs;
         path;
@@ -21,13 +21,10 @@ classdef IdCacheTreeElem < handle
         function treeNode = getCfg( obj, cfgList, createIfMissing )
             if nargin < 3, createIfMissing = false; end
             if isempty( cfgList ), treeNode = obj; return; end
-            cfgFieldNames = fieldnames( cfgList );
-            if isempty( cfgFieldNames ), treeNode = obj; return; end
-            cfgField = cfgList.(cfgFieldNames{1});
-            treeNode = obj.getCfgSubtree( cfgFieldNames{1}, cfgField, createIfMissing );
+            treeNode = obj.getCfgSubtree( cfgList(1).fieldname, ...
+                                          cfgList(1).field, createIfMissing );
             if isempty( treeNode ), return; end
-            restCfgList = rmfield( cfgList, cfgFieldNames{1} );
-            treeNode = treeNode.getCfg( restCfgList, createIfMissing );
+            treeNode = treeNode.getCfg( cfgList(2:end), createIfMissing );
         end
         %% -------------------------------------------------------------------------------
         

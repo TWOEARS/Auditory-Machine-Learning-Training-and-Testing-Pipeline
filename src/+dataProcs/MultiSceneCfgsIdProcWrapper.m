@@ -70,15 +70,22 @@ classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
             obj.sceneConfigurations = multiSceneCfgs;
         end
         %% ----------------------------------------------------------------
+       
+        % override of core.IdProcInterface's method
+        function out = processSaveAndGetOutput( obj, wavFilepath )
+            obj.process( wavFilepath );
+            out = obj.saveOutput( wavFilepath );
+            if nargout > 0
+                out = obj.loadProcessedData( wavFilepath );
+            end
+        end
+        %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
             for ii = 1 : numel( obj.sceneConfigurations )
                 fprintf( 'sc%d', ii );
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                if ~obj.wrappedProc.hasFileAlreadyBeenProcessed( wavFilepath )
-                    obj.wrappedProc.process( wavFilepath );
-                    obj.wrappedProc.saveOutput( wavFilepath );
-                end
+                obj.wrappedProc.processSaveAndGetOutput( wavFilepath );
                 fprintf( '#' );
             end
         end

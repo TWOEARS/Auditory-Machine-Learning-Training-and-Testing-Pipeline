@@ -6,6 +6,8 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         fs;
         afeRequests;
         indFile;
+        currentNewAfeRequestsIdx;
+        currentNewAfeProc;
     end
     
     %% --------------------------------------------------------------------
@@ -87,24 +89,28 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
                 end
             end
             if ~isempty( newAfeRequestsIdx )
-                newAfeProc = dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
-                newAfeProc.setInputProc( obj.inputProc );
-                newAfeProc.cacheSystemDir = obj.cacheSystemDir;
-                newAfeProc.soundDbBaseDir = obj.soundDbBaseDir;
-                newAfeProc.process( wavFilepath );
+                if ~isequal( newAfeRequestsIdx, obj.currentNewAfeRequestsIdx )
+                    obj.currentNewAfeProc = ...
+                                     dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
+                    obj.currentNewAfeProc.setInputProc( obj.inputProc );
+                    obj.currentNewAfeProc.cacheSystemDir = obj.cacheSystemDir;
+                    obj.currentNewAfeProc.soundDbBaseDir = obj.soundDbBaseDir;
+                    obj.currentNewAfeRequestsIdx = newAfeRequestsIdx;
+                end
+                obj.currentNewAfeProc.process( wavFilepath );
                 for jj = 1 : numel( newAfeRequestsIdx )
                     ii = newAfeRequestsIdx(jj);
-                    obj.individualAfeProcs{ii}.output = newAfeProc.output;
+                    obj.individualAfeProcs{ii}.output = obj.currentNewAfeProc.output;
                     obj.individualAfeProcs{ii}.output.afeData = ...
-                        containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
+                                 containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
                     obj.individualAfeProcs{ii}.output.afeData(1) = ...
-                        newAfeProc.output.afeData(jj);
+                                                 obj.currentNewAfeProc.output.afeData(jj);
                     obj.individualAfeProcs{ii}.saveOutput( wavFilepath );
                 end
             end
             for ii = 1 : numel( obj.individualAfeProcs )
                 obj.indFile{ii} = ...
-                    obj.individualAfeProcs{ii}.getOutputFilepath( wavFilepath ) ;
+                              obj.individualAfeProcs{ii}.getOutputFilepath( wavFilepath );
             end
         end
         %% ----------------------------------------------------------------

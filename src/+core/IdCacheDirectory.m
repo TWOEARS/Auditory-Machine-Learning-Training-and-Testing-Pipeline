@@ -149,27 +149,35 @@ classdef IdCacheDirectory < handle
     %% -----------------------------------------------------------------------------------
     methods (Static)
         
-        function ucfg = unfoldCfgStruct( cfg )
-            if ~isstruct( cfg ), ucfg = cfg; return; end
+        function ucfg = unfoldCfgStruct( cfg, sortUcfgArray, prefix )
+            if ~isstruct( cfg )
+                error( 'cfg has to be struct' ); 
+            end
             if numel( cfg ) > 1
                 error( 'cfg must not be array' );
             end
-            ucfg = cfg;
-            cfgFields = fieldnames( cfg );
-            for ff = 1 : numel( cfgFields )
-                cfgFieldName = cfgFields{ff};
-                if isstruct( cfg.(cfgFieldName) )
-                    unfoldedCfgField = core.IdCacheDirectory.unfoldCfgStruct( cfg.(cfgFieldName) );
-                    ucfg = rmfield( ucfg, cfgFieldName );
-                    subCfgFields = fieldnames( unfoldedCfgField );
-                    for sf = 1 : numel( subCfgFields )
-                        subCfgFieldName = subCfgFields{sf};
-                        nonStructName = [cfgFieldName '_' subCfgFieldName];
-                        ucfg.(nonStructName) = unfoldedCfgField.(subCfgFieldName);
-                    end
-                end
+            if nargin < 2, sortUcfgArray = true; end
+            if nargin < 3
+                prefix = ''; 
+            else
+                prefix = [prefix '_'];
             end
-            ucfg = orderfields( ucfg );
+            cfgFieldnames = fieldnames( cfg );
+            cfgSubCfgIdxs = cellfun( @(cf)(isstruct( cfg.(cf) )), cfgFieldnames );
+            subCfgFieldnames = cfgFieldnames(cfgSubCfgIdxs);
+            uSubCfgs = cellfun( ...
+                   @(fn)(core.IdCacheDirectory.unfoldCfgStruct( cfg.(fn), ...
+                                                                false, [prefix fn] )),...
+                   subCfgFieldnames, 'UniformOutput', false );
+            cfg = rmfield( cfg, cfgFieldnames(cfgSubCfgIdxs) );
+            cfgFieldnames = cfgFieldnames(~cfgSubCfgIdxs);
+            ucfg = cellfun( @(sf,fn)(struct('fieldname',[prefix fn],'field',{sf})),...
+                            struct2cell( cfg ), cfgFieldnames );
+            ucfg = vertcat( ucfg, uSubCfgs{:} );
+            if sortUcfgArray
+                [~, order] = sort( {ucfg.fieldname} );
+                ucfg = ucfg(order);
+            end
         end
         %% -------------------------------------------------------------------------------
         

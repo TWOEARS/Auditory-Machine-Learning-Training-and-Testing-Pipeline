@@ -1,4 +1,4 @@
-classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
+classdef IdSimConvRoomWrapper < core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     properties (Access = protected)
@@ -6,6 +6,9 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
         sceneConfig;
         IRDataset;
         reverberationMaxOrder = 5;
+        earSout;
+        onOffsOut;
+        annotsOut;
     end
     
     %% --------------------------------------------------------------------
@@ -15,7 +18,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         function obj = IdSimConvRoomWrapper( hrirFile )
-            obj = obj@dataProcs.BinSimProcInterface();
+            obj = obj@core.IdProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...
@@ -88,6 +91,13 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
                 hrirHash = calcDataHash( audioread( hrirFName ) );
             end
             outputDeps.hrir = hrirHash;
+        end
+        %% ----------------------------------------------------------------
+
+        function out = getOutput( obj )
+            out.earSout = obj.earSout;
+            out.onOffsOut = obj.onOffsOut;
+            out.annotsOut = obj.annotsOut;
         end
         %% ----------------------------------------------------------------
         

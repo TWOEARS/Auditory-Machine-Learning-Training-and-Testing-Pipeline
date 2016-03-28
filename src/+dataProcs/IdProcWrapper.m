@@ -90,6 +90,14 @@ classdef IdProcWrapper < core.IdProcInterface
         
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
+        
+        function outputDeps = getInternOutputDependencies( obj )
+            for ii = 1 : numel( obj.wrappedProcs )
+                outDepName = sprintf( 'wrappedProc%d', ii );
+                outputDeps.(outDepName) = obj.wrappedProcs{ii}.getOutputDependencies;
+            end
+        end
+        %% ----------------------------------------------------------------
                 
     end
     

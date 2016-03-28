@@ -16,8 +16,8 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         function obj = MultiSceneCfgsIdProcWrapper( sceneProc, wrapProc,...
                                                               multiSceneCfgs )
             obj = obj@dataProcs.IdProcWrapper( wrapProc, true );
-            if ~isa( sceneProc, 'dataProcs.BinSimProcInterface' )
-                error( 'sceneProc must implement dataProcs.BinSimProcInterface.' );
+            if ~isa( sceneProc, 'core.IdProcInterface' )
+                error( 'sceneProc must implement core.IdProcInterface.' );
             end
             obj.sceneProc = sceneProc;
             if nargin < 3, multiSceneCfgs = sceneConfig.SceneConfiguration.empty; end
@@ -102,10 +102,7 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
                 outputDeps.(outDepName) = obj.sceneConfigurations(ii);
             end
             obj.sceneProc.setSceneConfig( [] );
-            for ii = 1 : numel( obj.wrappedProcs )
-                outDepName = sprintf( 'wrappedDeps%d', ii );
-                outputDeps.(outDepName) = obj.wrappedProcs{ii}.getOutputDependencies;
-            end
+            outputDeps.wrapDeps = getInternOutputDependencies@dataProcs.IdProcWrapper( obj );
         end
         %% ----------------------------------------------------------------
 

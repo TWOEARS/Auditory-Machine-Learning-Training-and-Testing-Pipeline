@@ -1,54 +1,25 @@
-classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
+classdef SceneEarSignalProc < dataProcs.IdProcWrapper
     
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         sceneConfig;
         binauralSim;
+        earSout;
+        onOffsOut;
+        annotsOut;
     end
     
     %% --------------------------------------------------------------------
     methods (Access = public)
         
         function obj = SceneEarSignalProc( binauralSim )
-            obj = obj@dataProcs.BinSimProcInterface();
-            if ~isa( binauralSim, 'dataProcs.BinSimProcInterface' )
-                error( 'binauralSim must implement dataProcs.BinSimProcInterface.' );
-            end
-            obj.binauralSim = binauralSim;
+            obj = obj@dataProcs.IdProcWrapper( binauralSim );
+            obj.binauralSim = obj.wrappedProcs{1};
             obj.sceneConfig = sceneConfig.SceneConfiguration.empty;
         end
         %% ----------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
-        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
-            setCacheSystemDir@dataProcs.BinSimProcInterface( obj, cacheSystemDir, soundDbBaseDir );
-            obj.binauralSim.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
-        end
-        %% -----------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function saveCacheDirectory( obj )
-            saveCacheDirectory@dataProcs.BinSimProcInterface( obj );
-            obj.binauralSim.saveCacheDirectory();
-        end
-        %% -----------------------------------------------------------------        
-
-        % override of core.IdProcInterface's method
-        function getSingleProcessCacheAccess( obj )
-            getSingleProcessCacheAccess@dataProcs.BinSimProcInterface( obj );
-            obj.binauralSim.getSingleProcessCacheAccess();
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function releaseSingleProcessCacheAccess( obj )
-            releaseSingleProcessCacheAccess@dataProcs.BinSimProcInterface( obj );
-            obj.binauralSim.releaseSingleProcessCacheAccess();
-        end
-        %% -------------------------------------------------------------------------------
-        
         function setSceneConfig( obj, sceneConfig )
-%             obj.configChanged = true;
             obj.sceneConfig = sceneConfig;
         end
         %% ----------------------------------------------------------------
@@ -153,10 +124,17 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            obj.binauralSim.setSceneConfig( sceneConfig.SceneConfiguration.empty );
-            % SceneEarSignalProc doesn't (/must not) depend on the binSim's sceneConfig
-            outputDeps.binSimCfg = obj.binauralSim.getInternOutputDependencies;
             outputDeps.sceneCfg = obj.sceneConfig;
+            % SceneEarSignalProc doesn't (/must not) depend on the binSim's sceneConfig
+            obj.binauralSim.setSceneConfig( sceneConfig.SceneConfiguration.empty );
+            outputDeps.wrapDeps = getInternOutputDependencies@dataProcs.IdProcWrapper( obj );
+        end
+        %% ----------------------------------------------------------------
+
+        function out = getOutput( obj )
+            out.earSout = obj.earSout;
+            out.onOffsOut = obj.onOffsOut;
+            out.annotsOut = obj.annotsOut;
         end
         %% ----------------------------------------------------------------
 

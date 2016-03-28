@@ -13,8 +13,6 @@ classdef TwoEarsIdTrainPipe < handle
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         pipeline;
-        binauralSim;
-        multiCfgProcs;
         dataSetupAlreadyDone = false;
     end
     
@@ -25,43 +23,45 @@ classdef TwoEarsIdTrainPipe < handle
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
             ip.addOptional( 'soundDbBaseDir', '' );
-            ip.addOptional( 'hrir', ...
-                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
-                            @(fn)(exist( fn, 'file' )) );
             ip.parse( varargin{:} );
             modelTrainers.Base.featureMask( true, [] );
             fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
             obj.pipeline = core.IdentificationTrainingPipeline( ...
                                           'cacheSystemDir', ip.Results.cacheSystemDir, ...
                                           'soundDbBaseDir', ip.Results.soundDbBaseDir );
-            binSim = dataProcs.IdSimConvRoomWrapper( ip.Results.hrir );
-            obj.binauralSim = dataProcs.SceneEarSignalProc( binSim );
-            obj.multiCfgProcs{1} = ...
-                dataProcs.MultiSceneCfgsIdProcWrapper( obj.binauralSim, obj.binauralSim );
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
         
-        function init( obj )
+        function init( obj, sceneCfgs, varargin )
+            ip = inputParser;
+            ip.addOptional( 'hrir', ...
+                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
+                            @(fn)(exist( fn, 'file' )) );
+            ip.parse( varargin{:} );
             obj.setupData( true );
+            obj.pipeline.resetDataProcs();
+            binSim = dataProcs.SceneEarSignalProc( ...
+                                      dataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
             if isempty( obj.featureCreator )
-                obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
+                obj.featureCreator = featureCreators.FeatureSet1Blockmean();
             end
             obj.pipeline.featureCreator = obj.featureCreator;
-            obj.pipeline.resetDataProcs();
-            obj.multiCfgProcs{2} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
-                obj.binauralSim, ...
-                dataProcs.ParallelRequestsAFEmodule( obj.binauralSim.getDataFs(), ...
-                                                     obj.featureCreator.getAFErequests() ...
-                                                   ) );
-            obj.multiCfgProcs{3} =  dataProcs.MultiSceneCfgsIdProcWrapper( ...
-                                                    obj.binauralSim, obj.featureCreator );
-            obj.multiCfgProcs{4} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
-                                        obj.binauralSim, dataProcs.GatherFeaturesProc() );
-            obj.pipeline.addDataPipeProc( obj.multiCfgProcs{1} );
-            obj.pipeline.addDataPipeProc( obj.multiCfgProcs{2} );
-            obj.pipeline.addDataPipeProc( obj.multiCfgProcs{3} );
-            obj.pipeline.addGatherFeaturesProc( obj.multiCfgProcs{4} );
+            multiCfgProcs{1} = dataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim );
+            multiCfgProcs{2} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                binSim, ...
+                dataProcs.ParallelRequestsAFEmodule( binSim.getDataFs(), ...
+                                                     obj.featureCreator.getAFErequests() ) );
+            multiCfgProcs{3} =  ...
+                      dataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.featureCreator );
+            multiCfgProcs{4} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                                                 binSim, dataProcs.GatherFeaturesProc() );
+            for ii = 1 : numel( multiCfgProcs )
+                multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
+                if ii == numel( multiCfgProcs ), continue; end
+                obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );
+            end
+            obj.pipeline.addGatherFeaturesProc( multiCfgProcs{end} );
             if isempty( obj.modelCreator )
                 obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
                     'performanceMeasure', @performanceMeasures.BAC2, ...
@@ -69,13 +69,6 @@ classdef TwoEarsIdTrainPipe < handle
                     'alpha', 0.99 );
             end
             obj.pipeline.addModelCreator( obj.modelCreator );
-        end
-        %% -------------------------------------------------------------------------------
-
-        function setSceneConfig( obj, sceneCfgs )
-            for ii = 1 : numel( obj.multiCfgProcs )
-                obj.multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
-            end
         end
         %% -------------------------------------------------------------------------------
 

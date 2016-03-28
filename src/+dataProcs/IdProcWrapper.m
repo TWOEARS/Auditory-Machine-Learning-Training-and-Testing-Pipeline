@@ -1,7 +1,7 @@
 classdef IdProcWrapper < core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         wrappedProcs;
     end
     

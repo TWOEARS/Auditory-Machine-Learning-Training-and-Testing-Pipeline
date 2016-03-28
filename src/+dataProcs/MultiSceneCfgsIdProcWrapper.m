@@ -4,6 +4,8 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
     properties (SetAccess = private)
         sceneConfigurations;
         sceneProc;
+        wrappedLastConfigs;
+        wrappedLastFolders;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -27,6 +29,8 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
 
         function setSceneConfig( obj, multiSceneCfgs )
             obj.sceneConfigurations = multiSceneCfgs;
+            obj.wrappedLastConfigs = cell( size( obj.sceneConfigurations ) );
+            obj.wrappedLastFolders = cell( size( obj.sceneConfigurations ) );
         end
         %% ----------------------------------------------------------------
 
@@ -34,8 +38,13 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath )
             fileProcessed = true;
             for ii = 1 : numel( obj.sceneConfigurations )
+                obj.wrappedProcs{1}.lastConfig = obj.wrappedLastConfigs{ii};
+                obj.wrappedProcs{1}.lastFolder = obj.wrappedLastFolders{ii};
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                if ~obj.wrappedProcs{1}.hasFileAlreadyBeenProcessed( wavFilepath )
+                processed = obj.wrappedProcs{1}.hasFileAlreadyBeenProcessed( wavFilepath );
+                obj.wrappedLastConfigs{ii} = obj.wrappedProcs{1}.lastConfig;
+                obj.wrappedLastFolders{ii} = obj.wrappedProcs{1}.lastFolder;
+                if ~processed
                     fileProcessed = false; return;
                 end
             end
@@ -45,18 +54,19 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         % override of core.IdProcInterface's method
         function out = processSaveAndGetOutput( obj, wavFilepath )
             obj.process( wavFilepath );
-            out = obj.saveOutput( wavFilepath );
-            if nargout > 0
-                out = obj.loadProcessedData( wavFilepath );
-            end
+            out = [];
         end
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
             for ii = 1 : numel( obj.sceneConfigurations )
                 fprintf( 'sc%d', ii );
+                obj.wrappedProcs{1}.lastConfig = obj.wrappedLastConfigs{ii};
+                obj.wrappedProcs{1}.lastFolder = obj.wrappedLastFolders{ii};
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
                 obj.wrappedProcs{1}.processSaveAndGetOutput( wavFilepath );
+                obj.wrappedLastConfigs{ii} = obj.wrappedProcs{1}.lastConfig;
+                obj.wrappedLastFolders{ii} = obj.wrappedProcs{1}.lastFolder;
                 fprintf( '#' );
             end
         end

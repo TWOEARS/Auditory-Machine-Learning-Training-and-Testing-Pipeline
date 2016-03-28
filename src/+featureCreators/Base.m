@@ -71,7 +71,8 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function dummyProcess( obj, afeDummy )
+        function dummyProcess( obj )
+            afeDummy = obj.inputProc.makeDummyData();
             [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
             obj.afeData = afeBlocks{1};
             xd = obj.constructVector();

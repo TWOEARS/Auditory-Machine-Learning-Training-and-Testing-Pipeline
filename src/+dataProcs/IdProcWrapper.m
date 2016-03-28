@@ -80,6 +80,12 @@ classdef IdProcWrapper < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
+        % override of core.IdProcInterface's method
+        function outObjs = getOutputObject( obj )
+            outObjs = obj.wrappedProcs{:};
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
         
     %% -----------------------------------------------------------------------------------

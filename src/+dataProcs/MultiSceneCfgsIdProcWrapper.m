@@ -85,12 +85,6 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
             currentFolder = [];
         end
         %% -------------------------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function outObj = getOutputObject( obj )
-            outObj = obj.wrappedProcs{1};
-        end
-        %% -------------------------------------------------------------------------------
     end
         
     %% -----------------------------------------------------------------------------------
@@ -107,9 +101,10 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
                 outDepName = sprintf( 'sceneConfig%d', ii );
                 outputDeps.(outDepName) = obj.sceneConfigurations(ii);
             end
+            obj.sceneProc.setSceneConfig( [] );
             for ii = 1 : numel( obj.wrappedProcs )
                 outDepName = sprintf( 'wrappedDeps%d', ii );
-                outputDeps.(outDepName) = obj.wrappedProcs{ii}.getInternOutputDependencies;
+                outputDeps.(outDepName) = obj.wrappedProcs{ii}.getOutputDependencies;
             end
         end
         %% ----------------------------------------------------------------

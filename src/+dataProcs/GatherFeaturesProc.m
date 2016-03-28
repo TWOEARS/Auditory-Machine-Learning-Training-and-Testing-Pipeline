@@ -73,7 +73,7 @@ warning('            dataFile.mc = [dataFile.mc; repmat( ii, size( xy.y(useIdxs)
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( ~ )
-            outputDeps = [];
+            outputDeps.gatherDeps = [];
         end
         %% -------------------------------------------------------------------------------
 

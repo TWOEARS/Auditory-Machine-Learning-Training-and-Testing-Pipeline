@@ -8,7 +8,7 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         indFile;
         currentNewAfeRequestsIdx;
         currentNewAfeProc;
-        afeDeps;
+        prAfeDepProducer;
     end
     
     %% --------------------------------------------------------------------
@@ -30,8 +30,7 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
             end
             obj.afeRequests = afeRequests;
             obj.fs = fs;
-            prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
-            obj.afeDeps = prAfeDepProducer.getInternOutputDependencies.afeParams;
+            obj.prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
         end
         %% ----------------------------------------------------------------
 
@@ -119,8 +118,7 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         %% ----------------------------------------------------------------
         
         function afeDummy = makeDummyData ( obj )
-            dummyAfeProc = dataProcs.AuditoryFEmodule( obj.fs, obj.afeRequests );
-            afeDummy.afeData = dummyAfeProc.makeAFEdata( rand( 4100, 2 ) );
+            afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
             afeDummy.onOffsOut = zeros(0,2);
             afeDummy.annotsOut = [];
         end
@@ -131,11 +129,8 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.afeParams = obj.afeDeps;
-%             for ii = 1 : numel( obj.individualAfeProcs )
-%                 outputDeps.(['afeDep' num2str(ii)]) = ...
-%                     obj.individualAfeProcs{ii}.getInternOutputDependencies.afeParams;
-%             end
+            afeDeps = obj.prAfeDepProducer.getInternOutputDependencies.afeParams;
+            outputDeps.afeParams = afeDeps;
         end
         %% ----------------------------------------------------------------
 

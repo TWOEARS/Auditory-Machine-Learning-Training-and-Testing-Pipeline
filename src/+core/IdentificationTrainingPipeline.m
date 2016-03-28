@@ -150,7 +150,7 @@ classdef IdentificationTrainingPipeline < handle
             obj.gatherFeaturesProc.run();
 
             if isempty( obj.featureCreator.description )
-                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.wrappedProc;
+                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.wrappedProcs{1};
                 obj.featureCreator.dummyProcess( afe.makeDummyData );
             end
             featureCreator = obj.featureCreator;

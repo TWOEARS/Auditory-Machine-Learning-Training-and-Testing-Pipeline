@@ -1,10 +1,9 @@
-classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
+classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         sceneConfigurations;
         sceneProc;
-        wrappedProc;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -14,62 +13,34 @@ classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = MultiSceneCfgsIdProcWrapper( sceneProc, wrappedProc,...
+        function obj = MultiSceneCfgsIdProcWrapper( sceneProc, wrapProc,...
                                                               multiSceneCfgs )
-            obj = obj@core.IdProcInterface();
-            obj.procName = [obj.procName '(' wrappedProc.procName ')'];
+            obj = obj@dataProcs.IdProcWrapper( wrapProc, true );
             if ~isa( sceneProc, 'dataProcs.BinSimProcInterface' )
                 error( 'sceneProc must implement dataProcs.BinSimProcInterface.' );
             end
-            if ~isa( wrappedProc, 'core.IdProcInterface' )
-                error( 'wrappedProc must implement core.IdProcInterface.' );
-            end
             obj.sceneProc = sceneProc;
-            obj.wrappedProc = wrappedProc;
             if nargin < 3, multiSceneCfgs = sceneConfig.SceneConfiguration.empty; end
             obj.sceneConfigurations = multiSceneCfgs;
         end
         %% ----------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
-        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
-            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, soundDbBaseDir );
-            obj.wrappedProc.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
-        end
-        %% -----------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function saveCacheDirectory( obj )
-            saveCacheDirectory@core.IdProcInterface( obj );
-            obj.wrappedProc.saveCacheDirectory();
-        end
-        %% -----------------------------------------------------------------        
-
-        % override of core.IdProcInterface's method
-        function getSingleProcessCacheAccess( obj )
-            getSingleProcessCacheAccess@core.IdProcInterface( obj );
-            obj.wrappedProc.getSingleProcessCacheAccess();
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function releaseSingleProcessCacheAccess( obj )
-            releaseSingleProcessCacheAccess@core.IdProcInterface( obj );
-            obj.wrappedProc.releaseSingleProcessCacheAccess();
-        end
-        %% -----------------------------------------------------------------
-
-        % override of core.IdProcInterface's method
-        function connectIdData( obj, idData )
-            connectIdData@core.IdProcInterface( obj, idData );
-            obj.wrappedProc.connectIdData( idData );
-        end
-        %% -------------------------------------------------------------------------------
-        
         function setSceneConfig( obj, multiSceneCfgs )
             obj.sceneConfigurations = multiSceneCfgs;
         end
         %% ----------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath )
+            fileProcessed = true;
+            for ii = 1 : numel( obj.sceneConfigurations )
+                obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
+                if ~obj.wrappedProcs{1}.hasFileAlreadyBeenProcessed( wavFilepath )
+                    fileProcessed = false; return;
+                end
+            end
+        end
+        %% -------------------------------------------------------------------------------
        
         % override of core.IdProcInterface's method
         function out = processSaveAndGetOutput( obj, wavFilepath )
@@ -85,7 +56,7 @@ classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
             for ii = 1 : numel( obj.sceneConfigurations )
                 fprintf( 'sc%d', ii );
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                obj.wrappedProc.processSaveAndGetOutput( wavFilepath );
+                obj.wrappedProcs{1}.processSaveAndGetOutput( wavFilepath );
                 fprintf( '#' );
             end
         end
@@ -108,18 +79,6 @@ classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
             outFilepath = [];
         end
         %% -------------------------------------------------------------------------------
-
-        % override of core.IdProcInterface's method
-        function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath )
-            fileProcessed = true;
-            for ii = 1 : numel( obj.sceneConfigurations )
-                obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                if ~obj.wrappedProc.hasFileAlreadyBeenProcessed( wavFilepath )
-                    fileProcessed = false; return;
-                end
-            end
-        end
-        %% -------------------------------------------------------------------------------
        
         % override of core.IdProcInterface's method
         function currentFolder = getCurrentFolder( obj )
@@ -128,15 +87,8 @@ classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         % override of core.IdProcInterface's method
-        function setInputProc( obj, inputProc )
-            setInputProc@core.IdProcInterface( obj, [] );
-            obj.wrappedProc.setInputProc( inputProc );
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
         function outObj = getOutputObject( obj )
-            outObj = obj.wrappedProc;
+            outObj = obj.wrappedProcs{1};
         end
         %% -------------------------------------------------------------------------------
     end
@@ -153,8 +105,11 @@ classdef MultiSceneCfgsIdProcWrapper < core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             for ii = 1 : numel( obj.sceneConfigurations )
                 outDepName = sprintf( 'sceneConfig%d', ii );
-                obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                outputDeps.(outDepName) = obj.wrappedProc.getInternOutputDependencies;
+                outputDeps.(outDepName) = obj.sceneConfigurations(ii);
+            end
+            for ii = 1 : numel( obj.wrappedProcs )
+                outDepName = sprintf( 'wrappedDeps%d', ii );
+                outputDeps.(outDepName) = obj.wrappedProcs{ii}.getInternOutputDependencies;
             end
         end
         %% ----------------------------------------------------------------

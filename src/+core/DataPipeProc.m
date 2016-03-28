@@ -8,9 +8,7 @@ classdef DataPipeProc < handle
     end
     properties (SetAccess = protected, Transient)
         dataFileProcessor;
-%         inputFileNameBuilder;
         fileListOverlay;
-%         precedingFileNeededList;
     end
     
     %% --------------------------------------------------------------------
@@ -21,7 +19,6 @@ classdef DataPipeProc < handle
                 error( 'dataFileProc must be of type core.IdProcInterface.' );
             end
             obj.dataFileProcessor = dataFileProc;
-%             obj.inputFileNameBuilder = @(inFileName)(inFileName);
         end
         %% ----------------------------------------------------------------
 
@@ -33,7 +30,6 @@ classdef DataPipeProc < handle
         function connectData( obj, data )
             obj.data = data;
             obj.fileListOverlay =  true( 1, length( obj.data(:) ) ) ;
-%             obj.precedingFileNeededList =  true( 1, length( obj.data(:) ) ) ;
         end
         %% ----------------------------------------------------------------
 
@@ -41,23 +37,10 @@ classdef DataPipeProc < handle
             if ~isa( outputtingProc, 'core.DataPipeProc' )
                 error( 'outputtingProc must be of type core.DataPipeProc' );
             end
-%             obj.inputFileNameBuilder = outputtingProc.getOutputFileNameBuilder();
-%             obj.dataFileProcessor.setExternOutputDependencies( ...
-%                 outputtingProc.getOutputDependencies() );
             obj.dataFileProcessor.setInputProc( ...
                 outputtingProc.dataFileProcessor.getOutputObject() );
         end
         %% ----------------------------------------------------------------
-% 
-%         function outFileNameBuilder = getOutputFileNameBuilder( obj )
-%             outFileNameBuilder = @(inFileName)(obj.dataFileProcessor.getOutputFileName( inFileName ));
-%         end
-%         %% ----------------------------------------------------------------
-% 
-%         function outDeps = getOutputDependencies( obj )
-%             outDeps = obj.dataFileProcessor.getOutputDependencies();
-%         end
-%         %% ----------------------------------------------------------------
 
         function checkDataFiles( obj, otherOverlay )
             fprintf( '\nChecking file list: %s\n%s\n', ...
@@ -66,10 +49,8 @@ classdef DataPipeProc < handle
             if (nargin > 1) && ~isempty( otherOverlay ) && ...
                     (length( otherOverlay ) == length( obj.data(:) ))
                 obj.fileListOverlay = otherOverlay;
-%                 obj.precedingFileNeededList = otherOverlay;
             else
                 obj.fileListOverlay =  true( 1, length( obj.data(:) ) ) ;
-%                 obj.precedingFileNeededList =  true( 1, length( obj.data(:) ) ) ;
             end
             datalist = obj.data(:)';
             obj.dataFileProcessor.getSingleProcessCacheAccess();

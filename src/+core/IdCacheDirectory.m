@@ -171,8 +171,12 @@ classdef IdCacheDirectory < handle
                    subCfgFieldnames, 'UniformOutput', false );
             cfg = rmfield( cfg, cfgFieldnames(cfgSubCfgIdxs) );
             cfgFieldnames = cfgFieldnames(~cfgSubCfgIdxs);
-            ucfg = cellfun( @(sf,fn)(struct('fieldname',[prefix fn],'field',{sf})),...
-                            struct2cell( cfg ), cfgFieldnames );
+            if isempty( cfgFieldnames )
+                ucfg = struct('fieldname',{},'field',{});
+            else
+                ucfg = cellfun( @(sf,fn)(struct('fieldname',[prefix fn],'field',{sf})),...
+                                  struct2cell( cfg ), cfgFieldnames );
+            end
             ucfg = vertcat( ucfg, uSubCfgs{:} );
             if sortUcfgArray
                 [~, order] = sort( {ucfg.fieldname} );

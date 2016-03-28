@@ -23,12 +23,24 @@ classdef AuditoryFEmodule < core.IdProcInterface
             obj.managerObject = manager( obj.afeDataObj );
             for ii = 1:length( afeRequests )
                 obj.afeSignals(ii) = obj.managerObject.addProcessor( ...
-                    afeRequests{ii}.name, afeRequests{ii}.params );
-                obj.afeParams.s{ii} = dataProcs.AuditoryFEmodule.signal2struct( ...
-                    obj.afeSignals(ii) );
+                                           afeRequests{ii}.name, afeRequests{ii}.params );
+                sig = obj.afeSignals(ii);
+                sigsr = dataProcs.AuditoryFEmodule.signal2struct( sig );
+                if isfield( obj.afeParams, 'sr' ) &&...
+                        isfield( obj.afeParams.sr, sig{1}.Name )
+                    sigsrs = obj.afeParams.sr.(sig{1}.Name);
+                    if ~iscell( sigsrs ), sigsrs = {sigsrs}; end
+                    sigsrs{end+1} = sigsr;
+                    sigsrsHashes = cellfun( @calcDataHash, sigsrs, 'UniformOutput', false );
+                    [~,order] = sort( sigsrsHashes );
+                    sigsrs = sigsrs(order);
+                    obj.afeParams.sr.(sig{1}.Name) = sigsrs;
+                else
+                    obj.afeParams.sr.(sig{1}.Name) = sigsr;
+                end
             end
             obj.afeParams.p = dataProcs.AuditoryFEmodule.parameterSummary2struct( ...
-                obj.afeDataObj.getParameterSummary( obj.managerObject ) );
+                                obj.afeDataObj.getParameterSummary( obj.managerObject ) );
         end
         %% ----------------------------------------------------------------
         
@@ -96,28 +108,24 @@ classdef AuditoryFEmodule < core.IdProcInterface
     methods (Static)
        
         function s = signal2struct( sig )
-            for ii = 1 : length( sig )
-                sigschar = char(ii+96);
-                if isa( sig{ii}, 'TimeFrequencySignal' )
-                    s.(sigschar).cfHz = sig{ii}.cfHz;
-                end
-                if isa( sig{ii}, 'CorrelationSignal' )
-                    s.(sigschar).cfHz = sig{ii}.cfHz;
-                    s.(sigschar).lags = sig{ii}.lags;
-                end
-                if isa( sig{ii}, 'FeatureSignal' ) ...
-                   || isa( sig{ii}, 'SpectralFeaturesSignal' )
-                    s.(sigschar).flist = sig{ii}.fList;
-                end
-                if isa( sig{ii}, 'ModulationSignal' )
-                    s.(sigschar).cfHz = sig{ii}.cfHz;
-                    s.(sigschar).modCfHz = sig{ii}.modCfHz;
-                end
-                if isa( sig{ii}, 'Signal' )
-                    s.(sigschar).name = sig{ii}.Name;
-                    s.(sigschar).dim = sig{ii}.Dimensions;
-                    s.(sigschar).fsHz = sig{ii}.FsHz;
-                end
+            if isa( sig{1}, 'TimeFrequencySignal' )
+                s.cfHz = sig{1}.cfHz;
+            end
+            if isa( sig{1}, 'CorrelationSignal' )
+                s.cfHz = sig{1}.cfHz;
+                s.lags = sig{1}.lags;
+            end
+            if isa( sig{1}, 'FeatureSignal' ) || isa( sig{1}, 'SpectralFeaturesSignal' )
+                s.flist = sig{1}.fList;
+            end
+            if isa( sig{1}, 'ModulationSignal' )
+                s.cfHz = sig{1}.cfHz;
+                s.modCfHz = sig{1}.modCfHz;
+            end
+            if isa( sig{1}, 'Signal' )
+                s.name = sig{1}.Name;
+                s.dim = sig{1}.Dimensions;
+                s.fsHz = sig{1}.FsHz;
             end
         end
         %% ----------------------------------------------------------------
@@ -128,14 +136,14 @@ classdef AuditoryFEmodule < core.IdProcInterface
                 pfn = p.(fnames{ii});
                 if iscell( pfn )
                     for jj = 1 : length( pfn )
-                        stmp(jj) = ...
+                        stmp{jj} = ...
                             dataProcs.AuditoryFEmodule.parameter2struct( pfn{jj} );
                     end
                     s.(fnames{ii}) = stmp;
                     clear stmp;
                 elseif isa( pfn, 'Parameters' )
                     s.(fnames{ii}) = ...
-                        dataProcs.AuditoryFEmodule.parameter2struct( pfn );
+                        {dataProcs.AuditoryFEmodule.parameter2struct( pfn )};
                 end
             end
         end

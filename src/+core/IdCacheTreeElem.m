@@ -21,10 +21,35 @@ classdef IdCacheTreeElem < handle
         function treeNode = getCfg( obj, cfgList, createIfMissing )
             if nargin < 3, createIfMissing = false; end
             if isempty( cfgList ), treeNode = obj; return; end
-            treeNode = obj.getCfgSubtree( cfgList(1).fieldname, ...
-                                          cfgList(1).field, createIfMissing );
-            if isempty( treeNode ), return; end
-            treeNode = treeNode.getCfg( cfgList(2:end), createIfMissing );
+            treeNode = obj;
+            for ii = 1 : numel( cfgList )
+                subTreeNode = [];
+                cfgName = cfgList(ii).fieldname;
+                cfgField = cfgList(ii).field;
+                if treeNode.cfgSubs.isKey( cfgName )
+                    subTreeNodes = treeNode.cfgSubs(cfgName);
+                else
+                    subTreeNodes = [];
+                end
+                for jj = 1 : numel( subTreeNodes )
+                    subcfg = subTreeNodes(jj).cfg;
+                    subcfgEqualsCfg = isequalDeepCompare( subcfg, cfgField );
+                    if subcfgEqualsCfg
+                        subTreeNode = subTreeNodes(jj);
+                        break;
+                    end
+                end
+                if isempty( subTreeNode )
+                    if createIfMissing
+                        newSubTrees = [core.IdCacheTreeElem( cfgField ) subTreeNodes];
+                        treeNode.cfgSubs(cfgName) = newSubTrees;
+                        subTreeNode = newSubTrees(1);
+                    else
+                        return;
+                    end
+                end
+                treeNode = subTreeNode;
+            end
         end
         %% -------------------------------------------------------------------------------
         
@@ -33,7 +58,9 @@ classdef IdCacheTreeElem < handle
             subTreeNode = [];
             subTreeNodes = obj.getCfgSubtrees( cfgFieldName );
             for ii = 1 : numel( subTreeNodes )
-                if isequalDeepCompare( subTreeNodes(ii).cfg, cfg )
+                subcfg = subTreeNodes(ii).cfg;
+                subcfgEqualsCfg = isequalDeepCompare( subcfg, cfg );
+                if subcfgEqualsCfg
                     subTreeNode = subTreeNodes(ii);
                     return;
                 end

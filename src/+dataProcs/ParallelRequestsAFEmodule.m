@@ -8,6 +8,7 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
         indFile;
         currentNewAfeRequestsIdx;
         currentNewAfeProc;
+        afeDeps;
     end
     
     %% --------------------------------------------------------------------
@@ -29,6 +30,8 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
             end
             obj.afeRequests = afeRequests;
             obj.fs = fs;
+            prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
+            obj.afeDeps = prAfeDepProducer.getInternOutputDependencies.afeParams;
         end
         %% ----------------------------------------------------------------
 
@@ -128,10 +131,11 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            for ii = 1 : numel( obj.individualAfeProcs )
-                outputDeps.(['afeDep' num2str(ii)]) = ...
-                    obj.individualAfeProcs{ii}.getInternOutputDependencies.afeParams;
-            end
+            outputDeps.afeParams = obj.afeDeps;
+%             for ii = 1 : numel( obj.individualAfeProcs )
+%                 outputDeps.(['afeDep' num2str(ii)]) = ...
+%                     obj.individualAfeProcs{ii}.getInternOutputDependencies.afeParams;
+%             end
         end
         %% ----------------------------------------------------------------
 

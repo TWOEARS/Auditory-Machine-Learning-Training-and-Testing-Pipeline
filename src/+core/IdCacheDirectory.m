@@ -52,6 +52,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
 
         function getSingleProcessCacheAccess( obj )
+            if ~isempty( obj.cacheSingleProcessSema ), return; end
             cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
             cacheSpFilepath = [cacheFilepath '.singleProcess'];
             obj.cacheSingleProcessSema = setfilesemaphore( cacheSpFilepath );
@@ -60,6 +61,7 @@ classdef IdCacheDirectory < handle
         
         function releaseSingleProcessCacheAccess( obj )
             removefilesemaphore( obj.cacheSingleProcessSema );
+            obj.cacheSingleProcessSema = [];
         end
         %% -------------------------------------------------------------------------------
         

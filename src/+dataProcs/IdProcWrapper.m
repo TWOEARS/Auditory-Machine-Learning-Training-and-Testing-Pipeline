@@ -73,7 +73,7 @@ classdef IdProcWrapper < core.IdProcInterface
 
         % override of core.IdProcInterface's method
         function setInputProc( obj, inputProc )
-            setInputProc@core.IdProcInterface( obj, [] );
+            setInputProc@core.IdProcInterface( obj, inputProc );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.setInputProc( inputProc );
             end

@@ -1,4 +1,4 @@
-classdef ParallelRequestsAFEmodule < core.IdProcInterface
+classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
     
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -19,65 +19,19 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
     methods (Access = public)
         
         function obj = ParallelRequestsAFEmodule( fs, afeRequests )
-            obj = obj@core.IdProcInterface();
             for ii = 1:length( afeRequests )
-                obj.individualAfeProcs{ii} = ...
-                                        dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
+                indProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
             end
             for ii = 2:length( afeRequests )
-                obj.individualAfeProcs{ii}.cacheDirectory = ...
-                                                 obj.individualAfeProcs{1}.cacheDirectory;
+                indProcs{ii}.cacheDirectory = indProcs{1}.cacheDirectory;
             end
+            obj = obj@dataProcs.IdProcWrapper( indProcs, false );
+            obj.individualAfeProcs = indProcs;
             obj.afeRequests = afeRequests;
             obj.fs = fs;
             obj.prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
         end
         %% ----------------------------------------------------------------
-
-        % override of core.IdProcInterface's method
-        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
-            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, soundDbBaseDir );
-            for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{ii}.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
-            end
-        end
-        %% -----------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function saveCacheDirectory( obj )
-            saveCacheDirectory@core.IdProcInterface( obj );
-            for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{ii}.saveCacheDirectory();
-            end
-        end
-        %% -----------------------------------------------------------------        
-
-        % override of core.IdProcInterface's method
-        function getSingleProcessCacheAccess( obj )
-            getSingleProcessCacheAccess@core.IdProcInterface( obj );
-%             for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{1}.getSingleProcessCacheAccess();
-%             end
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function releaseSingleProcessCacheAccess( obj )
-            releaseSingleProcessCacheAccess@core.IdProcInterface( obj );
-%             for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{1}.releaseSingleProcessCacheAccess();
-%             end
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of core.IdProcInterface's method
-        function setInputProc( obj, inputProc )
-            setInputProc@core.IdProcInterface( obj, inputProc );
-            for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{ii}.setInputProc( inputProc );
-            end
-        end
-        %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
             newAfeRequests = {};
@@ -123,11 +77,19 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
             afeDummy.annotsOut = [];
         end
         %% ----------------------------------------------------------------
+
+        % override of dataProcs.IdProcWrapper's method
+        function outObj = getOutputObject( obj )
+            outObj = getOutputObject@core.IdProcInterface( obj );
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
 
     %% --------------------------------------------------------------------
     methods (Access = protected)
         
+        % override of dataProcs.IdProcWrapper's method
         function outputDeps = getInternOutputDependencies( obj )
             afeDeps = obj.prAfeDepProducer.getInternOutputDependencies.afeParams;
             outputDeps.afeParams = afeDeps;

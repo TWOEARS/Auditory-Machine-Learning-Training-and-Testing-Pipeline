@@ -87,12 +87,14 @@ classdef Base < core.IdProcInterface
                 afeSignal = afeData(afeKey{1});
                 if isa( afeSignal, 'cell' )
                     for ii = 1 : numel( afeSignal )
-                        afeSignalExtract{ii} = afeSignal{ii}.cutSignalCopy( obj.blockSize_s, backOffset_s );
-                        afeSignalExtract{ii}.reduceBufferToArray();
+                        afeSignalExtract{ii} = ...
+                            afeSignal{ii}.cutSignalCopyReducedToArray( obj.blockSize_s,...
+                                                                       backOffset_s );
                     end
                 else
-                    afeSignalExtract = afeSignal.cutSignalCopy( obj.blockSize_s, backOffset_s );
-                    afeSignalExtract.reduceBufferToArray();
+                    afeSignalExtract = ...
+                        afeSignal.cutSignalCopyReducedToArray( obj.blockSize_s, ...
+                                                               backOffset_s );
                 end
                 afeBlock(afeKey{1}) = afeSignalExtract;
                 fprintf( '.' );

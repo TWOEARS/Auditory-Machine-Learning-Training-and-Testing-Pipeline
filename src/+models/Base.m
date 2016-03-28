@@ -60,11 +60,11 @@ classdef (Abstract) Base < handle
             if nargin < 7, getDatapointInfo = 'noInfo'; end
             x = testSet(:,:,'x');
             yTrue = testSet(:,:,'y',positiveClass);
-            dpi.mc = testSet(:,:,'mc');
+%             dpi.mc = testSet(:,:,'mc');
             dpi.wavIdxs = testSet(:,:,'pointwiseWavfilenames');
             % remove samples with fuzzy labels
             x(yTrue==0,:) = [];
-            dpi.mc(yTrue==0) = [];
+%             dpi.mc(yTrue==0) = [];
             dpi.wavIdxs(yTrue==0,:) = [];
             yTrue(yTrue==0) = [];
             if numel( yTrue ) > maxDataSize
@@ -79,11 +79,11 @@ classdef (Abstract) Base < handle
                     negIdxs(1:nNeg) = [];
                     x([posIdxs; negIdxs],:) = [];
                     yTrue([posIdxs; negIdxs]) = [];
-                    dpi.mc([posIdxs; negIdxs],:) = [];
+%                     dpi.mc([posIdxs; negIdxs],:) = [];
                 else
                     x(maxDataSize+1:end,:) = [];
                     yTrue(maxDataSize+1:end) = [];
-                    dpi.mc(maxDataSize+1:end,:) = [];
+%                     dpi.mc(maxDataSize+1:end,:) = [];
                 end
             end
             if isempty( x ), error( 'There is no data to test the model.' ); end

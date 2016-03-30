@@ -16,6 +16,7 @@ classdef (Abstract) IdProcInterface < handle
         idData;
         lastFolder;
         lastConfig;
+        outFileSema;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -26,6 +27,7 @@ classdef (Abstract) IdProcInterface < handle
     methods (Access = public)
         
         function delete( obj )
+            removefilesemaphore( obj.outFileSema );
             obj.saveCacheDirectory();
         end
         %% -------------------------------------------------------------------------------
@@ -73,14 +75,15 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
 
         function out = loadProcessedData( obj, wavFilepath )
+            outFilepath = obj.getOutputFilepath( wavFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath );
             out = load( obj.getOutputFilepath( wavFilepath ) );
+            removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
         
-        function inData = loadInputData( obj, wavFilepath, dataLabels )
-            if nargin < 3, dataLabels = {}; end
-            inFilepath = obj.inputProc.getOutputFilepath( wavFilepath );
-            inData = load( inFilepath, dataLabels{:} );
+        function inData = loadInputData( obj, wavFilepath )
+            inData = obj.inputProc.loadProcessedData( wavFilepath );
         end
         %% -------------------------------------------------------------------------------
 
@@ -181,7 +184,10 @@ classdef (Abstract) IdProcInterface < handle
         function out = save( obj, wavFilepath, data )
             out = data;
             if isempty( wavFilepath ), return; end
-            save( obj.getOutputFilepath( wavFilepath ), '-struct', 'out' );
+            outFilepath = obj.getOutputFilepath( wavFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath );
+            save( outFilepath, '-struct', 'out' );
+            removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
 

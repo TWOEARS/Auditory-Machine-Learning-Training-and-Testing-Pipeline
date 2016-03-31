@@ -1,8 +1,8 @@
 classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
-    
+    % IdSimConvRoomWrapper wrap the simulator.SimulatorConvexRoom class
     %% -----------------------------------------------------------------------------------
     properties (Access = protected)
-        convRoomSim;
+        convRoomSim;    % simulation tool of type simulator.SimulatorConvexRoom
         sceneConfig;
         IRDataset;
         reverberationMaxOrder = 5;
@@ -15,6 +15,7 @@ classdef IdSimConvRoomWrapper < dataProcs.BinSimProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         function obj = IdSimConvRoomWrapper( hrirFile )
+            % initialize the simulation tool
             obj = obj@dataProcs.BinSimProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...

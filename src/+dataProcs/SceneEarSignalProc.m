@@ -3,7 +3,7 @@ classdef SceneEarSignalProc < dataProcs.BinSimProcInterface
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         sceneConfig;
-        binauralSim;
+        binauralSim;        % binaural simulator
         outputWavFileName;
     end
     

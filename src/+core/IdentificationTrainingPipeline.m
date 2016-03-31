@@ -1,9 +1,16 @@
 classdef IdentificationTrainingPipeline < handle
-
+    % IdentificationTrainingPipeline The identification training pipeline
+    %   facilitates training models for classifying sounds.
+    %   It manages the data for training and testing, orchestrates feature
+    %   extraction, optimizes the model and produces performance metrics 
+    %   for evaluating a model.
+    %   Trained models can then be integrated into the blackboard system
+    %   by loading them in an identitiy knowledge source
+    %
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
-        generalizationPerfomanceAssessCVtrainer;
+        generalizationPerfomanceAssessCVtrainer; % k-fold cross validation
         dataPipeProcs;
         gatherFeaturesProc;
         data;       
@@ -13,8 +20,8 @@ classdef IdentificationTrainingPipeline < handle
     
     %% --------------------------------------------------------------------
     properties 
-        featureCreator;
-        verbose = true;
+        featureCreator; % feature extraction
+        verbose = true; % log level
     end
     
     %% --------------------------------------------------------------------

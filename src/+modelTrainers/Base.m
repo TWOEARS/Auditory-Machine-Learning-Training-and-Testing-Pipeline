@@ -1,5 +1,6 @@
 classdef (Abstract) Base < handle
-    
+    % Base Abstract ModelTrainers Base class ?
+    %
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
         trainSet;
@@ -160,8 +161,8 @@ classdef (Abstract) Base < handle
             %   featureMask( setNewMask, newmask ) set the feature mask to 
             %       newmask on the condition that setNewMask is true
             persistent featureMask;
-            if isempty( featureMask )
-                featureMask = [];
+            if ~isempty( featureMask )
+                featureMask = []; % reset the feature mask
             end
             if nargin > 0  &&  setNewMask
                 if ~isempty( newmask ) && size( newmask, 2 ) ~= 1, newmask = newmask'; end;

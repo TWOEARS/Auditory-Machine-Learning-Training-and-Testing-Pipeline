@@ -21,44 +21,76 @@ classdef TwoEarsIdTrainPipe < handle
         trainsetShare = 0.5;
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         pipeline;
-        binauralSim;                    % binaural simulator
-        sceneConfBinauralSim;           % ?
-        multiConfBinauralSim;           % ?
         dataSetupAlreadyDone = false;   % pre-processing steps already done.
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods
 
-        function obj = TwoEarsIdTrainPipe( hrir )
+        function obj = TwoEarsIdTrainPipe( varargin )
             % TwoEarsIdTrainPipe Construct a training pipeline
-            %   TwoEarsIdTrainPipe() instantiate using the default impulse
-            %   response dataset to drive the binaural simulator
-            %   TwoEarsIdTrainPipe( hrir ) instantiate using a path to the 
-            %   impulse response dataset defined by hrir
-            %   (e.g. 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa'
+            %   TwoEarsIdTrainPipe() instantiate using the default cache-
+            %   system and sound-db base directories
             %
-            if nargin < 1
-                hrir = 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa';
-            end
+            ip = inputParser;
+            ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.addOptional( 'soundDbBaseDir', '' );
+            ip.parse( varargin{:} );
             modelTrainers.Base.featureMask( true, [] ); % reset the feature mask
-            warning( 'modelTrainers.Base.featureMask set to []' );
-            obj.pipeline = core.IdentificationTrainingPipeline(); % ?
-            obj.binauralSim = dataProcs.IdSimConvRoomWrapper( hrir );
-            obj.sceneConfBinauralSim = ...
-                dataProcs.SceneEarSignalProc( obj.binauralSim );
-            obj.multiConfBinauralSim = ...
-                dataProcs.MultiConfigurationsEarSignalProc( obj.sceneConfBinauralSim );
-%             obj.init();
+            fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
+            obj.pipeline = core.IdentificationTrainingPipeline( ...
+                                          'cacheSystemDir', ip.Results.cacheSystemDir, ...
+                                          'soundDbBaseDir', ip.Results.soundDbBaseDir );
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
-
-        function setSceneConfig( obj, scArray )
-            obj.multiConfBinauralSim.setSceneConfig( scArray );
+        
+        function init( obj, sceneCfgs, varargin )
+            % init initialize training pipeline
+            %   init() init using the default impulse
+            %   response dataset to drive the binaural simulator
+            %   init( sceneCfgs, 'hrir', hrir ) instantiate using a path to the 
+            %   impulse response dataset defined by hrir
+            %   (e.g. 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa'
+            %   
+            ip = inputParser;
+            ip.addOptional( 'hrir', ...
+                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
+                            @(fn)(exist( fn, 'file' )) );
+            ip.parse( varargin{:} );
+            obj.setupData( true );
+            obj.pipeline.resetDataProcs();
+            binSim = dataProcs.SceneEarSignalProc( ...
+                                      dataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
+            if isempty( obj.featureCreator )
+                obj.featureCreator = featureCreators.FeatureSet1Blockmean();
+            end
+            obj.pipeline.featureCreator = obj.featureCreator;
+            multiCfgProcs{1} = dataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim );
+            multiCfgProcs{2} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                binSim, ...
+                dataProcs.ParallelRequestsAFEmodule( binSim.getDataFs(), ...
+                                                     obj.featureCreator.getAFErequests() ) );
+            multiCfgProcs{3} =  ...
+                      dataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.featureCreator );
+            multiCfgProcs{4} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                                                 binSim, dataProcs.GatherFeaturesProc() );
+            for ii = 1 : numel( multiCfgProcs )
+                multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
+                if ii == numel( multiCfgProcs ), continue; end
+                obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );
+            end
+            obj.pipeline.addGatherFeaturesProc( multiCfgProcs{end} );
+            if isempty( obj.modelCreator )
+                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
+                    'performanceMeasure', @performanceMeasures.BAC2, ...
+                    'cvFolds', 4, ...
+                    'alpha', 0.99 );
+            end
+            obj.pipeline.addModelCreator( obj.modelCreator );
         end
         %% -------------------------------------------------------------------------------
 
@@ -79,34 +111,6 @@ classdef TwoEarsIdTrainPipe < handle
             % pipeline
             obj.dataSetupAlreadyDone = strcmp(obj.data,newData);
             obj.data = newData;
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function init( obj )
-            obj.setupData( true );
-            if isempty( obj.featureCreator )
-                % default feature creator
-                obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
-            end
-            obj.pipeline.featureCreator = obj.featureCreator;
-            obj.pipeline.resetDataProcs();
-            obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
-            obj.pipeline.addDataPipeProc( ...
-                dataProcs.MultiConfigurationsAFEmodule( ...
-                    dataProcs.ParallelRequestsAFEmodule( ...
-                        obj.binauralSim.getDataFs(), ...
-                        obj.featureCreator.getAFErequests() ...
-                        ) ) );
-            obj.pipeline.addDataPipeProc( ...
-                dataProcs.MultiConfigurationsFeatureProc( obj.featureCreator ) );
-            obj.pipeline.addGatherFeaturesProc( core.GatherFeaturesProc() );
-            if isempty( obj.modelCreator )
-                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
-                    'performanceMeasure', @performanceMeasures.BAC2, ...
-                    'cvFolds', 4, ...
-                    'alpha', 0.99 );
-            end
-            obj.pipeline.addModelCreator( obj.modelCreator );
         end
         %% -------------------------------------------------------------------------------
 

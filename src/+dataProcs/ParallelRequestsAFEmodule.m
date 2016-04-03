@@ -1,13 +1,14 @@
-classdef ParallelRequestsAFEmodule < core.IdProcInterface
+classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
     
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         individualAfeProcs;
-        newAfeProc;
         fs;
         afeRequests;
-        outputWavFileName;
         indFile;
+        currentNewAfeRequestsIdx;
+        currentNewAfeProc;
+        prAfeDepProducer;
     end
     
     %% --------------------------------------------------------------------
@@ -18,71 +19,80 @@ classdef ParallelRequestsAFEmodule < core.IdProcInterface
     methods (Access = public)
         
         function obj = ParallelRequestsAFEmodule( fs, afeRequests )
-            obj = obj@core.IdProcInterface();
             for ii = 1:length( afeRequests )
-                obj.individualAfeProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
+                indProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
             end
+            for ii = 2:length( afeRequests )
+                indProcs{ii}.cacheDirectory = indProcs{1}.cacheDirectory;
+            end
+            obj = obj@dataProcs.IdProcWrapper( indProcs, false );
+            obj.individualAfeProcs = indProcs;
             obj.afeRequests = afeRequests;
             obj.fs = fs;
+            obj.prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
         end
         %% ----------------------------------------------------------------
 
-        function process( obj, inFileName )
-            [p,wavFileName,~] = fileparts( inFileName );
-            [~,wavFileName,~] = fileparts( wavFileName );
-            soundDir = fileparts( p );
-            wavFileName = fullfile( soundDir, wavFileName );
-            ownCfg = obj.getOutputDependencies();
+        function process( obj, wavFilepath )
             newAfeRequests = {};
             newAfeRequestsIdx = [];
             for ii = 1 : numel( obj.individualAfeProcs )
-                obj.individualAfeProcs{ii}.setExternOutputDependencies( ownCfg.extern );
-                afePartProcessed = obj.individualAfeProcs{ii}.hasFileAlreadyBeenProcessed( wavFileName );
+                afePartProcessed = ...
+                    obj.individualAfeProcs{ii}.hasFileAlreadyBeenProcessed( wavFilepath );
                 if ~afePartProcessed
                     newAfeRequests(end+1) = obj.afeRequests(ii);
                     newAfeRequestsIdx(end+1) = ii;
                 end
             end
-            obj.outputWavFileName = wavFileName;
             if ~isempty( newAfeRequestsIdx )
-                obj.newAfeProc = dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
-                obj.newAfeProc.setExternOutputDependencies( ownCfg.extern );
-                obj.newAfeProc.process( inFileName );
+                if ~isequal( newAfeRequestsIdx, obj.currentNewAfeRequestsIdx )
+                    obj.currentNewAfeProc = ...
+                                     dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
+                    obj.currentNewAfeProc.setInputProc( obj.inputProc );
+                    obj.currentNewAfeProc.cacheSystemDir = obj.cacheSystemDir;
+                    obj.currentNewAfeProc.soundDbBaseDir = obj.soundDbBaseDir;
+                    obj.currentNewAfeRequestsIdx = newAfeRequestsIdx;
+                end
+                obj.currentNewAfeProc.process( wavFilepath );
                 for jj = 1 : numel( newAfeRequestsIdx )
                     ii = newAfeRequestsIdx(jj);
-                    obj.individualAfeProcs{ii}.output = obj.newAfeProc.output;
+                    obj.individualAfeProcs{ii}.output = obj.currentNewAfeProc.output;
                     obj.individualAfeProcs{ii}.output.afeData = ...
-                        containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
+                                 containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
                     obj.individualAfeProcs{ii}.output.afeData(1) = ...
-                        obj.newAfeProc.output.afeData(jj);
-                    obj.individualAfeProcs{ii}.saveOutput( wavFileName );
+                                                 obj.currentNewAfeProc.output.afeData(jj);
+                    obj.individualAfeProcs{ii}.saveOutput( wavFilepath );
                 end
             end
-            fprintf( '*\n' );
             for ii = 1 : numel( obj.individualAfeProcs )
                 obj.indFile{ii} = ...
-                    obj.individualAfeProcs{ii}.getOutputFileName( wavFileName ) ;
+                              obj.individualAfeProcs{ii}.getOutputFilepath( wavFilepath );
             end
         end
         %% ----------------------------------------------------------------
         
         function afeDummy = makeDummyData ( obj )
-            dummyAfeProc = dataProcs.AuditoryFEmodule( obj.fs, obj.afeRequests );
-            afeDummy.afeData = dummyAfeProc.makeAFEdata( rand( 4100, 2 ) );
+            afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
             afeDummy.onOffsOut = zeros(0,2);
             afeDummy.annotsOut = [];
         end
         %% ----------------------------------------------------------------
+
+        % override of dataProcs.IdProcWrapper's method
+        function outObj = getOutputObject( obj )
+            outObj = getOutputObject@core.IdProcInterface( obj );
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
 
     %% --------------------------------------------------------------------
     methods (Access = protected)
         
+        % override of dataProcs.IdProcWrapper's method
         function outputDeps = getInternOutputDependencies( obj )
-            for ii = 1 : numel( obj.individualAfeProcs )
-                outputDeps.(['afeDep' num2str(ii)]) = ...
-                    obj.individualAfeProcs{ii}.getInternOutputDependencies.afeParams;
-            end
+            afeDeps = obj.prAfeDepProducer.getInternOutputDependencies.afeParams;
+            outputDeps.afeParams = afeDeps;
         end
         %% ----------------------------------------------------------------
 

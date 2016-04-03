@@ -39,15 +39,15 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function process( obj, inputFileName )
-            in = load( inputFileName );
+        function process( obj, wavFilepath )
+            in = obj.loadInputData( wavFilepath );
             if ~isfield( in, 'afeData' )
                 if isfield( in, 'indFile' )
                     in.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
                     for ii = 1 : numel( in.indFile )
                         if ~exist( in.indFile{ii}, 'file' )
                             error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                                in.indFile{ii}, inputFileName );
+                                in.indFile{ii}, wavFilepath );
                         end
                         tmp = load( in.indFile{ii} );
                         in.afeData(ii) = tmp.afeData(1);
@@ -55,7 +55,7 @@ classdef Base < core.IdProcInterface
                     in.annotsOut = tmp.annotsOut;
                     in.onOffsOut = tmp.onOffsOut;
                 else
-                    error( 'Unforeseen' );
+                    error( 'unexpected input data' );
                 end
             end
             [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
@@ -64,7 +64,7 @@ classdef Base < core.IdProcInterface
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};
-                fprintf( ':' );
+                fprintf( '*' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
                 obj.descriptionBuilt = true;
@@ -72,7 +72,8 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function dummyProcess( obj, afeDummy )
+        function dummyProcess( obj )
+            afeDummy = obj.inputProc.makeDummyData();
             [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
             obj.afeData = afeBlocks{1};
             xd = obj.constructVector();
@@ -88,12 +89,14 @@ classdef Base < core.IdProcInterface
                 afeSignal = afeData(afeKey{1});
                 if isa( afeSignal, 'cell' )
                     for ii = 1 : numel( afeSignal )
-                        afeSignalExtract{ii} = afeSignal{ii}.cutSignalCopy( obj.blockSize_s, backOffset_s );
-                        afeSignalExtract{ii}.reduceBufferToArray();
+                        afeSignalExtract{ii} = ...
+                            afeSignal{ii}.cutSignalCopyReducedToArray( obj.blockSize_s,...
+                                                                       backOffset_s );
                     end
                 else
-                    afeSignalExtract = afeSignal.cutSignalCopy( obj.blockSize_s, backOffset_s );
-                    afeSignalExtract.reduceBufferToArray();
+                    afeSignalExtract = ...
+                        afeSignal.cutSignalCopyReducedToArray( obj.blockSize_s, ...
+                                                               backOffset_s );
                 end
                 afeBlock(afeKey{1}) = afeSignalExtract;
                 fprintf( '.' );

@@ -1,12 +1,20 @@
+set namespaceSeparator none
+
+
 class TwoEarsIdTrainPipe{
   Flist trainset
   Flist testset
   init( sceneCfgs, hrir )
   setupData()
 }
-note left: top-level user interface,\nwrapping pipeline objects\npredefined for Two!Ears context
 TwoEarsIdTrainPipe o-- "pipeline (1)" core.IdentificationTrainingPipeline
 TwoEarsIdTrainPipe ..> dataProcs.MultiSceneCfgsIdProcWrapper: sets scene configuration(s)
+note as Ntetp
+  top-level user interface,
+  wrapping pipeline objects
+  predefined for Two!Ears context
+end note
+Ntetp .. TwoEarsIdTrainPipe
 
 
 class core.IdentificationTrainingPipeline{
@@ -17,10 +25,14 @@ class core.IdentificationTrainingPipeline{
   setTestData( testData )
   run( modelNames )
 }
-note left: central pipeline class, controlling execution
 core.IdentificationTrainingPipeline o-- "data (1)" core.IdentTrainPipeData
 core.IdentificationTrainingPipeline *-- "dataPipeProcs (*)" core.DataPipeProc: runs cascade
 core.IdentificationTrainingPipeline o-- "trainer (1)" modelTrainers.Base: runs
+note as Ncitp
+  central pipeline class,
+  controlling execution
+end note
+Ncitp .. core.IdentificationTrainingPipeline
 
 
 class core.DataPipeProc{
@@ -28,9 +40,12 @@ class core.DataPipeProc{
   checkDataFiles()
   run()
 }
-note left: processes list of files
 core.DataPipeProc o-- "dataFileProcessor (1)" core.IdProcInterface: executes for each file
 core.DataPipeProc o-- core.IdentTrainPipeData
+note as Ncdpp
+  processes list of files
+end note
+Ncdpp .. core.DataPipeProc
 
 
 class core.IdCacheDirectory{
@@ -39,7 +54,7 @@ class core.IdCacheDirectory{
   loadCacheDirectory()
   saveCacheDirectory()
 }
-core.IdCacheDirectory *-- "treeRoot (1)" core.IdCacheTreeElem
+core.IdCacheDirectory *-up- "treeRoot (1)" core.IdCacheTreeElem
 
 
 class core.IdCacheTreeElem{
@@ -85,9 +100,12 @@ abstract class core.IdProcInterface{
   {abstract} getInternOutputDependencies()
   {abstract} getOutput()
 }
-note left: processes individual files
-core.IdProcInterface o-- "inputProc (1)" core.IdProcInterface
-core.IdProcInterface *-- "cacheDirectory (1)" core.IdCacheDirectory
+core.IdProcInterface o-up- "inputProc (1)" core.IdProcInterface
+core.IdProcInterface *-up- "cacheDirectory (1)" core.IdCacheDirectory
+note as Ncipi
+  processes individual files
+end note
+Ncipi .. core.IdProcInterface
 
 
 core.IdProcInterface <|-- dataProcs.AuditoryFEmodule
@@ -97,7 +115,10 @@ class dataProcs.AuditoryFEmodule{
   afeParams
   process( wavFilepath)
 }
-note left: output: AFE features
+note as Ndafm
+  output: AFE features
+end note
+Ndafm .. dataProcs.AuditoryFEmodule
 
 
 core.IdProcInterface <|-- dataProcs.GatherFeaturesProc
@@ -113,8 +134,12 @@ core.IdProcInterface <|-- dataProcs.IdProcWrapper
 class dataProcs.IdProcWrapper{
   process( wavFilepath)
 }
-note left: decorates another IdProcInterface\nwith additional functionality
 dataProcs.IdProcWrapper o-- "wrappedProcs (*)" core.IdProcInterface
+note as Ndipw
+  decorates another IdProcInterface
+  with additional functionality
+end note
+Ndipw .. dataProcs.IdProcWrapper
 
 
 core.IdProcInterface <|-- dataProcs.IdSimConvRoomWrapper
@@ -125,8 +150,12 @@ class dataProcs.IdSimConvRoomWrapper{
   getDataFs()
   process( wavFilepath)
 }
-note left: executes binaural simulation,\noutput: earsignals, event on-/offset times
 dataProcs.IdSimConvRoomWrapper o-- "sceneConfigs (1)" sceneConfig.SceneConfiguration
+note as Ndiscrw
+  executes binaural simulation,
+  output: earsignals, event on-/offset times
+end note
+Ndiscrw .. dataProcs.IdSimConvRoomWrapper
 
 
 dataProcs.IdProcWrapper <|-- dataProcs.MultiSceneCfgsIdProcWrapper
@@ -135,9 +164,14 @@ class dataProcs.MultiSceneCfgsIdProcWrapper{
   processSaveAndGetOutput( wavFilepath )
   process( wavFilepath)
 }
-note left: executes wrapped IdProcInterface\nfor each scene configuration separately.\nOutput: nil
 dataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneProc (1)" dataProcs.SceneEarSignalProc
 dataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneConfigs (*)" sceneConfig.SceneConfiguration
+note as Ndmsc
+  executes wrapped IdProcInterface
+  for each scene configuration separately.
+  Output: nil
+end note
+Ndmsc .. dataProcs.MultiSceneCfgsIdProcWrapper
 
 
 dataProcs.IdProcWrapper <|-- dataProcs.ParallelRequestsAFEmodule
@@ -146,8 +180,13 @@ class dataProcs.ParallelRequestsAFEmodule{
   afeRequests
   process( wavFilepath)
 }
-note left: intelligently splits and combines\nAFE requests, caches them individually.\nOutput: cache file pathes of individual requests
 dataProcs.ParallelRequestsAFEmodule *-- "individualAfeProcs (*)" dataProcs.AuditoryFEmodule
+note as Ndpram
+  intelligently splits and combines
+  AFE requests, caches them individually.
+  Output: cache file pathes of individual requests
+end note
+Ndpram .. dataProcs.ParallelRequestsAFEmodule
 
 
 dataProcs.IdProcWrapper <|-- dataProcs.SceneEarSignalProc
@@ -158,9 +197,14 @@ class dataProcs.SceneEarSignalProc{
   {static} runningEnergy( fs, signal, blockSec, stepSec )
   {static} detectActivity( fs, signal, thresdB, hSec, blockSec, stepSec )
 }
-note left: "scripts" IdSimConvRoomWrapper,\nmixes scenes (several sources).\nOutput: earsignals, event on-/offset times
 dataProcs.SceneEarSignalProc o-- "sceneConfig (1)" sceneConfig.SceneConfiguration
 dataProcs.SceneEarSignalProc o-- "binauralSim (1)" dataProcs.IdSimConvRoomWrapper
+note as Ndsesp
+  "scripts" IdSimConvRoomWrapper,
+  mixes scenes (several sources).
+  Output: earsignals, event on-/offset times
+end note
+Ndsesp .. dataProcs.SceneEarSignalProc
 
 
 core.IdProcInterface <|-- featureCreators.Base
@@ -180,7 +224,13 @@ abstract class featureCreators.Base{
   {abstract} getFeatureInternOutputDependencies()
   {abstract} constructVector()
 }
-note left: cuts "streams" (wavs) into\nblocks, labels them, and\nconstructs feature vectors.\nOutput: x, y
+note as Nfb
+  cuts "streams" (wavs) into
+  blocks, labels them, and
+  constructs feature vectors.
+  Output: x, y
+end note
+Nfb .. featureCreators.Base
 
 
 featureCreators.Base <|-- featureCreators.FeatureSet1Blockmean
@@ -189,7 +239,12 @@ class featureCreators.FeatureSet1Blockmean{
   constructVector()
   getFeatureInternOutputDependencies()
 }
-note left: constructs moments over time of\nams, ratemap, spectral\nfeatures and onset maps
+note as Nff1b
+  constructs moments over time of
+  ams, ratemap, spectral features
+  and onset maps
+end note
+Nff1b .. featureCreators.FeatureSet1Blockmean
 
 
 abstract class models.Base{
@@ -229,8 +284,12 @@ class models.HPSmodel{
   hpsSet
   applyModelMasked( x )
 }
-note left: wrapper model to also\nsave hps sets
 models.HPSmodel *-- "model (1) " models.Base
+note as Nmh
+  wrapper model to also
+  save hps sets
+end note
+Nmh .. models.HPSmodel
 
 
 

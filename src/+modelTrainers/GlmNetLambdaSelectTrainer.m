@@ -1,17 +1,22 @@
 classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
-    
-    %% -----------------------------------------------------------------------------------
+    % GlmNetLambdaSelectTrainer trainer for a GlmNetModel
+    %   Will fit an elastic net regression model. For alpha = 1 this 
+    %   corresponds to LASSO regularization. 
+    %   This trainer will additionally do a k-fold 
+    %   crossvalidation to choose the best lambda along the path according
+    %   to a performance measure.
+    %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
-        cvTrainer;
+        cvTrainer;      % for k-fold cross validation
         coreTrainer;
         fullSetModel;
-        alpha;
+        alpha;          % elastic net parameter
         family;
-        nLambda;
-        cvFolds;
+        nLambda;        % number of lambdas on the regularization path
+        cvFolds;        % no. of folds for cross validation
     end
     
-    %% -----------------------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods
 
         function obj = GlmNetLambdaSelectTrainer( varargin )

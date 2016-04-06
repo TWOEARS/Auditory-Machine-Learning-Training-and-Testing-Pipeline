@@ -1,0 +1,509 @@
+set namespaceSeparator none
+
+
+class TwoEarsIdTrainPipe{
+  Flist trainset
+  Flist testset
+  init( sceneCfgs, hrir )
+  setupData()
+}
+TwoEarsIdTrainPipe o-- "pipeline (1)" core.IdentificationTrainingPipeline
+TwoEarsIdTrainPipe ..> dataProcs.MultiSceneCfgsIdProcWrapper: sets scene configuration(s)
+note as Ntetp
+  top-level user interface,
+  wrapping pipeline objects
+  predefined for Two!Ears context
+end note
+Ntetp .. TwoEarsIdTrainPipe
+
+
+class core.IdentificationTrainingPipeline{
+  addModelCreator( trainer )
+  addDataPipeProc( idProc )
+  addGatherFeaturesProc( gatherFeaturesProc )
+  setTrainData( trainData )
+  setTestData( testData )
+  run( modelNames )
+}
+core.IdentificationTrainingPipeline o-- "data (1)" core.IdentTrainPipeData
+core.IdentificationTrainingPipeline *-- "dataPipeProcs (*)" core.DataPipeProc: runs cascade
+core.IdentificationTrainingPipeline o-- "trainer (1)" modelTrainers.Base: runs
+note as Ncitp
+  central pipeline class,
+  controlling execution
+end note
+Ncitp .. core.IdentificationTrainingPipeline
+
+
+class core.DataPipeProc{
+  connectToOutputFrom( outputtingProc )
+  checkDataFiles()
+  run()
+}
+core.DataPipeProc o-- "dataFileProcessor (1)" core.IdProcInterface: executes for each file
+core.DataPipeProc o-- core.IdentTrainPipeData
+note as Ncdpp
+  processes list of files
+end note
+Ncdpp .. core.DataPipeProc
+
+
+class core.IdCacheDirectory{
+  setCacheTopDir( topDir )
+  getCacheFilepath( cfg, createIfnExist )
+  loadCacheDirectory()
+  saveCacheDirectory()
+}
+core.IdCacheDirectory *-up- "treeRoot (1)" core.IdCacheTreeElem
+
+
+class core.IdCacheTreeElem{
+  cfg
+  path
+  getCfg( cfgList, createIfMissing )
+  integrateOtherTreeNode( otherNode )
+}
+core.IdCacheTreeElem *-- "cfgSubs (*)" core.IdCacheTreeElem
+
+
+class core.IdentTrainPipeData{
+  classNames
+  data
+  subsref()
+  subsasgn()
+  splitInPermutedStratifiedFolds( nFolds )
+  saveDataFList( flistName, baseDir )
+  loadWavFileList( wavflist )
+  {static} combineData( varargin )
+}
+core.IdentTrainPipeData *-- "files (*)" core.IdentTrainPipeDataElem: in "data" array
+
+
+class core.IdentTrainPipeDataElem{
+  wavFileName
+  x
+  y
+  mc
+}
+
+
+abstract class core.IdProcInterface{
+  hasFileAlreadyBeenProcessed( wavFilepath )
+  getOutputFilepath( wavFilepath )
+  loadProcessedData( wavFilepath )
+  loadInputData( wavFilepath )
+  processSaveAndGetOutput( wavFilepath )
+  saveOutput( wavFilepath )
+  getOutputDependencies()
+  ..
+  {abstract} process( wavFilepath )
+  {abstract} getInternOutputDependencies()
+  {abstract} getOutput()
+}
+core.IdProcInterface o-up- "inputProc (1)" core.IdProcInterface
+core.IdProcInterface *-up- "cacheDirectory (1)" core.IdCacheDirectory
+note as Ncipi
+  processes individual files
+end note
+Ncipi .. core.IdProcInterface
+
+
+core.IdProcInterface <|-- dataProcs.AuditoryFEmodule
+class dataProcs.AuditoryFEmodule{
+  managerObject
+  dataObject
+  afeParams
+  process( wavFilepath)
+}
+note as Ndafm
+  output: AFE features
+end note
+Ndafm .. dataProcs.AuditoryFEmodule
+
+
+core.IdProcInterface <|-- dataProcs.GatherFeaturesProc
+class dataProcs.GatherFeaturesProc{
+  sceneCfgDataUseRatio
+  prioClass
+  process( wavFilepath)
+}
+dataProcs.GatherFeaturesProc ..> core.IdentTrainPipeData: loads feature vectors and labels
+
+
+core.IdProcInterface <|-- dataProcs.IdProcWrapper
+class dataProcs.IdProcWrapper{
+  process( wavFilepath)
+}
+dataProcs.IdProcWrapper o-- "wrappedProcs (*)" core.IdProcInterface
+note as Ndipw
+  decorates another IdProcInterface
+  with additional functionality
+end note
+Ndipw .. dataProcs.IdProcWrapper
+
+
+core.IdProcInterface <|-- dataProcs.IdSimConvRoomWrapper
+class dataProcs.IdSimConvRoomWrapper{
+  convRoomSim
+  reverberationMaxOrder
+  IRDataset
+  getDataFs()
+  process( wavFilepath)
+}
+dataProcs.IdSimConvRoomWrapper o-- "sceneConfigs (1)" sceneConfig.SceneConfiguration
+note as Ndiscrw
+  executes binaural simulation,
+  output: earsignals, event on-/offset times
+end note
+Ndiscrw .. dataProcs.IdSimConvRoomWrapper
+
+
+dataProcs.IdProcWrapper <|-- dataProcs.MultiSceneCfgsIdProcWrapper
+class dataProcs.MultiSceneCfgsIdProcWrapper{
+  hasFileAlreadyBeenProcessed( wavFilepath )
+  processSaveAndGetOutput( wavFilepath )
+  process( wavFilepath)
+}
+dataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneProc (1)" dataProcs.SceneEarSignalProc
+dataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneConfigs (*)" sceneConfig.SceneConfiguration
+note as Ndmsc
+  executes wrapped IdProcInterface
+  for each scene configuration separately.
+  Output: nil
+end note
+Ndmsc .. dataProcs.MultiSceneCfgsIdProcWrapper
+
+
+dataProcs.IdProcWrapper <|-- dataProcs.ParallelRequestsAFEmodule
+class dataProcs.ParallelRequestsAFEmodule{
+  fs
+  afeRequests
+  process( wavFilepath)
+}
+dataProcs.ParallelRequestsAFEmodule *-- "individualAfeProcs (*)" dataProcs.AuditoryFEmodule
+note as Ndpram
+  intelligently splits and combines
+  AFE requests, caches them individually.
+  Output: cache file pathes of individual requests
+end note
+Ndpram .. dataProcs.ParallelRequestsAFEmodule
+
+
+dataProcs.IdProcWrapper <|-- dataProcs.SceneEarSignalProc
+class dataProcs.SceneEarSignalProc{
+  getDatafs()
+  process( wavFilepath)
+  {static} adjustSNR( fs, signal1, sig1OnOffs, signal2, snrdB )
+  {static} runningEnergy( fs, signal, blockSec, stepSec )
+  {static} detectActivity( fs, signal, thresdB, hSec, blockSec, stepSec )
+}
+dataProcs.SceneEarSignalProc o-- "sceneConfig (1)" sceneConfig.SceneConfiguration
+dataProcs.SceneEarSignalProc o-- "binauralSim (1)" dataProcs.IdSimConvRoomWrapper
+note as Ndsesp
+  "scripts" IdSimConvRoomWrapper,
+  mixes scenes (several sources).
+  Output: earsignals, event on-/offset times
+end note
+Ndsesp .. dataProcs.SceneEarSignalProc
+
+
+core.IdProcInterface <|-- featureCreators.Base
+abstract class featureCreators.Base{
+  shiftSize_s
+  minBlockToEventRatio
+  blockSize_s
+  labelBlockSize_s
+  description
+  setAfeData( afeData )
+  process( wavFilepath )
+  dummyProcess()
+  cutDataBlock( afeData, backOffset_s )
+  blockifyAndLabel( afeData, onOffs_s, annotsOut )
+  ..
+  {abstract} getAFErequests()
+  {abstract} getFeatureInternOutputDependencies()
+  {abstract} constructVector()
+}
+note as Nfb
+  cuts "streams" (wavs) into
+  blocks, labels them, and
+  constructs feature vectors.
+  Output: x, y
+end note
+Nfb .. featureCreators.Base
+
+
+featureCreators.Base <|-- featureCreators.FeatureSet1Blockmean
+class featureCreators.FeatureSet1Blockmean{
+  getAFErequests()
+  constructVector()
+  getFeatureInternOutputDependencies()
+}
+note as Nff1b
+  constructs moments over time of
+  ams, ratemap, spectral features
+  and onset maps
+end note
+Nff1b .. featureCreators.FeatureSet1Blockmean
+
+
+abstract class models.Base{
+  featureMask
+  applyModel( x )
+  verbose( newV )
+  ..
+  {abstract} applyModelMasked( x )
+  ..
+  {static} getPerformance( model, testSet, positiveClass, perfMeasure, maxDataSize, balMaxData )
+}
+models.Base ..> performanceMeasures.Base: produces
+
+models.Base <|-- models.DataScalingModel
+abstract class models.DataScalingModel{
+  dataTranslators
+  dataScalors
+  scale2zeroMeanUnitVar( x, saveScalingFactors )
+  ..
+  {abstract} applyModelToScaledData( x )
+}
+
+
+models.DataScalingModel <|-- models.GlmNetModel
+class models.GlmNetModel{
+  setLambda( newLambda )
+  getCoefImpacts( lambda )
+  getBestLambdaCVresults()
+  getBestMinStdCVresults()
+  getHighestLambdaWithinStdCVresults()
+  getLambdasAndNCoefs()
+}
+
+
+models.Base <|-- models.HPSmodel
+class models.HPSmodel{
+  hpsSet
+  applyModelMasked( x )
+}
+models.HPSmodel *-- "model (1) " models.Base
+note as Nmh
+  wrapper model to also
+  save hps sets
+end note
+Nmh .. models.HPSmodel
+
+
+
+abstract class modelTrainers.Base{
+  {static} balMaxData
+  {static} featureMask
+  maxDataSize
+  setPositiveClass( modelName )
+  setPerformanceMeasure( newPerformanceMeasure )
+  getModel()
+  verbose( newV )
+  getPerformance()
+  run()
+  getPermutedTrainingData()
+  ..
+  {abstract} buildModel( x, y )
+  {abstract} giveTrainedModel()
+}
+modelTrainers.Base ..> models.Base: produces
+modelTrainers.Base o-- "performanceMeasure (1)" performanceMeasures.Base
+modelTrainers.Base o-- "trainSet (1), testSet (1)" core.IdentTrainPipeData
+
+modelTrainers.Base <|-- modelTrainers.CVtrainer
+class modelTrainers.CVtrainer{
+  models
+  setNumberOfFolds( nFolds )
+  run()
+  buildModel()
+  getPerformance()
+}
+modelTrainers.CVtrainer o-- "trainer (1)" modelTrainers.Base
+
+
+modelTrainers.Base <|-- modelTrainers.GlmNetLambdaSelectTrainer
+class modelTrainers.GlmNetLambdaSelectTrainer{
+  alpha
+  family
+  nLambda
+  cvFolds
+  run()
+  buildModel()
+}
+modelTrainers.GlmNetLambdaSelectTrainer *-- "cvTrainer (1)" modelTrainers.CVtrainer
+modelTrainers.GlmNetLambdaSelectTrainer *-- "coreTrainer (1)" modelTrainers.GlmNetTrainer
+
+
+modelTrainers.Base <|-- modelTrainers.GlmNetTrainer
+class modelTrainers.GlmNetTrainer{
+  alpha
+  family
+  nLambda
+  lambda
+  buildModel( x, y )
+}
+modelTrainers.GlmNetTrainer ..> models.GlmNetModel: produces
+
+
+modelTrainers.Base <|-- modelTrainers.HpsTrainer
+abstract class modelTrainers.HpsTrainer{
+  hpsSets
+  hpsRefineStages
+  hpsSearchBudget
+  hpsCvFolds
+  hpsMaxDataSize
+  finalMaxDataSize
+  run()
+  ..
+  {abstract} getHpsGridSearchSets()
+  {abstract} refineGridTrainer( hps )
+}
+modelTrainers.HpsTrainer *-- "hpsCVtrainer (1)" modelTrainers.CVtrainer
+modelTrainers.HpsTrainer *-- "coreTrainer (1)" modelTrainers.Base
+
+
+modelTrainers.Base <|-- modelTrainers.LoadModelNoopTrainer
+class modelTrainers.LoadModelNoopTrainer{
+  modelPathBuilder
+  modelParams
+  buildModel( x, y )
+  giveTrainedModel()
+}
+
+
+modelTrainers.HpsTrainer <|-- modelTrainers.SVMmodelSelectTrainer
+class modelTrainers.SVMmodelSelectTrainer{
+  hpsEpsilons
+  hpsKernels
+  hpsCrange
+  hpsGammaRange
+  makeProbModel
+  getHpsGridSearchSets()
+  refineGridTrainer( hps )
+}
+modelTrainers.SVMmodelSelectTrainer *.. modelTrainers.SVMtrainer
+modelTrainers.HpsTrainer ..> models.HPSmodel: produces
+
+
+modelTrainers.Base <|-- modelTrainers.SVMtrainer
+class modelTrainers.SVMtrainer{
+  epsilon
+  kernel
+  c
+  gamma
+  makeProbModel
+  buildModel( x, y )
+}
+
+
+abstract class performanceMeasures.Base{
+  performance
+  datapointInfo
+  Base( yTrue, yPred, datapointInfo )
+  ..
+  {abstract} calcPerformance( yTrue, yPred, dpiarg )
+  {abstract} eqPm( other )
+  {abstract} gtPm( other )
+  {abstract} char()
+  {abstract} double()
+}
+
+
+performanceMeasures.Base <|-- performanceMeasures.BAC2
+class performanceMeasures.BAC2{
+  tp
+  fp
+  tn
+  fn
+  sensitivity
+  specificity
+  acc
+  BAC2( yTrue, yPred, datapointInfo )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, dpi )
+  makeDatapointInfoStats( fieldname, compiledPerfField )
+}
+
+
+class sceneConfig.ValGen{
+  type
+  val
+  instantiate()
+  value()
+  isequal( other )
+}
+
+
+class sceneConfig.SourceBase{
+  data
+  offset
+  instantiate()
+  isequal( other )
+}
+
+
+class sceneConfig.SceneConfiguration{
+  brirAzmIdx
+  loop
+  addSource( source, snr, loop )
+  addRoom( room )
+  setBRIRazm( azmIdx )
+  instantiate()
+  getSingleConfig( srcIdx )
+  isequal( other )
+}
+sceneConfig.SceneConfiguration *-- "sources (*)" sceneConfig.SourceBase
+sceneConfig.SceneConfiguration *-- "SNRs (*)" sceneConfig.ValGen
+sceneConfig.SceneConfiguration *-- "room (1)" sceneConfig.RoomValGen
+
+
+sceneConfig.ValGen <|-- sceneConfig.RoomValGen
+class sceneConfig.RoomValGen{
+  RoomValGen( val )
+  value()
+}
+
+
+sceneConfig.SourceBase <|-- sceneConfig.PointSource
+class sceneConfig.PointSource{
+  instantiate()
+  isequal( other )
+}
+sceneConfig.PointSource *-- "azimuth (1)" sceneConfig.ValGen
+sceneConfig.PointSource *-- "distance (1)" sceneConfig.ValGen
+
+
+sceneConfig.ValGen <|-- sceneConfig.NoiseValGen
+class sceneConfig.NoiseValGen{
+  NoiseValGen( val )
+  value()
+}
+
+
+sceneConfig.ValGen <|-- sceneConfig.FileListValGen
+class sceneConfig.FileListValGen{
+  FileListValGen( val )
+  isequal( other )
+}
+
+
+sceneConfig.SourceBase <|-- sceneConfig.DiffuseSource
+class sceneConfig.DiffuseSource{
+  instantiate()
+  isequal( other )
+}
+
+
+sceneConfig.SourceBase <|-- sceneConfig.BRIRsource
+class sceneConfig.BRIRsource{
+  brirFName
+  speakerId
+  isequal( other )
+}
+
+

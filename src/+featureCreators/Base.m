@@ -1,15 +1,16 @@
 classdef Base < core.IdProcInterface
-
+    % Base Abstract base class for specifying features sets with which features
+    % are extracted.
     %% --------------------------------------------------------------------
-    properties %(SetAccess = private)
-        shiftSize_s;
+    properties (SetAccess = private)
+        shiftSize_s;                % shift between blocks
         minBlockToEventRatio;
         maxNegBlockToEventRatio = 0;
         x;
         y;
-        blockSize_s;
+        blockSize_s;                % size of the AFE data block in seconds
         labelBlockSize_s;
-        afeData;
+        afeData;                    % AFE signals
         description;
         descriptionBuilt = false;
         blockCreator;
@@ -40,15 +41,15 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function process( obj, inputFileName )
-            in = load( inputFileName );
+        function process( obj, wavFilepath )
+            in = obj.loadInputData( wavFilepath );
             if ~isfield( in, 'afeData' )
                 if isfield( in, 'indFile' )
                     in.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
                     for ii = 1 : numel( in.indFile )
                         if ~exist( in.indFile{ii}, 'file' )
                             error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                                in.indFile{ii}, inputFileName );
+                                in.indFile{ii}, wavFilepath );
                         end
                         tmp = load( in.indFile{ii} );
                         in.afeData(ii) = tmp.afeData(1);
@@ -56,7 +57,7 @@ classdef Base < core.IdProcInterface
                     in.annotsOut = tmp.annotsOut;
                     in.onOffsOut = tmp.onOffsOut;
                 else
-                    error( 'Unforeseen' );
+                    error( 'unexpected input data' );
                 end
             end
             [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
@@ -65,7 +66,7 @@ classdef Base < core.IdProcInterface
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};
-                fprintf( ':' );
+                fprintf( '*' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
                 obj.descriptionBuilt = true;
@@ -73,7 +74,8 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function dummyProcess( obj, afeDummy )
+        function dummyProcess( obj )
+            afeDummy = obj.inputProc.makeDummyData();
             [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
             obj.afeData = afeBlocks{1};
             xd = obj.constructVector();
@@ -89,12 +91,14 @@ classdef Base < core.IdProcInterface
                 afeSignal = afeData(afeKey{1});
                 if isa( afeSignal, 'cell' )
                     for ii = 1 : numel( afeSignal )
-                        afeSignalExtract{ii} = afeSignal{ii}.cutSignalCopy( obj.blockSize_s, backOffset_s );
-                        afeSignalExtract{ii}.reduceBufferToArray();
+                        afeSignalExtract{ii} = ...
+                            afeSignal{ii}.cutSignalCopyReducedToArray( obj.blockSize_s,...
+                                                                       backOffset_s );
                     end
                 else
-                    afeSignalExtract = afeSignal.cutSignalCopy( obj.blockSize_s, backOffset_s );
-                    afeSignalExtract.reduceBufferToArray();
+                    afeSignalExtract = ...
+                        afeSignal.cutSignalCopyReducedToArray( obj.blockSize_s, ...
+                                                               backOffset_s );
                 end
                 afeBlock(afeKey{1}) = afeSignalExtract;
                 fprintf( '.' );
@@ -181,6 +185,8 @@ classdef Base < core.IdProcInterface
         %% ----------------------------------------------------------------
 
         function b = makeBlockFromAfe( obj, afeIdx, chIdx, func, grps, varargin )
+            % makeBlockFromAfe transform AFE data into a featrue block
+            %
             afedat = obj.afeData(afeIdx);
             afedat = afedat{chIdx};
             b{1} = func( afedat );
@@ -213,7 +219,7 @@ classdef Base < core.IdProcInterface
                 end
                 vaiic = cat( 1, vaii{:} );
                 for jj = 1 : size( vaii{1}, 2 )
-                    b1ii{1,jj} = { b2{:}, vaiic{:,jj}};
+                    b1ii{1,jj} = { b2{:}, vaiic{:,jj} };
                 end
                 b{1+ii} = b1ii;
                 clear b1ii;

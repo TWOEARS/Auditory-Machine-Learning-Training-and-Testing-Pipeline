@@ -1,21 +1,30 @@
 classdef IdentificationTrainingPipeline < handle
-
+    % IdentificationTrainingPipeline The identification training pipeline
+    %   facilitates training models for classifying sounds.
+    %   It manages the data for training and testing, orchestrates feature
+    %   extraction, optimizes the model and produces performance metrics 
+    %   for evaluating a model.
+    %   Trained models can then be integrated into the blackboard system
+    %   by loading them in an identitiy knowledge source
+    %
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
-        generalizationPerfomanceAssessCVtrainer;
+        generalizationPerfomanceAssessCVtrainer; % k-fold cross validation
         dataPipeProcs;
         gatherFeaturesProc;
         data;       
         trainSet;
         testSet;
+        cacheSystemDir;
+        soundDbBaseDir;
     end
     
     %% --------------------------------------------------------------------
     properties 
         blockCreator;
-        featureCreator;
-        verbose = true;
+        featureCreator; % feature extraction
+        verbose = true; % log level
     end
     
     %% --------------------------------------------------------------------
@@ -26,7 +35,13 @@ classdef IdentificationTrainingPipeline < handle
     methods
         
         %% Constructor.
-        function obj = IdentificationTrainingPipeline()
+        function obj = IdentificationTrainingPipeline( varargin )
+            ip = inputParser;
+            ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.addOptional( 'soundDbBaseDir', '' );
+            ip.parse( varargin{:} );
+            obj.cacheSystemDir = ip.Results.cacheSystemDir;
+            obj.soundDbBaseDir = ip.Results.soundDbBaseDir;
             obj.dataPipeProcs = {};
             obj.data = core.IdentTrainPipeData();
             obj.trainSet = core.IdentTrainPipeData();
@@ -52,11 +67,12 @@ classdef IdentificationTrainingPipeline < handle
         end
         %   -------------------
 
-        function addDataPipeProc( obj, dataProc )
-            if ~isa( dataProc, 'core.IdProcInterface' )
-                error( 'dataProc must be of type core.IdProcInterface.' );
+        function addDataPipeProc( obj, idProc )
+            if ~isa( idProc, 'core.IdProcInterface' )
+                error( 'idProc must be of type core.IdProcInterface.' );
             end
-            dataPipeProc = core.DataPipeProc( dataProc ); 
+            idProc.setCacheSystemDir( obj.cacheSystemDir, obj.soundDbBaseDir );
+            dataPipeProc = core.DataPipeProc( idProc ); 
             dataPipeProc.init();
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
@@ -64,8 +80,10 @@ classdef IdentificationTrainingPipeline < handle
         %   -------------------
         
         function addGatherFeaturesProc( obj, gatherFeaturesProc )
-            gatherFeaturesProc.connectData( obj.data );
-            obj.gatherFeaturesProc = gatherFeaturesProc;
+            gatherFeaturesProc.connectIdData( obj.data );
+            obj.gatherFeaturesProc = core.DataPipeProc( gatherFeaturesProc );
+            obj.gatherFeaturesProc.init();
+            obj.gatherFeaturesProc.connectData( obj.data );
         end
         %% ------------------------------------------------------------------------------- 
         
@@ -107,8 +125,6 @@ classdef IdentificationTrainingPipeline < handle
         %   models: 'all' for all training data classes (but not 'general')
         %           cell array of strings with model names for particular
         %           set of models
-        %   trainSetShare:  value between 0 and 1. testSet gets share of
-        %                   1 - trainSetShare.
         %   nGenAssessFolds: number of folds of generalization assessment
         %   cross validation (default: 0 - no folds)
         %
@@ -124,34 +140,29 @@ classdef IdentificationTrainingPipeline < handle
                 models(strcmp('general', models)) = [];
             end
 
-            for ii = 1 : length( obj.dataPipeProcs )
-                if ii > 1
-                    obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );
-                end
+            for ii = 2 : length( obj.dataPipeProcs )
+                obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );
             end
+            successiveProcFileList = [];
             for ii = length( obj.dataPipeProcs ) : -1 : 1
-                if ii == length( obj.dataPipeProcs )
-                    obj.dataPipeProcs{ii}.checkDataFiles();
-                else
-                    obj.dataPipeProcs{ii}.checkDataFiles(...
-                        obj.dataPipeProcs{ii+1}.precedingFileNeededList);
-                end
+                obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileList );
+                successiveProcFileList = obj.dataPipeProcs{ii}.fileListOverlay;
             end
             for ii = 1 : length( obj.dataPipeProcs )
                 obj.dataPipeProcs{ii}.run();
             end
             
-            if strcmp(models{1}, 'donttrain'), return; end;
+            if strcmp(models{1}, 'onlyGenCache'), return; end;
             
             obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
             obj.gatherFeaturesProc.run();
 
             if isempty( obj.featureCreator.description )
-                afe = obj.dataPipeProcs{end-1}.dataFileProcessor.afeProc;
-                obj.featureCreator.dummyProcess( afe.makeDummyData );
+                obj.featureCreator.dummyProcess();
             end
             featureCreator = obj.featureCreator;
-            lastDataProcParams = obj.dataPipeProcs{end}.getOutputDependencies();
+            lastDataProcParams = ...
+                obj.gatherFeaturesProc.dataFileProcessor.getOutputDependencies();
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;
                 save( 'dataStore.mat', ...

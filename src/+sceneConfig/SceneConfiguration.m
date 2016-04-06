@@ -1,6 +1,6 @@
 classdef SceneConfiguration < matlab.mixin.Copyable
-
-    %% -----------------------------------------------------------------------------------
+% SceneConfiguration Configure a scene by room, SNR and sources
+    %% --------------------------------------------------------------------
     properties (SetAccess = protected)
         sources; % sources(1) is the main source, data will be from pipeline data
         SNRs; % SNRs(1) is always interpreted as 0
@@ -11,16 +11,17 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         loop; % loop sources that are shorter than the main source
     end
 
-    %% -----------------------------------------------------------------------------------
+    %% --------------------------------------------------------------------
     methods
         
-        function obj = SceneConfiguration() % creates a "clean" configuration
+        function obj = SceneConfiguration()
+            % creates a "clean" configuration
             obj.room = sceneConfig.RoomValGen.empty;
             obj.SNRs = sceneConfig.ValGen.empty;
             obj.sources = sceneConfig.SourceBase.empty;
             obj.loop = [];
         end
-        %% -------------------------------------------------------------------------------
+        %% ----------------------------------------------------------------
         
         function addSource( obj, source, snr, loop )
             obj.sources(end+1) = source;

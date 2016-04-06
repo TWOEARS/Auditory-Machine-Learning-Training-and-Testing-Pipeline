@@ -1,47 +1,101 @@
 classdef TwoEarsIdTrainPipe < handle
-
-    %% -----------------------------------------------------------------------------------
+    % TwoEarsIdTrainPipe Two!Ears identification training pipeline wrapper
+    %   This wraps around the Two!Ears identification training pipeline
+    %   which facilitates training models for classifying sounds.
+    %   It manages the data for training and testing, drives the binaural
+    %   simulator, orchestrates feature extraction, optimizes the model and
+    %   produces performance metrics for evaluating a model.
+    %   Trained models can then be integrated into the blackboard system
+    %   by loading them in an identitiy knowledge source
+    %
+    %   The train and test can be specified individually or the data is
+    %   provided to be split by the pipeline
+    %
+    %% --------------------------------------------------------------------
     properties (SetAccess = public)
         blockCreator = [];
-        featureCreator = [];
-        modelCreator = [];
-        trainset = [];
-        testset = [];
-        data = [];
+        featureCreator = [];    % feature extraction (default: featureCreators.RatemapPlusDeltasBlockmean())
+        modelCreator = [];      % model trainer
+        trainset = [];          % file list with train examples
+        testset = [];           % file list with test examples
+        data = [];              % list of files to split in train and test
         trainsetShare = 0.5;
     end
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         pipeline;
-        binauralSim;
-        sceneConfBinauralSim;
-        multiConfBinauralSim;
-        dataSetupAlreadyDone = false;
+        dataSetupAlreadyDone = false;   % pre-processing steps already done.
     end
     
     %% -----------------------------------------------------------------------------------
     methods
 
-        function obj = TwoEarsIdTrainPipe( hrir )
-            if nargin < 1
-                hrir = 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa';
-            end
-            modelTrainers.Base.featureMask( true, [] );
-            warning( 'modelTrainers.Base.featureMask set to []' );
-            obj.pipeline = core.IdentificationTrainingPipeline();
-            obj.binauralSim = dataProcs.IdSimConvRoomWrapper( hrir );
-            obj.sceneConfBinauralSim = ...
-                dataProcs.SceneEarSignalProc( obj.binauralSim );
-            obj.multiConfBinauralSim = ...
-                dataProcs.MultiConfigurationsEarSignalProc( obj.sceneConfBinauralSim );
-%             obj.init();
+        function obj = TwoEarsIdTrainPipe( varargin )
+            % TwoEarsIdTrainPipe Construct a training pipeline
+            %   TwoEarsIdTrainPipe() instantiate using the default cache-
+            %   system and sound-db base directories
+            %
+            ip = inputParser;
+            ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.addOptional( 'soundDbBaseDir', '' );
+            ip.parse( varargin{:} );
+            modelTrainers.Base.featureMask( true, [] ); % reset the feature mask
+            fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
+            obj.pipeline = core.IdentificationTrainingPipeline( ...
+                                          'cacheSystemDir', ip.Results.cacheSystemDir, ...
+                                          'soundDbBaseDir', ip.Results.soundDbBaseDir );
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
-
-        function setSceneConfig( obj, scArray )
-            obj.multiConfBinauralSim.setSceneConfig( scArray );
+        
+        function init( obj, sceneCfgs, varargin )
+            % init initialize training pipeline
+            %   init() init using the default impulse
+            %   response dataset to drive the binaural simulator
+            %   init( sceneCfgs, 'hrir', hrir ) instantiate using a path to the 
+            %   impulse response dataset defined by hrir
+            %   (e.g. 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa'
+            %   
+            ip = inputParser;
+            ip.addOptional( 'hrir', ...
+                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
+                            @(fn)(exist( fn, 'file' )) );
+            ip.parse( varargin{:} );
+            obj.setupData( true );
+            if isempty( obj.blockCreator )
+                obj.blockCreator = blockCreators.EasyBlockCreator();
+                obj.blockCreator.labelCreator = blockCreators.ObjectTypeLabeler( 'binary', 1 );
+            end
+            obj.pipeline.resetDataProcs();
+            binSim = dataProcs.SceneEarSignalProc( ...
+                                      dataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
+            if isempty( obj.featureCreator )
+                obj.featureCreator = featureCreators.FeatureSet1Blockmean();
+            end
+            obj.pipeline.featureCreator = obj.featureCreator;
+            multiCfgProcs{1} = dataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim );
+            multiCfgProcs{2} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                binSim, ...
+                dataProcs.ParallelRequestsAFEmodule( binSim.getDataFs(), ...
+                                                     obj.featureCreator.getAFErequests() ) );
+            multiCfgProcs{3} =  ...
+                      dataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.featureCreator );
+            multiCfgProcs{4} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+                                                 binSim, dataProcs.GatherFeaturesProc() );
+            for ii = 1 : numel( multiCfgProcs )
+                multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
+                if ii == numel( multiCfgProcs ), continue; end
+                obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );
+            end
+            obj.pipeline.addGatherFeaturesProc( multiCfgProcs{end} );
+            if isempty( obj.modelCreator )
+                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
+                    'performanceMeasure', @performanceMeasures.BAC2, ...
+                    'cvFolds', 4, ...
+                    'alpha', 0.99 );
+            end
+            obj.pipeline.addModelCreator( obj.modelCreator );
         end
         %% -------------------------------------------------------------------------------
 
@@ -58,43 +112,16 @@ classdef TwoEarsIdTrainPipe < handle
         %% -------------------------------------------------------------------------------
 
         function set.data( obj, newData )
+            % set the data to be split into train and test set by the
+            % pipeline
             obj.dataSetupAlreadyDone = strcmp(obj.data,newData);
             obj.data = newData;
         end
         %% -------------------------------------------------------------------------------
-        
-        function init( obj )
-            obj.setupData( true );
-            if isempty( obj.blockCreator )
-                obj.blockCreator = blockCreators.EasyBlockCreator();
-                obj.blockCreator.labelCreator = blockCreators.ObjectTypeLabeler( 'binary', 1 );
-            end
-            if isempty( obj.featureCreator )
-                obj.featureCreator = featureCreators.RatemapPlusDeltasBlockmean();
-            end
-            obj.pipeline.blockCreator = obj.blockCreator;
-            obj.pipeline.featureCreator = obj.featureCreator;
-            obj.pipeline.resetDataProcs();
-            obj.pipeline.addDataPipeProc( obj.multiConfBinauralSim );
-            obj.pipeline.addDataPipeProc( ...
-                dataProcs.MultiConfigurationsAFEmodule( ...
-                    dataProcs.ParallelRequestsAFEmodule( ...
-                        obj.binauralSim.getDataFs(), obj.featureCreator.getAFErequests() ...
-                        ) ) );
-            obj.pipeline.addDataPipeProc( ...
-                dataProcs.MultiConfigurationsFeatureProc( obj.featureCreator ) );
-            obj.pipeline.addGatherFeaturesProc( core.GatherFeaturesProc() );
-            if isempty( obj.modelCreator )
-                obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
-                    'performanceMeasure', @performanceMeasures.BAC2, ...
-                    'cvFolds', 4, ...
-                    'alpha', 0.99 );
-            end
-            obj.pipeline.addModelCreator( obj.modelCreator );
-        end
-        %% -------------------------------------------------------------------------------
 
         function setupData( obj, skipIfAlreadyDone )
+            % setupData set up the train and test set and perform a
+            % train/test split on the data if not already specified.
             if nargin > 1 && skipIfAlreadyDone && obj.dataSetupAlreadyDone
                 return;
             end

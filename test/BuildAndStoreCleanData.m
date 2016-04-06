@@ -4,17 +4,17 @@ function BuildAndStoreCleanData( )
 addpath( '..' );
 startIdentificationTraining();
 
-pipe = TwoEarsIdTrainPipe();
+pipe = TwoEarsIdTrainPipe( 'soundDbBaseDir', ...
+                           fullfile( xml.dbPath, 'sound_databases', 'IEEE_AASP' ) );
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.LoadModelNoopTrainer( 'noop' );
 
 pipe.data = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
-
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource() );
-pipe.setSceneConfig( [sc] ); 
 
-pipe.init();
+pipe.init( sc );
+
 %modelPath = pipe.pipeline.run( {'dataStore'}, 0 ); % native pipeline format
 modelPath = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
 

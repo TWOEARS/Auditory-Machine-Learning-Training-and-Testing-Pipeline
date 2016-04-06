@@ -155,6 +155,10 @@ classdef (Abstract) Base < handle
         end
         
         function fm = featureMask( setNewMask, newmask )
+            % Set/Reset the featureMask and return it.
+            %   featureMask() reset the featurMask
+            %   featureMask( setNewMask, newmask ) set the feature mask to 
+            %       newmask on the condition that setNewMask is true
             persistent featureMask;
             if isempty( featureMask )
                 featureMask = [];

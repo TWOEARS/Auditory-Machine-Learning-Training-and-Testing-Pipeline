@@ -6,7 +6,8 @@ if nargin < 1, classname = 'baby'; end;
 addpath( '..' );
 startIdentificationTraining();
 
-pipe = TwoEarsIdTrainPipe();
+pipe = TwoEarsIdTrainPipe( 'soundDbBaseDir', ...
+                           fullfile( xml.dbPath, 'sound_databases', 'generalSoundsNI' ) );
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
@@ -26,9 +27,8 @@ sc(1).addSource( sceneConfig.PointSource( ...
     true );
 sc(2) = sceneConfig.SceneConfiguration();
 sc(2).addSource( sceneConfig.PointSource() );
-pipe.setSceneConfig( sc ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
@@ -53,7 +53,6 @@ sc(1).addSource( sceneConfig.PointSource( ...
     true );
 sc(2) = sceneConfig.SceneConfiguration();
 sc(2).addSource( sceneConfig.PointSource() );
-pipe.setSceneConfig( sc ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );

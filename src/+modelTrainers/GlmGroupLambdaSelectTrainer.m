@@ -1,6 +1,6 @@
 classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
     %GLMGROUPLAMBDASELECTTRAINER trainer for a GlmGroupModel, will fit a regression
-    % model with L1,0, L1,2 or L1,inf norm regularizeration.
+    % model with L1,0, L1,2 or L1,inf norm regularization.
     % this trainer will additionally do a k-folded crossvalidation to choose
     % the best lambda along the path according to a performance measure.
     

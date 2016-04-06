@@ -297,7 +297,6 @@ abstract class modelTrainers.Base{
   {static} balMaxData
   {static} featureMask
   maxDataSize
-  setData( trainSet, testSet )
   setPositiveClass( modelName )
   setPerformanceMeasure( newPerformanceMeasure )
   getModel()
@@ -310,7 +309,8 @@ abstract class modelTrainers.Base{
   {abstract} giveTrainedModel()
 }
 modelTrainers.Base ..> models.Base: produces
-
+modelTrainers.Base o-- "performanceMeasure (1)" performanceMeasures.Base
+modelTrainers.Base o-- "trainSet (1), testSet (1)" core.IdentTrainPipeData
 
 modelTrainers.Base <|-- modelTrainers.CVtrainer
 class modelTrainers.CVtrainer{

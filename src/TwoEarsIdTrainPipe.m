@@ -14,6 +14,7 @@ classdef TwoEarsIdTrainPipe < handle
     %% --------------------------------------------------------------------
     properties (SetAccess = public)
         blockCreator = [];
+        labelCreator = [];
         featureCreator = [];    % feature extraction (default: featureCreators.RatemapPlusDeltasBlockmean())
         modelCreator = [];      % model trainer
         trainset = [];          % file list with train examples
@@ -63,13 +64,15 @@ classdef TwoEarsIdTrainPipe < handle
                             @(fn)(exist( fn, 'file' )) );
             ip.parse( varargin{:} );
             obj.setupData( true );
-            if isempty( obj.blockCreator )
-                obj.blockCreator = blockCreators.EasyBlockCreator();
-                obj.blockCreator.labelCreator = blockCreators.ObjectTypeLabeler( 'binary', 1 );
-            end
             obj.pipeline.resetDataProcs();
             binSim = dataProcs.SceneEarSignalProc( ...
                                       dataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
+            if isempty( obj.blockCreator )
+                obj.blockCreator = BlockCreators.StandardBlockCreator();
+            end
+            if isempty( obj.labelCreator )
+                error( 'Please specify labelCreator(s).' );
+            end
             if isempty( obj.featureCreator )
                 obj.featureCreator = featureCreators.FeatureSet1Blockmean();
             end
@@ -80,8 +83,12 @@ classdef TwoEarsIdTrainPipe < handle
                 dataProcs.ParallelRequestsAFEmodule( binSim.getDataFs(), ...
                                                      obj.featureCreator.getAFErequests() ) );
             multiCfgProcs{3} =  ...
+                      dataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.blockCreator );
+            multiCfgProcs{4} =  ...
                       dataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.featureCreator );
-            multiCfgProcs{4} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
+            multiCfgProcs{5} =  ...
+                      dataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.labelCreator );
+            multiCfgProcs{6} = dataProcs.MultiSceneCfgsIdProcWrapper( ...
                                                  binSim, dataProcs.GatherFeaturesProc() );
             for ii = 1 : numel( multiCfgProcs )
                 multiCfgProcs{ii}.setSceneConfig( sceneCfgs );

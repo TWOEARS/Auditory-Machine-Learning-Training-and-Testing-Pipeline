@@ -7,7 +7,7 @@ class TwoEarsIdTrainPipe{
   init( sceneCfgs, hrir )
   setupData()
 }
-TwoEarsIdTrainPipe o-- "pipeline (1)" core.IdentificationTrainingPipeline
+TwoEarsIdTrainPipe o-- "pipeline (1)" core.IdentificationTrainingPipeline: sets up >
 TwoEarsIdTrainPipe ..> dataProcs.MultiSceneCfgsIdProcWrapper: sets scene configuration(s)
 note as Ntetp
   top-level user interface,
@@ -207,28 +207,83 @@ end note
 Ndsesp .. dataProcs.SceneEarSignalProc
 
 
+core.IdProcInterface <|-- BlockCreators.Base
+abstract class BlockCreators.Base{
+  shiftSize_s
+  blockSize_s
+  process( wavFilepath )
+  cutDataBlock( afeData, backOffset_s )
+  ..
+  {abstract} getBlockCreatorOutputDependencies()
+  {abstract} blockify( afeData, annotations )
+}
+note as Nbb
+  cuts "streams" (wavs) into blocks
+  Output: blocked AFE features
+end note
+Nbb .. BlockCreators.Base
+
+
+BlockCreators.Base <|-- BlockCreators.DistractedBlockCreator
+class BlockCreators.DistractedBlockCreator{
+  DistractedBlockCreator( distractorSources, rejectEnergyThreshold )
+  getBlockCreatorOutputDependencies()
+  blockify( afeData, annotations )
+}
+note as Nbdbc
+  rejects blocks with too 
+  little distractor energy
+end note
+Nbdbc .. BlockCreators.DistractedBlockCreator
+
+
+
+core.IdProcInterface <|-- LabelCreators.Base
+abstract class LabelCreators.Base{
+  process( wavFilepath )
+  ..
+  {abstract} getLabelCreatorOutputDependencies()
+  {abstract} label( annotations )
+}
+note as Nlb
+  labels blocks
+  Output: block labels
+end note
+Nlb .. LabelCreators.Base
+
+
+LabelCreators.Base <|-- LabelCreators.BinaryEventTypeLabeler
+class LabelCreators.BinaryEventTypeLabeler{
+  posOut
+  posOutType
+  negOut
+  negOutType
+  minBlockEventRatio
+  labelBlockSize_s
+  getLabelCreatorOutputDependencies()
+  label( annotations )
+}
+note as Nbetl
+  creates binary event type labels
+end note
+Nbetl .. LabelCreators.BinaryEventTypeLabeler
+
+
+
 core.IdProcInterface <|-- featureCreators.Base
 abstract class featureCreators.Base{
-  shiftSize_s
-  minBlockToEventRatio
-  blockSize_s
-  labelBlockSize_s
   description
   setAfeData( afeData )
   process( wavFilepath )
   dummyProcess()
-  cutDataBlock( afeData, backOffset_s )
-  blockifyAndLabel( afeData, onOffs_s, annotsOut )
   ..
   {abstract} getAFErequests()
   {abstract} getFeatureInternOutputDependencies()
   {abstract} constructVector()
 }
 note as Nfb
-  cuts "streams" (wavs) into
-  blocks, labels them, and
   constructs feature vectors.
-  Output: x, y
+  Output: x
 end note
 Nfb .. featureCreators.Base
 

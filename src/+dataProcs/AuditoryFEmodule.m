@@ -48,10 +48,10 @@ classdef AuditoryFEmodule < core.IdProcInterface
             in = obj.loadInputData( wavFilepath );
             obj.output.afeData = obj.makeAFEdata( in.earSout );
             obj.output.onOffsOut = in.onOffsOut;
-            if isfield( in, 'annotsOut' )
-                obj.output.annotsOut = in.annotsOut;
+            if isfield( in, 'annotations' )
+                obj.output.annotations = in.annotations;
             else
-                obj.output.annotsOut = [];
+                obj.output.annotations = [];
             end
         end
         %% ----------------------------------------------------------------
@@ -59,7 +59,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
         function afeDummy = makeDummyData ( obj )
             afeDummy.afeData = obj.makeAFEdata( rand( 4100, 2 ) );
             afeDummy.onOffsOut = zeros(0,2);
-            afeDummy.annotsOut = [];
+            afeDummy.annotations = [];
         end
         %% ----------------------------------------------------------------
 

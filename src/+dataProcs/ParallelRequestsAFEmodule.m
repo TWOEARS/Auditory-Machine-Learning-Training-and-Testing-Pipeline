@@ -5,7 +5,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         individualAfeProcs;
         fs;
         afeRequests;
-        indFile;
+        indivFiles;
         currentNewAfeRequestsIdx;
         currentNewAfeProc;
         prAfeDepProducer;
@@ -20,13 +20,13 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         
         function obj = ParallelRequestsAFEmodule( fs, afeRequests )
             for ii = 1:length( afeRequests )
-                indProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
+                indivProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
             end
             for ii = 2:length( afeRequests )
-                indProcs{ii}.cacheDirectory = indProcs{1}.cacheDirectory;
+                indivProcs{ii}.cacheDirectory = indivProcs{1}.cacheDirectory;
             end
-            obj = obj@dataProcs.IdProcWrapper( indProcs, false );
-            obj.individualAfeProcs = indProcs;
+            obj = obj@dataProcs.IdProcWrapper( indivProcs, false );
+            obj.individualAfeProcs = indivProcs;
             obj.afeRequests = afeRequests;
             obj.fs = fs;
             obj.prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
@@ -65,7 +65,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
                 end
             end
             for ii = 1 : numel( obj.individualAfeProcs )
-                obj.indFile{ii} = ...
+                obj.indivFiles{ii} = ...
                               obj.individualAfeProcs{ii}.getOutputFilepath( wavFilepath );
             end
         end
@@ -74,13 +74,30 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         function afeDummy = makeDummyData ( obj )
             afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
             afeDummy.onOffsOut = zeros(0,2);
-            afeDummy.annotsOut = [];
+            afeDummy.annotations = [];
         end
         %% ----------------------------------------------------------------
 
         % override of dataProcs.IdProcWrapper's method
         function outObj = getOutputObject( obj )
             outObj = getOutputObject@core.IdProcInterface( obj );
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of dataProcs.IdProcInterface's method
+        function out = loadProcessedData( obj, wavFilepath )
+            tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            obj.indivFiles = tmpOut.indivFiles;
+            try
+                out = obj.getOutput;
+            catch err
+                if strcmp( 'PRAFEM.FileCorrupt', err.msgIdent )
+                    err( '%s \n%s corrupt -- delete and restart.', ...
+                         err.msg, obj.getOutputFilepath( wavFilepath ) );
+                else
+                    rethrow( err );
+                end
+            end
         end
         %% -------------------------------------------------------------------------------
         
@@ -96,10 +113,28 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
 
+        % override of dataProcs.IdProcInterface's method
         function out = getOutput( obj )
-            out.indFile = obj.indFile;
-        end
+            out.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
+            for ii = 1 : numel( obj.indivFiles )
+                if ~exist( obj.indivFiles{ii}, 'file' )
+                    error( 'PRAFEM.FileCorrupt', '%s not found.', obj.indivFiles{ii} );
+                end
+                tmp = load( obj.indivFiles{ii} );
+                out.afeData(ii) = tmp.afeData(1);
+            end
+            out.annotations = tmp.annotations; % TODO join annotations of all afeData
+            out.onOffsOut = tmp.onOffsOut;
+    end
         %% ----------------------------------------------------------------
+        
+        % override of dataProcs.IdProcInterface's method
+        function out = save( obj, wavFilepath, ~ )
+            tmpOut.indivFiles = obj.indivFiles;
+            out = save@core.IdProcInterface( obj, wavFilepath, tmpOut ); 
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% --------------------------------------------------------------------

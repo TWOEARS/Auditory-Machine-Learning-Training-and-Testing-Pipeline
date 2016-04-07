@@ -112,7 +112,7 @@ classdef SceneEarSignalProc < dataProcs.IdProcWrapper
                                                             double(ovrlSignal(:,jj)), ...
                                                             100e-3, 50e-3 );
                     obj.annotsOut.srcEnergy(ii,jj,:) = ...
-                        single( energy(1:nTargetEnergyFrames) );
+                                                  single( energy(1:nTargetEnergyFrames) );
                 end
                 fprintf( '.' );
             end
@@ -134,7 +134,7 @@ classdef SceneEarSignalProc < dataProcs.IdProcWrapper
         function out = getOutput( obj )
             out.earSout = obj.earSout;
             out.onOffsOut = obj.onOffsOut;
-            out.annotsOut = obj.annotsOut;
+            out.annotations = obj.annotsOut;
         end
         %% ----------------------------------------------------------------
 

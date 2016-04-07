@@ -98,7 +98,7 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
         function out = getOutput( obj )
             out.earSout = obj.earSout;
             out.onOffsOut = obj.onOffsOut;
-            out.annotsOut = obj.annotsOut;
+            out.annotations = obj.annotsOut;
         end
         %% ----------------------------------------------------------------
         

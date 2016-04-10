@@ -68,7 +68,7 @@ classdef TwoEarsIdTrainPipe < handle
             binSim = dataProcs.SceneEarSignalProc( ...
                                       dataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
             if isempty( obj.blockCreator )
-                obj.blockCreator = BlockCreators.StandardBlockCreator();
+                obj.blockCreator = BlockCreators.StandardBlockCreator( 1.0, 0.4 );
             end
             if isempty( obj.labelCreator )
                 error( 'Please specify labelCreator(s).' );

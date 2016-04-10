@@ -1,21 +1,18 @@
 classdef IdentTrainPipeData < handle
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
-        classNames;
         data;
-        emptyDataStruct;
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods
         
         function obj = IdentTrainPipeData()
-            obj.emptyDataStruct = struct( 'files', core.IdentTrainPipeDataElem.empty );
-            obj.data = obj.emptyDataStruct;
+            obj.data = core.IdentTrainPipeDataElem.empty;
             rng( 'shuffle' );
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         % easy get interface
         function varargout = subsref( obj, S )
@@ -33,86 +30,43 @@ classdef IdentTrainPipeData < handle
                 end
             end
             if (length(S) == 1) && strcmp(S(1).type,'()')
-                classes = S.subs{1,1};
-                if isa( classes, 'char' )
-                    if classes == ':'
-                        cIdx = 1:length( obj.data );
+                fileSubScript = S.subs{1,1};
+                if isa( fileSubScript, 'char' )
+                    if all( fileSubScript == ':' )
+                        fIdx = 1 : length( obj.data );
                     else
-                        cIdx = obj.getClassIdx( classes );
+                        fIdx = obj.getFileIdx( {fileSubScript} );
                     end;
-                elseif isa( classes, 'cell' )
-                    cIdx = [];
-                    for c = classes
-                        cIdx(end+1) = obj.getClassIdx( c{1} );
-                    end
-                elseif isnumeric( classes )
-                    cIdx = classes;
+                elseif iscell( fileSubScript )
+                    fIdx = obj.getFileIdx( fileSubScript );
+                else % direct indexes
+                    fIdx = fileSubScript;
                 end
-                if size( S.subs, 2 ) > 1
-                    if ischar( S.subs{1,2} ) && ~all( S.subs{1,2} == ':' )
-                        [cIdx,fIdx] = obj.getFileIdx( S.subs{1,2} );
-                    else
-                        fIdx = S.subs{1,2};
-                    end
-                else
-                    fIdx = ':';
-                end
-                if size( S.subs, 2 ) > 2
-                    dIdx = S.subs{1,3};
-                    if strcmp( dIdx, 'x' ) && size( S.subs, 2 ) > 3
-                        if length(cIdx) > 1 || length(fIdx) > 1
-                            error( 'Index for x can only be chosen if specifying a class and a file.' );
+                if ~isempty( fIdx ) && size( S.subs, 2 ) > 1 % referencing fields of DataElems
+                    dSubScript = S.subs{1,2};
+                    if size( S.subs, 2 ) > 2
+                        if length( fIdx ) > 1
+                            error( 'Index for xy can only be chosen if specifying a file.' );
                         end
-                        xIdx = S.subs{1,4};
-                        varargout{1:nargout} = vertcat( obj.data(cIdx).files(fIdx).x(xIdx,:,:,:) );
-                    elseif strcmp( dIdx, 'y' ) && size( S.subs, 2 ) > 3
-                        if ~isa( S.subs{1,4}, 'char' )
-                            error( 'Index for positive class must be string.' );
+                        xyIdx = S.subs{1,3};
+                        if ndims( obj.data(fIdx(1)).(dSubScript) )  > 5
+                            error( 'D > 5 not supported' );
                         end
-                        yIdx = obj.getClassIdx( S.subs{1,4} );
-                        if isempty( yIdx )
-                            error( 'Index for positive class not valid.' );
-                        end
+                        varargout{1:nargout} = ...
+                                    vertcat( obj.data(fIdx).(dSubScript)(xyIdx,:,:,:,:) );
+                    elseif strcmp( dSubScript, 'fileName' )
+                        varargout{1:nargout} = { obj.data(fIdx).(dSubScript) }';
+                    elseif strcmp( dSubScript, 'pointwiseFileIdxs' )
                         out = [];
-                        for c = cIdx(1:end)
-                            cy = vertcat( obj.data(c).files(fIdx).y );
-                            if c ~= yIdx
-                                cy = -1 * ones( size( cy ) );
-                            end
-                            out = [out; cy];
-                        end
-                        varargout{1:nargout} = out;
-                    elseif strcmp( dIdx, 'wavFileName' )
-                        out = {};
-                        for c = cIdx(1:end)
-                            out = [out, { obj.data(c).files(fIdx).(dIdx) }];
-                        end
-                        varargout{1:nargout} = out';
-                    elseif strcmp( dIdx, 'pointwiseWavfilenames' )
-                        out = [];
-                        for c = cIdx(1:end)
-                            if ischar( fIdx ) && fIdx == ':'
-                                ffs = 1 : numel( obj.data(c).files );
-                            end
-                            for ff = ffs
-                                out = [out; repmat( [c,ff],...
-                                                    size( obj.data(c).files(ff).y ) )];
-                            end
+                        for ff = fIdx
+                            out = [out; repmat( ff, size( obj.data(ff).x, 1 ), 1 )];
                         end
                         varargout{1:nargout} = out;
                     else
-                        out = [];
-                        for c = cIdx(1:end)
-                            out = [out; vertcat( obj.data(c).files(fIdx).(dIdx) )];
-                        end
-                        varargout{1:nargout} = out;
+                        varargout{1:nargout} = vertcat( obj.data(fIdx).(dSubScript) );
                     end
-                else
-                    out = obj.data(cIdx(1)).files(fIdx);
-                    for c = cIdx(2:end)
-                        out = [out; obj.data(c).files(fIdx)];
-                    end
-                    varargout{1:nargout} = out;
+                else % referencing whole DataElems
+                    varargout{1:nargout} = obj.data(fIdx);
                 end
             else
                 if nargout == 0
@@ -122,257 +76,228 @@ classdef IdentTrainPipeData < handle
                 end
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         % easy set interface
         function obj = subsasgn( obj, S, val )
             if (length(S) == 1) && strcmp(S(1).type,'()')
-                className = S.subs{1,1};
-                if isa( className, 'char' )
-                    cIdx = obj.getClassIdx( className, 'createIfnExst' );
-                else
-                    error( 'className needs to be a string' );
-                end
-                if size( S.subs, 2 ) > 1
-                    fIdx = S.subs{1,2};
-                else
-                    error( 'file index must be set for assignment' );
-                end
-                if isa( fIdx, 'char' )
-                    if strcmp( fIdx, '+' )
-                        fIdx = length( obj.data(cIdx).files ) + 1;
+                fIdx = 0;
+                if isa( S.subs{1,1}, 'char' )
+                    if strcmp( S.subs{1,1}, '+' )
+                        fIdx = numel( obj.data ) + 1;
                     else
-                        error( 'unknown indexing' );
+                        fIdx = obj.getFileIdx( S.subs{1,1} );
+                    end
+                else
+                    fIdx = S.subs{1,1};
+                    if ~isnumeric( fIdx ) || fIdx > numel( obj.data )
+                        error( 'Data indexing error' );
                     end
                 end
-                if size( S.subs, 2 ) > 2
-                    dIdx = S.subs{1,3};
-                else
-                    dIdx = 'wavFileName';
-                end
-                if (strcmp( dIdx, 'x' ) || strcmp( dIdx, 'y' )) && size( S.subs, 2 ) > 3
-                    xIdx = S.subs{1,4};
-                    if isa( xIdx, 'char' )
-                        dIdxLen = length( obj.data(cIdx).files(fIdx).(dIdx) );
-                        switch xIdx
-                            case ':'
-                                xIdx = 1:dIdxLen;
-                            case '+'
-                                xIdx = dIdxLen+1:dIdxLen+1+size(val,1);
-                            otherwise
-                                error( 'unknown indexing' );
+                if ~isempty( fIdx ) && fIdx <= numel( obj.data ) && size( S.subs, 2 ) > 1
+                    dSubscript = S.subs{1,2};
+                    if size( S.subs, 2 ) > 2
+                        xyIdx = S.subs{1,3};
+                        if isa( xyIdx, 'char' )
+                            dIdxLen = size( obj.data(fIdx).(dSubscript), 1 );
+                            switch xyIdx
+                                case ':'
+                                    xyIdx = 1:dIdxLen;
+                                case '+'
+                                    xyIdx = dIdxLen+1:dIdxLen+size(val,1);
+                                otherwise
+                                    error( 'unknown indexing' );
+                            end
                         end
+                        if ndims( val ) > 5
+                            error( 'D > 5 not supported' );
+                        end
+                        obj.data(fIdx).(dSubscript)(xyIdx,:,:,:,:) = val;
+                    else
+                        obj.data(fIdx).(dSubscript) = val;
                     end
-                    obj.data(cIdx).files(fIdx).(dIdx)(xIdx,:,:,:,:,:,:) = val;
-                elseif strcmp( dIdx, 'Elem' )
-                    obj.data(cIdx).files(fIdx) = val;
                 else
-                    obj.data(cIdx).files(fIdx).(dIdx) = val;
+                    obj.data(fIdx) = val;
                 end
             else
                 obj = builtin( 'subsasgn', obj, S, val );
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function l = length( obj )
             l = 0;
             for d = obj.data
-                for f = d.files
-                    l = l + size( f.x, 1 );
-                end
+                l = l + size( d.x, 1 );
             end
         end
-        %% ----------------------------------------------------------------
-        %
-        %         function s = size( obj )
-        %             s = size(obj.cbuf.dat);
-        %             s(1) = length( obj );
-        %         end
-        %
-        %         function n = numel( obj )
-        %             n = prod( size( obj ) );
-        %         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
-        function ind = end( obj, k, n )
+        function ind = end( obj, k, ~ )
             switch k
                 case 1
                     ind = length( obj.data );
-                case 2
-                    error( 'dont know how to implement this yet' );
-                case 3
-                    error( 'dont know how to implement this yet' );
-                case 4
-                    error( 'dont know how to implement this yet' );
+                otherwise
+                    error( 'not implemented' );
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function ie = isempty( obj )
-            for d = obj.data
-                if numel( d.files ) > 0, ie = false; return; end
-            end
-            ie = true;
+            ie = (numel( obj.data ) == 0 );
         end
         
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
-        function permFolds = splitInPermutedStratifiedFolds( obj, nFolds )
+        function permFolds = splitInPermutedStratifiedFolds( obj, nFolds, stratifyLabels )
             if nFolds == 0
                 permFolds = [];
                 return;
             end
-            for ii = 1 : nFolds
-                permFolds{ii} = core.IdentTrainPipeData();
-                permFolds{ii}.classNames = obj.classNames ;
+            for ii = nFolds : -1 : 1, permFolds{ii} = core.IdentTrainPipeData(); end
+            if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
+                labelCombinationIdxs = ones( size( obj.data ) );
+            else
+                labelCombinationIdxs = obj.getDisjunctSubsetIdxs( stratifyLabels );
             end
-            for cIdx = 1 : numel( obj.classNames )
-                nClassFiles = numel( obj.data(cIdx).files );
-                fIdxPerm = randperm( nClassFiles );
+            for lcIdx = 1 : numel( unique( labelCombinationIdxs ) )
+                labelCombinationInstances = find( labelCombinationIdxs == lcIdx );
+                nLabelCombinationFiles = numel( labelCombinationInstances );
+                fIdxPerm = labelCombinationInstances(randperm( nLabelCombinationFiles ));
                 for ii = 1 : nFolds
-                    fIdx = ii : nFolds : nClassFiles;
-                    foldFidxPerm = fIdxPerm(fIdx);
-                    pf = permFolds{ii};
-                    pf.data(cIdx).files(1:length(fIdx)) = obj.data(cIdx).files(foldFidxPerm);
+                    foldFidxPerm = fIdxPerm(ii:nFolds:nLabelCombinationFiles);
+                    fold = permFolds{ii};
+                    fold.data(end+1:end+length(foldFidxPerm)) = obj.data(foldFidxPerm);
                 end
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
+
+        function disjunctSubsetIdxs = getDisjunctSubsetIdxs( obj, labels )
+            if isempty( labels ), disjunctSubsetIdxs = []; end
+            if ~iscell( labels ), error( 'labels must be cell' ); end
+            labelInstances = cell( numel( obj.data ), 1 );
+            for dd = 1 : numel( obj.data )
+                for ii = 1 : numel( labels )
+                    fa = obj.data(dd).getFileAnnotation( labels{ii} );
+                    if ~ischar( fa ), fa = mat2str( fa ); end
+                    labelInstances{dd} = [labelInstances{dd} fa];
+                end
+            end
+            [~,~,disjunctSubsetIdxs] = unique( labelInstances );
+        end
+        %% -------------------------------------------------------------------------------
+
+        function minSubsetSize = getMinDisjunctSubsetsSize( obj, labels )
+            labelCombinationIdxs = obj.getDisjunctSubsetIdxs( labels );
+            if isempty( labelCombinationIdxs ), minSubsetSize = 0; return; end
+            minSubsetSize = inf;
+            for lcIdx = 1 : numel( unique( labelCombinationIdxs ) )
+                minSubsetSize = min( minSubsetSize, sum( lcIdx == labelCombinationIdxs ) );
+            end            
+        end
+        %% -------------------------------------------------------------------------------
         
-        function [share, disjShare] = getShare( obj, ratio )
-            gcdShares = gcd( round( 100 * ratio ), round( 100 * (1 - ratio) ) ) / 100;
-            maxFolds = 0;
-            for d = obj.data
-                maxFolds = max( maxFolds, size( d.files, 2 ) );
+        function [share, disjShare] = getShare( obj, ratio, stratifyLabels )
+            if ~exist( 'stratifyLabels', 'var' )
+                maxFolds = numel( obj.data );
+                stratifyLabels = {};
+            else
+                maxFolds = obj.getMinDisjunctSubsetsSize( stratifyLabels );
             end
             if maxFolds == 0
                 share = core.IdentTrainPipeData();
                 disjShare = core.IdentTrainPipeData();
                 return;
             end
-            nFolds = min( round( 1 / gcdShares ), maxFolds );
-            folds = obj.splitInPermutedStratifiedFolds( nFolds );
+            nFolds = round( 100 / gcd( round( 100*ratio ), ...
+                                       round( 100*(1-ratio) ) ) );
+            nFolds = min( nFolds, maxFolds );
+            folds = obj.splitInPermutedStratifiedFolds( nFolds, stratifyLabels );
             shareNfolds = round( nFolds * ratio );
             share = core.IdentTrainPipeData.combineData( folds{1:shareNfolds} );
             if shareNfolds < nFolds
-                disjShare = core.IdentTrainPipeData.combineData( folds{shareNfolds + 1:end} );
+                disjShare = core.IdentTrainPipeData.combineData( folds{shareNfolds+1:end} );
             else
                 disjShare = [];
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
-        function saveDataFList( obj, flistName, baseDir )
-            wavFileNames = {};
-            for cIdx = 1 : numel( obj.classNames )
-                cName = obj.classNames{cIdx};
-                for dataFile = obj.data(cIdx).files
-                    if nargin < 3
-                        [~,fn,fe] = fileparts( dataFile.wavFileName );
-                        wavFileNames{end+1} = sprintf( '%s\n', [cName, '/', fn, fe] );
-                    else
-                        wavFileNames{end+1} = sprintf( '%s\n', ...
-                            getPathPart( dataFile.wavFileName, baseDir ) );
-                    end
-                    sdx = strfind( wavFileNames{end}, '\' );
-                    wavFileNames{end}(sdx) = '/';  % replace backslashes with slashed for url
+        function saveFList( obj, flistName, baseDir )
+            fileNames = {};
+            for dataFile = obj.data
+                if nargin < 3
+                    fileNames{end+1} = dataFile.fileName;
+                else
+                    fileNames{end+1} = sprintf( '%s', ...
+                                              getPathPart( dataFile.fileName, baseDir ) );
                 end
+                fileNames{end} = strrep( fileNames{end}, '\', '/' );
             end
             flistFid = fopen( flistName, 'w' );
-            for kk = 1:length(wavFileNames)
-                fprintf( flistFid, '%s', wavFileNames{kk} );
+            for kk = 1 : length(fileNames)
+                fprintf( flistFid, '%s\n', fileNames{kk} );
             end
             fclose( flistFid );
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
-        function loadWavFileList( obj, wavflist )
-            if isempty( wavflist ), return; end
-            obj.data = obj.emptyDataStruct;
-            obj.classNames = {};
+        function loadFileList( obj, flistName )
+            if isempty( flistName ), return; end
+            obj.data = core.IdentTrainPipeDataElem.empty;
             try
-                fid = fopen( xml.dbGetFile( wavflist ) );
+                fid = fopen( xml.dbGetFile( flistName ) );
             catch err
                 warning( err.message );
-                error( '%s not found!', wavflist );
+                error( '%s not found!', flistName );
             end
-            wavs = textscan( fid, '%s' );
-            for kk = 1:length(wavs{1})
+            fileList = textscan( fid, '%s' );
+            for ff = 1 : length( fileList{1} )
                 fprintf( '.' );
                 try
-                    wavName = xml.dbGetFile( wavs{1}{kk}, 1 );
-                    disp( wavName)
-                    wavName = cleanPathFromRelativeRefs( wavName );
-                    disp( wavName )
+                    filepath = xml.dbGetFile( fileList{1}{ff}, 1 );
+                    filepath = cleanPathFromRelativeRefs( filepath );
+                    fprintf( '%s\n', filepath );
                 catch err
                     warning( err.message );
-                    error( '%s, referenced in %s, not found!', wavs{1}{kk}, wavflist );
+                    error( '%s, referenced in %s, not found!', fileList{1}{ff}, flistName );
                 end
-                p = fileparts( wavName );
+                p = fileparts( filepath );
                 addPathsIfNotIncluded( p );
-                wavName = which( wavName ); % ensure absolute path
-                wavClass = IdEvalFrame.readEventClass( wavName );
-                obj.subsasgn( struct('type','()','subs',{{wavClass,'+'}}), wavName );
+                filepath = which( filepath ); % ensure absolute path
+                obj.data(end+1) = core.IdentTrainPipeDataElem( filepath );
             end
             fclose( fid );
             fprintf( '.\n' );
         end
-        %% ----------------------------------------------------------------
-
+        %% -------------------------------------------------------------------------------
         
+        function fIdx = getFileIdx( obj, fileNames )
+            if ~iscell( fileNames ), fileNames = {fileNames}; end
+            fIdx = [];
+            for ff = 1 : numel( fileNames )
+                fIdxff = find( strcmp( fileNames{ff}, {obj.data.fileName} ) );
+                if isempty( fIdxff ), continue; end
+                fIdx(ff) = fIdxff;
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Static)
 
         function combinedData = combineData( varargin )
             combinedData = core.IdentTrainPipeData();
             for ii = 1 : numel(varargin)
-                d = varargin{ii};
-                for jj = 1 : numel( d.classNames )
-                    cIdx = combinedData.getClassIdx( d.classNames{jj}, 'createIfnExst' );
-                    nDfiles = numel( d.data(jj).files );
-                    combinedData.data(cIdx).files(end+1:end+nDfiles) = d.data(jj).files;
-                end
+                dii = varargin{ii};
+                nDii = numel( dii.data );
+                combinedData.data(end+1:end+nDii) = dii.data;
             end
         end
         
     end
     
-    %% --------------------------------------------------------------------
-    methods (Access = private)
-        
-        %% function cIdx = getClassIdx( obj, className, mode )
-        %       returns the index of the class with name 'className'
-        %       if mode is 'createIfnExst', the class will be created in
-        %       the data structure if it does not exist yet.
-        function cIdx = getClassIdx( obj, className, mode )
-            [classAlreadyPresent,cIdx] = max( strcmp( obj.classNames, className ) );
-            if isempty( classAlreadyPresent ) || ~classAlreadyPresent
-                if nargin < 3, mode = ''; end;
-                if strcmpi( mode, 'createIfnExst' )
-                    obj.classNames{end+1} = className;
-                    cIdx = length( obj.classNames );
-                    obj.data(cIdx) = obj.emptyDataStruct;
-                else
-                    cIdx = [];
-                end
-            end
-        end
-        %% ----------------------------------------------------------------
-        
-        function [cIdx,fIdx] = getFileIdx( obj, wavFileName )
-            for cc = 1 : numel( obj.data )
-                for ff = 1 : numel( obj.data(cc).files )
-                    if strcmp( wavFileName, obj.data(cc).files(ff).wavFileName )
-                        cIdx = cc; fIdx = ff; return;
-                    end
-                end
-            end
-            cIdx = []; fIdx = [];
-        end
-        %% ----------------------------------------------------------------
-
-    end
 end

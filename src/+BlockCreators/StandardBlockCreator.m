@@ -22,59 +22,62 @@ classdef StandardBlockCreator < BlockCreators.Base
         end
         %% ------------------------------------------------------------------------------- 
 
-        function [afeBlocks, blockAnnotations] = blockify( obj, afeData, annotations )
-            afeBlocks = {};
-            blockAnnotations = [];
-            afeDataNames = afeData.keys;
-            anyAFEsignal = afeData(afeDataNames{1});
+        function [afeBlocks, blockAnnots] = blockify( obj, afeData, annotations )
+            anyAFEsignal = afeData(1);
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
-            sigLen = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
-            for backOffset_s = 0.0 : obj.shiftSize_s : max(sigLen+0.01,obj.shiftSize_s) - obj.shiftSize_s
-                afeBlocks{end+1} = obj.cutDataBlock( afeData, backOffset_s );
-                blockOffset = sigLen - backOffset_s;
-                labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-                blockAnnotations(end+1) = -1;
-                eventBlockOverlapLen = 0;
-                eventLength = 0;
-                for jj = 1 : size( onOffs_s, 1 )
-                    thisEventOnset = onOffs_s(jj,1);
-                    if thisEventOnset >= blockOffset, continue; end
-                    thisEventOffset = onOffs_s(jj,2);
-                    if thisEventOffset <= labelBlockOnset, continue; end
-                    thisEventBlockOverlapLen = ...
-                        min( blockOffset, thisEventOffset ) - ...
-                        max( labelBlockOnset, thisEventOnset );
-                    isEventBlockOverlap = thisEventBlockOverlapLen > 0;
-                    if isEventBlockOverlap
-                        eventBlockOverlapLen = ...
-                            eventBlockOverlapLen + thisEventBlockOverlapLen;
-                        eventLength = eventLength + thisEventOffset - thisEventOnset;
+            streamLen_s = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
+            backOffsets_s = ...
+                       0.0 : obj.shiftSize_s : max( streamLen_s-obj.shiftSize_s+0.01, 0 );
+            blockAnnots = repmat( annotations, numel( backOffsets_s ), 1 );
+            blockOffsets = {streamLen_s - backOffsets_s}';
+            blockOnsets = {[blockOffsets{:}] - obj.blockSize_s}';
+            [blockAnnots(:).blockOffset] = deal( blockOffsets{:} );
+            [blockAnnots(:).blockOnset] = deal( blockOnsets{:} );
+            aFields = fieldnames( annotations );
+            isSequenceAnnotation = cellfun( @(af)(...
+                      isstruct( annotations.(af) ) && isfield( annotations.(af), 't' ) ...
+                                                                             ), aFields );
+            sequenceAfields = aFields(isSequenceAnnotation);
+            afeBlocks = cell( numel( backOffsets_s ), 1 );
+            for ii = 1 : numel( backOffsets_s )
+                backOffset_s = backOffsets_s(ii);
+                afeBlocks{ii} = obj.cutDataBlock( afeData, backOffset_s );
+                for jj = 1 : numel( sequenceAfields )
+                    seqAname = sequenceAfields{jj};
+                    annot = annotations.(seqAname);
+                    blockOn = blockAnnots(jj).blockOnset;
+                    blockOff = blockAnnots(jj).blockOffset;
+                    if ~isstruct( annot.t ) % time series
+                        if size( annot.t ) == size( annot.(seqAname) )
+                            isTinBlock = arrayfun( @(at)(...
+                                                       at >= blockOn && at <= blockOff ...
+                                                                             ), annot.t );
+                            blockAnnots(jj).(seqAname).(seqAname)(~isTinBlock) = [];
+                            blockAnnots(jj).(seqAname).t(~isTinBlock) = [];
+                        else
+                            error( 'unexpected annotations sequence structure' );
+                        end
+                    elseif all( isfield( annot.t, {'onset','offset'} ) ) % event series
+                        if size( annot.t.onset ) == size( annot.t.offset ) && ...
+                              size( annot.t.onset ) == size( annot.(sequenceAfields{jj}) )
+                            isEventInBlock = arrayfun( @(eon,eoff)(...
+                                               (eon >= blockOn && eon <= blockOff) || ...
+                                              (eoff >= blockOn && eoff <= blockOff) || ...
+                                               (eon <= blockOn && eoff >= blockOff)...
+                                                       ), annot.t.onset, annot.t.offset );
+                            blockAnnots(jj).(seqAname).(seqAname)(~isEventInBlock) = [];
+                            blockAnnots(jj).(seqAname).t(~isEventInBlock) = [];
+                            
+                        else
+                            error( 'unexpected annotations sequence structure' );
+                        end
+                    else
+                        error( 'unexpected annotations sequence structure' );
                     end
                 end
-                maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
-                relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
-                blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
-                blockIsNoClearNegative = relEventBlockOverlap > obj.maxNegBlockToEventRatio;
-                if blockIsSoundEvent
-                    blockAnnotations(end) = 1;
-                    if isfield( annotations, 'srcEnergy' ) ...
-                            && size( annotations.srcEnergy, 1 ) > 1
-                        energyFramesInBlockIdxs = ...
-                            annotations.srcEnergy_t >= blockOffset - obj.blockSize_s ...
-                            & annotations.srcEnergy_t <= blockOffset;
-                        energyFramesInBlock = ...
-                            annotations.srcEnergy(2:end,:,energyFramesInBlockIdxs);
-                        distBlockEnergy = ...
-                            sum( log(30) - log( -mean( mean( energyFramesInBlock, 3 ), 2 ) ) );
-                        if distBlockEnergy < 0, blockAnnotations(end) = 0; end
-                    end
-                elseif blockIsNoClearNegative
-                    blockAnnotations(end) = 0;
-                end;
             end
-            afeBlocks = fliplr( afeBlocks );
-            blockAnnotations = fliplr( blockAnnotations );
-            blockAnnotations = blockAnnotations';
+            afeBlocks = flipud( afeBlocks );
+            blockAnnots = flipud( blockAnnots );
         end
         %% ------------------------------------------------------------------------------- 
         

@@ -1,68 +1,41 @@
 classdef Base < core.IdProcInterface
     % Base Abstract base class for specifying features sets with which features
     % are extracted.
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
-        shiftSize_s;                % shift between blocks
-        minBlockToEventRatio;
-        maxNegBlockToEventRatio = 0;
         x;
-        y;
-        blockSize_s;                % size of the AFE data block in seconds
-        labelBlockSize_s;
-        afeData;                    % AFE signals
+        inDatPath;
+        afeData;                    % current AFE signals used for vector construction
         description;
         descriptionBuilt = false;
-        blockCreator;
-        labelCreator;
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Abstract)
         afeRequests = getAFErequests( obj )
         outputDeps = getFeatureInternOutputDependencies( obj )
-        x = constructVector( obj )
+        x = constructVector( obj ) % has to return a cell, first item the feature vector, 
+                                   % second item the features description.
     end
 
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = Base( blockSize_s, shiftsize_s, minBlockToEventRatio, labelBlockSize_s )
+        function obj = Base()
             obj = obj@core.IdProcInterface();
-            obj.blockSize_s = blockSize_s;
-            obj.shiftSize_s = shiftsize_s;
-            obj.minBlockToEventRatio = minBlockToEventRatio;
-            obj.labelBlockSize_s = labelBlockSize_s;
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function setAfeData( obj, afeData )
             obj.afeData = afeData;
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            in = obj.loadInputData( wavFilepath );
-            if ~isfield( in, 'afeData' )
-                if isfield( in, 'indFile' )
-                    in.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
-                    for ii = 1 : numel( in.indFile )
-                        if ~exist( in.indFile{ii}, 'file' )
-                            error( '%s not found. \n%s corrupt -- delete and restart.', ...
-                                in.indFile{ii}, wavFilepath );
-                        end
-                        tmp = load( in.indFile{ii} );
-                        in.afeData(ii) = tmp.afeData(1);
-                    end
-                    in.annotations = tmp.annotations;
-                    in.onOffsOut = tmp.onOffsOut;
-                else
-                    error( 'unexpected input data' );
-                end
-            end
-            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotations );
+            inData = obj.loadInputData( wavFilepath );
+            obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.x = [];
-            for afeBlock = afeBlocks
+            for afeBlock = inData.afeBlocks
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};
@@ -72,117 +45,64 @@ classdef Base < core.IdProcInterface
                 obj.descriptionBuilt = true;
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function dummyProcess( obj )
             afeDummy = obj.inputProc.makeDummyData();
-            [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
-            obj.afeData = afeBlocks{1};
+            obj.afeData = afeDummy.afeData;
             xd = obj.constructVector();
             obj.description = xd{2};
             obj.descriptionBuilt = true;
         end
             
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
-        function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
-            afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
-            for afeKey = afeData.keys
-                afeSignal = afeData(afeKey{1});
-                if isa( afeSignal, 'cell' )
-                    for ii = 1 : numel( afeSignal )
-                        afeSignalExtract{ii} = ...
-                            afeSignal{ii}.cutSignalCopyReducedToArray( obj.blockSize_s,...
-                                                                       backOffset_s );
-                    end
+        % override of dataProcs.IdProcInterface's method
+        function out = loadProcessedData( obj, wavFilepath )
+            tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            obj.inDatPath = tmpOut.inDatPath;
+            try
+                out = obj.getOutput;
+            catch err
+                if strcmp( 'FCB.FileCorrupt', err.msgIdent )
+                    err( '%s \n%s corrupt -- delete and restart.', ...
+                                          err.msg, obj.getOutputFilepath( wavFilepath ) );
                 else
-                    afeSignalExtract = ...
-                        afeSignal.cutSignalCopyReducedToArray( obj.blockSize_s, ...
-                                                               backOffset_s );
+                    rethrow( err );
                 end
-                afeBlock(afeKey{1}) = afeSignalExtract;
-                fprintf( '.' );
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.blockSize = obj.blockSize_s;
-            outputDeps.labelBlockSize = obj.labelBlockSize_s;
-            outputDeps.shiftSize = obj.shiftSize_s;
-            outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
-            outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
-            outputDeps.v = 3;
+            outputDeps.v = 4;
             outputDeps.featureProc = obj.getFeatureInternOutputDependencies();
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj )
-            out.x = obj.x;
-            out.y = obj.y;
-        end
-        %% ----------------------------------------------------------------
-
-        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s, annotations )
-            afeBlocks = {};
-            y = [];
-            afeDataNames = afeData.keys;
-            anyAFEsignal = afeData(afeDataNames{1});
-            if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
-            sigLen = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
-            for backOffset_s = 0.0 : obj.shiftSize_s : max(sigLen+0.01,obj.shiftSize_s) - obj.shiftSize_s
-                afeBlocks{end+1} = obj.cutDataBlock( afeData, backOffset_s );
-                blockOffset = sigLen - backOffset_s;
-                labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-                y(end+1) = -1;
-                eventBlockOverlapLen = 0;
-                eventLength = 0;
-                for jj = 1 : size( onOffs_s, 1 )
-                    thisEventOnset = onOffs_s(jj,1);
-                    if thisEventOnset >= blockOffset, continue; end
-                    thisEventOffset = onOffs_s(jj,2);
-                    if thisEventOffset <= labelBlockOnset, continue; end
-                    thisEventBlockOverlapLen = ...
-                        min( blockOffset, thisEventOffset ) - ...
-                        max( labelBlockOnset, thisEventOnset );
-                    isEventBlockOverlap = thisEventBlockOverlapLen > 0;
-                    if isEventBlockOverlap
-                        eventBlockOverlapLen = ...
-                            eventBlockOverlapLen + thisEventBlockOverlapLen;
-                        eventLength = eventLength + thisEventOffset - thisEventOnset;
-                    end
-                end
-                maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
-                relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
-                blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
-                blockIsNoClearNegative = relEventBlockOverlap > obj.maxNegBlockToEventRatio;
-                if blockIsSoundEvent
-                    y(end) = 1;
-                    if isfield( annotations, 'srcEnergy' ) ...
-                            && size( annotations.srcEnergy, 1 ) > 1
-                        energyFramesInBlockIdxs = ...
-                            annotations.srcEnergy_t >= blockOffset - obj.blockSize_s ...
-                            & annotations.srcEnergy_t <= blockOffset;
-                        energyFramesInBlock = ...
-                            annotations.srcEnergy(2:end,:,energyFramesInBlockIdxs);
-                        distBlockEnergy = ...
-                            sum( log(30) - log( -mean( mean( energyFramesInBlock, 3 ), 2 ) ) );
-                        if distBlockEnergy < 0, y(end) = 0; end
-                    end
-                elseif blockIsNoClearNegative
-                    y(end) = 0;
-                end;
+            if ~exist( obj.inDatPath, 'file' )
+                error( 'FCB.FileCorrupt', '%s not found.', obj.inDatPath );
             end
-            afeBlocks = fliplr( afeBlocks );
-            y = fliplr( y );
-            y = y';
+            inDat = load( obj.inDatPath );
+            out.afeBlocks = inDat.afeBlocks;
+            out.blockAnnotations = inDat.blockAnnotations;
+            out.x = obj.x;
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
+        
+        % override of dataProcs.IdProcInterface's method
+        function save( obj, wavFilepath, ~ )
+            out.x = obj.x;
+            out.inDatPath = obj.inDatPath;
+            save@core.IdProcInterface( obj, wavFilepath, out ); 
+        end
+        %% ------------ Feature Description Utilities ------------------------------------
 
         function b = makeBlockFromAfe( obj, afeIdx, chIdx, func, grps, varargin )
             % makeBlockFromAfe transform AFE data into a featrue block
@@ -225,7 +145,7 @@ classdef Base < core.IdProcInterface
                 clear b1ii;
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function b = combineBlocks( obj, combFun, grpAdd, varargin )
             bs = vertcat( varargin{:} );
@@ -238,7 +158,7 @@ classdef Base < core.IdProcInterface
                 b{ii} = cellfun( @(g)([g grpAdd]), b{ii}, 'UniformOutput', false );
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function b = concatBlocks( obj, dim, varargin )
             bs = vertcat( varargin{:} );
@@ -252,7 +172,7 @@ classdef Base < core.IdProcInterface
             end
             b{1+dim} = cat( dim, bs{:,1+dim} );
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function b = transformBlock( obj, bl, dim, func, dIdxFun, grps )
             b{1} = func( bl{1} );
@@ -268,7 +188,7 @@ classdef Base < core.IdProcInterface
             bl1dIdxs = dIdxFun( 1 : numel( bl{1+dim} ) );
             b{1+dim} = bl{1+dim}(bl1dIdxs);
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function b = reshape2featVec( obj, bl )
             b{1} = reshape( bl{1}, 1, [] );
@@ -287,7 +207,7 @@ classdef Base < core.IdProcInterface
             grps = featureCreators.Base.removeGrpDuplicates( grps );
             b{2} = grps;
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function b = reshapeBlock( obj, bl, dim )
             rsz = { [], [] };
@@ -322,7 +242,7 @@ classdef Base < core.IdProcInterface
             b{1+odim(dim)} = grps;
             b{1+dim} = bl{1+dim};
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function x = block2feat( obj, b, func, dim, grpsIdxFun, grpsFun )
             x{1} = func( b{1} );
@@ -338,7 +258,7 @@ classdef Base < core.IdProcInterface
             end
             x{2} = grps;
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function x = concatFeats( obj, varargin )
             xs = cat( 1, varargin{:} );
@@ -346,21 +266,21 @@ classdef Base < core.IdProcInterface
             if obj.descriptionBuilt, return; end
             x{2} = cat( 2, xs{:,2} );
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
     end
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     
     methods (Static)
         
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         function b1d = joinGrps( bs )
             bs1d = cat( 1, bs{:} );
             for jj = 1 : size( bs1d, 2 )
                 b1d{1,jj} = cat( 2, bs1d{:,jj} );
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function g = removeGrpDuplicates( g )
             for jj = 1 : size( g, 2 )
@@ -390,7 +310,7 @@ classdef Base < core.IdProcInterface
                 clear nums;
             end
         end
-        %% ----------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
         
     end
     

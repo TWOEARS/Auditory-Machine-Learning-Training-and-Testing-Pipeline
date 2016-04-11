@@ -1,6 +1,6 @@
 classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         individualAfeProcs;
         fs;
@@ -11,11 +11,11 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         prAfeDepProducer;
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Static)
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
         function obj = ParallelRequestsAFEmodule( fs, afeRequests )
@@ -31,7 +31,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
             obj.fs = fs;
             obj.prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
             newAfeRequests = {};
@@ -69,13 +69,13 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
                               obj.individualAfeProcs{ii}.getOutputFilepath( wavFilepath );
             end
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         function afeDummy = makeDummyData ( obj )
             afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
             afeDummy.annotations = [];
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         % override of dataProcs.IdProcWrapper's method
         function outObj = getOutputObject( obj )
@@ -102,7 +102,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         
     end
 
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
         % override of dataProcs.IdProcWrapper's method
@@ -110,7 +110,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
             afeDeps = obj.prAfeDepProducer.getInternOutputDependencies.afeParams;
             outputDeps.afeParams = afeDeps;
         end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
 
         % override of dataProcs.IdProcInterface's method
         function out = getOutput( obj )
@@ -126,12 +126,12 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
                                                % individual annotations, they would have
                                                % to be joined here
     end
-        %% ----------------------------------------------------------------
+        %% -------------------------------------------------------------------------------
         
         % override of dataProcs.IdProcInterface's method
-        function out = save( obj, wavFilepath, ~ )
-            tmpOut.indivFiles = obj.indivFiles;
-            out = save@core.IdProcInterface( obj, wavFilepath, tmpOut ); 
+        function save( obj, wavFilepath, ~ )
+            out.indivFiles = obj.indivFiles;
+            save@core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
 

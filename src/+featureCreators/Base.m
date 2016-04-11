@@ -54,13 +54,13 @@ classdef Base < core.IdProcInterface
                         tmp = load( in.indFile{ii} );
                         in.afeData(ii) = tmp.afeData(1);
                     end
-                    in.annotsOut = tmp.annotsOut;
+                    in.annotations = tmp.annotations;
                     in.onOffsOut = tmp.onOffsOut;
                 else
                     error( 'unexpected input data' );
                 end
             end
-            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
+            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotations );
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.afeData = afeBlock{1};
@@ -128,7 +128,7 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s, annotsOut )
+        function [afeBlocks, y] = blockifyAndLabel( obj, afeData, onOffs_s, annotations )
             afeBlocks = {};
             y = [];
             afeDataNames = afeData.keys;
@@ -163,13 +163,13 @@ classdef Base < core.IdProcInterface
                 blockIsNoClearNegative = relEventBlockOverlap > obj.maxNegBlockToEventRatio;
                 if blockIsSoundEvent
                     y(end) = 1;
-                    if isfield( annotsOut, 'srcEnergy' ) ...
-                            && size( annotsOut.srcEnergy, 1 ) > 1
+                    if isfield( annotations, 'srcEnergy' ) ...
+                            && size( annotations.srcEnergy, 1 ) > 1
                         energyFramesInBlockIdxs = ...
-                            annotsOut.srcEnergy_t >= blockOffset - obj.blockSize_s ...
-                            & annotsOut.srcEnergy_t <= blockOffset;
+                            annotations.srcEnergy_t >= blockOffset - obj.blockSize_s ...
+                            & annotations.srcEnergy_t <= blockOffset;
                         energyFramesInBlock = ...
-                            annotsOut.srcEnergy(2:end,:,energyFramesInBlockIdxs);
+                            annotations.srcEnergy(2:end,:,energyFramesInBlockIdxs);
                         distBlockEnergy = ...
                             sum( log(30) - log( -mean( mean( energyFramesInBlock, 3 ), 2 ) ) );
                         if distBlockEnergy < 0, y(end) = 0; end

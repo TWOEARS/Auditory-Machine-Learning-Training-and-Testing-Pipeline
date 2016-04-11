@@ -181,8 +181,7 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function out = save( obj, wavFilepath, data )
-            out = data;
+        function save( obj, wavFilepath, out )
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath );

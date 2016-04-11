@@ -22,6 +22,8 @@ classdef DistractedBlockCreator < BlockCreators.StandardBlockCreator
     methods (Access = protected)
         
         function outputDeps = getBlockCreatorInternOutputDependencies( obj )
+            outputDeps.sbc = ...
+                getBlockCreatorInternOutputDependencies@BlockCreators.StandardBlockCreator( obj );
             outputDeps.v = 1;
         end
         %% ------------------------------------------------------------------------------- 

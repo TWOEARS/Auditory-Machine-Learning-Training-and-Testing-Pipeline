@@ -67,24 +67,40 @@ core.IdCacheTreeElem *-- "cfgSubs (*)" core.IdCacheTreeElem
 
 
 class core.IdentTrainPipeData{
-  classNames
-  data
   subsref()
   subsasgn()
-  splitInPermutedStratifiedFolds( nFolds )
+  length()
+  splitInPermutedStratifiedFolds( nFolds, stratifyLabels )
+  getDisjunctSubsetIdxs( labels )
+  getMinDisjunctSubsetsSize( labels )
+  getShare( ratio, stratifyLabels )
+  getFileIdx( fileNames )
   saveDataFList( flistName, baseDir )
-  loadWavFileList( wavflist )
+  loadFileList( flistName )
   {static} combineData( varargin )
 }
-core.IdentTrainPipeData *-- "files (*)" core.IdentTrainPipeDataElem: in "data" array
+core.IdentTrainPipeData *-- "data (*)" core.IdentTrainPipeDataElem
 
 
 class core.IdentTrainPipeDataElem{
-  wavFileName
+  fileName
   x
   y
-  mc
+  a
+  fileAnnotations
+  setFileName( fileName )
+  getFileAnnotation( aLabel )
+  readFileAnnotations()
 }
+note as Ncitpde
+  data elem refering one source file
+  a is for annotations refering the
+  respective x and y
+  fileAnnotations for annotations
+  refering the whole source file
+  (thus all x and y)
+end note
+Ncitpde .. core.IdentTrainPipeDataElem
 
 
 abstract class core.IdProcInterface{
@@ -184,10 +200,10 @@ dataProcs.ParallelRequestsAFEmodule *-- "individualAfeProcs (*)" dataProcs.Audit
 note as Ndpram
   intelligently splits and combines
   AFE requests, caches them individually.
-  Output: cache file pathes of individual requests
+  Output: AFE features
 end note
 Ndpram .. dataProcs.ParallelRequestsAFEmodule
-
+dataProcs.ParallelRequestsAFEmodule ..> BlockCreators.Base: usual dataflow >
 
 dataProcs.IdProcWrapper <|-- dataProcs.SceneEarSignalProc
 class dataProcs.SceneEarSignalProc{
@@ -205,6 +221,7 @@ note as Ndsesp
   Output: earsignals, event on-/offset times
 end note
 Ndsesp .. dataProcs.SceneEarSignalProc
+dataProcs.SceneEarSignalProc ..> dataProcs.ParallelRequestsAFEmodule: usual dataflow >
 
 
 core.IdProcInterface <|-- BlockCreators.Base
@@ -215,16 +232,27 @@ abstract class BlockCreators.Base{
   cutDataBlock( afeData, backOffset_s )
   ..
   {abstract} getBlockCreatorOutputDependencies()
-  {abstract} blockify( afeData, annotations )
+  {abstract} blockify( afeStream, streamAnnotations )
 }
 note as Nbb
   cuts "streams" (wavs) into blocks
-  Output: blocked AFE features
+  Output: blocked AFE features, annotations
 end note
 Nbb .. BlockCreators.Base
+BlockCreators.Base ..> featureCreators.Base: usual dataflow >
 
 
-BlockCreators.Base <|-- BlockCreators.DistractedBlockCreator
+BlockCreators.Base <|-- BlockCreators.StandardBlockCreator
+class BlockCreators.StandardBlockCreator{
+  getBlockCreatorOutputDependencies()
+  blockify( afeData, annotations )
+}
+note as Nbsbc
+  cuts afeData into blocks
+end note
+Nbsbc .. BlockCreators.StandardBlockCreator
+
+BlockCreators.StandardBlockCreator <|-- BlockCreators.DistractedBlockCreator
 class BlockCreators.DistractedBlockCreator{
   DistractedBlockCreator( distractorSources, rejectEnergyThreshold )
   getBlockCreatorOutputDependencies()
@@ -250,6 +278,7 @@ note as Nlb
   Output: block labels
 end note
 Nlb .. LabelCreators.Base
+LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
 
 
 LabelCreators.Base <|-- LabelCreators.BinaryEventTypeLabeler
@@ -286,6 +315,7 @@ note as Nfb
   Output: x
 end note
 Nfb .. featureCreators.Base
+featureCreators.Base ..> LabelCreators.Base: usual dataflow >
 
 
 featureCreators.Base <|-- featureCreators.FeatureSet1Blockmean

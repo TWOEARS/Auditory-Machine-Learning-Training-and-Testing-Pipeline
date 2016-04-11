@@ -240,6 +240,7 @@ note as Nbb
 end note
 Nbb .. BlockCreators.Base
 BlockCreators.Base ..> featureCreators.Base: usual dataflow >
+BlockCreators.Base ..> dataProcs.BlackboardKsWrapper: alternative dataflow >
 
 
 BlockCreators.Base <|-- BlockCreators.StandardBlockCreator
@@ -297,6 +298,38 @@ note as Nbetl
 end note
 Nbetl .. LabelCreators.BinaryEventTypeLabeler
 
+
+
+core.IdProcInterface <|-- dataProcs.BlackboardKsWrapper
+abstract class dataProcs.BlackboardKsWrapper{
+  ks
+  process( wavFilepath )
+  ..
+  {abstract} getKsInternOutputDependencies()
+  {abstract} preproc()
+  {abstract} postproc()
+}
+note as Ndbkw
+  emulates blackboard,
+  wraps a KS
+  Output: KS output
+end note
+Ndbkw .. dataProcs.BlackboardKsWrapper
+dataProcs.BlackboardKsWrapper ..> featureCreators.Base: alternative dataflow >
+
+
+dataProcs.BlackboardKsWrapper <|-- dataProcs.SegmentKsWrapper
+class dataProcs.SegmentKsWrapper{
+  getKsInternOutputDependencies()
+  preproc()
+  postproc()
+}
+note as Ndskw
+  wraps segementationKS
+  Output: segmented 
+  AFE blocks + annotations
+end note
+Ndskw .. dataProcs.SegmentKsWrapper
 
 
 core.IdProcInterface <|-- featureCreators.Base
@@ -535,9 +568,10 @@ class sceneConfig.SourceBase{
 class sceneConfig.SceneConfiguration{
   brirAzmIdx
   loop
-  addSource( source, snr, loop )
+  addSource( source, snr, snrRef )
   addRoom( room )
   setBRIRazm( azmIdx )
+  setLengthRef( source )
   instantiate()
   getSingleConfig( srcIdx )
   isequal( other )
@@ -556,6 +590,7 @@ class sceneConfig.RoomValGen{
 
 sceneConfig.SourceBase <|-- sceneConfig.PointSource
 class sceneConfig.PointSource{
+  loop
   instantiate()
   isequal( other )
 }

@@ -45,22 +45,22 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
+            eventOnsets = blockAnnotations.objectType.t.onset;
+            eventOffsets = blockAnnotations.objectType.t.offset;
+            blockOffset = blockAnnotations.blockOffset;
             labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-            y(end+1) = -1;
             eventBlockOverlapLen = 0;
             eventLength = 0;
-            for jj = 1 : size( blockAnnotations, 1 )
-                thisEventOnset = blockAnnotations(jj,1);
+            for jj = 1 : numel( eventOnsets )
+                thisEventOnset = eventOnsets(jj);
                 if thisEventOnset >= blockOffset, continue; end
-                thisEventOffset = blockAnnotations(jj,2);
+                thisEventOffset = eventOffsets(jj);
                 if thisEventOffset <= labelBlockOnset, continue; end
-                thisEventBlockOverlapLen = ...
-                    min( blockOffset, thisEventOffset ) - ...
-                    max( labelBlockOnset, thisEventOnset );
-                isEventBlockOverlap = thisEventBlockOverlapLen > 0;
+                thisEventBlockOverlap = min( blockOffset, thisEventOffset ) - ...
+                                        max( labelBlockOnset, thisEventOnset );
+                isEventBlockOverlap = thisEventBlockOverlap > 0;
                 if isEventBlockOverlap
-                    eventBlockOverlapLen = ...
-                        eventBlockOverlapLen + thisEventBlockOverlapLen;
+                    eventBlockOverlapLen = eventBlockOverlapLen + thisEventBlockOverlap;
                     eventLength = eventLength + thisEventOffset - thisEventOnset;
                 end
             end
@@ -69,9 +69,11 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
             blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
             blockIsNoClearNegative = relEventBlockOverlap > obj.maxNegBlockToEventRatio;
             if blockIsSoundEvent
-                y(end) = 1;
+                y = 1;
             elseif blockIsNoClearNegative
-                y(end) = 0;
+                y = 0;
+            else
+                y = -1;
             end;
         end
         %% -------------------------------------------------------------------------------

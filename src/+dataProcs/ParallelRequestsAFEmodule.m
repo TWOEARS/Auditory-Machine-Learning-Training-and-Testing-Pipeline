@@ -73,7 +73,6 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         
         function afeDummy = makeDummyData ( obj )
             afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
-            afeDummy.onOffsOut = zeros(0,2);
             afeDummy.annotations = [];
         end
         %% ----------------------------------------------------------------
@@ -123,8 +122,9 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
                 tmp = load( obj.indivFiles{ii} );
                 out.afeData(ii) = tmp.afeData(1);
             end
-            out.annotations = tmp.annotations; % TODO join annotations of all afeData
-            out.onOffsOut = tmp.onOffsOut;
+            out.annotations = tmp.annotations; % if individual AFE modules produced
+                                               % individual annotations, they would have
+                                               % to be joined here
     end
         %% ----------------------------------------------------------------
         

@@ -39,7 +39,7 @@ classdef Base < core.IdProcInterface
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};
-                fprintf( '*' );
+                fprintf( '.' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
                 obj.descriptionBuilt = true;
@@ -90,7 +90,6 @@ classdef Base < core.IdProcInterface
                 error( 'FCB.FileCorrupt', '%s not found.', obj.inDatPath );
             end
             inDat = load( obj.inDatPath );
-            out.afeBlocks = inDat.afeBlocks;
             out.blockAnnotations = inDat.blockAnnotations;
             out.x = obj.x;
         end

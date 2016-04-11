@@ -44,6 +44,7 @@ classdef DistractedBlockCreator < BlockCreators.StandardBlockCreator
                     afeBlocks(ii) = [];
                     blockAnnots(ii) = [];
                 end
+                fprintf( '*' );
             end
         end
         %% -------------------------------------------------------------------------------

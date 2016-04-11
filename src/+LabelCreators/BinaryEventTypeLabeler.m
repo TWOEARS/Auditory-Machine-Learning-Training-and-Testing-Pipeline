@@ -4,9 +4,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
     properties (SetAccess = private)
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
-        y;
         labelBlockSize_s;
-        inDatPath;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -29,7 +27,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        function outputDeps = getInternOutputDependencies( obj )
+        function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps.labelBlockSize = obj.labelBlockSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;

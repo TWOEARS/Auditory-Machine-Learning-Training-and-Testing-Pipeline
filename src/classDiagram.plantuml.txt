@@ -255,7 +255,8 @@ Nbsbc .. BlockCreators.StandardBlockCreator
 
 BlockCreators.StandardBlockCreator <|-- BlockCreators.DistractedBlockCreator
 class BlockCreators.DistractedBlockCreator{
-  DistractedBlockCreator( distractorSources, rejectEnergyThreshold )
+  distractorIdxs
+  rejectThreshold
   getBlockCreatorOutputDependencies()
   blockify( afeData, annotations )
 }
@@ -276,7 +277,7 @@ abstract class LabelCreators.Base{
 }
 note as Nlb
   labels blocks
-  Output: block labels
+  Output: x, y
 end note
 Nlb .. LabelCreators.Base
 LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
@@ -288,9 +289,10 @@ class LabelCreators.BinaryEventTypeLabeler{
   posOutType
   negOut
   negOutType
-  minBlockEventRatio
+  minBlockToEventRatio
+  maxBlockToEventRatio
   labelBlockSize_s
-  getLabelCreatorOutputDependencies()
+  getLabelInternOutputDependencies()
   label( annotations )
 }
 note as Nbetl
@@ -345,7 +347,7 @@ abstract class featureCreators.Base{
 }
 note as Nfb
   constructs feature vectors.
-  Output: x
+  Output: x, blockAnnotations
 end note
 Nfb .. featureCreators.Base
 featureCreators.Base ..> LabelCreators.Base: usual dataflow >

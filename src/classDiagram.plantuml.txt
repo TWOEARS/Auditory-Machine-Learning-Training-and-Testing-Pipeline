@@ -285,7 +285,6 @@ LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
 
 LabelCreators.Base <|-- LabelCreators.BinaryEventTypeLabeler
 class LabelCreators.BinaryEventTypeLabeler{
-  posOut
   posOutType
   negOut
   negOutType

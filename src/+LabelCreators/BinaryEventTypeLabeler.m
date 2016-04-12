@@ -5,6 +5,9 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
         labelBlockSize_s;
+        isPosOutType;
+        negOut;
+        isNegOutType;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -14,11 +17,26 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = BinaryEventTypeLabeler( minBlockToEventRatio, labelBlockSize_s )
+        function obj = BinaryEventTypeLabeler( varargin )
             obj = obj@LabelCreators.Base();
-            obj.minBlockToEventRatio = minBlockToEventRatio;
-            obj.labelBlockSize_s = labelBlockSize_s;
-            obj.maxNegBlockToEventRatio = 0;
+            ip = inputParser;
+            ip.addOptional( 'minBlockToEventRatio', 2 );
+            ip.addOptional( 'maxNegBlockToEventRatio', -30 );
+            ip.addOptional( 'labelBlockSize_s', -30 );
+            ip.addOptional( 'posOutType', {'TypeName'} );
+            ip.addOptional( 'negOut', 'all' ); % event, non-event, all
+            ip.addOptional( 'negOutType', 'rest' ); % typename, 'rest' (respective to pos)
+            ip.parse( varargin{:} );
+            obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
+            obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
+            obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
+            obj.isPosOutType = @(t)( any( strcmp( ip.Results.posOutType, t ) ) );
+            obj.negOut = ip.Results.negOut;
+            if strcmp( ip.Results.negOutType, 'rest' )
+                obj.isNegOutType = @(t)( ~obj.isPosOutType( t ) );
+            else
+                obj.isNegOutType = @(t)( any( strcmp( ip.Results.negOutType, t ) ) );
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -31,6 +49,9 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
             outputDeps.labelBlockSize = obj.labelBlockSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
+            outputDeps.isPosOutType = obj.isPosOutType;
+            outputDeps.negOut = obj.negOut;
+            outputDeps.isNegOutType = obj.isNegOutType;
             outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------
@@ -45,36 +66,50 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
-            eventOnsets = blockAnnotations.objectType.t.onset;
-            eventOffsets = blockAnnotations.objectType.t.offset;
             blockOffset = blockAnnotations.blockOffset;
             labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-            eventBlockOverlapLen = 0;
-            eventLength = 0;
-            for jj = 1 : numel( eventOnsets )
-                thisEventOnset = eventOnsets(jj);
-                if thisEventOnset >= blockOffset, continue; end
-                thisEventOffset = eventOffsets(jj);
-                if thisEventOffset <= labelBlockOnset, continue; end
-                thisEventBlockOverlap = min( blockOffset, thisEventOffset ) - ...
-                                        max( labelBlockOnset, thisEventOnset );
-                isEventBlockOverlap = thisEventBlockOverlap > 0;
-                if isEventBlockOverlap
-                    eventBlockOverlapLen = eventBlockOverlapLen + thisEventBlockOverlap;
-                    eventLength = eventLength + thisEventOffset - thisEventOnset;
-                end
-            end
-            maxBlockEventLen = min( obj.labelBlockSize_s, eventLength );
-            relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
-            blockIsSoundEvent = relEventBlockOverlap > obj.minBlockToEventRatio;
-            blockIsNoClearNegative = relEventBlockOverlap > obj.maxNegBlockToEventRatio;
-            if blockIsSoundEvent
+            eventOnsets = blockAnnotations.objectType.t.onset;
+            eventOffsets = blockAnnotations.objectType.t.offset;
+            eventIsPosType = arrayfun( @(ba)(...
+                                    ~obj.isPosOutType( ba ) )...
+                                               , blockAnnotations.objectType.objectType );
+            eventIsNegType = arrayfun( @(ba)(...
+                                    ~obj.isNegOutType( ba ) )...
+                                               , blockAnnotations.objectType.objectType );
+            eventBlockOverlaps = arrayfun( @(eon,eof)(...
+                                  min( blockOffset, eof ) - max( labelBlockOnset, eon )...
+                                                           ), eventOnsets, eventOffsets );
+            [isPosEvent, isNotPosEvent] = obj.isBlockEvent( eventIsPosType, ...
+                                                            eventBlockOverlaps, ...
+                                                            eventOnsets, eventOffsets );
+            [isNegEvent, isNotNegEvent] = obj.isBlockEvent( eventIsNegType, ...
+                                                            eventBlockOverlaps, ...
+                                                            eventOnsets, eventOffsets );
+            if isPosEvent
                 y = 1;
-            elseif blockIsNoClearNegative
-                y = 0;
-            else
+            elseif strcmp( obj.negOut, 'event' ) && isNegEvent
                 y = -1;
-            end;
+            elseif strcmp( obj.negOut, 'non-event' ) && isNotPosEvent && isNotNegEvent
+                y = -1;
+            elseif strcmp( obj.negOut, 'all' ) && isNotPosEvent
+                y = -1;
+            else
+                y = 0;
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function [isEvent, isNotEvent] = isBlockEvent( obj, isEventConsidered, ...
+                                                            eventBlockOverlaps, ...
+                                                            eventOnsets, eventOffsets )
+            isEventBlockOverlap = isEventConsidered & (eventBlockOverlaps > 0);
+            eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );
+            eventLen = sum( eventOffsets(isEventBlockOverlap) ...
+                            - eventOnsets(isEventBlockOverlap) );
+            maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
+            relEventBlockOverlap = eventBlockOverlapLen / maxBlockEventLen;
+            isEvent = relEventBlockOverlap >= obj.minBlockToEventRatio;
+            isNotEvent = relEventBlockOverlap <= obj.maxNegBlockToEventRatio;
         end
         %% -------------------------------------------------------------------------------
         

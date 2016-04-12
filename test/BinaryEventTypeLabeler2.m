@@ -1,4 +1,4 @@
-classdef BinaryEventTypeLabeler < LabelCreators.Base
+classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
     % class for binary labeling blocks by event (target vs non-target)
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
@@ -18,7 +18,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
     methods
         
         function obj = BinaryEventTypeLabeler( varargin )
-            obj = obj@LabelCreators.Base();
+            obj = obj@LabelCreators.MultiEventTypeLabeler();
             ip = inputParser;
             ip.addOptional( 'minBlockToEventRatio', 0.75 );
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
@@ -27,9 +27,11 @@ classdef BinaryEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'negOut', 'all' ); % event, non-event, all
             ip.addOptional( 'negOutType', 'rest' ); % typename, 'rest' (respective to pos)
             ip.parse( varargin{:} );
-            obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
-            obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
-            obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
+            multiTypes = {ip.Results.posOutType, };
+            multiParams = {'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
+                           'minBlockToEventRatio', ip.Results.minBlockToEventRatio, ...
+                           'maxNegBlockToEventRatio', ip.Results.maxNegBlockToEventRatio, ...
+                           'types', multiTypes };
             obj.isPosOutType = @(t)( any( strcmp( ip.Results.posOutType, t ) ) );
             obj.negOut = ip.Results.negOut;
             if strcmp( ip.Results.negOutType, 'rest' )

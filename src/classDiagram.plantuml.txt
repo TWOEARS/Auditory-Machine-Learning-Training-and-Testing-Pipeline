@@ -272,25 +272,36 @@ core.IdProcInterface <|-- LabelCreators.Base
 abstract class LabelCreators.Base{
   process( wavFilepath )
   ..
-  {abstract} getLabelCreatorOutputDependencies()
+  {abstract} getLabelInternOutputDependencies()
   {abstract} label( annotations )
 }
 note as Nlb
   labels blocks
-  Output: x, y
+  Output: x, y, a
 end note
 Nlb .. LabelCreators.Base
 LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
 
 
-LabelCreators.Base <|-- LabelCreators.BinaryEventTypeLabeler
-class LabelCreators.BinaryEventTypeLabeler{
-  posOutType
-  negOut
-  negOutType
+LabelCreators.Base <|-- LabelCreators.MultiEventTypeLabeler
+class LabelCreators.MultiEventTypeLabeler{
   minBlockToEventRatio
-  maxBlockToEventRatio
+  maxNegBlockToEventRatio
   labelBlockSize_s
+  eventIsType
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+  relBlockEventsOverlap( blockAnnotations )
+}
+note as Nmetl
+  creates multiclass event type labels
+end note
+Nmetl .. LabelCreators.MultiEventTypeLabeler
+
+
+LabelCreators.MultiEventTypeLabeler <|-- LabelCreators.BinaryEventTypeLabeler
+class LabelCreators.BinaryEventTypeLabeler{
+  negOut
   getLabelInternOutputDependencies()
   label( annotations )
 }
@@ -298,7 +309,6 @@ note as Nbetl
   creates binary event type labels
 end note
 Nbetl .. LabelCreators.BinaryEventTypeLabeler
-
 
 
 core.IdProcInterface <|-- dataProcs.BlackboardKsWrapper

@@ -283,6 +283,19 @@ Nlb .. LabelCreators.Base
 LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
 
 
+LabelCreators.Base <|-- LabelCreators.MultiLabeler
+class LabelCreators.MultiLabeler{
+  throwAwayZeroLabelBlocks
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+LabelCreators.MultiLabeler o-- "individualLabelers (1*)" LabelCreators.Base
+note as Nml
+  creates multi-labels
+end note
+Nml .. LabelCreators.MultiLabeler
+
+
 LabelCreators.Base <|-- LabelCreators.MultiEventTypeLabeler
 class LabelCreators.MultiEventTypeLabeler{
   minBlockToEventRatio

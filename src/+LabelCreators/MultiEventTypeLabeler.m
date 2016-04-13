@@ -1,11 +1,11 @@
 classdef MultiEventTypeLabeler < LabelCreators.Base
-    % class for binary labeling blocks by event (target vs non-target)
+    % class for multi-class labeling blocks by event
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
         labelBlockSize_s;
-        types;
+        eventIsType;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -26,7 +26,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
-            obj.types = ip.Results.types;
+            for ii = 1 : numel( ip.Results.types )
+                obj.eventIsType{ii} = @(e)(any( strcmp( e, ip.Results.types{ii} ) ));
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -54,24 +56,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
-            blockOffset = blockAnnotations.blockOffset;
-            labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-            eventOnsets = blockAnnotations.objectType.t.onset;
-            eventOffsets = blockAnnotations.objectType.t.offset;
-            eventBlockOverlaps = arrayfun( @(eon,eof)(...
-                                  min( blockOffset, eof ) - max( labelBlockOnset, eon )...
-                                                           ), eventOnsets, eventOffsets );
-            relBlockEventOverlap = zeros( size( obj.types ) );
-            for ii = 1 : numel( obj.types )
-                eventIsType = arrayfun( @(ba)(...
-                                  any( strcmp( ba, obj.types{ii} ) )...
-                                              ), blockAnnotations.objectType.objectType );
-                relBlockEventOverlap(ii) = obj.relBlockEventOverlap( eventIsType, ...
-                                                                     eventBlockOverlaps, ...
-                                                                     eventOnsets, eventOffsets );
-            end
+            relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
             [maxRelOverlap, maxIdx] = max( relBlockEventOverlap );
-            if maxRelOverlap < obj.maxBlockToEventRatio
+            if maxRelOverlap < obj.maxNegBlockToEventRatio
                 y = -1;
             elseif maxRelOverlap < obj.minBlockToEventRatio
                 y = 0;
@@ -81,18 +68,29 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         end
         %% -------------------------------------------------------------------------------
         
-        function relOverlap = relBlockEventOverlap( obj, isEventConsidered, ...
-                                                         eventBlockOverlaps, ...
-                                                         eventOnsets, eventOffsets )
-            isEventBlockOverlap = isEventConsidered & (eventBlockOverlaps > 0);
-            eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );
-            eventLen = sum( eventOffsets(isEventBlockOverlap) ...
-                            - eventOnsets(isEventBlockOverlap) );
-            maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
-            relOverlap = eventBlockOverlapLen / maxBlockEventLen;
+        function relBlockEventsOverlap = relBlockEventsOverlap( obj, blockAnnotations )
+            blockOffset = blockAnnotations.blockOffset;
+            labelBlockOnset = blockOffset - obj.labelBlockSize_s;
+            eventOnsets = blockAnnotations.objectType.t.onset;
+            eventOffsets = blockAnnotations.objectType.t.offset;
+            eventBlockOverlaps = arrayfun( @(eon,eof)(...
+                                  min( blockOffset, eof ) - max( labelBlockOnset, eon )...
+                                                           ), eventOnsets, eventOffsets );
+            relBlockEventsOverlap = zeros( size( obj.eventIsType ) );
+            for ii = 1 : numel( obj.types )
+                eventsAreType = arrayfun( @(ba)(...
+                                  obj.eventIsType{ii}(ba)...
+                                              ), blockAnnotations.objectType.objectType );
+                isEventBlockOverlap = eventsAreType & (eventBlockOverlaps > 0);
+                eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );
+                eventLen = sum( eventOffsets(isEventBlockOverlap) ...
+                  - eventOnsets(isEventBlockOverlap) );
+                maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
+                relBlockEventsOverlap(ii) = eventBlockOverlapLen / maxBlockEventLen;
+            end
         end
         %% -------------------------------------------------------------------------------
-        
+                
     end
     %% -----------------------------------------------------------------------------------
     

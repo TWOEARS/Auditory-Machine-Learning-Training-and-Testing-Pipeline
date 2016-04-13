@@ -5,7 +5,7 @@ addpath( '..' );
 startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe( 'soundDbBaseDir', ...
-                           fullfile( xml.dbPath, 'sound_databases', 'IEEE_AASP' ) );
+                           '~/Two ears/binaural-simulator/tmp/sound_databases/IEEE_AASP' );
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.LoadModelNoopTrainer( 'noop' );
 

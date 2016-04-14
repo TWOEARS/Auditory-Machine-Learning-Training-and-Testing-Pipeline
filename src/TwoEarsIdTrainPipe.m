@@ -58,8 +58,7 @@ classdef TwoEarsIdTrainPipe < handle
             %   
             ip = inputParser;
             ip.addOptional( 'hrir', ...
-                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
-                            @(fn)(exist( fn, 'file' )) );
+                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             ip.parse( varargin{:} );
             obj.setupData( true );
             obj.pipeline.resetDataProcs();

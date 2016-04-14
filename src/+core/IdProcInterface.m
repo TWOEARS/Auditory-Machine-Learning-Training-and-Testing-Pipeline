@@ -76,7 +76,7 @@ classdef (Abstract) IdProcInterface < handle
 
         function out = loadProcessedData( obj, wavFilepath )
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             out = load( obj.getOutputFilepath( wavFilepath ) );
             removefilesemaphore( obj.outFileSema );
         end
@@ -186,14 +186,14 @@ classdef (Abstract) IdProcInterface < handle
             out = data;
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             save( outFilepath, '-struct', 'out' );
             removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
 
         function procFileExt = getProcFileExt( obj )
-            procFileExt = ['.' obj.procName '.mat'];
+            procFileExt = '.mat';
         end
         %% -------------------------------------------------------------------------------
         

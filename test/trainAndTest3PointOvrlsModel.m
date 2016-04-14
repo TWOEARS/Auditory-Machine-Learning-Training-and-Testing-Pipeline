@@ -37,9 +37,8 @@ sc.addSource( sceneConfig.PointSource( ...
     'offset', sceneConfig.ValGen('manual',0.0) ),...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
-pipe.setSceneConfig( sc ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
@@ -75,7 +74,6 @@ sc.addSource( sceneConfig.PointSource( ...
     'offset', sceneConfig.ValGen('manual',0.0) ),...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
-pipe.setSceneConfig( [sc] ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );

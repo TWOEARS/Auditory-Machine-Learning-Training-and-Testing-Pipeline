@@ -6,12 +6,12 @@ classdef (Abstract) IdProcInterface < handle
     properties (SetAccess = protected)
         procName;
         cacheSystemDir;
+        nPathLevelsForCacheName = 3;
     end
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected, Transient = true)
         cacheDirectory;
-        soundDbBaseDir;
         inputProc;
         idData;
         lastFolder;
@@ -76,7 +76,7 @@ classdef (Abstract) IdProcInterface < handle
 
         function out = loadProcessedData( obj, wavFilepath )
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             out = load( obj.getOutputFilepath( wavFilepath ) );
             removefilesemaphore( obj.outFileSema );
         end
@@ -88,13 +88,18 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
 
         function outFilepath = getOutputFilepath( obj, wavFilepath )
-            fileName = wavFilepath(numel(obj.soundDbBaseDir)+1:end);
-            fileName = strrep( fileName, '/', '.' );
-            fileName = strrep( fileName, '\', '.' );
-            fileName = strrep( fileName, ':', '.' );
-            fileName = strrep( fileName, ' ', '.' );
+            filepath = '';
+            for ii = 1 : obj.nPathLevelsForCacheName
+                [wavFilepath, filepathPart, ext] = fileparts( wavFilepath );
+                filepath = [filepathPart ext '.' filepath];
+            end
+            filepath = filepath(1:end-1);
+            filepath = strrep( filepath, '/', '.' );
+            filepath = strrep( filepath, '\', '.' );
+            filepath = strrep( filepath, ':', '.' );
+            filepath = strrep( filepath, ' ', '.' );
             outFilepath = ...
-                fullfile( obj.getCurrentFolder(), [fileName obj.getProcFileExt] );
+                fullfile( obj.getCurrentFolder(), [filepath obj.getProcFileExt] );
         end
         %% -------------------------------------------------------------------------------
 
@@ -118,19 +123,15 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
+        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName )
             if exist( cacheSystemDir, 'dir' )
                 obj.cacheSystemDir = fullfile( cacheSystemDir, obj.procName );
                 obj.cacheDirectory.setCacheTopDir( obj.cacheSystemDir, true );
             else
                 error( 'cannot find directory "%s": does it exist?', cacheSystemDir ); 
             end
-            if isempty( soundDbBaseDir ) 
-                obj.soundDbBaseDir = soundDbBaseDir;
-            elseif exist( soundDbBaseDir, 'dir' )
-                obj.soundDbBaseDir = fullfile( soundDbBaseDir, filesep );
-            else
-                error( 'cannot find directory "%s": does it exist?', soundDbBaseDir ); 
+            if exist( 'nPathLevelsForCacheName', 'var' ) 
+                obj.nPathLevelsForCacheName = nPathLevelsForCacheName;
             end
         end
         %% -------------------------------------------------------------------------------
@@ -185,14 +186,14 @@ classdef (Abstract) IdProcInterface < handle
             out = data;
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             save( outFilepath, '-struct', 'out' );
             removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
 
         function procFileExt = getProcFileExt( obj )
-            procFileExt = ['.' obj.procName '.mat'];
+            procFileExt = '.mat';
         end
         %% -------------------------------------------------------------------------------
         

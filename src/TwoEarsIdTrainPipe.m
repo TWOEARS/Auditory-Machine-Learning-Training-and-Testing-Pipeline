@@ -37,13 +37,13 @@ classdef TwoEarsIdTrainPipe < handle
             %
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
-            ip.addOptional( 'soundDbBaseDir', '' );
+            ip.addOptional( 'nPathLevelsForCacheName', 3 );
             ip.parse( varargin{:} );
             modelTrainers.Base.featureMask( true, [] ); % reset the feature mask
             fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
             obj.pipeline = core.IdentificationTrainingPipeline( ...
                                           'cacheSystemDir', ip.Results.cacheSystemDir, ...
-                                          'soundDbBaseDir', ip.Results.soundDbBaseDir );
+                                          'nPathLevelsForCacheName', ip.Results.nPathLevelsForCacheName );
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------
@@ -58,8 +58,7 @@ classdef TwoEarsIdTrainPipe < handle
             %   
             ip = inputParser;
             ip.addOptional( 'hrir', ...
-                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa', ...
-                            @(fn)(exist( fn, 'file' )) );
+                            'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             ip.parse( varargin{:} );
             obj.setupData( true );
             obj.pipeline.resetDataProcs();

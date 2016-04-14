@@ -19,9 +19,8 @@ pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TestSet.f
 
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource() );
-pipe.setSceneConfig( [sc] ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
@@ -51,9 +50,8 @@ pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TestSet.f
 
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource() );
-pipe.setSceneConfig( [sc] ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );

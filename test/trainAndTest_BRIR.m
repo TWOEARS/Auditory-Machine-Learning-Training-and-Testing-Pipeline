@@ -14,7 +14,7 @@ brirs = { ...
     };
 
 
-pipe = TwoEarsIdTrainPipe( [] );
+pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...
@@ -37,9 +37,8 @@ sc.addSource( sceneConfig.BRIRsource( brirs{1}, ...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
 sc.setBRIRazm( 0.4 ); % point of recorded azm range (0..1)
-pipe.setSceneConfig( sc ); 
 
-pipe.init();
+pipe.init( sc, 'hrir', [] );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 
@@ -65,9 +64,8 @@ sc.addSource( sceneConfig.BRIRsource( brirs{1}, ...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
 sc.setBRIRazm( 0.4 ); % point of recorded azm range (0..1)
-pipe.setSceneConfig( sc ); 
 
-pipe.init();
+pipe.init( sc, 'hrir', [] );
 modelPath1 = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' Training -- Saved at %s -- \n\n', modelPath );

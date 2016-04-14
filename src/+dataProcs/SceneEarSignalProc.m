@@ -13,7 +13,7 @@ classdef SceneEarSignalProc < dataProcs.IdProcWrapper
     methods (Access = public)
         
         function obj = SceneEarSignalProc( binauralSim )
-            obj = obj@dataProcs.IdProcWrapper( binauralSim );
+            obj = obj@dataProcs.IdProcWrapper( binauralSim, false );
             obj.binauralSim = obj.wrappedProcs{1};
             obj.sceneConfig = sceneConfig.SceneConfiguration.empty;
         end

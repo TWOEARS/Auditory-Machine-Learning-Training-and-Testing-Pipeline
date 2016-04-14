@@ -2,7 +2,6 @@ function trainAndTestCleanModel_2_svm( classname )
 
 if nargin < 1, classname = 'speech'; end;
 
-%startTwoEars( '../IdentificationTraining.xml' );
 addpath( '..' );
 startIdentificationTraining();
 
@@ -28,9 +27,8 @@ pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TestSet.f
 
 sc = sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource() );
-pipe.setSceneConfig( [sc] ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );

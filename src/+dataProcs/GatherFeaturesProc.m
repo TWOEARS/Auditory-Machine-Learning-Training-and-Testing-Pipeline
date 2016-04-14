@@ -39,7 +39,7 @@ classdef GatherFeaturesProc < core.IdProcInterface
             end
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
             dataFile.y = [dataFile.y; xy.y(useIdxs)];
-warning('            dataFile.mc = [dataFile.mc; repmat( ii, size( xy.y(useIdxs) ) )];');
+%            dataFile.mc = [dataFile.mc; repmat( ii, size( xy.y(useIdxs) ) )];
             fprintf( '.' );
         end
         %% -------------------------------------------------------------------------------

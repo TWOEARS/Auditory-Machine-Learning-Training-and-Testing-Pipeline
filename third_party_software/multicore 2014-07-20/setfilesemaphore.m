@@ -1,4 +1,4 @@
-function semaphoreCell = setfilesemaphore(fileList, semaphoreMode)
+function semaphoreCell = setfilesemaphore(fileList, varargin)
 %SETFILESEMAPHORE  Set semaphore for exclusive file access.
 %   SEMAPHORE = SETFILESEMAPHORE(FILENAME) sets a semaphore to get
 %   exclusive access on file FILENAME. The semaphore is realized by generating
@@ -36,15 +36,23 @@ function semaphoreCell = setfilesemaphore(fileList, semaphoreMode)
 %
 %   Markus Buehren
 %   Last modified 20.07.2014
+%   Modified by Ivo Trowitzsch, 2016
 %
 %   See also REMOVEFILESEMAPHORE.
 
 % Todo: What about system time differences between the local machine and
 % the machine where the temporary directory lies?
 
+ip = inputParser;
+ip.addOptional( 'semaphoreMode', 'set always' );
+ip.addOptional( 'semaphoreOldTime', inf );
+ip.parse( varargin{:} );
+
+semaphoreMode = ip.Results.semaphoreMode;
+semaphoreOldTime = ip.Results.semaphoreOldTime; % other semaphore files are deleted if found longer than this time
+semaphoreOldTime2 = semaphoreOldTime * 3; % other semaphore files are deleted if older than this time
+
 % set parameters (all times in seconds)
-semaphoreOldTime    = inf;   % other semaphore files are deleted if found longer than this time
-semaphoreOldTime2   = inf;   % other semaphore files are deleted if older than this time
 fixedWaitTime       = 0.02; % wait after generating semaphore to check if access is exclusive
 checkAgainWaitTime  = 0.02; % wait before checking again if semaphore files are already existing
 retryWaitTime       = 0.4;  % random wait time after removing own semaphore file again 

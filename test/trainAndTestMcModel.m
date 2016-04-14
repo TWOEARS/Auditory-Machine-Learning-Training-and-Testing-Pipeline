@@ -6,8 +6,7 @@ if nargin < 1, classname = 'baby'; end;
 addpath( '..' );
 startIdentificationTraining();
 
-pipe = TwoEarsIdTrainPipe( 'soundDbBaseDir', ...
-                           fullfile( xml.dbPath, 'sound_databases', 'generalSoundsNI' ) );
+pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...

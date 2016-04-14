@@ -4,8 +4,7 @@ function BuildAndStoreCleanData( )
 addpath( '..' );
 startIdentificationTraining();
 
-pipe = TwoEarsIdTrainPipe( 'soundDbBaseDir', ...
-                           fullfile( xml.dbPath, 'sound_databases', 'IEEE_AASP' ) );
+pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
 pipe.modelCreator = modelTrainers.LoadModelNoopTrainer( 'noop' );
 

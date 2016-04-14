@@ -50,7 +50,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
                                      dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
                     obj.currentNewAfeProc.setInputProc( obj.inputProc );
                     obj.currentNewAfeProc.cacheSystemDir = obj.cacheSystemDir;
-                    obj.currentNewAfeProc.soundDbBaseDir = obj.soundDbBaseDir;
+                    obj.currentNewAfeProc.nPathLevelsForCacheName = obj.nPathLevelsForCacheName;
                     obj.currentNewAfeRequestsIdx = newAfeRequestsIdx;
                 end
                 obj.currentNewAfeProc.process( wavFilepath );

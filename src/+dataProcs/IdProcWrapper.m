@@ -27,10 +27,10 @@ classdef IdProcWrapper < core.IdProcInterface
         %% ----------------------------------------------------------------
 
         % override of core.IdProcInterface's method
-        function setCacheSystemDir( obj, cacheSystemDir, soundDbBaseDir )
-            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, soundDbBaseDir );
+        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName )
+            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, nPathLevelsForCacheName );
             for ii = 1 : numel( obj.wrappedProcs )
-                obj.wrappedProcs{ii}.setCacheSystemDir( cacheSystemDir, soundDbBaseDir );
+                obj.wrappedProcs{ii}.setCacheSystemDir( cacheSystemDir, nPathLevelsForCacheName );
             end
         end
         %% -----------------------------------------------------------------

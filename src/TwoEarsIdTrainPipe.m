@@ -37,13 +37,13 @@ classdef TwoEarsIdTrainPipe < handle
             %
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
-            ip.addOptional( 'soundDbBaseDir', '' );
+            ip.addOptional( 'nPathLevelsForCacheName', 3 );
             ip.parse( varargin{:} );
             modelTrainers.Base.featureMask( true, [] ); % reset the feature mask
             fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
             obj.pipeline = core.IdentificationTrainingPipeline( ...
                                           'cacheSystemDir', ip.Results.cacheSystemDir, ...
-                                          'soundDbBaseDir', ip.Results.soundDbBaseDir );
+                                          'nPathLevelsForCacheName', ip.Results.nPathLevelsForCacheName );
             obj.dataSetupAlreadyDone = false;
         end
         %% -------------------------------------------------------------------------------

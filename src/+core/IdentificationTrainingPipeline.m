@@ -17,7 +17,7 @@ classdef IdentificationTrainingPipeline < handle
         trainSet;
         testSet;
         cacheSystemDir;
-        soundDbBaseDir;
+        nPathLevelsForCacheName;
     end
     
     %% --------------------------------------------------------------------
@@ -37,10 +37,10 @@ classdef IdentificationTrainingPipeline < handle
         function obj = IdentificationTrainingPipeline( varargin )
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
-            ip.addOptional( 'soundDbBaseDir', '' );
+            ip.addOptional( 'nPathLevelsForCacheName', 3 );
             ip.parse( varargin{:} );
             obj.cacheSystemDir = ip.Results.cacheSystemDir;
-            obj.soundDbBaseDir = ip.Results.soundDbBaseDir;
+            obj.nPathLevelsForCacheName = ip.Results.nPathLevelsForCacheName;
             obj.dataPipeProcs = {};
             obj.data = core.IdentTrainPipeData();
             obj.trainSet = core.IdentTrainPipeData();
@@ -70,7 +70,7 @@ classdef IdentificationTrainingPipeline < handle
             if ~isa( idProc, 'core.IdProcInterface' )
                 error( 'idProc must be of type core.IdProcInterface.' );
             end
-            idProc.setCacheSystemDir( obj.cacheSystemDir, obj.soundDbBaseDir );
+            idProc.setCacheSystemDir( obj.cacheSystemDir, obj.nPathLevelsForCacheName );
             dataPipeProc = core.DataPipeProc( idProc ); 
             dataPipeProc.init();
             dataPipeProc.connectData( obj.data );

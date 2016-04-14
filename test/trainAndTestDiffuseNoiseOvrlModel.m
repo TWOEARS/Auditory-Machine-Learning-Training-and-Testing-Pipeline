@@ -2,7 +2,6 @@ function trainAndTestDiffuseNoiseOvrlModel( classname )
 
 if nargin < 1, classname = 'speech'; end;
 
-%startTwoEars( '../IdentificationTraining.xml' );
 addpath( '..' );
 startIdentificationTraining();
 
@@ -23,9 +22,8 @@ sc.addSource( sceneConfig.DiffuseSource( ...
     'data',sceneConfig.NoiseValGen(struct( 'len', sceneConfig.ValGen('manual',44100) )) ),...
     sceneConfig.ValGen( 'manual', 10 ),...
     true );
-pipe.setSceneConfig( [sc] ); 
 
-pipe.init();
+pipe.init( sc );
 modelPath = pipe.pipeline.run( {classname}, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );

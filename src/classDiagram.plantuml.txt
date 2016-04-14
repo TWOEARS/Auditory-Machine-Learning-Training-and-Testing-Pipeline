@@ -270,6 +270,8 @@ Nbdbc .. BlockCreators.DistractedBlockCreator
 
 core.IdProcInterface <|-- LabelCreators.Base
 abstract class LabelCreators.Base{
+  labelBlockSize_s
+  labelBlockSize_auto
   process( wavFilepath )
   ..
   {abstract} getLabelInternOutputDependencies()
@@ -285,7 +287,6 @@ LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
 
 LabelCreators.Base <|-- LabelCreators.MultiLabeler
 class LabelCreators.MultiLabeler{
-  throwAwayZeroLabelBlocks
   getLabelInternOutputDependencies()
   label( blockAnnotations )
 }
@@ -296,11 +297,39 @@ end note
 Nml .. LabelCreators.MultiLabeler
 
 
+LabelCreators.Base <|-- LabelCreators.EnergyDependentLabeler
+abstract class LabelCreators.EnergyDependentLabeler{
+  sourcesMinEnergy
+  sourcesId
+  label( blockAnnotations )
+  ..
+  {abstract} labelEnergeticBlock( blockAnnotations )
+  {static} isEnergyTooLow( blockAnnots, srcIds, srcMinEnergy )
+}
+note as Nledl
+  only labels blocks with 
+  enough energy in the 
+  specified sources
+end note
+Nledl .. LabelCreators.EnergyDependentLabeler
+
+
+LabelCreators.EnergyDependentLabeler <|-- LabelCreators.AzmLabeler
+class LabelCreators.AzmLabeler{
+  labelEnergeticBlock( blockAnnotations )
+  getLabelInternOutputDependencies()
+}
+note as Nlal
+  labels blocks with
+  azm of specified source
+end note
+Nlal .. LabelCreators.AzmLabeler
+
+
 LabelCreators.Base <|-- LabelCreators.MultiEventTypeLabeler
 class LabelCreators.MultiEventTypeLabeler{
   minBlockToEventRatio
   maxNegBlockToEventRatio
-  labelBlockSize_s
   eventIsType
   getLabelInternOutputDependencies()
   label( blockAnnotations )

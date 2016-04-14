@@ -37,6 +37,10 @@ pipe.labelCreator = babyLabeler;
 %                                   {babyLabeler,babyVsFireLabeler,typeMulticlassLabeler} );
 % pipe.labelCreator = multiLabeler;
 % 
+% % label will be azm of source 1
+% azmLabeler = LabelCreators.AzmLabeler( 'sourceId', 1 );
+% pipe.labelCreator = azmLabeler;
+% 
 %%
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...

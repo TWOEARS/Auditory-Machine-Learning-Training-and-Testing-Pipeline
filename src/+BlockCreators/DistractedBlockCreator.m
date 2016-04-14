@@ -36,10 +36,8 @@ classdef DistractedBlockCreator < BlockCreators.StandardBlockCreator
             [afeBlocks, blockAnnots] = ...
                  blockify@BlockCreators.StandardBlockCreator( obj, afeData, annotations );
             for ii = numel( afeBlocks ) : -1 : 1
-                eFrames = cellfun( @(e)( e(obj.distractorIdxs,:) ), ...
-                            blockAnnots(ii).srcEnergy.srcEnergy, 'UniformOutput', false );
-                distractorEnergy  = -log( -mean( cell2mat( eFrames ), 2 ) );
-                rejectBlock = sum( log( -obj.rejectThreshold ) + distractorEnergy ) < 0;
+                rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
+                               blockAnnots(ii), obj.distractorIdxs, obj.rejectThreshold );
                 if rejectBlock
                     afeBlocks(ii) = [];
                     blockAnnots(ii) = [];

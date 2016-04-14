@@ -1,10 +1,7 @@
-classdef MultiEventTypeLabeler < LabelCreators.Base
-    % class for multi-class labeling blocks by event
+classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
+    % class for labeling blocks by azm of a specified source
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
-        minBlockToEventRatio;
-        maxNegBlockToEventRatio;
-        eventIsType;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -14,19 +11,16 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = MultiEventTypeLabeler( varargin )
+        function obj = AzmLabeler( varargin )
             ip = inputParser;
-            ip.addOptional( 'minBlockToEventRatio', 0.75 );
-            ip.addOptional( 'maxNegBlockToEventRatio', 0 );
+            ip.addOptional( 'sourceMinEnergy', -20 );
             ip.addOptional( 'labelBlockSize_s', [] );
-            ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
+            ip.addOptional( 'sourceId', 1 );
             ip.parse( varargin{:} );
-            obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
-            obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
-            obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
-            for ii = 1 : numel( ip.Results.types )
-                obj.eventIsType{ii} = @(e)(any( strcmp( e, ip.Results.types{ii} ) ));
-            end
+            obj = obj@LabelCreators.EnergyDependentLabeler( ...
+                                      'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
+                                      'sourcesMinEnergy', ip.Results.sourceMinEnergy, ...
+                                      'sourcesId', ip.Results.sourceId );
         end
         %% -------------------------------------------------------------------------------
 
@@ -36,20 +30,17 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     methods (Access = protected)
         
         function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
-            outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
-            outputDeps.types = obj.types;
             outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------
-        
-        function y = label( obj, blockAnnotations )
+
+        function y = labelEnergeticBlock( obj, blockAnnotations )
             relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
             [maxRelOverlap, maxIdx] = max( relBlockEventOverlap );
             if maxRelOverlap < obj.maxNegBlockToEventRatio
                 y = -1;
             elseif maxRelOverlap < obj.minBlockToEventRatio
-                y = NaN;
+                y = 0;
             else
                 y = maxIdx;
             end
@@ -66,7 +57,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                                                            ), eventOnsets, eventOffsets );
             relBlockEventsOverlap = zeros( size( obj.eventIsType ) );
             for ii = 1 : numel( obj.types )
-                eventsAreType = cellfun( @(ba)(...
+                eventsAreType = arrayfun( @(ba)(...
                                   obj.eventIsType{ii}(ba)...
                                               ), blockAnnotations.objectType.objectType );
                 isEventBlockOverlap = eventsAreType & (eventBlockOverlaps > 0);

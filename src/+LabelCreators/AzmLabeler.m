@@ -35,38 +35,9 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
         %% -------------------------------------------------------------------------------
 
         function y = labelEnergeticBlock( obj, blockAnnotations )
-            relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
-            [maxRelOverlap, maxIdx] = max( relBlockEventOverlap );
-            if maxRelOverlap < obj.maxNegBlockToEventRatio
-                y = -1;
-            elseif maxRelOverlap < obj.minBlockToEventRatio
-                y = 0;
-            else
-                y = maxIdx;
-            end
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function relBlockEventsOverlap = relBlockEventsOverlap( obj, blockAnnotations )
-            blockOffset = blockAnnotations.blockOffset;
-            labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-            eventOnsets = blockAnnotations.objectType.t.onset;
-            eventOffsets = blockAnnotations.objectType.t.offset;
-            eventBlockOverlaps = arrayfun( @(eon,eof)(...
-                                  min( blockOffset, eof ) - max( labelBlockOnset, eon )...
-                                                           ), eventOnsets, eventOffsets );
-            relBlockEventsOverlap = zeros( size( obj.eventIsType ) );
-            for ii = 1 : numel( obj.types )
-                eventsAreType = arrayfun( @(ba)(...
-                                  obj.eventIsType{ii}(ba)...
-                                              ), blockAnnotations.objectType.objectType );
-                isEventBlockOverlap = eventsAreType & (eventBlockOverlaps > 0);
-                eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );
-                eventLen = sum( eventOffsets(isEventBlockOverlap) ...
-                  - eventOnsets(isEventBlockOverlap) );
-                maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
-                relBlockEventsOverlap(ii) = eventBlockOverlapLen / maxBlockEventLen;
-            end
+            blockAzms = [blockAnnotations.srcAzms.srcAzms{:}];
+            srcBlockAzms = blockAzms(obj.sourcesId,:);
+            y = median( srcBlockAzms );
         end
         %% -------------------------------------------------------------------------------
                 

@@ -42,15 +42,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------
-
-        % override of LabelCreators.Base's method
-        function out = getOutput( obj )
-            out = getOutput@LabelCreators.Base( obj );
-            out.x = out.x(out.y ~= 0);
-            out.a = out.blockAnnotations(out.y ~= 0);
-            out.y = out.y(out.y ~= 0);
-        end
-        %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
             relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
@@ -58,7 +49,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             if maxRelOverlap < obj.maxNegBlockToEventRatio
                 y = -1;
             elseif maxRelOverlap < obj.minBlockToEventRatio
-                y = 0;
+                y = NaN;
             else
                 y = maxIdx;
             end

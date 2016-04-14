@@ -34,7 +34,7 @@ pipe.labelCreator = babyLabeler;
 % 
 % % multinomial labels: baby will be (1,1,2), fire (-1,-1,4), female (-1,0,3)
 % multiLabeler = LabelCreators.MultiLabeler( ...
-%                            {babyLabeler,babyVsFireLabeler,typeMulticlassLabeler}, false );
+%                                   {babyLabeler,babyVsFireLabeler,typeMulticlassLabeler} );
 % pipe.labelCreator = multiLabeler;
 % 
 %%

@@ -87,6 +87,9 @@ classdef Base < core.IdProcInterface
             out.x = inDat.x;
             out.a = inDat.blockAnnotations;
             out.y = obj.y;
+            out.x(any(isnan(out.y))) = [];
+            out.a(any(isnan(out.y))) = [];
+            out.y(any(isnan(out.y))) = [];
         end
         %% -------------------------------------------------------------------------------
         

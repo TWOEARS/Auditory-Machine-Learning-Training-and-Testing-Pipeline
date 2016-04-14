@@ -65,7 +65,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
                     (relBlockEventOverlap(1) < obj.maxNegBlockToEventRatio) 
                 y = -1;
             else
-                y = 0;
+                y = NaN;
             end
         end
         %% -------------------------------------------------------------------------------

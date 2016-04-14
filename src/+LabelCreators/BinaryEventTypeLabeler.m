@@ -16,7 +16,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
             ip = inputParser;
             ip.addOptional( 'minBlockToEventRatio', 0.75 );
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
-            ip.addOptional( 'labelBlockSize_s', 1.0 );
+            ip.addOptional( 'labelBlockSize_s', [] );
             ip.addOptional( 'posOutType', {'TypeName'} );
             ip.addOptional( 'negOut', 'all' ); % event, non-event, all
             ip.addOptional( 'negOutType', 'rest' ); % typename, 'rest' (respective to pos)

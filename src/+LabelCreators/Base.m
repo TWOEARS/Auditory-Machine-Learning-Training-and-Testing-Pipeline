@@ -3,6 +3,8 @@ classdef Base < core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         y;
+        labelBlockSize_s;
+        labelBlockSize_auto;
         inDatPath;
     end
     
@@ -15,8 +17,17 @@ classdef Base < core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = Base()
+        function obj = Base( varargin )
             obj = obj@core.IdProcInterface();
+            ip = inputParser;
+            ip.addOptional( 'labelBlockSize_s', [] );
+            ip.parse( varargin{:} );
+            obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
+            if isempty( obj.labelBlockSize_s )
+                obj.labelBlockSize_auto = true;
+            else
+                obj.labelBlockSize_auto = false;
+            end
         end
         %% -------------------------------------------------------------------------------
         
@@ -25,7 +36,14 @@ classdef Base < core.IdProcInterface
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.y = [];
             for blockAnnotation = in.blockAnnotations
+                if obj.labelBlockSize_auto
+                    obj.labelBlockSize_s = blockAnnotation{1}.blockOffset - ...
+                                                            blockAnnotation{1}.blockOnset;
+                end
                 obj.y(end+1,:) = obj.label( blockAnnotation{1} );
+                if obj.labelBlockSize_auto
+                    obj.labelBlockSize_s = [];
+                end
                 fprintf( '.' );
             end
         end
@@ -55,6 +73,8 @@ classdef Base < core.IdProcInterface
         
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.v = 1;
+            outputDeps.labelBlockSize = obj.labelBlockSize_s;
+            outputDeps.labelBlockSize_auto = obj.labelBlockSize_auto;
             outputDeps.labelProc = obj.getLabelInternOutputDependencies();
         end
         %% -------------------------------------------------------------------------------

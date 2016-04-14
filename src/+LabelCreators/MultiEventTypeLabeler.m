@@ -4,7 +4,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     properties (SetAccess = private)
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
-        labelBlockSize_s;
         eventIsType;
     end
     
@@ -16,14 +15,13 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     methods
         
         function obj = MultiEventTypeLabeler( varargin )
-            obj = obj@LabelCreators.Base();
             ip = inputParser;
             ip.addOptional( 'minBlockToEventRatio', 0.75 );
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
-            ip.addOptional( 'labelBlockSize_s', 1.0 );
+            ip.addOptional( 'labelBlockSize_s', [] );
             ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
             ip.parse( varargin{:} );
-            obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
+            obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             for ii = 1 : numel( ip.Results.types )
@@ -38,7 +36,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     methods (Access = protected)
         
         function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps.labelBlockSize = obj.labelBlockSize_s;
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
             outputDeps.types = obj.types;

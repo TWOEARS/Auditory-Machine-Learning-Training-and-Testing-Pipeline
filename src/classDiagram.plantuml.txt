@@ -326,6 +326,19 @@ end note
 Nlal .. LabelCreators.AzmLabeler
 
 
+LabelCreators.EnergyDependentLabeler <|-- LabelCreators.AzmDistributionLabeler
+class LabelCreators.AzmDistributionLabeler{
+  angularResolution
+  labelEnergeticBlock( blockAnnotations )
+  getLabelInternOutputDependencies()
+}
+note as Nladl
+  labels blocks with sources
+  distribution over azimuth
+end note
+Nladl .. LabelCreators.AzmDistributionLabeler
+
+
 LabelCreators.Base <|-- LabelCreators.MultiEventTypeLabeler
 class LabelCreators.MultiEventTypeLabeler{
   minBlockToEventRatio

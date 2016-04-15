@@ -41,6 +41,14 @@ pipe.labelCreator = babyLabeler;
 % azmLabeler = LabelCreators.AzmLabeler( 'sourceId', 1 );
 % pipe.labelCreator = azmLabeler;
 % 
+% % label will be distribution of sources over azm
+% azmLabeler2 = LabelCreators.AzmDistributionLabeler( 'sourcesMinEnergy', -30 );
+% pipe.labelCreator = azmLabeler2;
+% 
+% % multinomial labels: (typeId,azmSrc1)
+% multiLabeler = LabelCreators.MultiLabeler( {typeMulticlassLabeler, azmLabeler} );
+% pipe.labelCreator = multiLabeler;
+%
 %%
 pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @performanceMeasures.BAC2, ...

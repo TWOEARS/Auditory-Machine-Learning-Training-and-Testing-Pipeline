@@ -3,7 +3,7 @@ classdef EnergyDependentLabeler < LabelCreators.Base
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         sourcesMinEnergy;
-        sourcesId;
+        sourceIds;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -18,11 +18,11 @@ classdef EnergyDependentLabeler < LabelCreators.Base
             ip = inputParser;
             ip.addOptional( 'sourcesMinEnergy', -20 );
             ip.addOptional( 'labelBlockSize_s', [] );
-            ip.addOptional( 'sourcesId', 1 );
+            ip.addOptional( 'sourceIds', 1 );
             ip.parse( varargin{:} );
             obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.sourcesMinEnergy = ip.Results.sourcesMinEnergy;
-            obj.sourcesId = ip.Results.sourcesId;
+            obj.sourceIds = ip.Results.sourceIds;
         end
         %% -------------------------------------------------------------------------------
 
@@ -34,14 +34,14 @@ classdef EnergyDependentLabeler < LabelCreators.Base
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps = getInternOutputDependencies@LabelCreators.Base( obj );
             outputDeps.sourcesMinEnergy = obj.sourcesMinEnergy;
-            outputDeps.sourcesId = obj.sourcesId;
+            outputDeps.sourceIds = obj.sourceIds;
             outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------
 
         function y = label( obj, blockAnnotations )
             rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
-                                    blockAnnotations, obj.sourceId, obj.sourceMinEnergy );
+                                  blockAnnotations, obj.sourceIds, obj.sourcesMinEnergy );
             if rejectBlock
                 y = NaN;
             else
@@ -57,11 +57,11 @@ classdef EnergyDependentLabeler < LabelCreators.Base
         
         %% -------------------------------------------------------------------------------
         
-        function eTooLow = isEnergyTooLow( blockAnnotations, sourceIds, sourceMinEnergy )
+        function eTooLow = isEnergyTooLow( blockAnnotations, sourceIds, sourcesMinEnergy )
             eFrames = cellfun( @(e)( e(sourceIds,:) ), ...
                            blockAnnotations.srcEnergy.srcEnergy, 'UniformOutput', false );
             sourcesEnergy  = -log( -mean( cell2mat( eFrames ), 2 ) );
-            eTooLow = sum( log( -sourceMinEnergy ) + sourcesEnergy ) < 0;
+            eTooLow = sum( log( -sourcesMinEnergy ) + sourcesEnergy ) < 0;
         end
         %% -------------------------------------------------------------------------------
         

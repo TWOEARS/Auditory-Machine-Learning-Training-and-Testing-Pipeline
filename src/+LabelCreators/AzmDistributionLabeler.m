@@ -1,7 +1,9 @@
-classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
+classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
     % class for labeling blocks by azm of a specified source
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
+        angularResolution;
+        nAngles;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -11,16 +13,22 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = AzmLabeler( varargin )
+        function obj = AzmDistributionLabeler( varargin )
             ip = inputParser;
-            ip.addOptional( 'sourceMinEnergy', -20 );
+            ip.addOptional( 'angularResolution', 15 );
+            ip.addOptional( 'sourcesMinEnergy', -20 );
             ip.addOptional( 'labelBlockSize_s', [] );
-            ip.addOptional( 'sourceId', 1 );
+            ip.addOptional( 'sourceIds', ':' );
             ip.parse( varargin{:} );
             obj = obj@LabelCreators.EnergyDependentLabeler( ...
                                       'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
-                                      'sourcesMinEnergy', ip.Results.sourceMinEnergy, ...
-                                      'sourceIds', ip.Results.sourceId );
+                                      'sourcesMinEnergy', ip.Results.sourcesMinEnergy, ...
+                                      'sourceIds', ip.Results.sourceIds );
+            obj.angularResolution = ip.Results.angularResolution;
+            obj.nAngles = 360 / obj.angularResolution;
+            if rem( obj.nAngles, 1 ) ~= 0
+                error( 'Choose a divisor of 360 as angularResolution.' );
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -30,14 +38,17 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
     methods (Access = protected)
         
         function outputDeps = getLabelInternOutputDependencies( obj )
+            outputDeps.angularResolution = obj.angularResolution;
             outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------
 
         function y = labelEnergeticBlock( obj, blockAnnotations )
             blockAzms = [blockAnnotations.srcAzms.srcAzms{:}];
-            srcBlockAzms = blockAzms(obj.sourcesId,:);
-            y = median( srcBlockAzms );
+            srcAzms = median( blockAzms(obj.sourceIds,:), 2 );
+            srcAzmIdxs = mod( round( srcAzms / obj.angularResolution ) + 1, obj.nAngles );
+            y = zeros( 1, obj.nAngles );
+            y(srcAzmIdxs) = 1;
         end
         %% -------------------------------------------------------------------------------
                 

@@ -45,6 +45,10 @@ pipe.labelCreator = babyLabeler;
 % azmLabeler2 = LabelCreators.AzmDistributionLabeler( 'sourcesMinEnergy', -30 );
 % pipe.labelCreator = azmLabeler2;
 % 
+% % label will be number of sources
+% noSrcsLabeler = LabelCreators.NumberOfSourcesLabeler();
+% pipe.labelCreator = noSrcsLabeler;
+% 
 % % multinomial labels: (typeId,azmSrc1)
 % multiLabeler = LabelCreators.MultiLabeler( {typeMulticlassLabeler, azmLabeler} );
 % pipe.labelCreator = multiLabeler;

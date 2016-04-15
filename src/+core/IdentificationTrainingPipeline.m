@@ -7,7 +7,7 @@ classdef IdentificationTrainingPipeline < handle
     %   Trained models can then be integrated into the blackboard system
     %   by loading them in an identitiy knowledge source
     %
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         trainer;
         generalizationPerfomanceAssessCVtrainer; % k-fold cross validation
@@ -19,20 +19,19 @@ classdef IdentificationTrainingPipeline < handle
         nPathLevelsForCacheName;
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     properties 
         featureCreator; % feature extraction
         verbose = true; % log level
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Static)
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods
         
-        %% Constructor.
         function obj = IdentificationTrainingPipeline( varargin )
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
@@ -47,10 +46,6 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% ------------------------------------------------------------------------------- 
         
-        %   -----------------------
-        %   setting up the pipeline
-        %   -----------------------
-
         function addModelCreator( obj, trainer )
             if ~isa( trainer, 'modelTrainers.Base' )
                 error( 'ModelCreator must be of type modelTrainers.Base' );
@@ -58,12 +53,12 @@ classdef IdentificationTrainingPipeline < handle
             obj.trainer = trainer;
             obj.generalizationPerfomanceAssessCVtrainer = modelTrainers.CVtrainer( obj.trainer );
         end
-        %   -------------------
+        %% ------------------------------------------------------------------------------- 
         
         function resetDataProcs( obj )
             obj.dataPipeProcs = {};
         end
-        %   -------------------
+        %% ------------------------------------------------------------------------------- 
 
         function addDataPipeProc( obj, idProc )
             if ~isa( idProc, 'core.IdProcInterface' )
@@ -76,38 +71,30 @@ classdef IdentificationTrainingPipeline < handle
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end
-        %   -------------------
+        %% ------------------------------------------------------------------------------- 
         
-        %   -------------------
-        %   setting up the data
-        %   -------------------
-
         function connectData( obj, data )
             obj.data = data;
         end
-        %   -------------------
+        %% ------------------------------------------------------------------------------- 
 
         function setTrainData( obj, trainData )
             obj.trainSet = trainData;
             obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
         end
-        %   -------------------
+        %% ------------------------------------------------------------------------------- 
         
         function setTestData( obj, testData )
             obj.testSet = testData;
             obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
         end
-        %   -------------------
+        %% ------------------------------------------------------------------------------- 
         
         function splitIntoTrainAndTestSets( obj, trainSetShare )
             [obj.trainSet, obj.testSet] = obj.data.getShare( trainSetShare );
         end
         %% ------------------------------------------------------------------------------- 
         
-        %   --------------------
-        %   running the pipeline
-        %   --------------------
-
         %% function run( obj, models, trainSetShare, nGenAssessFolds )
         %       Runs the pipeline, creating the models specified in models
         %       All models trained in one run use the same training and
@@ -145,9 +132,6 @@ classdef IdentificationTrainingPipeline < handle
             
             if strcmp(models{1}, 'onlyGenCache'), return; end;
             
-            if isempty( obj.featureCreator.description )
-                obj.featureCreator.dummyProcess();
-            end
             featureCreator = obj.featureCreator;
             lastDataProcParams = ...
                 obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
@@ -240,7 +224,7 @@ classdef IdentificationTrainingPipeline < handle
 
     end
     
-    %% --------------------------------------------------------------------
+    %% -----------------------------------------------------------------------------------
     methods (Access = private)
     end
     

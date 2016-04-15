@@ -72,17 +72,6 @@ classdef Base < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
         
-        function dummyProcess( obj )
-            afeDummy = obj.inputProc.makeDummyData();
-            [afeBlocks, ~] = obj.blockifyAndLabel( afeDummy.afeData, [], [] );
-            obj.afeData = afeBlocks{1};
-            xd = obj.constructVector();
-            obj.description = xd{2};
-            obj.descriptionBuilt = true;
-        end
-            
-        %% ----------------------------------------------------------------
-
         function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
             afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for afeKey = afeData.keys
@@ -103,6 +92,25 @@ classdef Base < core.IdProcInterface
             end
         end
         %% ----------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function out = loadProcessedData( obj, wavFilepath )
+            out = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            if ~obj.descriptionBuilt 
+                if exist( fdescFilepath, 'file' )
+                    fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
+                    load( fdescFilepath, 'description' );
+                    obj.description = description;
+                    removefilesemaphore( fdescFileSema );
+                    obj.descriptionBuilt = true;
+                else
+                    warning( ['%s not found, delete at least one used cache file in ' ...
+                              'this folder to rebuild description.'], fdescFilepath );
+                end
+            end
+        end
+        %% -------------------------------------------------------------------------------
         
     end
     
@@ -119,6 +127,19 @@ classdef Base < core.IdProcInterface
             outputDeps.featureProc = obj.getFeatureInternOutputDependencies();
         end
         %% ----------------------------------------------------------------
+
+        % override of core.IdProcInterface's method
+        function out = save( obj, wavFilepath, data )
+            out = save@core.IdProcInterface( obj, wavFilepath, data );
+            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
+                description = obj.description;
+                fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
+                save( fdescFilepath, 'description' );
+                removefilesemaphore( fdescFileSema );
+            end
+        end
+        %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj )
             out.x = obj.x;

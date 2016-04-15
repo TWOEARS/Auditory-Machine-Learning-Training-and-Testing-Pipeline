@@ -71,13 +71,6 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
         
-        function afeDummy = makeDummyData ( obj )
-            afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
-            afeDummy.onOffsOut = zeros(0,2);
-            afeDummy.annotsOut = [];
-        end
-        %% ----------------------------------------------------------------
-
         % override of dataProcs.IdProcWrapper's method
         function outObj = getOutputObject( obj )
             outObj = getOutputObject@core.IdProcInterface( obj );

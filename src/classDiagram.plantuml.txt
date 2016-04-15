@@ -215,7 +215,6 @@ abstract class featureCreators.Base{
   description
   setAfeData( afeData )
   process( wavFilepath )
-  dummyProcess()
   cutDataBlock( afeData, backOffset_s )
   blockifyAndLabel( afeData, onOffs_s, annotsOut )
   ..

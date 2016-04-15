@@ -3,14 +3,22 @@ classdef IdentTrainPipeData < handle
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         data;
+        stratificationLabels;
+        autoStratify;
     end
     
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = IdentTrainPipeData()
+        function obj = IdentTrainPipeData( varargin )
             obj.data = core.IdentTrainPipeDataElem.empty;
             rng( 'shuffle' );
+            ip = inputParser;
+            ip.addOptional( 'autoStratify', true );
+            ip.addOptional( 'stratificationLabels', {} );
+            ip.parse( varargin{:} );
+            obj.stratificationLabels = ip.Results.stratificationLabels;
+            obj.autoStratify = ip.Results.autoStratify;
         end
         %% -------------------------------------------------------------------------------
         
@@ -149,6 +157,16 @@ classdef IdentTrainPipeData < handle
         
         %% -------------------------------------------------------------------------------
         
+        function autoSetStratificationLabels( obj )
+            obj.stratificationLabels = fieldnames( obj.data(1).fileAnnotations );
+            for d = obj.data
+                fileAnnotLabelsNotIncludedAlready = ...
+                     ~strcmp( obj.stratificationLabels, fieldnames( d.fileAnnotations ) );
+                obj.stratificationLabels(fileAnnotLabelsNotIncludedAlready) = [];
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
         function permFolds = splitInPermutedStratifiedFolds( obj, nFolds, stratifyLabels )
             if nFolds == 0
                 permFolds = [];
@@ -156,6 +174,10 @@ classdef IdentTrainPipeData < handle
             end
             for ii = nFolds : -1 : 1, permFolds{ii} = core.IdentTrainPipeData(); end
             if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
+                if obj.autoStratify, obj.autoSetStratificationLabels(); end
+                stratifyLabels = obj.stratificationLabels;
+            end
+            if isempty( stratifyLabels )
                 labelCombinationIdxs = ones( size( obj.data ) );
             else
                 labelCombinationIdxs = obj.getDisjunctSubsetIdxs( stratifyLabels );
@@ -199,9 +221,12 @@ classdef IdentTrainPipeData < handle
         %% -------------------------------------------------------------------------------
         
         function [share, disjShare] = getShare( obj, ratio, stratifyLabels )
-            if ~exist( 'stratifyLabels', 'var' )
+            if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
+                if obj.autoStratify, obj.autoSetStratificationLabels(); end
+                stratifyLabels = obj.stratificationLabels;
+            end
+            if isempty( stratifyLabels )
                 maxFolds = numel( obj.data );
-                stratifyLabels = {};
             else
                 maxFolds = obj.getMinDisjunctSubsetsSize( stratifyLabels );
             end

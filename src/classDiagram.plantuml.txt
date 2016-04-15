@@ -66,9 +66,12 @@ core.IdCacheTreeElem *-- "cfgSubs (*)" core.IdCacheTreeElem
 
 
 class core.IdentTrainPipeData{
+  stratificationLabels
+  autoStratify
   subsref()
   subsasgn()
   length()
+  autoSetStratificationLabels()
   splitInPermutedStratifiedFolds( nFolds, stratifyLabels )
   getDisjunctSubsetIdxs( labels )
   getMinDisjunctSubsetsSize( labels )
@@ -560,7 +563,7 @@ modelTrainers.HpsTrainer *-- "coreTrainer (1)" modelTrainers.Base
 
 modelTrainers.Base <|-- modelTrainers.LoadModelNoopTrainer
 class modelTrainers.LoadModelNoopTrainer{
-  modelPathBuilder
+  modelPath
   modelParams
   buildModel( x, y )
   giveTrainedModel()

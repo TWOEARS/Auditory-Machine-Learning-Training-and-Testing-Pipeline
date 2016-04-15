@@ -14,8 +14,8 @@ sc.addSource( sceneConfig.PointSource() );
 
 pipe.init( sc );
 
-%modelPath = pipe.pipeline.run( {'dataStore'}, 0 ); % native pipeline format
-modelPath = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
+%modelPath = pipe.pipeline.run( 'dataStore', 0 ); % native pipeline format
+modelPath = pipe.pipeline.run( 'dataStoreUni', 0 ); % universal format (x,y)
 
 fprintf( ' -- Data is saved at %s -- \n', modelPath );
 

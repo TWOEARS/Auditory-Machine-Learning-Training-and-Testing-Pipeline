@@ -26,7 +26,7 @@ sc.addSource( sceneConfig.PointSource( ...
     true );
 
 pipe.init( sc );
-modelPath = pipe.pipeline.run( {classname}, 0 );
+modelPath = pipe.pipeline.run( classname, 0 );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
@@ -50,4 +50,4 @@ sc.addSource( sceneConfig.PointSource( ...
     true );
 
 pipe.init( sc );
-modelPath = pipe.pipeline.run( {classname}, 0 );
+modelPath = pipe.pipeline.run( classname, 0 );

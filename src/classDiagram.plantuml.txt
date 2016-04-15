@@ -22,7 +22,7 @@ class core.IdentificationTrainingPipeline{
   addDataPipeProc( idProc )
   setTrainData( trainData )
   setTestData( testData )
-  run( modelNames )
+  run( modelname )
 }
 core.IdentificationTrainingPipeline o-- "data (1)" core.IdentTrainPipeData
 core.IdentificationTrainingPipeline *-- "dataPipeProcs (*)" core.DataPipeProc: runs cascade

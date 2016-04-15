@@ -85,7 +85,7 @@ sc.addSource( sceneConfig.PointSource( ...
 sc.setLengthRef( 'source', 1 );
 pipe.init( sc );
 
-modelPath = pipe.pipeline.run( 0 );
+modelPath = pipe.pipeline.run( 'interestingModel' );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 

@@ -13,7 +13,7 @@ sc.addSource( sceneConfig.PointSource() );
 
 pipe.init( sc );
 
-modelPath = pipe.pipeline.run( {'onlyGenCache'}, 0 ); 
+modelPath = pipe.pipeline.run( 'onlyGenCache' ); 
 
 fprintf( ' -- Log is saved at %s -- \n', modelPath );
 

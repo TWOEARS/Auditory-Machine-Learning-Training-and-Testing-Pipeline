@@ -96,29 +96,27 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% ------------------------------------------------------------------------------- 
         
-        %% function run( obj, models, trainSetShare, nGenAssessFolds )
+        %% function run( obj, modelname, nGenAssessFolds )
         %       Runs the pipeline, creating the models specified in models
         %       All models trained in one run use the same training and
         %       test sets.
         %
-        %   models: 'all' for all training data classes (but not 'general')
-        %           cell array of strings with model names for particular
-        %           set of models
+        %   modelname: name for model.
+        %              no training options:
+        %              'onlyGenCache' stops after data processing
+        %              'dataStore' saves data in native format
+        %              'dataStoreUni' saves data as x,y matrices
+        %           
         %   nGenAssessFolds: number of folds of generalization assessment
         %   cross validation (default: 0 - no folds)
         %
-        function modelPath = run( obj, models, nGenAssessFolds )
+        function modelPath = run( obj, modelname, nGenAssessFolds )
             if nargin < 3
                 nGenAssessFolds = 0;
             end
             cleaner = onCleanup( @() obj.finish() );
             modelPath = obj.createFilesDir();
             
-            if strcmpi( models, 'all' )
-                models = obj.data.classNames;
-                models(strcmp('general', models)) = [];
-            end
-
             for ii = 2 : length( obj.dataPipeProcs )
                 obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );
             end
@@ -131,69 +129,66 @@ classdef IdentificationTrainingPipeline < handle
                 obj.dataPipeProcs{ii}.run();
             end
             
-            if strcmp(models{1}, 'onlyGenCache'), return; end;
+            if strcmp(modelname, 'onlyGenCache'), return; end;
             
             featureCreator = obj.featureCreator;
             lastDataProcParams = ...
                 obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
-            if strcmp(models{1}, 'dataStore')
+            if strcmp(modelname, 'dataStore')
                 data = obj.data;
                 save( 'dataStore.mat', ...
                       'data', 'featureCreator', 'lastDataProcParams', '-v7.3' );
                 return; 
-            elseif strcmp(models{1}, 'dataStoreUni')
+            elseif strcmp(modelname, 'dataStoreUni')
                 x = obj.data(:,'x');
-                featureNames = obj.featureCreator.description;
                 y = obj.data(:,'y');
+                featureNames = obj.featureCreator.description;
                 save( 'dataStoreUni.mat', ...
-                      'x', 'y', 'classnames', 'featureNames', '-v7.3' );
+                      'x', 'y', 'featureNames', '-v7.3' );
                 return; 
             end;
             
-            for modelName = models
-                fprintf( ['\n\n===================================\n',...
-                              '##   Training model "%s"\n',...
-                              '===================================\n\n'], modelName{1} );
-                if nGenAssessFolds > 1
-                    fprintf( '\n==  Generalization performance assessment CV...\n\n' );
-                    obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
-                    obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
-                    obj.generalizationPerfomanceAssessCVtrainer.run();
-                    genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
-                    fprintf( '\n==  Performance after generalization assessment CV:\n' );
-                    disp( genPerfCVresults );
-                end
-                obj.trainer.setData( obj.trainSet, obj.testSet );
-                fprintf( '\n==  Training model on trainSet...\n\n' );
+            fprintf( ['\n\n===================================\n',...
+                          '##   Training model "%s"\n',...
+                          '===================================\n\n'], modelname );
+            if nGenAssessFolds > 1
+                fprintf( '\n==  Generalization performance assessment CV...\n\n' );
+                obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
+                obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
+                obj.generalizationPerfomanceAssessCVtrainer.run();
+                genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
+                fprintf( '\n==  Performance after generalization assessment CV:\n' );
+                disp( genPerfCVresults );
+            end
+            obj.trainer.setData( obj.trainSet, obj.testSet );
+            fprintf( '\n==  Training model on trainSet...\n\n' );
+            tic;
+            obj.trainer.run();
+            trainTime = toc;
+            testTime = nan;
+            testPerfresults = [];
+            if ~isempty( obj.testSet )
+                fprintf( '\n==  Testing model on testSet... \n\n' );
                 tic;
-                obj.trainer.run();
-                trainTime = toc;
-                testTime = nan;
-                testPerfresults = [];
-                if ~isempty( obj.testSet )
-                    fprintf( '\n==  Testing model on testSet... \n\n' );
-                    tic;
-                    testPerfresults = obj.trainer.getPerformance( 'datapointInfo' );
-                    testTime = toc;
-                    if numel( testPerfresults ) == 1
-                        fprintf( ['\n\n===================================\n',...
-                            '##   "%s" Performance: %f\n',...
-                            '===================================\n\n'], ...
-                            modelName{1}, testPerfresults.double() );
-                    else
-                        fprintf( ['\n\n===================================\n',...
-                            '##   "%s" Performance: more than one value\n',...
-                            '===================================\n\n'], ...
-                            modelName{1} );
-                    end
+                testPerfresults = obj.trainer.getPerformance( 'datapointInfo' );
+                testTime = toc;
+                if numel( testPerfresults ) == 1
+                    fprintf( ['\n\n===================================\n',...
+                              '##   "%s" Performance: %f\n',...
+                              '===================================\n\n'], ...
+                             modelname, testPerfresults.double() );
+                else
+                    fprintf( ['\n\n===================================\n',...
+                              '##   "%s" Performance: more than one value\n',...
+                              '===================================\n\n'], ...
+                             modelname );
                 end
-                model = obj.trainer.getModel();
-                modelFileExt = ['.model.mat'];
-                modelFilename = [modelName{1} modelFileExt];
-                save( modelFilename, ...
-                      'model', 'featureCreator', ...
-                      'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );
-            end;
+            end
+            model = obj.trainer.getModel();
+            modelFilename = [modelname '.model.mat'];
+            save( modelFilename, ...
+                'model', 'featureCreator', ...
+                'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );
         end
         
         %% -------------------------------------------------------------------------------

@@ -12,7 +12,6 @@ classdef IdentificationTrainingPipeline < handle
         trainer;
         generalizationPerfomanceAssessCVtrainer; % k-fold cross validation
         dataPipeProcs;
-        gatherFeaturesProc;
         data;       
         trainSet;
         testSet;
@@ -71,20 +70,13 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'idProc must be of type core.IdProcInterface.' );
             end
             idProc.setCacheSystemDir( obj.cacheSystemDir, obj.nPathLevelsForCacheName );
+            idProc.connectIdData( obj.data );
             dataPipeProc = core.DataPipeProc( idProc ); 
             dataPipeProc.init();
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
         end
         %   -------------------
-        
-        function addGatherFeaturesProc( obj, gatherFeaturesProc )
-            gatherFeaturesProc.connectIdData( obj.data );
-            obj.gatherFeaturesProc = core.DataPipeProc( gatherFeaturesProc );
-            obj.gatherFeaturesProc.init();
-            obj.gatherFeaturesProc.connectData( obj.data );
-        end
-        %% ------------------------------------------------------------------------------- 
         
         %   -------------------
         %   setting up the data
@@ -153,15 +145,12 @@ classdef IdentificationTrainingPipeline < handle
             
             if strcmp(models{1}, 'onlyGenCache'), return; end;
             
-            obj.gatherFeaturesProc.connectToOutputFrom( obj.dataPipeProcs{end} );
-            obj.gatherFeaturesProc.run();
-
             if isempty( obj.featureCreator.description )
                 obj.featureCreator.dummyProcess();
             end
             featureCreator = obj.featureCreator;
             lastDataProcParams = ...
-                obj.gatherFeaturesProc.dataFileProcessor.getOutputDependencies();
+                obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
             if strcmp(models{1}, 'dataStore')
                 data = obj.data;
                 save( 'dataStore.mat', ...

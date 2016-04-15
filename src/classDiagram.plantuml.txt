@@ -20,7 +20,6 @@ Ntetp .. TwoEarsIdTrainPipe
 class core.IdentificationTrainingPipeline{
   addModelCreator( trainer )
   addDataPipeProc( idProc )
-  addGatherFeaturesProc( gatherFeaturesProc )
   setTrainData( trainData )
   setTestData( testData )
   run( modelNames )

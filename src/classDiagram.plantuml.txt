@@ -20,7 +20,6 @@ Ntetp .. TwoEarsIdTrainPipe
 class core.IdentificationTrainingPipeline{
   addModelCreator( trainer )
   addDataPipeProc( idProc )
-  addGatherFeaturesProc( gatherFeaturesProc )
   setTrainData( trainData )
   setTestData( testData )
   run( modelNames )
@@ -416,7 +415,6 @@ abstract class featureCreators.Base{
   description
   setAfeData( afeData )
   process( wavFilepath )
-  dummyProcess()
   ..
   {abstract} getAFErequests()
   {abstract} getFeatureInternOutputDependencies()

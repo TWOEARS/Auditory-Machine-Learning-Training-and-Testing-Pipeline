@@ -71,18 +71,12 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
         
-        function afeDummy = makeDummyData ( obj )
-            afeDummy.afeData = obj.prAfeDepProducer.makeAFEdata( rand( obj.fs/10, 2 ) );
-            afeDummy.annotations = [];
-        end
-        %% -------------------------------------------------------------------------------
-
         % override of dataProcs.IdProcWrapper's method
         function outObj = getOutputObject( obj )
             outObj = getOutputObject@core.IdProcInterface( obj );
         end
         %% -------------------------------------------------------------------------------
-
+        
         % override of dataProcs.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
             tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
@@ -118,7 +112,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
             for ii = 1 : numel( obj.indivFiles )
                 if ~exist( obj.indivFiles{ii}, 'file' )
                     error( 'PRAFEM.FileCorrupt', '%s not found.', obj.indivFiles{ii} );
-                end
+        end
                 tmp = load( obj.indivFiles{ii} );
                 out.afeData(ii) = tmp.afeData(1);
             end

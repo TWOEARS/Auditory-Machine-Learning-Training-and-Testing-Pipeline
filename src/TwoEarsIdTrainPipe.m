@@ -91,10 +91,8 @@ classdef TwoEarsIdTrainPipe < handle
                                                  binSim, dataProcs.GatherFeaturesProc() );
             for ii = 1 : numel( multiCfgProcs )
                 multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
-                if ii == numel( multiCfgProcs ), continue; end
                 obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );
             end
-            obj.pipeline.addGatherFeaturesProc( multiCfgProcs{end} );
             if isempty( obj.modelCreator )
                 obj.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
                     'performanceMeasure', @performanceMeasures.BAC2, ...

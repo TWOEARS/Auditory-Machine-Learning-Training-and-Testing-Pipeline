@@ -47,17 +47,9 @@ classdef Base < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
-        function dummyProcess( obj )
-            afeDummy = obj.inputProc.makeDummyData();
-            obj.afeData = afeDummy.afeData;
-            xd = obj.constructVector();
-            obj.description = xd{2};
-            obj.descriptionBuilt = true;
-        end
-            
         %% -------------------------------------------------------------------------------
 
-        % override of dataProcs.IdProcInterface's method
+        % override of core.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
             tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
             obj.inDatPath = tmpOut.inDatPath;
@@ -69,6 +61,19 @@ classdef Base < core.IdProcInterface
                                           err.msg, obj.getOutputFilepath( wavFilepath ) );
                 else
                     rethrow( err );
+                end
+            end
+            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            if ~obj.descriptionBuilt 
+                if exist( fdescFilepath, 'file' )
+                    fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
+                    load( fdescFilepath, 'description' );
+                    obj.description = description;
+                    removefilesemaphore( fdescFileSema );
+                    obj.descriptionBuilt = true;
+                else
+                    warning( ['%s not found, delete at least one used cache file in ' ...
+                              'this folder to rebuild description.'], fdescFilepath );
                 end
             end
         end
@@ -94,12 +99,19 @@ classdef Base < core.IdProcInterface
             out.x = obj.x;
         end
         %% -------------------------------------------------------------------------------
-        
-        % override of dataProcs.IdProcInterface's method
+
+        % override of core.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.x = obj.x;
             out.inDatPath = obj.inDatPath;
             save@core.IdProcInterface( obj, wavFilepath, out ); 
+            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
+                description = obj.description;
+                fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
+                save( fdescFilepath, 'description' );
+                removefilesemaphore( fdescFileSema );
+            end
         end
         %% ------------ Feature Description Utilities ------------------------------------
 

@@ -1,4 +1,4 @@
-classdef GlmGroupTrainer < modelTrainers.Base & Parameterized
+classdef GlmGroupTrainer < ModelTrainers.Base & Parameterized
     %GLMGROUPTRAINER trainer for a GlmGroupModel, will fit a regression
     % model with L1,0, L1,2 or L1,inf norm regularizeration.
     
@@ -15,7 +15,7 @@ classdef GlmGroupTrainer < modelTrainers.Base & Parameterized
         %% CONSTRUCTOR
         function obj = GlmGroupTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @performanceMeasures.BAC2, ...
+                'default', @PerformanceMeasures.BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
                 'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'family', ...
@@ -43,7 +43,7 @@ classdef GlmGroupTrainer < modelTrainers.Base & Parameterized
         %% BUILD MODEL
         function buildModel(self, x, y)
             % init
-            self.model = models.GlmGroupModel();
+            self.model = Models.GlmGroupModel();
             
             % precondition inputs
             x(isinf(x)) = nan;

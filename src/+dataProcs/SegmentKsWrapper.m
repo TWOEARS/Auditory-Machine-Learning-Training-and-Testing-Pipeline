@@ -1,4 +1,4 @@
-classdef SegmentKsWrapper < dataProcs.BlackboardKsWrapper
+classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     % Base Abstract base class for specifying features sets with which features
     % are extracted.
     %% -----------------------------------------------------------------------------------
@@ -13,7 +13,7 @@ classdef SegmentKsWrapper < dataProcs.BlackboardKsWrapper
     methods
         
         function obj = SegmentKsWrapper()
-            obj = obj@dataProcs.BlackboardKsWrapper();
+            obj = obj@DataProcs.BlackboardKsWrapper();
         end
         %% -------------------------------------------------------------------------------
         

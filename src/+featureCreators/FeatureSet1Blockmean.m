@@ -1,4 +1,4 @@
-classdef FeatureSet1Blockmean < featureCreators.Base
+classdef FeatureSet1Blockmean < FeatureCreators.Base
 % FeatureSet1Blockmean Specifies a feature set consisting of:
 %   see FeatureSet1Blockmean.getAFErequests()
 %   uses magnitude ratemap with cubic compression and scaling to a max value
@@ -24,7 +24,7 @@ classdef FeatureSet1Blockmean < featureCreators.Base
         function obj = FeatureSet1Blockmean( )
             % FeatureSet1Blockmean construct by setting attributes to
             % default values
-            obj = obj@featureCreators.Base( 0.5, 0.5/3, 0.75, 0.5 );
+            obj = obj@FeatureCreators.Base( 0.5, 0.5/3, 0.75, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;

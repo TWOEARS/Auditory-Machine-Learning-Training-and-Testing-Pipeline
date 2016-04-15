@@ -1,4 +1,4 @@
-classdef BMFATrainer < modelTrainers.Base & Parameterized
+classdef BMFATrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -11,7 +11,7 @@ classdef BMFATrainer < modelTrainers.Base & Parameterized
 
         function obj = BMFATrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @performanceMeasures.BAC2, ...
+                'default', @PerformanceMeasures.BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
                 'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'maxDataSize', ...
@@ -26,11 +26,11 @@ classdef BMFATrainer < modelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-            obj.model = models.BMFAModel();
+            obj.model = Models.BMFAModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.mfaK = obj.nComp;
             [obj.model.model{1}, obj.model.model{2}] = ...
-                modelTrainers.BMFATrainer.trainBMFA( y, xScaled, gmmOpts );
+                ModelTrainers.BMFATrainer.trainBMFA( y, xScaled, gmmOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

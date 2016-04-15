@@ -1,4 +1,4 @@
-classdef BlackboardKsWrapper < core.IdProcInterface
+classdef BlackboardKsWrapper < Core.IdProcInterface
     % Base Abstract base class for specifying features sets with which features
     % are extracted.
     %% -----------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ classdef BlackboardKsWrapper < core.IdProcInterface
     methods
         
         function obj = BlackboardKsWrapper()
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
         end
         %% -------------------------------------------------------------------------------
         
@@ -28,9 +28,9 @@ classdef BlackboardKsWrapper < core.IdProcInterface
         
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
-            out = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            out = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
         end
         %% -------------------------------------------------------------------------------
         
@@ -49,9 +49,9 @@ classdef BlackboardKsWrapper < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function save( obj, wavFilepath, out )
-            save@core.IdProcInterface( obj, wavFilepath, out ); 
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
         

@@ -1,4 +1,4 @@
-classdef MbfNetTrainer < modelTrainers.Base & Parameterized
+classdef MbfNetTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -12,7 +12,7 @@ classdef MbfNetTrainer < modelTrainers.Base & Parameterized
 
         function obj = MbfNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @performanceMeasures.BAC2, ...
+                'default', @PerformanceMeasures.BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
                 'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'nComp', ...
@@ -31,7 +31,7 @@ classdef MbfNetTrainer < modelTrainers.Base & Parameterized
 
         function buildModel( obj, x, y )
 %             glmOpts.weights = obj.setDataWeights( y );
-            obj.model = models.MbfNetModel();
+            obj.model = Models.MbfNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             mbfOpts.nComp = obj.nComp;
             mbfOpts.thr = obj.thr;
@@ -42,9 +42,9 @@ classdef MbfNetTrainer < modelTrainers.Base & Parameterized
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
 %             obj.model.model = glmnet( xScaled, y, obj.family, glmOpts );
             mbfOpts.initComps = mbfOpts.nComp;
-          idFeature = modelTrainers.featureSelectionPCA2(xScaled,mbfOpts.thr);
+          idFeature = ModelTrainers.featureSelectionPCA2(xScaled,mbfOpts.thr);
             [obj.model.model{1}, obj.model.model{2}] = ...
-                modelTrainers.MBFTrainer.trainMbfs( y, xScaled(:,idFeature), mbfOpts );
+                ModelTrainers.MBFTrainer.trainMbfs( y, xScaled(:,idFeature), mbfOpts );
             obj.model.model{3}=idFeature;            % train +1 model
             % call obj.setPositiveClass( 'general' );
             verboseFprintf( obj, '\n' );

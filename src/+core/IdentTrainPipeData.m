@@ -11,7 +11,7 @@ classdef IdentTrainPipeData < handle
     methods
         
         function obj = IdentTrainPipeData( varargin )
-            obj.data = core.IdentTrainPipeDataElem.empty;
+            obj.data = Core.IdentTrainPipeDataElem.empty;
             rng( 'shuffle' );
             ip = inputParser;
             ip.addOptional( 'autoStratify', true );
@@ -172,7 +172,7 @@ classdef IdentTrainPipeData < handle
                 permFolds = [];
                 return;
             end
-            for ii = nFolds : -1 : 1, permFolds{ii} = core.IdentTrainPipeData(); end
+            for ii = nFolds : -1 : 1, permFolds{ii} = Core.IdentTrainPipeData(); end
             if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
                 if obj.autoStratify, obj.autoSetStratificationLabels(); end
                 stratifyLabels = obj.stratificationLabels;
@@ -231,8 +231,8 @@ classdef IdentTrainPipeData < handle
                 maxFolds = obj.getMinDisjunctSubsetsSize( stratifyLabels );
             end
             if maxFolds == 0
-                share = core.IdentTrainPipeData();
-                disjShare = core.IdentTrainPipeData();
+                share = Core.IdentTrainPipeData();
+                disjShare = Core.IdentTrainPipeData();
                 return;
             end
             nFolds = round( 100 / gcd( round( 100*ratio ), ...
@@ -240,9 +240,9 @@ classdef IdentTrainPipeData < handle
             nFolds = min( nFolds, maxFolds );
             folds = obj.splitInPermutedStratifiedFolds( nFolds, stratifyLabels );
             shareNfolds = round( nFolds * ratio );
-            share = core.IdentTrainPipeData.combineData( folds{1:shareNfolds} );
+            share = Core.IdentTrainPipeData.combineData( folds{1:shareNfolds} );
             if shareNfolds < nFolds
-                disjShare = core.IdentTrainPipeData.combineData( folds{shareNfolds+1:end} );
+                disjShare = Core.IdentTrainPipeData.combineData( folds{shareNfolds+1:end} );
             else
                 disjShare = [];
             end
@@ -270,7 +270,7 @@ classdef IdentTrainPipeData < handle
         
         function loadFileList( obj, flistName )
             if isempty( flistName ), return; end
-            obj.data = core.IdentTrainPipeDataElem.empty;
+            obj.data = Core.IdentTrainPipeDataElem.empty;
             try
                 fid = fopen( xml.dbGetFile( flistName ) );
             catch err
@@ -291,7 +291,7 @@ classdef IdentTrainPipeData < handle
                 p = fileparts( filepath );
                 addPathsIfNotIncluded( p );
                 filepath = which( filepath ); % ensure absolute path
-                obj.data(end+1) = core.IdentTrainPipeDataElem( filepath );
+                obj.data(end+1) = Core.IdentTrainPipeDataElem( filepath );
             end
             fclose( fid );
             fprintf( '.\n' );
@@ -315,7 +315,7 @@ classdef IdentTrainPipeData < handle
     methods (Static)
 
         function combinedData = combineData( varargin )
-            combinedData = core.IdentTrainPipeData();
+            combinedData = Core.IdentTrainPipeData();
             for ii = 1 : numel(varargin)
                 dii = varargin{ii};
                 nDii = numel( dii.data );

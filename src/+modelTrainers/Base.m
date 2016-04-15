@@ -6,7 +6,7 @@ classdef (Abstract) Base < handle
         testSet;
     end
     
-    properties (SetAccess = {?modelTrainers.Base, ?Parameterized})
+    properties (SetAccess = {?ModelTrainers.Base, ?Parameterized})
         performanceMeasure;
         maxDataSize;
     end
@@ -32,10 +32,10 @@ classdef (Abstract) Base < handle
         
         function model = getModel( obj )
             model = obj.giveTrainedModel();
-            if ~isa( model, 'models.Base' )
-                error( 'giveTrainedModel must produce an models.Base object.' );
+            if ~isa( model, 'Models.Base' )
+                error( 'giveTrainedModel must produce an Models.Base object.' );
             end
-            model.featureMask = modelTrainers.Base.featureMask;
+            model.featureMask = ModelTrainers.Base.featureMask;
         end
         %% -------------------------------------------------------------------------------
         
@@ -62,7 +62,7 @@ classdef (Abstract) Base < handle
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
             model.verbose( obj.verbose );
-            performance = models.Base.getPerformance( ...
+            performance = Models.Base.getPerformance( ...
                 model, obj.testSet, obj.performanceMeasure, ...
                 obj.maxDataSize, true, getDatapointInfo );
         end
@@ -74,7 +74,7 @@ classdef (Abstract) Base < handle
                 warning( 'There are NaNs or INFs in the data!' );
             end
             if numel( y ) > obj.maxDataSize
-                if modelTrainers.Base.balMaxData
+                if ModelTrainers.Base.balMaxData
                     nPos = min( int32( obj.maxDataSize/2 ), sum( y == +1 ) );
                     nNeg = obj.maxDataSize - nPos;
                     posIdxs = find( y == +1 );
@@ -103,10 +103,10 @@ classdef (Abstract) Base < handle
                 y = obj.trainSet(:,'y');
             end
             % apply the mask
-            fmask = modelTrainers.Base.featureMask;
+            fmask = ModelTrainers.Base.featureMask;
             if ~isempty( fmask )
                 p_feat = size( x, 2 );
-                p_mask = size( modelTrainers.Base.featureMask, 1 );
+                p_mask = size( ModelTrainers.Base.featureMask, 1 );
                 fmask = fmask( 1 : min( p_feat, p_mask ) );
                 x = x(:,fmask);
             end

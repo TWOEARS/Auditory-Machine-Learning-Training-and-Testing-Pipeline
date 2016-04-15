@@ -1,4 +1,4 @@
-classdef Base < core.IdProcInterface
+classdef Base < Core.IdProcInterface
     % Base Abstract base class for extraction of blocks from streams (wavs)
     %% ----------------------------------------------------------------------------------- 
     properties (SetAccess = private)
@@ -18,7 +18,7 @@ classdef Base < core.IdProcInterface
     methods
         
         function obj = Base( blockSize_s, shiftsize_s )
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
             obj.blockSize_s = blockSize_s;
             obj.shiftSize_s = shiftsize_s;
         end

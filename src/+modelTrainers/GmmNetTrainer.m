@@ -1,4 +1,4 @@
-classdef GmmNetTrainer < modelTrainers.Base & Parameterized
+classdef GmmNetTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -12,7 +12,7 @@ classdef GmmNetTrainer < modelTrainers.Base & Parameterized
 
         function obj = GmmNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @performanceMeasures.BAC2, ...
+                'default', @PerformanceMeasures.BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
                 'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'nComp', ...
@@ -30,7 +30,7 @@ classdef GmmNetTrainer < modelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-            obj.model = models.GmmNetModel();
+            obj.model = Models.GmmNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.nComp = obj.nComp;
             gmmOpts.thr = obj.thr;
@@ -41,7 +41,7 @@ classdef GmmNetTrainer < modelTrainers.Base & Parameterized
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             gmmOpts.initComps = gmmOpts.nComp;
             %....... approach 1: explicit dimension reduction using PCA
-            idFeature = modelTrainers.featureSelectionPCA2(xScaled,gmmOpts.thr);
+            idFeature = ModelTrainers.featureSelectionPCA2(xScaled,gmmOpts.thr);
             xTrain = xScaled(:,idFeature);
             %....... approach 2: uncorrelate feature variables using PCA 
 % % %             dataDim = size(xScaled,2);
@@ -51,7 +51,7 @@ classdef GmmNetTrainer < modelTrainers.Base & Parameterized
 % % %             idFeature = ndims;
         
             [obj.model.model{1}, obj.model.model{2}] = ...
-                modelTrainers.GmmNetTrainer.trainGmms( y, xTrain, gmmOpts );
+                ModelTrainers.GmmNetTrainer.trainGmms( y, xTrain, gmmOpts );
             obj.model.model{3}=idFeature;           
             verboseFprintf( obj, '\n' );
         end

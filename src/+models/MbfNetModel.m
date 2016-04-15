@@ -1,7 +1,7 @@
-classdef MbfNetModel < models.DataScalingModel
+classdef MbfNetModel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.MbfNetTrainer, ?modelTrainers.MBFmodelSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.MbfNetTrainer, ?ModelTrainers.MBFmodelSelectTrainer})
         model;
         nComp;
         thr;

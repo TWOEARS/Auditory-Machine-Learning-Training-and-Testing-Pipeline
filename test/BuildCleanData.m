@@ -4,12 +4,12 @@ addpath( '..' );
 startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
-pipe.featureCreator = featureCreators.FeatureSet1Blockmean();
-pipe.modelCreator = modelTrainers.LoadModelNoopTrainer( 'noop' );
+pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
+pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
 
 pipe.data = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_mini_TrainSet.flist';
-sc = sceneConfig.SceneConfiguration();
-sc.addSource( sceneConfig.PointSource() );
+sc = SceneConfig.SceneConfiguration();
+sc.addSource( SceneConfig.PointSource() );
 
 pipe.init( sc );
 

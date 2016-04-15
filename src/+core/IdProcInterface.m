@@ -151,8 +151,8 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
         
         function setInputProc( obj, inputProc )
-            if ~isempty( inputProc ) && ~isa( inputProc, 'core.IdProcInterface' )
-                error( 'inputProc must be of type core.IdProcInterface' );
+            if ~isempty( inputProc ) && ~isa( inputProc, 'Core.IdProcInterface' )
+                error( 'inputProc must be of type Core.IdProcInterface' );
             end
             obj.inputProc = inputProc;
         end
@@ -178,7 +178,7 @@ classdef (Abstract) IdProcInterface < handle
             else
                 obj.procName = procName;
             end
-            obj.cacheDirectory = core.IdCacheDirectory();
+            obj.cacheDirectory = Core.IdCacheDirectory();
         end
         %% -------------------------------------------------------------------------------
         

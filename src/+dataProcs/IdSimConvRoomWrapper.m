@@ -1,4 +1,4 @@
-classdef IdSimConvRoomWrapper < core.IdProcInterface
+classdef IdSimConvRoomWrapper < Core.IdProcInterface
     % IdSimConvRoomWrapper wrap the simulator.SimulatorConvexRoom class
     %% -----------------------------------------------------------------------------------
     properties (Access = protected)
@@ -19,7 +19,7 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
     methods (Access = public)
         function obj = IdSimConvRoomWrapper( hrirFile )
             % initialize the simulation tool
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...
@@ -75,7 +75,7 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.sceneConfig = copy( obj.sceneConfig );
             if ~isempty( outputDeps.sceneConfig )
-                outputDeps.sceneConfig.sources(1).data = []; % configs shall not include filename
+                outputDeps.SceneConfig.sources(1).data = []; % configs shall not include filename
             end
             outputDeps.SampleRate = obj.convRoomSim.SampleRate;
             outputDeps.ReverberationMaxOrder = obj.reverberationMaxOrder;
@@ -108,10 +108,10 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
     methods (Access = private)
         
         function [earSignals, earsOnOffs] = makeEarSignalsAndLabels( obj, wavFilepath )
-            sceneConfigInst = obj.sceneConfig.instantiate();
+            sceneConfigInst = obj.SceneConfig.instantiate();
             [snd, earsOnOffs] = obj.loadSound( sceneConfigInst, wavFilepath );
             obj.setupSceneConfig( sceneConfigInst );
-            if isa( sceneConfigInst.sources(1), 'sceneConfig.DiffuseSource' )
+            if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
                 earSignals = snd{1};
             else
                 obj.setSourceData( snd{1} );
@@ -143,47 +143,47 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
         function setupSceneConfig( obj, sceneConfig )
             obj.convRoomSim.set( 'ShutDown', true );
             if ~isempty(obj.convRoomSim.Sources), obj.convRoomSim.Sources(2:end) = []; end;
-            useSimReverb = ~isempty( sceneConfig.room );
+            useSimReverb = ~isempty( SceneConfig.room );
             if useSimReverb
                 if isempty( obj.IRDataset ) % then BRIRsources are expected
                     error( 'usage of BRIR incompatible with simulating a room' );
                 end
-                obj.convRoomSim.Room = sceneConfig.room.value; 
+                obj.convRoomSim.Room = SceneConfig.room.value; 
                 obj.convRoomSim.Room.set( 'ReverberationMaxOrder', ...
                                           obj.reverberationMaxOrder );
             end
             channelMapping = 1;
-            if isa( sceneConfig.sources(1), 'sceneConfig.PointSource' ) 
+            if isa( SceneConfig.sources(1), 'SceneConfig.PointSource' ) 
                 if useSimReverb
                     obj.convRoomSim.Sources{1} = simulator.source.ISMGroup();
                     obj.convRoomSim.Sources{1}.set( 'Room', obj.convRoomSim.Room );
                 else
                     obj.convRoomSim.Sources{1} = simulator.source.Point();
                 end
-                obj.convRoomSim.Sources{1}.Radius = sceneConfig.sources(1).distance.value;
-                obj.convRoomSim.Sources{1}.Azimuth = sceneConfig.sources(1).azimuth.value;
-            elseif isa( sceneConfig.sources(1), 'sceneConfig.BRIRsource' ) 
+                obj.convRoomSim.Sources{1}.Radius = SceneConfig.sources(1).distance.value;
+                obj.convRoomSim.Sources{1}.Azimuth = SceneConfig.sources(1).azimuth.value;
+            elseif isa( SceneConfig.sources(1), 'SceneConfig.BRIRsource' ) 
                 obj.convRoomSim.Sources{1} = simulator.source.Point();
                 brirSofa = SOFAload(xml.dbGetFile(...
-                    sceneConfig.sources(1).brirFName), 'nodata');
-                azmIdx = ceil( sceneConfig.brirAzmIdx * size( brirSofa.ListenerView, 1 ));
+                    SceneConfig.sources(1).brirFName), 'nodata');
+                azmIdx = ceil( SceneConfig.brirAzmIdx * size( brirSofa.ListenerView, 1 ));
                 headOrientation = SOFAconvertCoordinates( ...
                     brirSofa.ListenerView(azmIdx,:),'cartesian','spherical' );
                 if isempty( obj.IRDataset ) ...
-                   || ~strcmp( obj.IRDataset.fname, sceneConfig.sources(1).brirFName ) ...
-                   || (isfield( obj.IRDataset, 'speakerId' ) ~= ~isempty( sceneConfig.sources(1).speakerId ) ) ...
-                   || obj.IRDataset.speakerId ~= sceneConfig.sources(1).speakerId
-                    if isempty( sceneConfig.sources(1).speakerId )
+                   || ~strcmp( obj.IRDataset.fname, SceneConfig.sources(1).brirFName ) ...
+                   || (isfield( obj.IRDataset, 'speakerId' ) ~= ~isempty( SceneConfig.sources(1).speakerId ) ) ...
+                   || obj.IRDataset.speakerId ~= SceneConfig.sources(1).speakerId
+                    if isempty( SceneConfig.sources(1).speakerId )
                        obj.IRDataset.dir = ...
-                           simulator.DirectionalIR( sceneConfig.sources(1).brirFName );
+                           simulator.DirectionalIR( SceneConfig.sources(1).brirFName );
                     else
                        obj.IRDataset.dir = ...
-                           simulator.DirectionalIR( sceneConfig.sources(1).brirFName, ...
-                           sceneConfig.sources(1).speakerId );
-                       obj.IRDataset.speakerId = sceneConfig.sources(1).speakerId;
+                           simulator.DirectionalIR( SceneConfig.sources(1).brirFName, ...
+                           SceneConfig.sources(1).speakerId );
+                       obj.IRDataset.speakerId = SceneConfig.sources(1).speakerId;
                     end
                     obj.IRDataset.isbrir = true;
-                    obj.IRDataset.fname = sceneConfig.sources(1).brirFName;
+                    obj.IRDataset.fname = SceneConfig.sources(1).brirFName;
                 end
                 obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
                 obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
@@ -197,8 +197,8 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
         %% ----------------------------------------------------------------
 
         function [snd, onOffs] = loadSound( obj, sceneConfig, wavFilepath )
-            startOffset = sceneConfig.sources(1).offset.value;
-            src = sceneConfig.sources(1).data.value;
+            startOffset = SceneConfig.sources(1).offset.value;
+            src = SceneConfig.sources(1).data.value;
             onOffs = [];
             if ischar( src ) % then it is a filename
                 snd{1} = getPointSourceSignalFromWav( ...
@@ -216,7 +216,7 @@ classdef IdSimConvRoomWrapper < core.IdProcInterface
             else
                 error( 'This was not foreseen.' );
             end
-            if isa( sceneConfig.sources(1), 'sceneConfig.DiffuseSource' )
+            if isa( SceneConfig.sources(1), 'SceneConfig.DiffuseSource' )
                 snd{1} = repmat( snd{1}, 1, 2 );
             end
         end

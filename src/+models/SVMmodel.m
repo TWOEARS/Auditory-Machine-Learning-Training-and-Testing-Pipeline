@@ -1,7 +1,7 @@
-classdef SVMmodel < models.DataScalingModel
+classdef SVMmodel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = ?modelTrainers.SVMtrainer)
+    properties (SetAccess = ?ModelTrainers.SVMtrainer)
         useProbModel;
         model;
     end

@@ -1,4 +1,4 @@
-classdef FileListValGen < sceneConfig.ValGen
+classdef FileListValGen < SceneConfig.ValGen
 
     %%
     properties
@@ -20,7 +20,7 @@ classdef FileListValGen < sceneConfig.ValGen
             else
                 valGenArgs = {'set', val};
             end
-            obj = obj@sceneConfig.ValGen( valGenArgs{:} );
+            obj = obj@SceneConfig.ValGen( valGenArgs{:} );
             obj.filesepsAreUnix = true;
         end
         

@@ -1,4 +1,4 @@
-classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
+classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
@@ -17,12 +17,12 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         
         function obj = MultiSceneCfgsIdProcWrapper( sceneProc, wrapProc,...
                                                               multiSceneCfgs )
-            obj = obj@dataProcs.IdProcWrapper( wrapProc, true );
-            if ~isa( sceneProc, 'core.IdProcInterface' )
-                error( 'sceneProc must implement core.IdProcInterface.' );
+            obj = obj@DataProcs.IdProcWrapper( wrapProc, true );
+            if ~isa( sceneProc, 'Core.IdProcInterface' )
+                error( 'sceneProc must implement Core.IdProcInterface.' );
             end
             obj.sceneProc = sceneProc;
-            if nargin < 3, multiSceneCfgs = sceneConfig.SceneConfiguration.empty; end
+            if nargin < 3, multiSceneCfgs = SceneConfig.SceneConfiguration.empty; end
             obj.sceneConfigurations = multiSceneCfgs;
         end
         %% ----------------------------------------------------------------
@@ -34,7 +34,7 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function fileProcessed = hasFileAlreadyBeenProcessed( obj, wavFilepath )
             fileProcessed = true;
             for ii = 1 : numel( obj.sceneConfigurations )
@@ -51,7 +51,7 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
        
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = processSaveAndGetOutput( obj, wavFilepath )
             obj.process( wavFilepath );
             out = [];
@@ -72,25 +72,25 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = loadProcessedData( ~, ~ ) 
             out = [];
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function inData = loadInputData( ~, ~, ~ )
             inData = [];
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function outFilepath = getOutputFilepath( ~, ~ )
             outFilepath = [];
         end
         %% -------------------------------------------------------------------------------
        
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function currentFolder = getCurrentFolder( obj )
             currentFolder = [];
         end
@@ -100,7 +100,7 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = save( ~, ~, ~ )
             out = [];
         end
@@ -112,7 +112,7 @@ classdef MultiSceneCfgsIdProcWrapper < dataProcs.IdProcWrapper
                 outputDeps.(outDepName) = obj.sceneConfigurations(ii);
             end
             obj.sceneProc.setSceneConfig( [] );
-            outputDeps.wrapDeps = getInternOutputDependencies@dataProcs.IdProcWrapper( obj );
+            outputDeps.wrapDeps = getInternOutputDependencies@DataProcs.IdProcWrapper( obj );
         end
         %% ----------------------------------------------------------------
 

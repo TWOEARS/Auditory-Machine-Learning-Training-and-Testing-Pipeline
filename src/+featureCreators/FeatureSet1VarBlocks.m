@@ -1,4 +1,4 @@
-classdef FeatureSet1VarBlocks < featureCreators.Base
+classdef FeatureSet1VarBlocks < FeatureCreators.Base
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -22,7 +22,7 @@ classdef FeatureSet1VarBlocks < featureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSet1VarBlocks( )
-            obj = obj@featureCreators.Base( 1, 0.2, 0.75, 0.2  );
+            obj = obj@FeatureCreators.Base( 1, 0.2, 0.75, 0.2  );
             obj.freqChannels = 16;
             obj.onsfreqChannels = 8;
             obj.amFreqChannels = 8;

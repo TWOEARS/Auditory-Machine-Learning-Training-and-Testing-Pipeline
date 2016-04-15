@@ -1,4 +1,4 @@
-classdef CVtrainer < modelTrainers.Base
+classdef CVtrainer < ModelTrainers.Base
 
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -18,8 +18,8 @@ classdef CVtrainer < modelTrainers.Base
     methods
 
         function obj = CVtrainer( trainer )
-            if ~isa( trainer, 'modelTrainers.Base' )
-                error( 'trainer must implement modelTrainers.Base' );
+            if ~isa( trainer, 'ModelTrainers.Base' )
+                error( 'trainer must implement ModelTrainers.Base' );
             end
             obj.trainer = trainer;
             obj.nFolds = 5;
@@ -83,7 +83,7 @@ classdef CVtrainer < modelTrainers.Base
         function foldCombi = getAllFoldsButOne( obj, exceptIdx )
             foldsIdx = 1 : obj.nFolds;
             foldsIdx(exceptIdx) = [];
-            foldCombi = core.IdentTrainPipeData.combineData( obj.folds{foldsIdx} );
+            foldCombi = Core.IdentTrainPipeData.combineData( obj.folds{foldsIdx} );
         end
         %% ----------------------------------------------------------------
 

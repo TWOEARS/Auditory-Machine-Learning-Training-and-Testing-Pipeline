@@ -1,7 +1,7 @@
-classdef AuditoryFEmodule < core.IdProcInterface
+classdef AuditoryFEmodule < Core.IdProcInterface
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?dataProcs.ParallelRequestsAFEmodule})
+    properties (SetAccess = {?DataProcs.ParallelRequestsAFEmodule})
         managerObject;           % WP2 manager object - holds the signal buffer (data obj)
         afeDataObj;
         afeSignals;
@@ -17,7 +17,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
     methods (Access = public)
         
         function obj = AuditoryFEmodule( fs, afeRequests )
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
             obj.afeSignals = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             obj.afeDataObj = dataObject( [], fs, 2, 2 );
             obj.managerObject = manager( obj.afeDataObj );
@@ -25,7 +25,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
                 obj.afeSignals(ii) = obj.managerObject.addProcessor( ...
                                            afeRequests{ii}.name, afeRequests{ii}.params );
                 sig = obj.afeSignals(ii);
-                sigsr = dataProcs.AuditoryFEmodule.signal2struct( sig );
+                sigsr = DataProcs.AuditoryFEmodule.signal2struct( sig );
                 if isfield( obj.afeParams, 'sr' ) &&...
                         isfield( obj.afeParams.sr, sig{1}.Name )
                     sigsrs = obj.afeParams.sr.(sig{1}.Name);
@@ -39,7 +39,7 @@ classdef AuditoryFEmodule < core.IdProcInterface
                     obj.afeParams.sr.(sig{1}.Name) = sigsr;
                 end
             end
-            obj.afeParams.p = dataProcs.AuditoryFEmodule.parameterSummary2struct( ...
+            obj.afeParams.p = DataProcs.AuditoryFEmodule.parameterSummary2struct( ...
                                 obj.afeDataObj.getParameterSummary( obj.managerObject ) );
         end
         %% ----------------------------------------------------------------
@@ -125,13 +125,13 @@ classdef AuditoryFEmodule < core.IdProcInterface
                 if iscell( pfn )
                     for jj = 1 : length( pfn )
                         stmp{jj} = ...
-                            dataProcs.AuditoryFEmodule.parameter2struct( pfn{jj} );
+                            DataProcs.AuditoryFEmodule.parameter2struct( pfn{jj} );
                     end
                     s.(fnames{ii}) = stmp;
                     clear stmp;
                 elseif isa( pfn, 'Parameters' )
                     s.(fnames{ii}) = ...
-                        {dataProcs.AuditoryFEmodule.parameter2struct( pfn )};
+                        {DataProcs.AuditoryFEmodule.parameter2struct( pfn )};
                 end
             end
         end

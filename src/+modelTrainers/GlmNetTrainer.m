@@ -1,4 +1,4 @@
-classdef GlmNetTrainer < modelTrainers.Base & Parameterized
+classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -14,7 +14,7 @@ classdef GlmNetTrainer < modelTrainers.Base & Parameterized
 
         function obj = GlmNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @performanceMeasures.BAC2, ...
+                             'default', @PerformanceMeasures.BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'alpha', ...
@@ -39,7 +39,7 @@ classdef GlmNetTrainer < modelTrainers.Base & Parameterized
 
         function buildModel( obj, x, y )
             glmOpts.weights = obj.setDataWeights( y );
-            obj.model = models.GlmNetModel();
+            obj.model = Models.GlmNetModel();
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );

@@ -1,7 +1,7 @@
-classdef HPSmodel < models.Base
+classdef HPSmodel < Models.Base
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = ?modelTrainers.HpsTrainer)
+    properties (SetAccess = ?ModelTrainers.HpsTrainer)
         hpsSet;
         model;
     end

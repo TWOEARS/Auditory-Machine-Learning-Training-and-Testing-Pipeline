@@ -1,4 +1,4 @@
-classdef BRIRsource < sceneConfig.SourceBase & Parameterized
+classdef BRIRsource < SceneConfig.SourceBase & Parameterized
 
     %% -----------------------------------------------------------------------------------
     properties
@@ -14,7 +14,7 @@ classdef BRIRsource < sceneConfig.SourceBase & Parameterized
                              'default', [], ...
                              'valFun', @(x)(isnumeric(x)) );
             obj = obj@Parameterized( pds );
-            obj = obj@sceneConfig.SourceBase( varargin{:} );
+            obj = obj@SceneConfig.SourceBase( varargin{:} );
             obj.brirFName = strrep( brirFName, '\', '/' );
         end
         %% -------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ classdef BRIRsource < sceneConfig.SourceBase & Parameterized
         function e = isequal( obj1, obj2 )
             f1SepIdxs = strfind( obj1.brirFName, '/' );
             f2SepIdxs = strfind( obj2.brirFName, '/' );
-            e = isequal@sceneConfig.SourceBase( obj1, obj2 ) && ...
+            e = isequal@SceneConfig.SourceBase( obj1, obj2 ) && ...
                 isequal( obj1.speakerId, obj2.speakerId ) && ...
                 strcmp( obj1.brirFName(f1SepIdxs(end-1):end), obj2.brirFName(f2SepIdxs(end-1):end) );
         end

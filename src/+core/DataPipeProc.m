@@ -15,8 +15,8 @@ classdef DataPipeProc < handle
     methods (Access = public)
         
         function obj = DataPipeProc( dataFileProc )
-            if ~isa( dataFileProc, 'core.IdProcInterface' )
-                error( 'dataFileProc must be of type core.IdProcInterface.' );
+            if ~isa( dataFileProc, 'Core.IdProcInterface' )
+                error( 'dataFileProc must be of type Core.IdProcInterface.' );
             end
             obj.dataFileProcessor = dataFileProc;
         end
@@ -34,8 +34,8 @@ classdef DataPipeProc < handle
         %% ----------------------------------------------------------------
 
         function connectToOutputFrom( obj, outputtingProc )
-            if ~isa( outputtingProc, 'core.DataPipeProc' )
-                error( 'outputtingProc must be of type core.DataPipeProc' );
+            if ~isa( outputtingProc, 'Core.DataPipeProc' )
+                error( 'outputtingProc must be of type Core.DataPipeProc' );
             end
             obj.dataFileProcessor.setInputProc( ...
                 outputtingProc.dataFileProcessor.getOutputObject() );

@@ -1,7 +1,7 @@
-classdef vMFModel < models.DataScalingModel
+classdef vMFModel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.vMFTrainer, ?modelTrainers.GMMmodelSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.vMFTrainer, ?ModelTrainers.GMMmodelSelectTrainer})
         model;
 %         coefsRelStd;
 %         lambdasSortedByPerf;

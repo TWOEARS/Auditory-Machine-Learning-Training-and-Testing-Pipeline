@@ -11,7 +11,7 @@ classdef (Abstract) Base
         
         function obj = Base( yTrue, yPred, datapointInfo )
             if nargin < 2
-                error( ['Subclass of performanceMeasures.Base must call superconstructor ',...
+                error( ['Subclass of PerformanceMeasures.Base must call superconstructor ',...
                         'and pass yTrue and yPred.'] );
             end
             if nargin < 3

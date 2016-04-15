@@ -1,4 +1,4 @@
-classdef IdProcWrapper < core.IdProcInterface
+classdef IdProcWrapper < Core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -9,11 +9,11 @@ classdef IdProcWrapper < core.IdProcInterface
     methods (Access = public)
         
         function obj = IdProcWrapper( wrapProcs, includeWrappedProcsInName )
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
             if ~iscell( wrapProcs ), wrapProcs = {wrapProcs}; end
             for ii = 1 : numel( wrapProcs )
-                if ~isa( wrapProcs{ii}, 'core.IdProcInterface' )
-                    error( 'wrapProc must implement core.IdProcInterface.' );
+                if ~isa( wrapProcs{ii}, 'Core.IdProcInterface' )
+                    error( 'wrapProc must implement Core.IdProcInterface.' );
                 end
             end
             if nargin < 2, includeWrappedProcsInName = true; end
@@ -26,61 +26,61 @@ classdef IdProcWrapper < core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName )
-            setCacheSystemDir@core.IdProcInterface( obj, cacheSystemDir, nPathLevelsForCacheName );
+            setCacheSystemDir@Core.IdProcInterface( obj, cacheSystemDir, nPathLevelsForCacheName );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.setCacheSystemDir( cacheSystemDir, nPathLevelsForCacheName );
             end
         end
         %% -----------------------------------------------------------------
         
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function saveCacheDirectory( obj )
-            saveCacheDirectory@core.IdProcInterface( obj );
+            saveCacheDirectory@Core.IdProcInterface( obj );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.saveCacheDirectory();
             end
         end
         %% -----------------------------------------------------------------        
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function getSingleProcessCacheAccess( obj )
-            getSingleProcessCacheAccess@core.IdProcInterface( obj );
+            getSingleProcessCacheAccess@Core.IdProcInterface( obj );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.getSingleProcessCacheAccess();
             end
         end
         %% -------------------------------------------------------------------------------
         
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function releaseSingleProcessCacheAccess( obj )
-            releaseSingleProcessCacheAccess@core.IdProcInterface( obj );
+            releaseSingleProcessCacheAccess@Core.IdProcInterface( obj );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.releaseSingleProcessCacheAccess();
             end
         end
         %% -----------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function connectIdData( obj, idData )
-            connectIdData@core.IdProcInterface( obj, idData );
+            connectIdData@Core.IdProcInterface( obj, idData );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.connectIdData( idData );
             end
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function setInputProc( obj, inputProc )
-            setInputProc@core.IdProcInterface( obj, inputProc );
+            setInputProc@Core.IdProcInterface( obj, inputProc );
             for ii = 1 : numel( obj.wrappedProcs )
                 obj.wrappedProcs{ii}.setInputProc( inputProc );
             end
         end
         %% -------------------------------------------------------------------------------
         
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function outObjs = getOutputObject( obj )
             outObjs = obj.wrappedProcs{:};
         end

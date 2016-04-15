@@ -1,4 +1,4 @@
-classdef BlockConcatFeatureSet2 < featureCreators.Base
+classdef BlockConcatFeatureSet2 < FeatureCreators.Base
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -18,7 +18,7 @@ classdef BlockConcatFeatureSet2 < featureCreators.Base
     methods (Access = public)
         
         function obj = BlockConcatFeatureSet2( )
-            obj = obj@featureCreators.Base( 0.48, 0.24, 0.5, 0.48 );
+            obj = obj@FeatureCreators.Base( 0.48, 0.24, 0.5, 0.48 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;

@@ -1,6 +1,6 @@
-classdef GlmGroupModel < models.DataScalingModel
+classdef GlmGroupModel < Models.DataScalingModel
     
-    properties (SetAccess = {?modelTrainers.GlmGroupTrainer, ?modelTrainers.GlmGroupLambdaSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.GlmGroupTrainer, ?ModelTrainers.GlmGroupLambdaSelectTrainer})
         model;
         perf_lambda_mean;
         perf_lambda_std;

@@ -1,7 +1,7 @@
-classdef GlmNetModel < models.DataScalingModel
+classdef GlmNetModel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.GlmNetTrainer, ?modelTrainers.GlmNetLambdaSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.GlmNetTrainer, ?ModelTrainers.GlmNetLambdaSelectTrainer})
         model;
         lPerfsMean;
         lPerfsStd;

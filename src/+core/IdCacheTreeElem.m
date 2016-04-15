@@ -1,6 +1,6 @@
 classdef IdCacheTreeElem < handle
     
-    properties (Access = {?core.IdCacheDirectory})
+    properties (Access = {?Core.IdCacheDirectory})
         cfg;
         cfgSubs;
         path;
@@ -41,7 +41,7 @@ classdef IdCacheTreeElem < handle
                 end
                 if isempty( subTreeNode )
                     if createIfMissing
-                        newSubTrees = [core.IdCacheTreeElem( cfgField ) subTreeNodes];
+                        newSubTrees = [Core.IdCacheTreeElem( cfgField ) subTreeNodes];
                         treeNode.cfgSubs(cfgName) = newSubTrees;
                         subTreeNode = newSubTrees(1);
                     else
@@ -66,7 +66,7 @@ classdef IdCacheTreeElem < handle
                 end
             end
             if createIfMissing
-                newSubTrees = [core.IdCacheTreeElem( cfg ) subTreeNodes];
+                newSubTrees = [Core.IdCacheTreeElem( cfg ) subTreeNodes];
                 obj.cfgSubs(cfgFieldName) = newSubTrees;
                 subTreeNode = newSubTrees(1);
             end

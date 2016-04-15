@@ -1,4 +1,4 @@
-classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
+classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
@@ -20,16 +20,16 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         
         function obj = ParallelRequestsAFEmodule( fs, afeRequests )
             for ii = 1:length( afeRequests )
-                indivProcs{ii} = dataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
+                indivProcs{ii} = DataProcs.AuditoryFEmodule( fs, afeRequests(ii) );
             end
             for ii = 2:length( afeRequests )
                 indivProcs{ii}.cacheDirectory = indivProcs{1}.cacheDirectory;
             end
-            obj = obj@dataProcs.IdProcWrapper( indivProcs, false );
+            obj = obj@DataProcs.IdProcWrapper( indivProcs, false );
             obj.individualAfeProcs = indivProcs;
             obj.afeRequests = afeRequests;
             obj.fs = fs;
-            obj.prAfeDepProducer = dataProcs.AuditoryFEmodule( fs, afeRequests );
+            obj.prAfeDepProducer = DataProcs.AuditoryFEmodule( fs, afeRequests );
         end
         %% -------------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
             if ~isempty( newAfeRequestsIdx )
                 if ~isequal( newAfeRequestsIdx, obj.currentNewAfeRequestsIdx )
                     obj.currentNewAfeProc = ...
-                                     dataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
+                                     DataProcs.AuditoryFEmodule( obj.fs, newAfeRequests );
                     obj.currentNewAfeProc.setInputProc( obj.inputProc );
                     obj.currentNewAfeProc.cacheSystemDir = obj.cacheSystemDir;
                     obj.currentNewAfeProc.nPathLevelsForCacheName = obj.nPathLevelsForCacheName;
@@ -71,15 +71,15 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
         
-        % override of dataProcs.IdProcWrapper's method
+        % override of DataProcs.IdProcWrapper's method
         function outObj = getOutputObject( obj )
-            outObj = getOutputObject@core.IdProcInterface( obj );
+            outObj = getOutputObject@Core.IdProcInterface( obj );
         end
         %% -------------------------------------------------------------------------------
         
-        % override of dataProcs.IdProcInterface's method
+        % override of DataProcs.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
-            tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
             obj.indivFiles = tmpOut.indivFiles;
             try
                 out = obj.getOutput;
@@ -99,14 +99,14 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        % override of dataProcs.IdProcWrapper's method
+        % override of DataProcs.IdProcWrapper's method
         function outputDeps = getInternOutputDependencies( obj )
             afeDeps = obj.prAfeDepProducer.getInternOutputDependencies.afeParams;
             outputDeps.afeParams = afeDeps;
         end
         %% -------------------------------------------------------------------------------
 
-        % override of dataProcs.IdProcInterface's method
+        % override of DataProcs.IdProcInterface's method
         function out = getOutput( obj )
             out.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for ii = 1 : numel( obj.indivFiles )
@@ -122,10 +122,10 @@ classdef ParallelRequestsAFEmodule < dataProcs.IdProcWrapper
     end
         %% -------------------------------------------------------------------------------
         
-        % override of dataProcs.IdProcInterface's method
+        % override of DataProcs.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.indivFiles = obj.indivFiles;
-            save@core.IdProcInterface( obj, wavFilepath, out ); 
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
 

@@ -16,9 +16,9 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         
         function obj = SceneConfiguration()
             % creates a "clean" configuration
-            obj.room = sceneConfig.RoomValGen.empty;
-            obj.SNRs = sceneConfig.ValGen.empty;
-            obj.sources = sceneConfig.SourceBase.empty;
+            obj.room = SceneConfig.RoomValGen.empty;
+            obj.SNRs = SceneConfig.ValGen.empty;
+            obj.sources = SceneConfig.SourceBase.empty;
             obj.loop = [];
         end
         %% ----------------------------------------------------------------
@@ -26,7 +26,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         function addSource( obj, source, snr, loop )
             obj.sources(end+1) = source;
             if numel( obj.SNRs ) == 0  || nargin < 3
-                obj.SNRs(end+1) = sceneConfig.ValGen( 'manual', 0 );
+                obj.SNRs(end+1) = SceneConfig.ValGen( 'manual', 0 );
             else
                 obj.SNRs(end+1) = snr;
             end
@@ -49,7 +49,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         %% -------------------------------------------------------------------------------
 
         function confInst = instantiate( obj )
-            confInst = sceneConfig.SceneConfiguration();
+            confInst = SceneConfig.SceneConfiguration();
             confInst.room = obj.room.instantiate();
             for kk = 1 : numel( obj.sources )
                 confInst.sources(kk) = obj.sources(kk).instantiate();
@@ -61,10 +61,10 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         %% -------------------------------------------------------------------------------
 
         function singleConfig = getSingleConfig( obj, srcIdx )
-            singleConfig = sceneConfig.SceneConfiguration();
+            singleConfig = SceneConfig.SceneConfiguration();
             singleConfig.room = obj.room;
             singleConfig.sources = obj.sources(srcIdx);
-            singleConfig.SNRs = sceneConfig.ValGen( 'manual', 0 );
+            singleConfig.SNRs = SceneConfig.ValGen( 'manual', 0 );
             singleConfig.loop = false; % there is only one source
             singleConfig.brirAzmIdx = obj.brirAzmIdx;
         end
@@ -80,7 +80,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if obj1.brirAzmIdx ~= obj2.brirAzmIdx, return; end
             obj2srcsInCmpIdxs = ones( size( obj2.sources ) );
             for kk = 1 : numel( obj1.sources )
-                sequal = sceneConfig.SourceBase.isequalHetrgn( obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
+                sequal = SceneConfig.SourceBase.isequalHetrgn( obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
                 if ~any( sequal ), return; 
                 else
                     ssequal = isequal( obj1.SNRs(kk), obj2.SNRs ) & sequal;
@@ -100,7 +100,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
     methods (Access = protected)
         
         function csc = copyElement( obj )
-            csc = sceneConfig.SceneConfiguration();
+            csc = SceneConfig.SceneConfiguration();
             for ii = 1 : numel( obj.sources )
                 csc.sources(ii) = copy( obj.sources(ii) );
                 csc.SNRs(ii) = copy( obj.SNRs(ii) );

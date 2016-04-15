@@ -1,4 +1,4 @@
-classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
+classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -23,7 +23,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
 
         function obj = HpsTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @performanceMeasures.BAC2, ...
+                             'default', @PerformanceMeasures.BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'buildCoreTrainer', ...
@@ -113,7 +113,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
     methods (Access = protected)
         
         function model = giveTrainedModel( obj )
-            model = models.HPSmodel();
+            model = Models.HPSmodel();
             model.model = obj.coreTrainer.getModel();
             model.hpsSet = obj.hpsSets;
         end
@@ -125,7 +125,7 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
     methods (Access = private)
         
         function createHpsTrainer( obj )
-            obj.hpsCVtrainer = modelTrainers.CVtrainer( obj.coreTrainer );
+            obj.hpsCVtrainer = ModelTrainers.CVtrainer( obj.coreTrainer );
             obj.hpsCVtrainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.hpsCVtrainer.setData( obj.trainSet, obj.testSet );
             obj.hpsCVtrainer.setNumberOfFolds( obj.hpsCvFolds );

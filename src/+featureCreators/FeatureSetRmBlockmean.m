@@ -1,4 +1,4 @@
-classdef FeatureSetRmBlockmean < featureCreators.Base
+classdef FeatureSetRmBlockmean < FeatureCreators.Base
     % uses magnitude ratemap with cubic compression and scaling to a max value
     % of one. Reduces each freq channel to its mean and std + mean and std of
     % finite differences.
@@ -19,7 +19,7 @@ classdef FeatureSetRmBlockmean < featureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSetRmBlockmean( )
-            obj = obj@featureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
+            obj = obj@FeatureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
             obj.freqChannels = 16;
             obj.deltasLevels = 0;
             obj.wsize = 32e-3;

@@ -41,18 +41,18 @@ classdef IdentificationTrainingPipeline < handle
             obj.cacheSystemDir = ip.Results.cacheSystemDir;
             obj.nPathLevelsForCacheName = ip.Results.nPathLevelsForCacheName;
             obj.dataPipeProcs = {};
-            obj.data = core.IdentTrainPipeData();
-            obj.trainSet = core.IdentTrainPipeData();
-            obj.testSet = core.IdentTrainPipeData();
+            obj.data = Core.IdentTrainPipeData();
+            obj.trainSet = Core.IdentTrainPipeData();
+            obj.testSet = Core.IdentTrainPipeData();
         end
         %% ------------------------------------------------------------------------------- 
         
         function addModelCreator( obj, trainer )
-            if ~isa( trainer, 'modelTrainers.Base' )
-                error( 'ModelCreator must be of type modelTrainers.Base' );
+            if ~isa( trainer, 'ModelTrainers.Base' )
+                error( 'ModelCreator must be of type ModelTrainers.Base' );
             end
             obj.trainer = trainer;
-            obj.generalizationPerfomanceAssessCVtrainer = modelTrainers.CVtrainer( obj.trainer );
+            obj.generalizationPerfomanceAssessCVtrainer = ModelTrainers.CVtrainer( obj.trainer );
         end
         %% ------------------------------------------------------------------------------- 
         
@@ -62,12 +62,12 @@ classdef IdentificationTrainingPipeline < handle
         %% ------------------------------------------------------------------------------- 
 
         function addDataPipeProc( obj, idProc )
-            if ~isa( idProc, 'core.IdProcInterface' )
-                error( 'idProc must be of type core.IdProcInterface.' );
+            if ~isa( idProc, 'Core.IdProcInterface' )
+                error( 'idProc must be of type Core.IdProcInterface.' );
             end
             idProc.setCacheSystemDir( obj.cacheSystemDir, obj.nPathLevelsForCacheName );
             idProc.connectIdData( obj.data );
-            dataPipeProc = core.DataPipeProc( idProc ); 
+            dataPipeProc = Core.DataPipeProc( idProc ); 
             dataPipeProc.init();
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
@@ -84,13 +84,13 @@ classdef IdentificationTrainingPipeline < handle
 
         function setTrainData( obj, trainData )
             obj.trainSet = trainData;
-            obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
+            obj.data = Core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
         end
         %% ------------------------------------------------------------------------------- 
         
         function setTestData( obj, testData )
             obj.testSet = testData;
-            obj.data = core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
+            obj.data = Core.IdentTrainPipeData.combineData( obj.trainSet, obj.testSet );
         end
         %% ------------------------------------------------------------------------------- 
         

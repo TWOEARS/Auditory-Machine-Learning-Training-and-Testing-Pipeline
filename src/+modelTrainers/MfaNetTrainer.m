@@ -1,4 +1,4 @@
-classdef MfaNetTrainer < modelTrainers.Base & Parameterized
+classdef MfaNetTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -12,7 +12,7 @@ classdef MfaNetTrainer < modelTrainers.Base & Parameterized
 
         function obj = MfaNetTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @performanceMeasures.BAC2, ...
+                'default', @PerformanceMeasures.BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
                 'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'nComp', ...
@@ -30,7 +30,7 @@ classdef MfaNetTrainer < modelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-            obj.model = models.MfaNetModel();
+            obj.model = Models.MfaNetModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             mbfOpts.nComp = obj.nComp;
             mbfOpts.nDim = obj.nDim;
@@ -42,7 +42,7 @@ classdef MfaNetTrainer < modelTrainers.Base & Parameterized
             mbfOpts.mfaK = mbfOpts.nComp;
             mbfOpts.mfaM = mbfOpts.nDim;
             [obj.model.model{1}, obj.model.model{2}] = ...
-                modelTrainers.MFATrainer.trainMFA( y, xScaled, mbfOpts );
+                ModelTrainers.MFATrainer.trainMFA( y, xScaled, mbfOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

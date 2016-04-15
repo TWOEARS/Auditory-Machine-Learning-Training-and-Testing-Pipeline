@@ -14,7 +14,7 @@ classdef IdCacheDirectory < handle
     methods
         
         function obj = IdCacheDirectory()
-            obj.treeRoot = core.IdCacheTreeElem();
+            obj.treeRoot = Core.IdCacheTreeElem();
             obj.cacheFileInfo = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
             obj.cacheDirChanged = false;
         end
@@ -133,7 +133,7 @@ classdef IdCacheDirectory < handle
         
         function treeNode = findCfgTreeNode( obj, cfg, createIfMissing )
             if nargin < 3, createIfMissing = false; end
-            ucfg = core.IdCacheDirectory.unfoldCfgStruct( cfg );
+            ucfg = Core.IdCacheDirectory.unfoldCfgStruct( cfg );
             treeNode = obj.treeRoot.getCfg( ucfg, createIfMissing );
         end
         %% -------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ classdef IdCacheDirectory < handle
             cfgSubCfgIdxs = cellfun( @(cf)(isstruct( cfg.(cf) )), cfgFieldnames );
             subCfgFieldnames = cfgFieldnames(cfgSubCfgIdxs);
             uSubCfgs = cellfun( ...
-                   @(fn)(core.IdCacheDirectory.unfoldCfgStruct( cfg.(fn), ...
+                   @(fn)(Core.IdCacheDirectory.unfoldCfgStruct( cfg.(fn), ...
                                                                 false, [prefix fn] )),...
                    subCfgFieldnames, 'UniformOutput', false );
             cfg = rmfield( cfg, cfgFieldnames(cfgSubCfgIdxs) );

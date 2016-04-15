@@ -1,7 +1,7 @@
 classdef (Abstract) Base < handle
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.Base})
+    properties (SetAccess = {?ModelTrainers.Base})
         featureMask = [];
     end
     

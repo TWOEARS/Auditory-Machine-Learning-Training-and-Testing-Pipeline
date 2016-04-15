@@ -1,4 +1,4 @@
-classdef (Abstract) DataScalingModel < models.Base
+classdef (Abstract) DataScalingModel < Models.Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)

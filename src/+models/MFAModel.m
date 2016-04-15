@@ -1,7 +1,7 @@
-classdef MFAModel < models.DataScalingModel
+classdef MFAModel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.MFATrainer, ?modelTrainers.BGMMmodelSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.MFATrainer, ?ModelTrainers.BGMMmodelSelectTrainer})
         model;
 %         coefsRelStd;
 %         lambdasSortedByPerf;

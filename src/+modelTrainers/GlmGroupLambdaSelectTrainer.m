@@ -1,13 +1,13 @@
-classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
+classdef GlmGroupLambdaSelectTrainer < ModelTrainers.Base & Parameterized
     %GLMGROUPLAMBDASELECTTRAINER trainer for a GlmGroupModel, will fit a regression
     % model with L1,0, L1,2 or L1,inf norm regularization.
     % this trainer will additionally do a k-folded crossvalidation to choose
     % the best lambda along the path according to a performance measure.
     
     properties (SetAccess = {?Parameterized})
-        trainer_cv; % modelTrainers.CVTrainer
-        trainer_core; % modelTrainers.GlmGroupTrainer
-        model; % models.GlmGroupModel
+        trainer_cv; % ModelTrainers.CVTrainer
+        trainer_core; % ModelTrainers.GlmGroupTrainer
+        model; % Models.GlmGroupModel
         family; % only 'binomial' works for now
         norm; % one of [0,2,inf], the norm to apply with groups
         groups; % one integer label feature
@@ -20,7 +20,7 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
         %% CONSTRUCTOR
         function self = GlmGroupLambdaSelectTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                'default', @performanceMeasures.BAC2, ...
+                'default', @PerformanceMeasures.BAC2, ...
                 'valFun', @(x)(isa( x, 'function_handle' )), ...
                 'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'family', ...
@@ -54,22 +54,22 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
         function buildModel(self, ~, ~)
             verboseFprintf(self, '\nRun on full trainSet...\n');
             % run core trainer once to determine the lambda path
-            self.trainer_core = modelTrainers.GlmGroupTrainer( ...
+            self.trainer_core = ModelTrainers.GlmGroupTrainer( ...
                 'performanceMeasure', self.performanceMeasure, ...
                 'maxDataSize', self.maxDataSize, ...
                 'family', self.family, ...
                 'groups', self.groups, ...
                 'norm', self.norm, ...
                 'nlambdas', self.nlambdas);
-            self.trainer_core.setData(self.trainSet, self.testSet);
-            self.trainer_core.run();
-            self.model = self.trainer_core.getModel();
+            self.trainer_Core.setData(self.trainSet, self.testSet);
+            self.trainer_Core.run();
+            self.model = self.trainer_Core.getModel();
             lambdas = self.model.model.lambda;
             
             verboseFprintf( self, '\nRun cv to determine best lambda...\n' );
             % run cv trainer on all folds
-            self.trainer_core.setParameters(false, 'lambda', lambdas);
-            self.trainer_cv = modelTrainers.CVtrainer(self.trainer_core);
+            self.trainer_Core.setParameters(false, 'lambda', lambdas);
+            self.trainer_cv = ModelTrainers.CVtrainer(self.trainer_core);
             self.trainer_cv.setPerformanceMeasure(self.performanceMeasure);
             self.trainer_cv.setData(self.trainSet, self.testSet);
             self.trainer_cv.setNumberOfFolds(self.kfolds);
@@ -81,7 +81,7 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
             perf_lambda = zeros(self.nlambdas, self.kfolds);
             for i = 1:self.kfolds
                 models_cv{i}.setLambda([]);
-                perf_lambda(:,i) = models.Base.getPerformance( ...
+                perf_lambda(:,i) = Models.Base.getPerformance( ...
                     models_cv{i}, self.trainer_cv.folds{i}, ...
                     self.performanceMeasure);
                 verboseFprintf(self, '.');
@@ -95,7 +95,7 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
         
         %         
         function rval = getPerformance(self)
-            rval = models.Base.getPerformance( ...
+            rval = Models.Base.getPerformance( ...
                 self.model, self.testSet, ...
                 self.performanceMeasure );
         end

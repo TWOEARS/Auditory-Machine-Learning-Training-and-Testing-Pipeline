@@ -7,8 +7,8 @@ class TwoEarsIdTrainPipe{
   init( sceneCfgs, hrir )
   setupData()
 }
-TwoEarsIdTrainPipe o-- "pipeline (1)" core.IdentificationTrainingPipeline: sets up >
-TwoEarsIdTrainPipe ..> dataProcs.MultiSceneCfgsIdProcWrapper: sets scene configuration(s)
+TwoEarsIdTrainPipe o-- "pipeline (1)" Core.IdentificationTrainingPipeline: sets up >
+TwoEarsIdTrainPipe ..> DataProcs.MultiSceneCfgsIdProcWrapper: sets scene configuration(s)
 note as Ntetp
   top-level user interface,
   wrapping pipeline objects
@@ -17,55 +17,55 @@ end note
 Ntetp .. TwoEarsIdTrainPipe
 
 
-class core.IdentificationTrainingPipeline{
+class Core.IdentificationTrainingPipeline{
   addModelCreator( trainer )
   addDataPipeProc( idProc )
   setTrainData( trainData )
   setTestData( testData )
   run( modelname )
 }
-core.IdentificationTrainingPipeline o-- "data (1)" core.IdentTrainPipeData
-core.IdentificationTrainingPipeline *-- "dataPipeProcs (*)" core.DataPipeProc: runs cascade
-core.IdentificationTrainingPipeline o-- "trainer (1)" modelTrainers.Base: runs
+Core.IdentificationTrainingPipeline o-- "data (1)" Core.IdentTrainPipeData
+Core.IdentificationTrainingPipeline *-- "dataPipeProcs (*)" Core.DataPipeProc: runs cascade
+Core.IdentificationTrainingPipeline o-- "trainer (1)" ModelTrainers.Base: runs
 note as Ncitp
   central pipeline class,
   controlling execution
 end note
-Ncitp .. core.IdentificationTrainingPipeline
+Ncitp .. Core.IdentificationTrainingPipeline
 
 
-class core.DataPipeProc{
+class Core.DataPipeProc{
   connectToOutputFrom( outputtingProc )
   checkDataFiles()
   run()
 }
-core.DataPipeProc o-- "dataFileProcessor (1)" core.IdProcInterface: executes for each file
-core.DataPipeProc o-- core.IdentTrainPipeData
+Core.DataPipeProc o-- "dataFileProcessor (1)" Core.IdProcInterface: executes for each file
+Core.DataPipeProc o-- Core.IdentTrainPipeData
 note as Ncdpp
   processes list of files
 end note
-Ncdpp .. core.DataPipeProc
+Ncdpp .. Core.DataPipeProc
 
 
-class core.IdCacheDirectory{
+class Core.IdCacheDirectory{
   setCacheTopDir( topDir )
   getCacheFilepath( cfg, createIfnExist )
   loadCacheDirectory()
   saveCacheDirectory()
 }
-core.IdCacheDirectory *-up- "treeRoot (1)" core.IdCacheTreeElem
+Core.IdCacheDirectory *-up- "treeRoot (1)" Core.IdCacheTreeElem
 
 
-class core.IdCacheTreeElem{
+class Core.IdCacheTreeElem{
   cfg
   path
   getCfg( cfgList, createIfMissing )
   integrateOtherTreeNode( otherNode )
 }
-core.IdCacheTreeElem *-- "cfgSubs (*)" core.IdCacheTreeElem
+Core.IdCacheTreeElem *-- "cfgSubs (*)" Core.IdCacheTreeElem
 
 
-class core.IdentTrainPipeData{
+class Core.IdentTrainPipeData{
   stratificationLabels
   autoStratify
   subsref()
@@ -81,10 +81,10 @@ class core.IdentTrainPipeData{
   loadFileList( flistName )
   {static} combineData( varargin )
 }
-core.IdentTrainPipeData *-- "data (*)" core.IdentTrainPipeDataElem
+Core.IdentTrainPipeData *-- "data (*)" Core.IdentTrainPipeDataElem
 
 
-class core.IdentTrainPipeDataElem{
+class Core.IdentTrainPipeDataElem{
   fileName
   x
   y
@@ -102,10 +102,10 @@ note as Ncitpde
   refering the whole source file
   (thus all x and y)
 end note
-Ncitpde .. core.IdentTrainPipeDataElem
+Ncitpde .. Core.IdentTrainPipeDataElem
 
 
-abstract class core.IdProcInterface{
+abstract class Core.IdProcInterface{
   hasFileAlreadyBeenProcessed( wavFilepath )
   getOutputFilepath( wavFilepath )
   loadProcessedData( wavFilepath )
@@ -118,16 +118,16 @@ abstract class core.IdProcInterface{
   {abstract} getInternOutputDependencies()
   {abstract} getOutput()
 }
-core.IdProcInterface o-up- "inputProc (1)" core.IdProcInterface
-core.IdProcInterface *-up- "cacheDirectory (1)" core.IdCacheDirectory
+Core.IdProcInterface o-up- "inputProc (1)" Core.IdProcInterface
+Core.IdProcInterface *-up- "cacheDirectory (1)" Core.IdCacheDirectory
 note as Ncipi
   processes individual files
 end note
-Ncipi .. core.IdProcInterface
+Ncipi .. Core.IdProcInterface
 
 
-core.IdProcInterface <|-- dataProcs.AuditoryFEmodule
-class dataProcs.AuditoryFEmodule{
+Core.IdProcInterface <|-- DataProcs.AuditoryFEmodule
+class DataProcs.AuditoryFEmodule{
   managerObject
   dataObject
   afeParams
@@ -136,97 +136,97 @@ class dataProcs.AuditoryFEmodule{
 note as Ndafm
   output: AFE features
 end note
-Ndafm .. dataProcs.AuditoryFEmodule
+Ndafm .. DataProcs.AuditoryFEmodule
 
 
-core.IdProcInterface <|-- dataProcs.GatherFeaturesProc
-class dataProcs.GatherFeaturesProc{
+Core.IdProcInterface <|-- DataProcs.GatherFeaturesProc
+class DataProcs.GatherFeaturesProc{
   sceneCfgDataUseRatio
   prioClass
   process( wavFilepath)
 }
-dataProcs.GatherFeaturesProc ..> core.IdentTrainPipeData: loads feature vectors and labels
+DataProcs.GatherFeaturesProc ..> Core.IdentTrainPipeData: loads feature vectors and labels
 
 
-core.IdProcInterface <|-- dataProcs.IdProcWrapper
-class dataProcs.IdProcWrapper{
+Core.IdProcInterface <|-- DataProcs.IdProcWrapper
+class DataProcs.IdProcWrapper{
   process( wavFilepath)
 }
-dataProcs.IdProcWrapper o-- "wrappedProcs (*)" core.IdProcInterface
+DataProcs.IdProcWrapper o-- "wrappedProcs (*)" Core.IdProcInterface
 note as Ndipw
   decorates another IdProcInterface
   with additional functionality
 end note
-Ndipw .. dataProcs.IdProcWrapper
+Ndipw .. DataProcs.IdProcWrapper
 
 
-core.IdProcInterface <|-- dataProcs.IdSimConvRoomWrapper
-class dataProcs.IdSimConvRoomWrapper{
+Core.IdProcInterface <|-- DataProcs.IdSimConvRoomWrapper
+class DataProcs.IdSimConvRoomWrapper{
   convRoomSim
   reverberationMaxOrder
   IRDataset
   getDataFs()
   process( wavFilepath)
 }
-dataProcs.IdSimConvRoomWrapper o-- "sceneConfigs (1)" sceneConfig.SceneConfiguration
+DataProcs.IdSimConvRoomWrapper o-- "sceneConfigs (1)" SceneConfig.SceneConfiguration
 note as Ndiscrw
   executes binaural simulation,
   output: earsignals, event on-/offset times
 end note
-Ndiscrw .. dataProcs.IdSimConvRoomWrapper
+Ndiscrw .. DataProcs.IdSimConvRoomWrapper
 
 
-dataProcs.IdProcWrapper <|-- dataProcs.MultiSceneCfgsIdProcWrapper
-class dataProcs.MultiSceneCfgsIdProcWrapper{
+DataProcs.IdProcWrapper <|-- DataProcs.MultiSceneCfgsIdProcWrapper
+class DataProcs.MultiSceneCfgsIdProcWrapper{
   hasFileAlreadyBeenProcessed( wavFilepath )
   processSaveAndGetOutput( wavFilepath )
   process( wavFilepath)
 }
-dataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneProc (1)" dataProcs.SceneEarSignalProc
-dataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneConfigs (*)" sceneConfig.SceneConfiguration
+DataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneProc (1)" DataProcs.SceneEarSignalProc
+DataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneConfigs (*)" SceneConfig.SceneConfiguration
 note as Ndmsc
   executes wrapped IdProcInterface
   for each scene configuration separately.
   Output: nil
 end note
-Ndmsc .. dataProcs.MultiSceneCfgsIdProcWrapper
+Ndmsc .. DataProcs.MultiSceneCfgsIdProcWrapper
 
 
-dataProcs.IdProcWrapper <|-- dataProcs.ParallelRequestsAFEmodule
-class dataProcs.ParallelRequestsAFEmodule{
+DataProcs.IdProcWrapper <|-- DataProcs.ParallelRequestsAFEmodule
+class DataProcs.ParallelRequestsAFEmodule{
   fs
   afeRequests
   process( wavFilepath)
 }
-dataProcs.ParallelRequestsAFEmodule *-- "individualAfeProcs (*)" dataProcs.AuditoryFEmodule
+DataProcs.ParallelRequestsAFEmodule *-- "individualAfeProcs (*)" DataProcs.AuditoryFEmodule
 note as Ndpram
   intelligently splits and combines
   AFE requests, caches them individually.
   Output: AFE features
 end note
-Ndpram .. dataProcs.ParallelRequestsAFEmodule
-dataProcs.ParallelRequestsAFEmodule ..> BlockCreators.Base: usual dataflow >
+Ndpram .. DataProcs.ParallelRequestsAFEmodule
+DataProcs.ParallelRequestsAFEmodule ..> BlockCreators.Base: usual dataflow >
 
-dataProcs.IdProcWrapper <|-- dataProcs.SceneEarSignalProc
-class dataProcs.SceneEarSignalProc{
+DataProcs.IdProcWrapper <|-- DataProcs.SceneEarSignalProc
+class DataProcs.SceneEarSignalProc{
   getDatafs()
   process( wavFilepath)
   {static} adjustSNR( fs, signal1, sig1OnOffs, signal2, snrdB )
   {static} runningEnergy( fs, signal, blockSec, stepSec )
   {static} detectActivity( fs, signal, thresdB, hSec, blockSec, stepSec )
 }
-dataProcs.SceneEarSignalProc o-- "sceneConfig (1)" sceneConfig.SceneConfiguration
-dataProcs.SceneEarSignalProc o-- "binauralSim (1)" dataProcs.IdSimConvRoomWrapper
+DataProcs.SceneEarSignalProc o-- "sceneConfig (1)" SceneConfig.SceneConfiguration
+DataProcs.SceneEarSignalProc o-- "binauralSim (1)" DataProcs.IdSimConvRoomWrapper
 note as Ndsesp
   "scripts" IdSimConvRoomWrapper,
   mixes scenes (several sources).
   Output: earsignals, event on-/offset times
 end note
-Ndsesp .. dataProcs.SceneEarSignalProc
-dataProcs.SceneEarSignalProc ..> dataProcs.ParallelRequestsAFEmodule: usual dataflow >
+Ndsesp .. DataProcs.SceneEarSignalProc
+DataProcs.SceneEarSignalProc ..> DataProcs.ParallelRequestsAFEmodule: usual dataflow >
 
 
-core.IdProcInterface <|-- BlockCreators.Base
+Core.IdProcInterface <|-- BlockCreators.Base
 abstract class BlockCreators.Base{
   shiftSize_s
   blockSize_s
@@ -241,8 +241,8 @@ note as Nbb
   Output: blocked AFE features, annotations
 end note
 Nbb .. BlockCreators.Base
-BlockCreators.Base ..> featureCreators.Base: usual dataflow >
-BlockCreators.Base ..> dataProcs.BlackboardKsWrapper: alternative dataflow >
+BlockCreators.Base ..> FeatureCreators.Base: usual dataflow >
+BlockCreators.Base ..> DataProcs.BlackboardKsWrapper: alternative dataflow >
 
 
 BlockCreators.Base <|-- BlockCreators.StandardBlockCreator
@@ -270,7 +270,7 @@ Nbdbc .. BlockCreators.DistractedBlockCreator
 
 
 
-core.IdProcInterface <|-- LabelCreators.Base
+Core.IdProcInterface <|-- LabelCreators.Base
 abstract class LabelCreators.Base{
   labelBlockSize_s
   labelBlockSize_auto
@@ -284,7 +284,7 @@ note as Nlb
   Output: x, y, a
 end note
 Nlb .. LabelCreators.Base
-LabelCreators.Base ..> dataProcs.GatherFeaturesProc: usual dataflow >
+LabelCreators.Base ..> DataProcs.GatherFeaturesProc: usual dataflow >
 
 
 LabelCreators.Base <|-- LabelCreators.MultiLabeler
@@ -381,8 +381,8 @@ end note
 Nbetl .. LabelCreators.BinaryEventTypeLabeler
 
 
-core.IdProcInterface <|-- dataProcs.BlackboardKsWrapper
-abstract class dataProcs.BlackboardKsWrapper{
+Core.IdProcInterface <|-- DataProcs.BlackboardKsWrapper
+abstract class DataProcs.BlackboardKsWrapper{
   ks
   process( wavFilepath )
   ..
@@ -395,12 +395,12 @@ note as Ndbkw
   wraps a KS
   Output: KS output
 end note
-Ndbkw .. dataProcs.BlackboardKsWrapper
-dataProcs.BlackboardKsWrapper ..> featureCreators.Base: alternative dataflow >
+Ndbkw .. DataProcs.BlackboardKsWrapper
+DataProcs.BlackboardKsWrapper ..> FeatureCreators.Base: alternative dataflow >
 
 
-dataProcs.BlackboardKsWrapper <|-- dataProcs.SegmentKsWrapper
-class dataProcs.SegmentKsWrapper{
+DataProcs.BlackboardKsWrapper <|-- DataProcs.SegmentKsWrapper
+class DataProcs.SegmentKsWrapper{
   getKsInternOutputDependencies()
   preproc()
   postproc()
@@ -410,11 +410,11 @@ note as Ndskw
   Output: segmented 
   AFE blocks + annotations
 end note
-Ndskw .. dataProcs.SegmentKsWrapper
+Ndskw .. DataProcs.SegmentKsWrapper
 
 
-core.IdProcInterface <|-- featureCreators.Base
-abstract class featureCreators.Base{
+Core.IdProcInterface <|-- FeatureCreators.Base
+abstract class FeatureCreators.Base{
   description
   setAfeData( afeData )
   process( wavFilepath )
@@ -427,12 +427,12 @@ note as Nfb
   constructs feature vectors.
   Output: x, blockAnnotations
 end note
-Nfb .. featureCreators.Base
-featureCreators.Base ..> LabelCreators.Base: usual dataflow >
+Nfb .. FeatureCreators.Base
+FeatureCreators.Base ..> LabelCreators.Base: usual dataflow >
 
 
-featureCreators.Base <|-- featureCreators.FeatureSet1Blockmean
-class featureCreators.FeatureSet1Blockmean{
+FeatureCreators.Base <|-- FeatureCreators.FeatureSet1Blockmean
+class FeatureCreators.FeatureSet1Blockmean{
   getAFErequests()
   constructVector()
   getFeatureInternOutputDependencies()
@@ -442,10 +442,10 @@ note as Nff1b
   ams, ratemap, spectral features
   and onset maps
 end note
-Nff1b .. featureCreators.FeatureSet1Blockmean
+Nff1b .. FeatureCreators.FeatureSet1Blockmean
 
 
-abstract class models.Base{
+abstract class Models.Base{
   featureMask
   applyModel( x )
   verbose( newV )
@@ -454,10 +454,10 @@ abstract class models.Base{
   ..
   {static} getPerformance( model, testSet, perfMeasure, maxDataSize, balMaxData )
 }
-models.Base ..> performanceMeasures.Base: produces
+Models.Base ..> PerformanceMeasures.Base: produces
 
-models.Base <|-- models.DataScalingModel
-abstract class models.DataScalingModel{
+Models.Base <|-- Models.DataScalingModel
+abstract class Models.DataScalingModel{
   dataTranslators
   dataScalors
   scale2zeroMeanUnitVar( x, saveScalingFactors )
@@ -466,8 +466,8 @@ abstract class models.DataScalingModel{
 }
 
 
-models.DataScalingModel <|-- models.GlmNetModel
-class models.GlmNetModel{
+Models.DataScalingModel <|-- Models.GlmNetModel
+class Models.GlmNetModel{
   setLambda( newLambda )
   getCoefImpacts( lambda )
   getBestLambdaCVresults()
@@ -477,21 +477,21 @@ class models.GlmNetModel{
 }
 
 
-models.Base <|-- models.HPSmodel
-class models.HPSmodel{
+Models.Base <|-- Models.HPSmodel
+class Models.HPSmodel{
   hpsSet
   applyModelMasked( x )
 }
-models.HPSmodel *-- "model (1) " models.Base
+Models.HPSmodel *-- "model (1) " Models.Base
 note as Nmh
   wrapper model to also
   save hps sets
 end note
-Nmh .. models.HPSmodel
+Nmh .. Models.HPSmodel
 
 
 
-abstract class modelTrainers.Base{
+abstract class ModelTrainers.Base{
   {static} balMaxData
   {static} featureMask
   maxDataSize
@@ -505,23 +505,23 @@ abstract class modelTrainers.Base{
   {abstract} buildModel( x, y )
   {abstract} giveTrainedModel()
 }
-modelTrainers.Base ..> models.Base: produces
-modelTrainers.Base o-- "performanceMeasure (1)" performanceMeasures.Base
-modelTrainers.Base o-- "trainSet (1), testSet (1)" core.IdentTrainPipeData
+ModelTrainers.Base ..> Models.Base: produces
+ModelTrainers.Base o-- "performanceMeasure (1)" PerformanceMeasures.Base
+ModelTrainers.Base o-- "trainSet (1), testSet (1)" Core.IdentTrainPipeData
 
-modelTrainers.Base <|-- modelTrainers.CVtrainer
-class modelTrainers.CVtrainer{
+ModelTrainers.Base <|-- ModelTrainers.CVtrainer
+class ModelTrainers.CVtrainer{
   models
   setNumberOfFolds( nFolds )
   run()
   buildModel()
   getPerformance()
 }
-modelTrainers.CVtrainer o-- "trainer (1)" modelTrainers.Base
+ModelTrainers.CVtrainer o-- "trainer (1)" ModelTrainers.Base
 
 
-modelTrainers.Base <|-- modelTrainers.GlmNetLambdaSelectTrainer
-class modelTrainers.GlmNetLambdaSelectTrainer{
+ModelTrainers.Base <|-- ModelTrainers.GlmNetLambdaSelectTrainer
+class ModelTrainers.GlmNetLambdaSelectTrainer{
   alpha
   family
   nLambda
@@ -529,23 +529,23 @@ class modelTrainers.GlmNetLambdaSelectTrainer{
   run()
   buildModel()
 }
-modelTrainers.GlmNetLambdaSelectTrainer *-- "cvTrainer (1)" modelTrainers.CVtrainer
-modelTrainers.GlmNetLambdaSelectTrainer *-- "coreTrainer (1)" modelTrainers.GlmNetTrainer
+ModelTrainers.GlmNetLambdaSelectTrainer *-- "cvTrainer (1)" ModelTrainers.CVtrainer
+ModelTrainers.GlmNetLambdaSelectTrainer *-- "coreTrainer (1)" ModelTrainers.GlmNetTrainer
 
 
-modelTrainers.Base <|-- modelTrainers.GlmNetTrainer
-class modelTrainers.GlmNetTrainer{
+ModelTrainers.Base <|-- ModelTrainers.GlmNetTrainer
+class ModelTrainers.GlmNetTrainer{
   alpha
   family
   nLambda
   lambda
   buildModel( x, y )
 }
-modelTrainers.GlmNetTrainer ..> models.GlmNetModel: produces
+ModelTrainers.GlmNetTrainer ..> Models.GlmNetModel: produces
 
 
-modelTrainers.Base <|-- modelTrainers.HpsTrainer
-abstract class modelTrainers.HpsTrainer{
+ModelTrainers.Base <|-- ModelTrainers.HpsTrainer
+abstract class ModelTrainers.HpsTrainer{
   hpsSets
   hpsRefineStages
   hpsSearchBudget
@@ -557,12 +557,12 @@ abstract class modelTrainers.HpsTrainer{
   {abstract} getHpsGridSearchSets()
   {abstract} refineGridTrainer( hps )
 }
-modelTrainers.HpsTrainer *-- "hpsCVtrainer (1)" modelTrainers.CVtrainer
-modelTrainers.HpsTrainer *-- "coreTrainer (1)" modelTrainers.Base
+ModelTrainers.HpsTrainer *-- "hpsCVtrainer (1)" ModelTrainers.CVtrainer
+ModelTrainers.HpsTrainer *-- "coreTrainer (1)" ModelTrainers.Base
 
 
-modelTrainers.Base <|-- modelTrainers.LoadModelNoopTrainer
-class modelTrainers.LoadModelNoopTrainer{
+ModelTrainers.Base <|-- ModelTrainers.LoadModelNoopTrainer
+class ModelTrainers.LoadModelNoopTrainer{
   modelPath
   modelParams
   buildModel( x, y )
@@ -570,8 +570,8 @@ class modelTrainers.LoadModelNoopTrainer{
 }
 
 
-modelTrainers.HpsTrainer <|-- modelTrainers.SVMmodelSelectTrainer
-class modelTrainers.SVMmodelSelectTrainer{
+ModelTrainers.HpsTrainer <|-- ModelTrainers.SVMmodelSelectTrainer
+class ModelTrainers.SVMmodelSelectTrainer{
   hpsEpsilons
   hpsKernels
   hpsCrange
@@ -580,12 +580,12 @@ class modelTrainers.SVMmodelSelectTrainer{
   getHpsGridSearchSets()
   refineGridTrainer( hps )
 }
-modelTrainers.SVMmodelSelectTrainer *.. modelTrainers.SVMtrainer
-modelTrainers.HpsTrainer ..> models.HPSmodel: produces
+ModelTrainers.SVMmodelSelectTrainer *.. ModelTrainers.SVMtrainer
+ModelTrainers.HpsTrainer ..> Models.HPSmodel: produces
 
 
-modelTrainers.Base <|-- modelTrainers.SVMtrainer
-class modelTrainers.SVMtrainer{
+ModelTrainers.Base <|-- ModelTrainers.SVMtrainer
+class ModelTrainers.SVMtrainer{
   epsilon
   kernel
   c
@@ -595,7 +595,7 @@ class modelTrainers.SVMtrainer{
 }
 
 
-abstract class performanceMeasures.Base{
+abstract class PerformanceMeasures.Base{
   performance
   datapointInfo
   Base( yTrue, yPred, datapointInfo )
@@ -608,8 +608,8 @@ abstract class performanceMeasures.Base{
 }
 
 
-performanceMeasures.Base <|-- performanceMeasures.BAC2
-class performanceMeasures.BAC2{
+PerformanceMeasures.Base <|-- PerformanceMeasures.BAC2
+class PerformanceMeasures.BAC2{
   tp
   fp
   tn
@@ -627,7 +627,7 @@ class performanceMeasures.BAC2{
 }
 
 
-class sceneConfig.ValGen{
+class SceneConfig.ValGen{
   type
   val
   instantiate()
@@ -636,7 +636,7 @@ class sceneConfig.ValGen{
 }
 
 
-class sceneConfig.SourceBase{
+class SceneConfig.SourceBase{
   data
   offset
   instantiate()
@@ -644,7 +644,7 @@ class sceneConfig.SourceBase{
 }
 
 
-class sceneConfig.SceneConfiguration{
+class SceneConfig.SceneConfiguration{
   brirAzmIdx
   loop
   addSource( source, snr, snrRef )
@@ -655,51 +655,51 @@ class sceneConfig.SceneConfiguration{
   getSingleConfig( srcIdx )
   isequal( other )
 }
-sceneConfig.SceneConfiguration *-- "sources (*)" sceneConfig.SourceBase
-sceneConfig.SceneConfiguration *-- "SNRs (*)" sceneConfig.ValGen
-sceneConfig.SceneConfiguration *-- "room (1)" sceneConfig.RoomValGen
+SceneConfig.SceneConfiguration *-- "sources (*)" SceneConfig.SourceBase
+SceneConfig.SceneConfiguration *-- "SNRs (*)" SceneConfig.ValGen
+SceneConfig.SceneConfiguration *-- "room (1)" SceneConfig.RoomValGen
 
 
-sceneConfig.ValGen <|-- sceneConfig.RoomValGen
-class sceneConfig.RoomValGen{
+SceneConfig.ValGen <|-- SceneConfig.RoomValGen
+class SceneConfig.RoomValGen{
   RoomValGen( val )
   value()
 }
 
 
-sceneConfig.SourceBase <|-- sceneConfig.PointSource
-class sceneConfig.PointSource{
+SceneConfig.SourceBase <|-- SceneConfig.PointSource
+class SceneConfig.PointSource{
   loop
   instantiate()
   isequal( other )
 }
-sceneConfig.PointSource *-- "azimuth (1)" sceneConfig.ValGen
-sceneConfig.PointSource *-- "distance (1)" sceneConfig.ValGen
+SceneConfig.PointSource *-- "azimuth (1)" SceneConfig.ValGen
+SceneConfig.PointSource *-- "distance (1)" SceneConfig.ValGen
 
 
-sceneConfig.ValGen <|-- sceneConfig.NoiseValGen
-class sceneConfig.NoiseValGen{
+SceneConfig.ValGen <|-- SceneConfig.NoiseValGen
+class SceneConfig.NoiseValGen{
   NoiseValGen( val )
   value()
 }
 
 
-sceneConfig.ValGen <|-- sceneConfig.FileListValGen
-class sceneConfig.FileListValGen{
+SceneConfig.ValGen <|-- SceneConfig.FileListValGen
+class SceneConfig.FileListValGen{
   FileListValGen( val )
   isequal( other )
 }
 
 
-sceneConfig.SourceBase <|-- sceneConfig.DiffuseSource
-class sceneConfig.DiffuseSource{
+SceneConfig.SourceBase <|-- SceneConfig.DiffuseSource
+class SceneConfig.DiffuseSource{
   instantiate()
   isequal( other )
 }
 
 
-sceneConfig.SourceBase <|-- sceneConfig.BRIRsource
-class sceneConfig.BRIRsource{
+SceneConfig.SourceBase <|-- SceneConfig.BRIRsource
+class SceneConfig.BRIRsource{
   brirFName
   speakerId
   isequal( other )

@@ -1,4 +1,4 @@
-classdef ShortFeatureSet1Blockmean < featureCreators.Base
+classdef ShortFeatureSet1Blockmean < FeatureCreators.Base
 % uses magnitude ratemap with cubic compression and scaling to a max value
 % of one. Reduces each freq channel to its mean and std + mean and std of
 % finite differences.
@@ -20,7 +20,7 @@ classdef ShortFeatureSet1Blockmean < featureCreators.Base
     methods (Access = public)
         
         function obj = ShortFeatureSet1Blockmean( )
-            obj = obj@featureCreators.Base( 0.5, 0.5/3, 0.5, 0.5 );
+            obj = obj@FeatureCreators.Base( 0.5, 0.5/3, 0.5, 0.5 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;

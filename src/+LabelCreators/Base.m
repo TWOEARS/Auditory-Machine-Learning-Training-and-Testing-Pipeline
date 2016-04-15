@@ -1,4 +1,4 @@
-classdef Base < core.IdProcInterface
+classdef Base < Core.IdProcInterface
     % Base Abstract base class for labeling blocks
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
@@ -18,7 +18,7 @@ classdef Base < core.IdProcInterface
     methods
         
         function obj = Base( varargin )
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
             ip = inputParser;
             ip.addOptional( 'labelBlockSize_s', [] );
             ip.parse( varargin{:} );
@@ -49,9 +49,9 @@ classdef Base < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        % override of dataProcs.IdProcInterface's method
+        % override of DataProcs.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
-            tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
             obj.inDatPath = tmpOut.inDatPath;
             try
                 out = obj.getOutput;
@@ -93,11 +93,11 @@ classdef Base < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
-        % override of dataProcs.IdProcInterface's method
+        % override of DataProcs.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.y = obj.y;
             out.inDatPath = obj.inDatPath;
-            save@core.IdProcInterface( obj, wavFilepath, out ); 
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
         

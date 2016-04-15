@@ -1,4 +1,4 @@
-classdef FeatureSetRawRm < featureCreators.Base
+classdef FeatureSetRawRm < FeatureCreators.Base
 % 
 
     %% --------------------------------------------------------------------
@@ -17,7 +17,7 @@ classdef FeatureSetRawRm < featureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSetRawRm( )
-            obj = obj@featureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
+            obj = obj@FeatureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.deltasLevels = 0;

@@ -1,7 +1,7 @@
-classdef GmmNetModel < models.DataScalingModel
+classdef GmmNetModel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.GmmNetTrainer, ?modelTrainers.GMMmodelSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.GmmNetTrainer, ?ModelTrainers.GMMmodelSelectTrainer})
         model;
         nComp;
         thr;

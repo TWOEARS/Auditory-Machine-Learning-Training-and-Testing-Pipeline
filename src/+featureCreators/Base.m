@@ -1,4 +1,4 @@
-classdef Base < core.IdProcInterface
+classdef Base < Core.IdProcInterface
     % Base Abstract base class for specifying features sets with which features
     % are extracted.
     %% -----------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ classdef Base < core.IdProcInterface
     methods
         
         function obj = Base()
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
         end
         %% -------------------------------------------------------------------------------
         
@@ -49,9 +49,9 @@ classdef Base < core.IdProcInterface
         
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
-            tmpOut = loadProcessedData@core.IdProcInterface( obj, wavFilepath );
+            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
             obj.inDatPath = tmpOut.inDatPath;
             try
                 out = obj.getOutput;
@@ -100,11 +100,11 @@ classdef Base < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.x = obj.x;
             out.inDatPath = obj.inDatPath;
-            save@core.IdProcInterface( obj, wavFilepath, out ); 
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
             fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
             if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
                 description = obj.description;
@@ -164,8 +164,8 @@ classdef Base < core.IdProcInterface
             b{1} = combFun( bva{:} );
             if obj.descriptionBuilt, return; end
             for ii = 2 : size( bs, 2 )
-                b{ii} = featureCreators.Base.joinGrps( bs(:,ii) );
-                b{ii} = featureCreators.Base.removeGrpDuplicates( b{ii} );
+                b{ii} = FeatureCreators.Base.joinGrps( bs(:,ii) );
+                b{ii} = FeatureCreators.Base.removeGrpDuplicates( b{ii} );
                 b{ii} = cellfun( @(g)([g grpAdd]), b{ii}, 'UniformOutput', false );
             end
         end
@@ -178,8 +178,8 @@ classdef Base < core.IdProcInterface
             d = 1 : size( bs, 2 ) - 1;
             d(dim) = [];
             for ii = d
-                b{1+d} = featureCreators.Base.joinGrps( bs(:,1+d) );
-                b{1+d} = featureCreators.Base.removeGrpDuplicates( b{1+d} );
+                b{1+d} = FeatureCreators.Base.joinGrps( bs(:,1+d) );
+                b{1+d} = FeatureCreators.Base.removeGrpDuplicates( b{1+d} );
             end
             b{1+dim} = cat( dim, bs{:,1+dim} );
         end
@@ -215,7 +215,7 @@ classdef Base < core.IdProcInterface
                 grps{1,ii} = cat( 2, grps{:,ii} );
             end
             grps(2,:) = [];
-            grps = featureCreators.Base.removeGrpDuplicates( grps );
+            grps = FeatureCreators.Base.removeGrpDuplicates( grps );
             b{2} = grps;
         end
         %% -------------------------------------------------------------------------------
@@ -249,7 +249,7 @@ classdef Base < core.IdProcInterface
             ddim = { ':', ':' };
             ddim{dim} = 2;
             grps(ddim{1},ddim{2}) = [];
-            grps = featureCreators.Base.removeGrpDuplicates( grps );
+            grps = FeatureCreators.Base.removeGrpDuplicates( grps );
             b{1+odim(dim)} = grps;
             b{1+dim} = bl{1+dim};
         end

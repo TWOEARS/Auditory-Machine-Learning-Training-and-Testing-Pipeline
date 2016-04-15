@@ -1,4 +1,4 @@
-classdef MBFTrainer < modelTrainers.Base & Parameterized
+classdef MBFTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -11,7 +11,7 @@ classdef MBFTrainer < modelTrainers.Base & Parameterized
 
         function obj = MBFTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @performanceMeasures.BAC2, ...
+                             'default', @PerformanceMeasures.BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'maxDataSize', ...
@@ -26,7 +26,7 @@ classdef MBFTrainer < modelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )
-            obj.model = models.MbfModel();
+            obj.model = Models.MbfModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
              gmmOpts.nComp = obj.nComp;
              xTrain = (normvec(xScaled'))';
@@ -34,7 +34,7 @@ classdef MBFTrainer < modelTrainers.Base & Parameterized
 %             xTrain = (preprocess(xScaled'))';
 %             xTrain = (normvec(xTrain'))';
             [obj.model.model{1}, obj.model.model{2}] = ...
-                modelTrainers.MBFTrainer.trainMbfs( y, xTrain, gmmOpts );
+                ModelTrainers.MBFTrainer.trainMbfs( y, xTrain, gmmOpts );
             verboseFprintf( obj, '\n' );
 
         end

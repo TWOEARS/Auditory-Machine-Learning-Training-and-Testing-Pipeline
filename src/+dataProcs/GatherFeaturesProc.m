@@ -1,4 +1,4 @@
-classdef GatherFeaturesProc < core.IdProcInterface
+classdef GatherFeaturesProc < Core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private, Transient)
@@ -14,7 +14,7 @@ classdef GatherFeaturesProc < core.IdProcInterface
     methods (Access = public)
         
         function obj = GatherFeaturesProc()
-            obj = obj@core.IdProcInterface();
+            obj = obj@Core.IdProcInterface();
         end
         %% -------------------------------------------------------------------------------
 
@@ -44,25 +44,25 @@ classdef GatherFeaturesProc < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = loadProcessedData( ~, ~ ) 
             out = [];
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function outFilepath = getOutputFilepath( ~, ~ )
             outFilepath = [];
         end
         %% -------------------------------------------------------------------------------
 
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function fileProcessed = hasFileAlreadyBeenProcessed( ~, ~ )
             fileProcessed = false;
         end
         %% -------------------------------------------------------------------------------
        
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function currentFolder = getCurrentFolder( ~ )
             currentFolder = [];
         end
@@ -82,7 +82,7 @@ classdef GatherFeaturesProc < core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
-        % override of core.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = save( ~, ~, ~ )
             out = [];
         end

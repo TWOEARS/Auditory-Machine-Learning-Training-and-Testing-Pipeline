@@ -1,4 +1,4 @@
-classdef BAC2 < performanceMeasures.Base
+classdef BAC2 < PerformanceMeasures.Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -20,7 +20,7 @@ classdef BAC2 < performanceMeasures.Base
             else
                 dpiarg = {datapointInfo};
             end
-            obj = obj@performanceMeasures.Base( yTrue, yPred, dpiarg{:} );
+            obj = obj@PerformanceMeasures.Base( yTrue, yPred, dpiarg{:} );
         end
         % -----------------------------------------------------------------
     
@@ -106,7 +106,7 @@ classdef BAC2 < performanceMeasures.Base
                     end
                     iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1})(udfeIdxs);
                 end
-                dpiext(ii) = performanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
+                dpiext(ii) = PerformanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
                                                        iiDatapointInfo.yPred,...
                                                        iiDatapointInfo );
                 compiled{ii,1} = udfe;

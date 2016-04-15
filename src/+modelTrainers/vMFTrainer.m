@@ -1,4 +1,4 @@
-classdef vMFTrainer < modelTrainers.Base & Parameterized
+classdef vMFTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -12,7 +12,7 @@ classdef vMFTrainer < modelTrainers.Base & Parameterized
 
         function obj = vMFTrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @performanceMeasures.BAC2, ...
+                             'default', @PerformanceMeasures.BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'maxDataSize', ...
@@ -31,12 +31,12 @@ classdef vMFTrainer < modelTrainers.Base & Parameterized
 
         function buildModel( obj, x, y )
 %             glmOpts.weights = obj.setDataWeights( y );
-            obj.model = models.vMFModel();
+            obj.model = Models.vMFModel();
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             gmmOpts.nComp = obj.nComp;
             gmmOpts.thr = obj.thr;
             %....... approach 1: explicit dimension reduction using PCA
-            idFeature = modelTrainers.featureSelectionPCA2(xScaled,gmmOpts.thr);
+            idFeature = ModelTrainers.featureSelectionPCA2(xScaled,gmmOpts.thr);
             xTrain = xScaled(:,idFeature);
             %....... approach 2: uncorrelate feature variables using PCA 
 %             dataDim = size(xScaled,2);
@@ -47,7 +47,7 @@ classdef vMFTrainer < modelTrainers.Base & Parameterized
             
             gmmOpts.initComps = gmmOpts.nComp;
             [obj.model.model{1}, obj.model.model{2}] = ...
-                modelTrainers.vMFTrainer.trainVMF( y, (normvec(xTrain'))', gmmOpts );
+                ModelTrainers.vMFTrainer.trainVMF( y, (normvec(xTrain'))', gmmOpts );
             obj.model.model{3}=idFeature;
             verboseFprintf( obj, '\n' );
         end

@@ -1,4 +1,4 @@
-classdef SVMtrainer < modelTrainers.Base & Parameterized
+classdef SVMtrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
@@ -15,7 +15,7 @@ classdef SVMtrainer < modelTrainers.Base & Parameterized
 
         function obj = SVMtrainer( varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @performanceMeasures.BAC2, ...
+                             'default', @PerformanceMeasures.BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
                              'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
             pds{2} = struct( 'name', 'epsilon', ...
@@ -43,7 +43,7 @@ classdef SVMtrainer < modelTrainers.Base & Parameterized
 
         function buildModel( obj, x, y )
             [x, y, cp] = obj.prepareData( x, y );
-            obj.model = models.SVMmodel();
+            obj.model = Models.SVMmodel();
             obj.model.useProbModel = obj.makeProbModel;
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             m = ceil( prod( size( x ) ) * 8 / (1024 * 1024) );

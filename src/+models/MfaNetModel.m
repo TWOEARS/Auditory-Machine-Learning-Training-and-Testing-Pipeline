@@ -1,7 +1,7 @@
-classdef MfaNetModel < models.DataScalingModel
+classdef MfaNetModel < Models.DataScalingModel
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?modelTrainers.MfaNetTrainer, ?modelTrainers.MFAmodelSelectTrainer})
+    properties (SetAccess = {?ModelTrainers.MfaNetTrainer, ?ModelTrainers.MFAmodelSelectTrainer})
         model;
         nComp;
         thr;

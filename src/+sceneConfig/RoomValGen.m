@@ -1,21 +1,21 @@
-classdef RoomValGen < sceneConfig.ValGen
+classdef RoomValGen < SceneConfig.ValGen
 
     %%
     methods
         
         function obj = RoomValGen( val )
             if ~( ...
-                    isfield( val, 'lengthX' ) && isa( val.lengthX, 'sceneConfig.ValGen' ) && ...
-                    isfield( val, 'lengthY' ) && isa( val.lengthY, 'sceneConfig.ValGen' ) && ...
-                    isfield( val, 'height' ) && isa( val.height, 'sceneConfig.ValGen' ) && ...
-                    isfield( val, 'rt60' ) && isa( val.rt60, 'sceneConfig.ValGen' ) )
+                    isfield( val, 'lengthX' ) && isa( val.lengthX, 'SceneConfig.ValGen' ) && ...
+                    isfield( val, 'lengthY' ) && isa( val.lengthY, 'SceneConfig.ValGen' ) && ...
+                    isfield( val, 'height' ) && isa( val.height, 'SceneConfig.ValGen' ) && ...
+                    isfield( val, 'rt60' ) && isa( val.rt60, 'SceneConfig.ValGen' ) )
                 error( 'val does not provide all needed fields' );
             end
-            obj = obj@sceneConfig.ValGen( 'manual', val );
+            obj = obj@SceneConfig.ValGen( 'manual', val );
         end
         
         function val = value( obj )
-            if obj.instantiated, val = value@sceneConfig.ValGen( obj ); return; end
+            if obj.instantiated, val = value@SceneConfig.ValGen( obj ); return; end
             room = simulator.room.Shoebox();
             room.set( 'ReverberationMaxOrder', 5 ); 
             room.set( 'UnitZ', [0; 0; 1] );

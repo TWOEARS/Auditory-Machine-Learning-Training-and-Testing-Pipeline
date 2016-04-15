@@ -297,6 +297,19 @@ end note
 Nml .. LabelCreators.MultiLabeler
 
 
+LabelCreators.Base <|-- LabelCreators.NumberOfSourcesLabeler
+class LabelCreators.NumberOfSourcesLabeler{
+  srcMinEnergy
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+note as Nlnsl
+  labels number of
+  sources in block
+end note
+Nlnsl .. LabelCreators.NumberOfSourcesLabeler
+
+
 LabelCreators.Base <|-- LabelCreators.EnergyDependentLabeler
 abstract class LabelCreators.EnergyDependentLabeler{
   sourcesMinEnergy

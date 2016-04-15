@@ -57,9 +57,9 @@ classdef DataPipeProc < handle
             for ii = 1 : length( datalist )
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = datalist(ii);
-                fprintf( '%s\n', dataFile.wavFileName );
+                fprintf( '%s\n', dataFile.fileName );
                 fileHasBeenProcessed = ...
-                    obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName );
+                    obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.fileName );
                 obj.fileListOverlay(ii) = ~fileHasBeenProcessed;
             end
             fprintf( '..' );
@@ -76,8 +76,8 @@ classdef DataPipeProc < handle
             datalist = obj.data(:);
             datalist = datalist(obj.fileListOverlay);
             for dataFile = datalist(randperm(length(datalist)))'
-                fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.wavFileName );
-                obj.dataFileProcessor.processSaveAndGetOutput( dataFile.wavFileName );
+                fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.fileName );
+                obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
                 % TODO: semaphore
                 fprintf( '\n' );
             end

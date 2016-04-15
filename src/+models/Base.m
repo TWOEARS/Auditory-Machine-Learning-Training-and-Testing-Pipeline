@@ -20,7 +20,7 @@ classdef (Abstract) Base < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function v = verbose( obj, newV )
+        function v = verbose( ~, newV )
             persistent verb;    % faking a static property
             if isempty( verb ), verb = false; end
             if nargin > 1
@@ -61,7 +61,7 @@ classdef (Abstract) Base < handle
             x = testSet(:,'x');
             yTrue = testSet(:,'y');
 %             dpi.mc = testSet(:,'mc');
-            dpi.wavIdxs = testSet(:,'pointwiseWavfilenames');
+            dpi.fileIdxs = testSet(:,'pointwiseFilenames');
             % remove samples with fuzzy labels
             x(yTrue==0,:) = [];
 %             dpi.mc(yTrue==0) = [];
@@ -89,11 +89,9 @@ classdef (Abstract) Base < handle
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             if strcmpi( getDatapointInfo, 'datapointInfo' )
-                dpi.classIdxs = dpi.wavIdxs(:,1);
-                [uniqueDpiWavIdxs, ~, dpi.wavIdxs] = unique( dpi.wavIdxs, 'rows' );
-                dpi.classes = testSet.classNames;
+                [uniqueDpiWavIdxs, ~, dpi.fileIdxs] = unique( dpi.wavIdxs, 'rows' );
                 for ii = 1 : numel( uniqueDpiWavIdxs )
-                    dpi.wavs(ii) = testSet(uniqueDpiWavIdxs(ii),'wavFileName');
+                    dpi.wavs(ii) = testSet(uniqueDpiWavIdxs(ii),'fileName');
                 end
                 dpiarg = {dpi};
             else

@@ -71,6 +71,9 @@ classdef IdentificationTrainingPipeline < handle
             dataPipeProc.init();
             dataPipeProc.connectData( obj.data );
             obj.dataPipeProcs{end+1} = dataPipeProc;
+            if numel( obj.dataPipeProcs ) > 1
+                obj.dataPipeProcs{end}.connectToOutputFrom( obj.dataPipeProcs{end-1} );
+            end
         end
         %% ------------------------------------------------------------------------------- 
         
@@ -117,13 +120,10 @@ classdef IdentificationTrainingPipeline < handle
             cleaner = onCleanup( @() obj.finish() );
             modelPath = obj.createFilesDir();
             
-            for ii = 2 : length( obj.dataPipeProcs )
-                obj.dataPipeProcs{ii}.connectToOutputFrom( obj.dataPipeProcs{ii-1} );
-            end
-            successiveProcFileList = [];
+            successiveProcFileFilter = [];
             for ii = length( obj.dataPipeProcs ) : -1 : 1
-                obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileList );
-                successiveProcFileList = obj.dataPipeProcs{ii}.fileListOverlay;
+                obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
+                successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
             end
             for ii = 1 : length( obj.dataPipeProcs )
                 obj.dataPipeProcs{ii}.run();

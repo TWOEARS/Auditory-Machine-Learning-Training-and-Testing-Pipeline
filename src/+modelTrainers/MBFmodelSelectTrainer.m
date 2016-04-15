@@ -55,14 +55,12 @@ classdef MBFmodelSelectTrainer < modelTrainers.Base & Parameterized
                      'thr', obj.thr);
                  
                  obj.coreTrainer.setData( obj.trainSet, obj.testSet );
-                 obj.coreTrainer.setPositiveClass( obj.positiveClass );
                  obj.coreTrainer.run();
                  obj.fullSetModel = obj.coreTrainer.getModel();
                  
                  verboseFprintf( obj, '\nRun cv to determine best number of components...\n' );
                  obj.cvTrainer = modelTrainers.CVtrainer( obj.coreTrainer );
                  obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
-                 obj.cvTrainer.setPositiveClass( obj.positiveClass );
                  obj.cvTrainer.setData( obj.trainSet, obj.testSet );
                  obj.cvTrainer.setNumberOfFolds( obj.cvFolds );
                  obj.cvTrainer.run();
@@ -77,7 +75,7 @@ classdef MBFmodelSelectTrainer < modelTrainers.Base & Parameterized
                     %                     cvModels{ii}.setLambda( lambdas(ll) );
                     %                   cvModels{ii}.setnComp( comps(ll) );
                     lPerfs(nc,ii) = models.Base.getPerformance( ...
-                        cvModels{nt,nc}{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
+                        cvModels{nt,nc}{ii}, obj.cvTrainer.folds{ii}, ...
                         obj.performanceMeasure );
                 end
             end
@@ -95,7 +93,6 @@ classdef MBFmodelSelectTrainer < modelTrainers.Base & Parameterized
                 'thr', obj.thr);
             
             obj.coreTrainer.setData( obj.trainSet, obj.testSet );
-            obj.coreTrainer.setPositiveClass( obj.positiveClass );
             obj.coreTrainer.run();
             obj.fullSetModel = obj.coreTrainer.getModel();
 %             obj.fullSetModel.setnComp( bestnComp );
@@ -104,7 +101,7 @@ classdef MBFmodelSelectTrainer < modelTrainers.Base & Parameterized
         
         function performance = getPerformance( obj )
             performance = models.Base.getPerformance( ...
-                obj.fullSetModel, obj.testSet, obj.positiveClass, ...
+                obj.fullSetModel, obj.testSet, ...
                 obj.performanceMeasure );
         end
         %% -------------------------------------------------------------------------------

@@ -2,14 +2,14 @@ classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
-        modelPathBuilder;
+        modelPath;
         modelParams;
     end
 
     %% --------------------------------------------------------------------
     methods
 
-        function obj = LoadModelNoopTrainer( modelPathBuilder, varargin )
+        function obj = LoadModelNoopTrainer( modelPath, varargin )
             pds{1} = struct( 'name', 'performanceMeasure', ...
                              'default', @performanceMeasures.BAC2, ...
                              'valFun', @(x)(isa( x, 'function_handle' )), ...
@@ -22,11 +22,11 @@ classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
-            obj.modelPathBuilder = modelPathBuilder;
+            obj.modelPath = modelPath;
         end
         %% ----------------------------------------------------------------
 
-        function buildModel( obj, x, y )
+        function buildModel( ~, ~, ~ )
             % noop
         end
         %% ----------------------------------------------------------------
@@ -37,10 +37,10 @@ classdef LoadModelNoopTrainer < modelTrainers.Base & Parameterized
     methods (Access = protected)
         
         function model = giveTrainedModel( obj )
-            if ~exist( obj.modelPathBuilder( obj.positiveClass ), 'file' )
-                error( 'Could not find "%s".', obj.modelPathBuilder( obj.positiveClass ) );
+            if ~exist( obj.modelPath, 'file' )
+                error( 'Could not find "%s".', obj.modelPath );
             end
-            ms = load( obj.modelPathBuilder( obj.positiveClass ), 'model' );
+            ms = load( obj.modelPath, 'model' );
             model = ms.model;
             fieldsModelParams = fieldnames( obj.modelParams );
             for ii = 1: length( fieldsModelParams )

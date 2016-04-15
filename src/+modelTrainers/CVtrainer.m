@@ -40,7 +40,6 @@ classdef CVtrainer < modelTrainers.Base
         %% ----------------------------------------------------------------
         
         function buildModel( obj, ~, ~ )
-            obj.trainer.setPositiveClass( obj.positiveClass );
             obj.trainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.createFolds();
             obj.foldsPerformance = ones( obj.nFolds, 1 );
@@ -71,7 +70,7 @@ classdef CVtrainer < modelTrainers.Base
     %% --------------------------------------------------------------------
     methods (Access = protected)
         
-        function model = giveTrainedModel( obj )
+        function model = giveTrainedModel( ~ )
             error( 'cvtrainer -- which model do you want?' );
         end
         %% ----------------------------------------------------------------

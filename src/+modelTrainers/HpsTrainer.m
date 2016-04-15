@@ -127,7 +127,6 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
         function createHpsTrainer( obj )
             obj.hpsCVtrainer = modelTrainers.CVtrainer( obj.coreTrainer );
             obj.hpsCVtrainer.setPerformanceMeasure( obj.performanceMeasure );
-            obj.hpsCVtrainer.setPositiveClass( obj.positiveClass );
             obj.hpsCVtrainer.setData( obj.trainSet, obj.testSet );
             obj.hpsCVtrainer.setNumberOfFolds( obj.hpsCvFolds );
         end
@@ -148,7 +147,6 @@ classdef (Abstract) HpsTrainer < modelTrainers.Base & Parameterized
         function refinedHpsTrainer = createRefineGridTrainer( obj, hps )
             hps = obj.sortHpsSetsByPerformance( hps );
             refinedHpsTrainer = obj.refineGridTrainer( hps );
-            refinedHpsTrainer.setPositiveClass( obj.positiveClass );
             refinedHpsTrainer.setData( obj.trainSet, obj.testSet );
             refinedHpsTrainer.trainWithBestHps = false;
             refinedHpsTrainer.setParameters( false, ...

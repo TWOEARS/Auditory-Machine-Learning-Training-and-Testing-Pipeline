@@ -4,7 +4,6 @@ classdef (Abstract) Base < handle
     properties (SetAccess = protected)
         trainSet;
         testSet;
-        positiveClass;
     end
     
     properties (SetAccess = {?modelTrainers.Base, ?Parameterized})
@@ -22,12 +21,6 @@ classdef (Abstract) Base < handle
         end
         %% ----------------------------------------------------------------
         
-        function setPositiveClass( obj, modelName )
-            if ~isa( modelName, 'char' ), error( 'modelName must be a string.' ); end
-            obj.positiveClass = modelName;
-        end
-        %% ----------------------------------------------------------------
-
         function setPerformanceMeasure( obj, newPerformanceMeasure )
             if ~isa( newPerformanceMeasure, 'function_handle' )
                 error( ['newPerformanceMeasure must be a function handle pointing ', ...
@@ -70,7 +63,7 @@ classdef (Abstract) Base < handle
             model = obj.getModel();
             model.verbose( obj.verbose );
             performance = models.Base.getPerformance( ...
-                model, obj.testSet, obj.positiveClass, obj.performanceMeasure, ...
+                model, obj.testSet, obj.performanceMeasure, ...
                 obj.maxDataSize, true, getDatapointInfo );
         end
         %% ----------------------------------------------------------------
@@ -102,16 +95,13 @@ classdef (Abstract) Base < handle
         %% ----------------------------------------------------------------
 
         function [x,y] = getPermutedTrainingData( obj )
-            x = obj.trainSet(:,:,'x');
+            x = obj.trainSet(:,'x');
             if isempty( x )
                 warning( 'There is no data to train the model.' ); 
                 y = [];
             else
-                y = obj.trainSet(:,:,'y',obj.positiveClass);
+                y = obj.trainSet(:,'y');
             end
-            % remove samples with fuzzy labels
-            x(y==0,:) = [];
-            y(y==0) = [];
             % apply the mask
             fmask = modelTrainers.Base.featureMask;
             if ~isempty( fmask )

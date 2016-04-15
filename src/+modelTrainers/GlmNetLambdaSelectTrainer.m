@@ -58,7 +58,6 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
                 'family', obj.family, ...
                 'nLambda', obj.nLambda );
             obj.coreTrainer.setData( obj.trainSet, obj.testSet );
-            obj.coreTrainer.setPositiveClass( obj.positiveClass );
             obj.coreTrainer.run();
             obj.fullSetModel = obj.coreTrainer.getModel();
             lambdas = obj.fullSetModel.model.lambda;
@@ -66,7 +65,6 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
             obj.coreTrainer.setParameters( false, 'lambda', lambdas );
             obj.cvTrainer = modelTrainers.CVtrainer( obj.coreTrainer );
             obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
-            obj.cvTrainer.setPositiveClass( obj.positiveClass );
             obj.cvTrainer.setData( obj.trainSet, obj.testSet );
             obj.cvTrainer.setNumberOfFolds( obj.cvFolds );
             obj.cvTrainer.run();
@@ -76,7 +74,7 @@ classdef GlmNetLambdaSelectTrainer < modelTrainers.Base & Parameterized
             for ii = 1 : numel( cvModels )
                 cvModels{ii}.setLambda( [] );
                 lPerfs(:,ii) = models.Base.getPerformance( ...
-                    cvModels{ii}, obj.cvTrainer.folds{ii}, obj.positiveClass, ...
+                    cvModels{ii}, obj.cvTrainer.folds{ii}, ...
                     obj.performanceMeasure );
                 verboseFprintf( obj, '.' );
             end

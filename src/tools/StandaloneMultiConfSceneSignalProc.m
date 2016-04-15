@@ -53,7 +53,7 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
                 if ~isempty( targetSrcFlist )
                     wavs = readFileList( targetSrcFlist );
                 else
-                    wavs = obj.data(:,:,'wavFileName');
+                    wavs = obj.data(:,'wavFileName');
                 end
                 classes = cellfun( @IdEvalFrame.readEventClass, wavs, 'UniformOutput', false);
                 targetWavs = {};

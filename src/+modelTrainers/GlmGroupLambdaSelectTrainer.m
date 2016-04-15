@@ -62,7 +62,6 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
                 'norm', self.norm, ...
                 'nlambdas', self.nlambdas);
             self.trainer_core.setData(self.trainSet, self.testSet);
-            self.trainer_core.setPositiveClass(self.positiveClass);
             self.trainer_core.run();
             self.model = self.trainer_core.getModel();
             lambdas = self.model.model.lambda;
@@ -72,7 +71,6 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
             self.trainer_core.setParameters(false, 'lambda', lambdas);
             self.trainer_cv = modelTrainers.CVtrainer(self.trainer_core);
             self.trainer_cv.setPerformanceMeasure(self.performanceMeasure);
-            self.trainer_cv.setPositiveClass(self.positiveClass);
             self.trainer_cv.setData(self.trainSet, self.testSet);
             self.trainer_cv.setNumberOfFolds(self.kfolds);
             self.trainer_cv.run();
@@ -85,7 +83,7 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
                 models_cv{i}.setLambda([]);
                 perf_lambda(:,i) = models.Base.getPerformance( ...
                     models_cv{i}, self.trainer_cv.folds{i}, ...
-                    self.positiveClass, self.performanceMeasure);
+                    self.performanceMeasure);
                 verboseFprintf(self, '.');
             end
             self.model.perf_lambda_mean = mean(perf_lambda, 2);
@@ -98,7 +96,7 @@ classdef GlmGroupLambdaSelectTrainer < modelTrainers.Base & Parameterized
         %         
         function rval = getPerformance(self)
             rval = models.Base.getPerformance( ...
-                self.model, self.testSet, self.positiveClass, ...
+                self.model, self.testSet, ...
                 self.performanceMeasure );
         end
     end

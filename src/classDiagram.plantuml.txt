@@ -449,7 +449,7 @@ abstract class models.Base{
   ..
   {abstract} applyModelMasked( x )
   ..
-  {static} getPerformance( model, testSet, positiveClass, perfMeasure, maxDataSize, balMaxData )
+  {static} getPerformance( model, testSet, perfMeasure, maxDataSize, balMaxData )
 }
 models.Base ..> performanceMeasures.Base: produces
 
@@ -492,7 +492,6 @@ abstract class modelTrainers.Base{
   {static} balMaxData
   {static} featureMask
   maxDataSize
-  setPositiveClass( modelName )
   setPerformanceMeasure( newPerformanceMeasure )
   getModel()
   verbose( newV )

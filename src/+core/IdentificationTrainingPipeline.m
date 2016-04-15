@@ -142,12 +142,9 @@ classdef IdentificationTrainingPipeline < handle
                       'data', 'featureCreator', 'lastDataProcParams', '-v7.3' );
                 return; 
             elseif strcmp(models{1}, 'dataStoreUni')
-                x = obj.data(:,:,'x');
-                classnames = obj.data.classNames;
+                x = obj.data(:,'x');
                 featureNames = obj.featureCreator.description;
-                for ii = 1 : length( classnames )
-                    y(:,ii) = obj.data(:,:,'y', classnames{ii});
-                end
+                y = obj.data(:,'y');
                 save( 'dataStoreUni.mat', ...
                       'x', 'y', 'classnames', 'featureNames', '-v7.3' );
                 return; 
@@ -161,14 +158,12 @@ classdef IdentificationTrainingPipeline < handle
                     fprintf( '\n==  Generalization performance assessment CV...\n\n' );
                     obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
                     obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
-                    obj.generalizationPerfomanceAssessCVtrainer.setPositiveClass( modelName{1} );
                     obj.generalizationPerfomanceAssessCVtrainer.run();
                     genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
                     fprintf( '\n==  Performance after generalization assessment CV:\n' );
                     disp( genPerfCVresults );
                 end
                 obj.trainer.setData( obj.trainSet, obj.testSet );
-                obj.trainer.setPositiveClass( modelName{1} );
                 fprintf( '\n==  Training model on trainSet...\n\n' );
                 tic;
                 obj.trainer.run();

@@ -20,7 +20,7 @@ classdef FeatureSet1BlockmeanLmVsStd < FeatureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSet1BlockmeanLmVsStd( )
-            obj = obj@FeatureCreators.Base( 0.5, 0.5/3, 0.5, 0.5 );
+            obj = obj@FeatureCreators.Base();
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;

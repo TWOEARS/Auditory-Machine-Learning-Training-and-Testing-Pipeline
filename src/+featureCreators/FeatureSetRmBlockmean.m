@@ -19,7 +19,7 @@ classdef FeatureSetRmBlockmean < FeatureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSetRmBlockmean( )
-            obj = obj@FeatureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
+            obj = obj@FeatureCreators.Base();
             obj.freqChannels = 16;
             obj.deltasLevels = 0;
             obj.wsize = 32e-3;

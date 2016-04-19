@@ -17,7 +17,7 @@ classdef FeatureSetRawRm < FeatureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSetRawRm( )
-            obj = obj@FeatureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
+            obj = obj@FeatureCreators.Base();
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.deltasLevels = 0;

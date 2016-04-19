@@ -42,9 +42,9 @@ classdef TwoEarsIdTrainPipe < handle
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
             ip.addOptional( 'nPathLevelsForCacheName', 3 );
             ip.parse( varargin{:} );
-            modelTrainers.Base.featureMask( true, [] ); % reset the feature mask
+            ModelTrainers.Base.featureMask( true, [] ); % reset the feature mask
             fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
-            obj.pipeline = core.IdentificationTrainingPipeline( ...
+            obj.pipeline = Core.IdentificationTrainingPipeline( ...
                                           'cacheSystemDir', ip.Results.cacheSystemDir, ...
                                           'nPathLevelsForCacheName', ip.Results.nPathLevelsForCacheName );
             obj.dataSetupAlreadyDone = false;
@@ -65,8 +65,8 @@ classdef TwoEarsIdTrainPipe < handle
             ip.parse( varargin{:} );
             obj.setupData( true );
             obj.pipeline.resetDataProcs();
-            binSim = dataProcs.SceneEarSignalProc( ...
-                                      dataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
+            binSim = DataProcs.SceneEarSignalProc( ...
+                                      DataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
             if isempty( obj.blockCreator )
                 obj.blockCreator = BlockCreators.StandardBlockCreator( 1.0, 0.4 );
             end
@@ -74,7 +74,7 @@ classdef TwoEarsIdTrainPipe < handle
                 error( 'Please specify labelCreator(s).' );
             end
             if isempty( obj.featureCreator )
-                obj.featureCreator = featureCreators.FeatureSet1Blockmean();
+                obj.featureCreator = FeatureCreators.FeatureSet1Blockmean();
             end
             afeReqs = obj.featureCreator.getAFErequests();
             if ~isempty( obj.ksWrapper )

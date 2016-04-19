@@ -22,7 +22,7 @@ classdef FeatureSet1VarBlocks < FeatureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSet1VarBlocks( )
-            obj = obj@FeatureCreators.Base( 1, 0.2, 0.75, 0.2  );
+            obj = obj@FeatureCreators.Base();
             obj.freqChannels = 16;
             obj.onsfreqChannels = 8;
             obj.amFreqChannels = 8;

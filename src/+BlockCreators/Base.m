@@ -9,7 +9,7 @@ classdef Base < Core.IdProcInterface
     end
     
     %% -----------------------------------------------------------------------------------
-    methods (Abstract)
+    methods (Abstract, Access = protected)
         outputDeps = getBlockCreatorInternOutputDependencies( obj )
         [afeBlocks, blockAnnotations] = blockify( obj, afeStream, streamAnnotations )
     end

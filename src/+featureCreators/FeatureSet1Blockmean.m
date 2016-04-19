@@ -24,7 +24,7 @@ classdef FeatureSet1Blockmean < FeatureCreators.Base
         function obj = FeatureSet1Blockmean( )
             % FeatureSet1Blockmean construct by setting attributes to
             % default values
-            obj = obj@FeatureCreators.Base( 0.5, 0.5/3, 0.75, 0.5 );
+            obj = obj@FeatureCreators.Base();
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
             obj.freqChannelsStatistics = 32;

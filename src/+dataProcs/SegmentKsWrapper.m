@@ -17,11 +17,20 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         end
         %% -------------------------------------------------------------------------------
         
-        function preproc( obj )
+        function preproc( obj, blockAnnotations )
+            prior = [];
+            for ii = 1 : obj.ks.nSources
+                azm = []; %TODO read azm from blockAnnotations
+                prior(end+1) = deg2rad( azm );
+                if prior(end) > pi, prior(end) = -deg2rad( azm ); end
+            end
+            obj.ks.setFixedPositions( prior );
         end
         %% -------------------------------------------------------------------------------
         
         function postproc( obj )
+            segHypos = obj.bbs.blackboard.getLastData( 'segmentationHypotheses' );
+            segHypos = segHypos.data;
         end
         %% -------------------------------------------------------------------------------
         

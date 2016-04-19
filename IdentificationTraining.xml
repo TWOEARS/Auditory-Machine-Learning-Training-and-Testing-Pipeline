@@ -3,4 +3,5 @@
 <TwoEarsPart sub="src" branch="multispeaker" startup="startBinauralSimulator" >binaural-simulator</TwoEarsPart>
 <TwoEarsPart sub="API_MO" startup="SOFAstart">sofa</TwoEarsPart>
 <TwoEarsPart startup="startAuditoryFrontEnd" >auditory-front-end</TwoEarsPart>
+<TwoEarsPart startup="startBlackboardSystem" >blackboard-system</TwoEarsPart>
 </requirements>

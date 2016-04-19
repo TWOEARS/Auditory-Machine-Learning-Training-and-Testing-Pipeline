@@ -1,9 +1,10 @@
 classdef BlackboardKsWrapper < Core.IdProcInterface
-    % Base Abstract base class for specifying features sets with which features
-    % are extracted.
+    % Abstract base class for wrapping KS into an emulated blackboard
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         ks;
+        bbs;
+        afeDataIndexOffset;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -16,13 +17,23 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = BlackboardKsWrapper()
+        function obj = BlackboardKsWrapper( ks, afeDataIndexOffset )
             obj = obj@Core.IdProcInterface();
+            obj.ks = ks;
+            obj.bbs = BlackboardSystem( false );
+            obj.afeDataIndexOffset = afeDataIndexOffset;
         end
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
             inData = obj.loadInputData( wavFilepath );
+            for afeBlock = inData.afeBlocks
+                afeData = afeBlock{1};
+                for ii = 1 : numel( obj.ks.reqHashs )
+                    obj.bbs.blackboard.addSignal( ...
+                              obj.ks.reqhashs{ii}, afeData(ii + obj.afeDataIndexOffset) );
+                end
+            end
         end
         %% -------------------------------------------------------------------------------
         

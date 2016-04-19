@@ -3,8 +3,7 @@ function trainAndTestMultiSourceBabyVsAll()
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startIdentificationTraining();
 
-pipe = TwoEarsIdTrainPipe( 'soundDbBaseDir', ...
-                           fullfile( xml.dbPath, 'sound_databases', 'generalSoundsNI' ) );
+pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.DistractedBlockCreator( 1.0, 0.4, ...
                                                           'distractorSources', [2 3],...
                                                           'rejectEnergyThreshold', -30 );

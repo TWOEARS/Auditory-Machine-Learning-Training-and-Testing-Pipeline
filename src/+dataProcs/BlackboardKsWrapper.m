@@ -5,12 +5,13 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         ks;
         bbs;
         afeDataIndexOffset;
+        out;
     end
     
     %% -----------------------------------------------------------------------------------
     methods (Abstract)
         preproc( obj, blockAnnotations )
-        postproc( obj )
+        postproc( obj, afeData, blockAnnotations )
         outputDeps = getKsInternOutputDependencies( obj )
     end
 
@@ -31,6 +32,7 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
             inData = obj.loadInputData( wavFilepath );
             bas = inData.blockAnnotations;
             afes = inData.afeBlocks;
+            obj.out = struct( 'afeBlocks', {{}}, 'blockAnnotations', {[]} );
             for aa = 1 : numel( afes )
                 afeData = afes{aa};
                 % initialize blackboard environment for block
@@ -50,17 +52,10 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
                 % run ks
                 obj.preproc( bas(aa) ); % add any ks-specific data to blackboard
                 obj.ks.execute();
-                obj.postproc(); % read ks results from blackboard
+                afeData.remove( (1 : numel( obj.ks.reqHashs )) + obj.afeDataIndexOffset )
+                obj.postproc( afeData, bas(aa) ); % read ks results from bb, create output
             end
             warning( 'on', 'BB:tNotIncreasing' );
-        end
-        %% -------------------------------------------------------------------------------
-        
-        %% -------------------------------------------------------------------------------
-
-        % override of Core.IdProcInterface's method
-        function out = loadProcessedData( obj, wavFilepath )
-            out = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
         end
         %% -------------------------------------------------------------------------------
         
@@ -76,15 +71,11 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj )
+            out.afeBlocks = obj.out.afeBlocks;
+            out.blockAnnotations = obj.out.blockAnnotations;
         end
         %% -------------------------------------------------------------------------------
 
-        % override of Core.IdProcInterface's method
-        function save( obj, wavFilepath, out )
-            save@Core.IdProcInterface( obj, wavFilepath, out ); 
-        end
-        %% -------------------------------------------------------------------------------
-        
     end
     %% -----------------------------------------------------------------------------------
     

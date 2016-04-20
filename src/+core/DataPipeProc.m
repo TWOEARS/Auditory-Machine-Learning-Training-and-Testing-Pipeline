@@ -73,7 +73,7 @@ classdef DataPipeProc < handle
             fprintf( '\nRunning: %s\n%s\n', ...
                      obj.dataFileProcessor.procName, ...
                      repmat( '=', 1, 9 + numel( obj.dataFileProcessor.procName ) ) );
-            datalist = obj.data(:);
+            datalist = obj.data(:)';
             datalist = datalist(obj.fileListOverlay);
             for dataFile = datalist(randperm(length(datalist)))'
                 fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.fileName );

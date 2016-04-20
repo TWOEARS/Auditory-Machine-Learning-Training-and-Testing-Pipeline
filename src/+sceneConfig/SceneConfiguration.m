@@ -2,10 +2,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
 % SceneConfiguration Configure a scene by room, SNR and sources
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
-        sources; % sources(1) is the main source, data will be from pipeline data
-        SNRs; % SNRs(1) is always interpreted as 0
-              % all others are in relation to sources(1)
-              % length(sources) must be == length(SNRs)
+        sources; 
+        SNRs;
         snrRefs;
         room;
         brirAzmIdx;

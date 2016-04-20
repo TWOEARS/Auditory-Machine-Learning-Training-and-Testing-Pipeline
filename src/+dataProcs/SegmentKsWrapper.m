@@ -18,7 +18,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function preproc( obj, blockAnnotations )
-            prior = zeros( size( 1, obj.ks.nSources );
+            prior = zeros( size( 1, obj.ks.nSources ) );
             for ii = 1 : obj.ks.nSources
                 blockAzms = [blockAnnotations.srcAzms.srcAzms{:}];
                 srcBlockAzms = blockAzms(ii,:);
@@ -57,6 +57,13 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     methods (Access = protected)
         
         %% -------------------------------------------------------------------------------
+        
+        function afeBlocks = softmaskAFE( obj, afeBlock, segMask )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function blockAnnotations = maskBA( obj, blockAnnotations, srcIdx )
+        end
         %% -------------------------------------------------------------------------------
         
     end

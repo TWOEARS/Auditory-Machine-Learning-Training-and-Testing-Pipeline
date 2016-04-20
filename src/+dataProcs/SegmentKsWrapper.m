@@ -63,6 +63,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function blockAnnotations = maskBA( obj, blockAnnotations, srcIdx )
+            baFields = fieldnames( blockAnnotations );
+            for ff = 1 : numel( baFields )
+                blockAnnotations.(baFields{ii}).(baFields{ii}) = ...
+                         blockAnnotations.(baFields{ii}).(baFields{ii})(srcIdx,:,:,:,:,:);
+            end
         end
         %% -------------------------------------------------------------------------------
         

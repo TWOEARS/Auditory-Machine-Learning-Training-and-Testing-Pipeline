@@ -39,9 +39,32 @@ classdef IdentTrainPipeData < handle
             end
             if (length(S) == 1) && strcmp(S(1).type,'()')
                 fileSubScript = S.subs{1,1};
+                dataElemFieldIdxPos = 2;
                 if isa( fileSubScript, 'char' )
                     if all( fileSubScript == ':' )
                         fIdx = 1 : length( obj.data );
+                    elseif strcmp( fileSubScript, 'fileLabel' )
+                        dataElemFieldIdxPos = 3;
+                        labels = S.subs{1,2};
+                        if iscell( labels ) && cellfun( @iscell, labels )
+                            fmask = ones( size( obj.data ) );
+                            for ii = 1 : numel( labels )
+                                label = labels{ii}{1};
+                                labelValues = labels{ii}{2};
+                                if ~iscell( labelValues )
+                                    error( 'put labelValues in cell' );
+                                end
+                                fmasktmp = zeros( size( obj.data ) );
+                                for jj = 1 : numel( labelValues )
+                                    fmasktmp = fmasktmp | ...
+                                            obj.getFilesLabeled( label, labelValues{jj} );
+                                end
+                                fmask = fmask & fmasktmp;
+                            end
+                            fIdx = find( fmask );
+                        else
+                            error( 'unknown referencing' );
+                        end
                     else
                         fIdx = obj.getFileIdx( {fileSubScript} );
                     end;
@@ -50,13 +73,14 @@ classdef IdentTrainPipeData < handle
                 else % direct indexes
                     fIdx = fileSubScript;
                 end
-                if ~isempty( fIdx ) && size( S.subs, 2 ) > 1 % referencing fields of DataElems
-                    dSubScript = S.subs{1,2};
-                    if size( S.subs, 2 ) > 2
+                % referencing fields of DataElems
+                if ~isempty( fIdx ) && size( S.subs, 2 ) >= dataElemFieldIdxPos 
+                    dSubScript = S.subs{1,dataElemFieldIdxPos};
+                    if size( S.subs, 2 ) > dataElemFieldIdxPos
                         if length( fIdx ) > 1
                             error( 'Index for xy can only be chosen if specifying a file.' );
                         end
-                        xyIdx = S.subs{1,3};
+                        xyIdx = S.subs{1,dataElemFieldIdxPos+1};
                         if ndims( obj.data(fIdx(1)).(dSubScript) )  > 5
                             error( 'D > 5 not supported' );
                         end
@@ -207,6 +231,22 @@ classdef IdentTrainPipeData < handle
                 end
             end
             [~,~,disjunctSubsetIdxs] = unique( labelInstances );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function fIdxs = getFilesLabeled( obj, label, labelValue )
+            labelValues = arrayfun( @(df)( ...
+                                      df.getFileAnnotation( label )...
+                                                    ), obj.data, 'UniformOutput', false );
+            if ischar( labelValue )
+                fIdxs = strcmp( labelValues, labelValue );
+            elseif isnumeric( labelValue )
+                fIdxs = labelValue == labelValues;
+            elseif isobject( labelValue )
+                fIdxs = cellfun( @(lv)( lavelValue.equals( lv ) ), labelValues );
+            else
+                error( 'don''t know how to compare these labelValues' );
+            end
         end
         %% -------------------------------------------------------------------------------
 

@@ -6,7 +6,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         SNRs;
         snrRefs;
         room;
-        brirAzmIdx;
+        brirHeadOrientIdx;
         lenRefType;
         lenRefArg;
         minLen;
@@ -21,7 +21,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             obj.SNRs = SceneConfig.ValGen.empty;
             obj.sources = SceneConfig.SourceBase.empty;
             obj.snrRefs = [];
-            obj.brirAzmIdx = 1;
+            obj.brirHeadOrientIdx = 1;
             obj.lenRefType = 'source';
             obj.lenRefArg = 1;
             obj.minLen = 0;
@@ -44,8 +44,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         end
         %% -------------------------------------------------------------------------------
         
-        function setBRIRazm( obj, azmIdx )
-            obj.brirAzmIdx = azmIdx;
+        function setBRIRheadOrientation( obj, brirHeadOrientIdx )
+            obj.brirHeadOrientIdx = brirHeadOrientIdx;
         end
         %% -------------------------------------------------------------------------------
 

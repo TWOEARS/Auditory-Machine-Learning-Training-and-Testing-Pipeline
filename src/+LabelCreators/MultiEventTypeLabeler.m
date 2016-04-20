@@ -1,7 +1,7 @@
 classdef MultiEventTypeLabeler < LabelCreators.Base
     % class for multi-class labeling blocks by event
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
         eventIsType;

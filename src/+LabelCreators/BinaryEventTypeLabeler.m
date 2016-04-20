@@ -1,7 +1,7 @@
 classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
     % class for binary labeling blocks by event (target vs non-target)
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         negOut;
     end
     
@@ -29,9 +29,9 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
             obj = obj@LabelCreators.MultiEventTypeLabeler( multiParams{:} );
             obj.negOut = ip.Results.negOut;
             if strcmp( ip.Results.negOutType, 'rest' )
-                obj.isEventType{2} = @(e)( ~obj.isEventType{1}( e ) );
+                obj.eventIsType{2} = @(e)( ~obj.eventIsType{1}( e ) );
             else
-                obj.isEventType{2} = @(e)( any( strcmp( ip.Results.negOutType, e ) ) );
+                obj.eventIsType{2} = @(e)( any( strcmp( ip.Results.negOutType, e ) ) );
             end
         end
         %% -------------------------------------------------------------------------------

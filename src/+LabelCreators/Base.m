@@ -9,7 +9,7 @@ classdef Base < Core.IdProcInterface
     end
     
     %% -----------------------------------------------------------------------------------
-    methods (Abstract)
+    methods (Abstract, Access = protected)
         outputDeps = getLabelInternOutputDependencies( obj )
         y = label( obj, annotations )
     end

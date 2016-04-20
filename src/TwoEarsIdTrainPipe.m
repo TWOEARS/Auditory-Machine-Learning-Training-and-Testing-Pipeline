@@ -138,15 +138,15 @@ classdef TwoEarsIdTrainPipe < handle
                 return;
             end
             if ~isempty( obj.trainset ) || ~isempty( obj.testset )
-                trainSet = core.IdentTrainPipeData();
-                trainSet.loadWavFileList( obj.trainset );
+                trainSet = Core.IdentTrainPipeData();
+                trainSet.loadFileList( obj.trainset );
                 obj.pipeline.setTrainData( trainSet );
-                testSet = core.IdentTrainPipeData();
-                testSet.loadWavFileList( obj.testset );
+                testSet = Core.IdentTrainPipeData();
+                testSet.loadFileList( obj.testset );
                 obj.pipeline.setTestData( testSet );
             else
-                data = core.IdentTrainPipeData();
-                data.loadWavFileList( obj.data );
+                data = Core.IdentTrainPipeData();
+                data.loadFileList( obj.data );
                 obj.pipeline.connectData( data );
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
             end

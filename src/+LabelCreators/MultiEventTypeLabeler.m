@@ -38,7 +38,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
-            outputDeps.types = obj.types;
+            outputDeps.eventIsType = obj.eventIsType;
             outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------

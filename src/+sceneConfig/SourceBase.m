@@ -4,6 +4,9 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
     properties
         data;
         offset;
+        normalize;
+        normalizeLevel;
+        loop;
     end
 
     %% -----------------------------------------------------------------------------------
@@ -17,6 +20,15 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
             pds{2} = struct( 'name', 'offset', ...
                              'default', SceneConfig.ValGen('manual',0.5), ...
                              'valFun', @(x)(isa(x, 'SceneConfig.ValGen')) );
+            pds{3} = struct( 'name', 'normalize', ...
+                             'default', true, ...
+                             'valFun', @islogical );
+            pds{4} = struct( 'name', 'normalizeLevel', ...
+                             'default', 1.0, ...
+                             'valFun', @(x)(isnumeric(x) && (x > 0)) );
+            pds{5} = struct( 'name', 'loop', ...
+                             'default', 'no', ...
+                             'valFun', @(x)(any(strcmpi( x,{'no','self','randomSeq'} ))) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end
@@ -30,7 +42,10 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
         %% -------------------------------------------------------------------------------
         
         function e = isequal( obj1, obj2 )
-            e = isequal( obj1.data, obj2.data ) && isequal( obj1.offset, obj2.offset );
+            e = isequal( obj1.data, obj2.data ) && isequal( obj1.offset, obj2.offset ) ...
+                && isequal( obj1.normalize, obj2.normalize ) ...
+                && isequal( obj1.normalizeLevel, obj2.normalizeLevel ) ...
+                && strcmpi( obj1.loop, obj2.loop );
         end
         %% -------------------------------------------------------------------------------
         

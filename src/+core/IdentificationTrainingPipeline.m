@@ -206,9 +206,9 @@ classdef IdentificationTrainingPipeline < handle
             cd( saveDir );
             path = pwd;
             diary( ['IdTrainPipe' curTimeStr '.log'] );
-            obj.trainSet.saveDataFList( ['trainSet' curTimeStr '.flist'], 'sound_databases' );
+            obj.trainSet.saveFList( ['trainSet' curTimeStr '.flist'], 'sound_databases' );
             if ~isempty( obj.testSet )
-                obj.testSet.saveDataFList( ['testSet' curTimeStr '.flist'], 'sound_databases' );
+                obj.testSet.saveFList( ['testSet' curTimeStr '.flist'], 'sound_databases' );
             end
         end
         %% -------------------------------------------------------------------------------

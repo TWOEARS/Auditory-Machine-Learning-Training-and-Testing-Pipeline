@@ -6,9 +6,12 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         SNRs; % SNRs(1) is always interpreted as 0
               % all others are in relation to sources(1)
               % length(sources) must be == length(SNRs)
+        snrRefs;
         room;
-        brirAzmIdx = 1;
-        loop; % loop sources that are shorter than the main source
+        brirAzmIdx;
+        lenRefType;
+        lenRefArg;
+        minLen;
     end
 
     %% --------------------------------------------------------------------
@@ -19,22 +22,22 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             obj.room = SceneConfig.RoomValGen.empty;
             obj.SNRs = SceneConfig.ValGen.empty;
             obj.sources = SceneConfig.SourceBase.empty;
-            obj.loop = [];
+            obj.snrRefs = [];
+            obj.brirAzmIdx = 1;
+            obj.lenRefType = 'source';
+            obj.lenRefArg = 1;
+            obj.minLen = 0;
         end
         %% ----------------------------------------------------------------
         
-        function addSource( obj, source, snr, loop )
+        function addSource( obj, source, varargin )
+            ip = inputParser;
+            ip.addOptional( 'snr', SceneConfig.ValGen( 'manual', 0 ) );
+            ip.addOptional( 'snrRef', 1 );
             obj.sources(end+1) = source;
-            if numel( obj.SNRs ) == 0  || nargin < 3
-                obj.SNRs(end+1) = SceneConfig.ValGen( 'manual', 0 );
-            else
-                obj.SNRs(end+1) = snr;
-            end
-            if numel( obj.loop ) == 0  || nargin < 4
-                obj.loop(end+1) = false;
-            else
-                obj.loop(end+1) = loop;
-            end
+            ip.parse( varargin{:} );
+            obj.SNRs(end+1) = ip.Results.snr;
+            obj.snrRefs(end+1) = ip.Results.snrRef;
         end
         %% -------------------------------------------------------------------------------
         
@@ -48,6 +51,16 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         end
         %% -------------------------------------------------------------------------------
 
+        function setLengthRef( obj, refType, refArg, varargin )
+            ip = inputParser;
+            ip.addOptional( 'min', 0 );
+            ip.parse( varargin{:} );
+            obj.lenRefType = refType;
+            obj.lenRefArg = refArg;
+            obj.minLen = ip.Results.min;
+        end
+        %% -------------------------------------------------------------------------------
+
         function confInst = instantiate( obj )
             confInst = SceneConfig.SceneConfiguration();
             confInst.room = obj.room.instantiate();
@@ -55,8 +68,11 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 confInst.sources(kk) = obj.sources(kk).instantiate();
                 confInst.SNRs(kk) = obj.SNRs(kk).instantiate();
             end
+            confInst.snrRefs = obj.snrRefs;
             confInst.brirAzmIdx = obj.brirAzmIdx;
-            confInst.loop = obj.loop;
+            confInst.lenRefType = obj.lenRefType;
+            confInst.lenRefArg = obj.lenRefArg;
+            confInst.minLen = obj.minLen;
         end
         %% -------------------------------------------------------------------------------
 
@@ -65,8 +81,11 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             singleConfig.room = obj.room;
             singleConfig.sources = obj.sources(srcIdx);
             singleConfig.SNRs = SceneConfig.ValGen( 'manual', 0 );
-            singleConfig.loop = false; % there is only one source
+            singleConfig.snrRefs = obj.snrRefs(srcIdx);
             singleConfig.brirAzmIdx = obj.brirAzmIdx;
+            singleConfig.lenRefType = obj.lenRefType;
+            singleConfig.lenRefArg = obj.lenRefArg;
+            singleConfig.minLen = obj.minLen;
         end
         %% -------------------------------------------------------------------------------
         
@@ -75,15 +94,17 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if isempty( obj1 ) && isempty( obj2 ), e = true; return; end
             if isempty( obj1 ) || isempty( obj2 ), return; end
             if numel( obj1.sources ) ~= numel( obj2.sources ), return; end
-            if numel( obj1.loop ) ~= numel( obj2.loop ), return; end
-            if obj1.loop ~= obj2.loop, return; end
             if obj1.brirAzmIdx ~= obj2.brirAzmIdx, return; end
+            if obj1.lenRefType ~= obj2.lenRefType, return; end
+            if obj1.lenRefArg ~= obj2.lenRefArg, return; end
+            if obj1.minLen ~= obj2.minLen, return; end
             obj2srcsInCmpIdxs = ones( size( obj2.sources ) );
             for kk = 1 : numel( obj1.sources )
                 sequal = SceneConfig.SourceBase.isequalHetrgn( obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
                 if ~any( sequal ), return; 
                 else
-                    ssequal = isequal( obj1.SNRs(kk), obj2.SNRs ) & sequal;
+                    ssequal = isequal( obj1.SNRs(kk), obj2.SNRs ) & sequal & ...
+                                                       (obj1.snrRefs(kk) == obj2.snrRefs);
                     if ~any( ssequal ), return; 
                     else
                         sseFirstIdx = find( ssequal == 1, 1, 'first' );
@@ -105,9 +126,12 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 csc.sources(ii) = copy( obj.sources(ii) );
                 csc.SNRs(ii) = copy( obj.SNRs(ii) );
             end
+            csc.snrRefs = obj.snrRefs;
             csc.room = copy( obj.room );
-            csc.loop = obj.loop;
             csc.brirAzmIdx = obj.brirAzmIdx;
+            csc.lenRefType = obj.lenRefType;
+            csc.lenRefArg = obj.lenRefArg;
+            csc.minLen = obj.minLen;
         end
         %% -------------------------------------------------------------------------------
     end

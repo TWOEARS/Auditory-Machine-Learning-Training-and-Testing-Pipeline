@@ -67,7 +67,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             obj.setupSceneConfig( sceneConfigInst );
             if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
                 obj.earSout = signal{1};
-                t = 1 : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
+                t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
                 t = t / obj.getDataFs;
                 obj.annotsOut.srcAzms.t = t;
                 obj.annotsOut.srcAzms.srcAzms = repmat( {obj.srcAzimuth}, size( t ) );
@@ -104,6 +104,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 hrirHash = calcDataHash( audioread( hrirFName ) );
             end
             outputDeps.hrir = hrirHash;
+            outputDeps.v = 1;
         end
         %% ----------------------------------------------------------------
 

@@ -66,15 +66,16 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             signal = obj.loadSound( sceneConfigInst, wavFilepath );
             obj.setupSceneConfig( sceneConfigInst );
             if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
-                earSignals = signal{1};
-                % TODO: azimuth?
+                obj.earSout = signal{1};
+                t = 1 : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
+                t = t / obj.getDataFs;
+                obj.annotsOut.srcAzms.t = t;
+                obj.annotsOut.srcAzms.srcAzms = repmat( {obj.srcAzimuth}, size( t ) );
             else
                 obj.setSourceData( signal{1} );
                 obj.simulate();
-                earSignals = obj.convRoomSim.Sinks.getData();
+                obj.earSout = obj.convRoomSim.Sinks.getData();
             end
-            % TODO: normalize switch
-            obj.earSout = earSignals / max( abs( earSignals(:) ) ); % normalize
         end
         %% ----------------------------------------------------------------
         
@@ -133,7 +134,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             while ~obj.convRoomSim.isFinished()
                 obj.convRoomSim.set('Refresh',true);  % refresh all objects
                 obj.convRoomSim.set('Process',true);  % processing
-                t = t + obj.convRoomSim.passedTime;
+                t = t + obj.convRoomSim.BlockSize / obj.getDataFs;
                 obj.annotsOut.srcAzms.srcAzms(end+1) = {obj.srcAzimuth};
                 obj.annotsOut.srcAzms.t(end+1) = t;
                 fprintf( '.' );
@@ -207,7 +208,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             eventType = '';
             if ischar( src ) % then it is a filename
                 signal{1} = getPointSourceSignalFromWav( ...
-                                           src, obj.convRoomSim.SampleRate, startOffset );
+                                    src, obj.convRoomSim.SampleRate, startOffset, false );
                 eventType = IdEvalFrame.readEventClass( wavFilepath );
                 if strcmpi( eventType, 'general' )
                     onOffs = zeros(0,2);
@@ -231,6 +232,12 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.annotsOut.srcType.t.onset(end+1) = onOffs(ii,1);
                 obj.annotsOut.srcType.t.offset(end+1) = onOffs(ii,2);
                 obj.annotsOut.srcType.srcType(end+1) = {eventType};
+            end
+            if sceneConfig.sources(1).normalize
+                sigSorted = sort( abs( signal{1}(:) ) );
+                nUpperSigSorted = round( numel( sigSorted ) * 0.9 );
+                sigUpperAbs = median( sigSorted(nUpperSigSorted:end) ); % ~0.95 percentile
+                signal{1} = signal{1} * sceneConfig.sources(1).normalizeLevel/sigUpperAbs;
             end
         end
         %% ----------------------------------------------------------------

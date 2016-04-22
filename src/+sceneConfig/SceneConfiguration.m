@@ -7,9 +7,9 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         snrRefs;
         room;
         brirHeadOrientIdx;
-        lenRefType;
-        lenRefArg;
-        minLen;
+        lenRefType; % 'source', 'time'
+        lenRefArg; % srcId, time in s
+        minLen; % time in s
     end
 
     %% --------------------------------------------------------------------

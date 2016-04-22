@@ -28,95 +28,143 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
 
-        function process( obj, wavFilepath )
-            obj.annotsOut.srcAzms = struct( 't', {[]}, 'srcAzms', {{}} );
-            obj.annotsOut.srcType = struct( 't', struct( 'onset', {[]}, 'onset', {[]} ), ...
-                                            'srcType', {{}} );
-            obj.annotsOut.srcEnergy = struct( 't', {[]}, 'srcEnergy', {{}} );
-            obj.annotsOut.mixEnergy = struct( 't', {[]}, 'mixEnergy', {{}} );
-            targetSignalLen = 1;
-            splitEarSignals = cell( numel( obj.SceneConfig.sources ), 1 );
-            for srcIdx = 1 : numel( obj.SceneConfig.sources )
-                sc = obj.SceneConfig.getSingleConfig( srcIdx );
+        function process( obj, pipeWavFilepath )
+            numSrcs = numel( obj.sceneConfig.sources );
+            obj.annotsOut.srcType = struct( 't', struct( 'onset', {[]}, 'offset', {[]} ), ...
+                                            'srcType', {cell(1,0)} );
+            
+            switch obj.sceneConfig.lenRefType
+                case 'time'
+                    targetSignalLen = ...
+                                 max( obj.sceneConfig.lenRefArg, obj.sceneConfig.minLen );
+                    targetLenSourceRef = 1;
+                    adaptTargetLen = false;
+                case 'source'
+                    targetSignalLen = obj.sceneConfig.minLen;
+                    targetLenSourceRef = obj.sceneConfig.lenRefArg;
+                    adaptTargetLen = true;
+                otherwise
+                    error( 'Unknown SceneConfig.lenRefType' );
+            end
+            srcIndexes = 1 : numSrcs;
+            srcIndexes(targetLenSourceRef) = [];
+            srcIndexes = [targetLenSourceRef srcIndexes];
+            
+            splitEarSignals = cell( numSrcs, 1 );
+            tSplitAzms = cell(numSrcs,1);
+            splitAzms = cell(numSrcs,1);
+            for srcIdx = srcIndexes
+                sc = obj.sceneConfig.getSingleConfig( srcIdx );
                 splitSignalLen = 0;
-                while splitSignalLen < targetSignalLen - 0.01
-                    scInst = sc.instantiate();
-                    if srcIdx == 1
-                        scInst.sources(1).data = SceneConfig.FileListValGen( wavFilepath );
-                        DELETE{srcIdx} = IdEvalFrame.readEventClass( wavFilepath );
-                    elseif isa( scInst.sources(1).data, 'SceneConfig.FileListValGen' )
-                        wavFilepath = scInst.sources(1).data.value;
-                        if isempty( wavFilepath )
-                            error( 'Empty wav file name through use of FileListValGen!' );
+                while (splitSignalLen == 0) || (splitSignalLen < targetSignalLen - 0.01)
+                    if (splitSignalLen == 0) || strcmp( sc.sources(1).loop, 'randomSeq' )
+                        scInst = sc.instantiate(); % TODO: problem: this not only creates
+                                                   % loop variations in the files, but
+                                                   % in all ValGens, so maybe azm etc...
+                        if isa( scInst.sources(1).data, 'SceneConfig.FileListValGen' )
+                            if strcmp( scInst.sources(1).data.value, 'pipeInput' )
+                                scInst.sources(1).data = ...
+                                    SceneConfig.FileListValGen( pipeWavFilepath );
+                            end
+                            splitWavFilepath = scInst.sources(1).data.value;
+                        else % data through ValGen like NoiseValGen
+                            splitWavFilepath = ''; % don't cache in binauralSim
                         end
-                        srcClassii = IdEvalFrame.readEventClass( wavFilepath );
-                        if ~isempty( DELETE{srcIdx} ) && ~strcmp( srcClassii, DELETE{srcIdx} )
-                            error('Different classes used in looped distractor');
-                        end
-                        DELETE{srcIdx} = srcClassii;
-                    else
-                        wavFilepath = ''; % don't save
-                        DELETE{srcIdx} = '';
+                        obj.binauralSim.setSceneConfig( scInst );
+                        splitOut = ...
+                              obj.binauralSim.processSaveAndGetOutput( splitWavFilepath );
                     end
-                    obj.binauralSim.setSceneConfig( scInst );
-                    splitOut = obj.binauralSim.processSaveAndGetOutput( wavFilepath );
                     if ~isempty( splitEarSignals{srcIdx} )
                         splitOut.earSout = DataProcs.SceneEarSignalProc.adjustSNR( ...
-                            obj.getDataFs(), splitEarSignals{srcIdx}, 'energy', splitOut.earSout, 0 );
+                                             obj.getDataFs(), splitEarSignals{srcIdx}, ...
+                                                          'energy', splitOut.earSout, 0 );
                     end
                     splitEarSignals{srcIdx} = [splitEarSignals{srcIdx}; splitOut.earSout];
-                    targetSignalLen = length( splitEarSignals{1} ) / obj.getDataFs();
-                    if srcIdx > 1 && obj.SceneConfig.loop(srcIdx)
-                        splitSignalLen = length( splitEarSignals{srcIdx} ) / obj.getDataFs();
-                    else
-                        splitSignalLen = targetSignalLen;
+                    
+                    splitSignalLen = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
+                    if adaptTargetLen && (srcIdx == targetLenSourceRef)
+                        targetSignalLen = max( splitSignalLen, targetSignalLen );
+                    elseif strcmp( scInst.sources(1).loop, 'no' ) ...
+                                             && (splitSignalLen >= obj.sceneConfig.minLen)
+                        break;
                     end
-                    if strcmpi( DELETE{srcIdx}, DELETE{1} )
-                        maxLen = length( splitEarSignals{1} ) / obj.getDataFs();
-                        splitOnOffs = splitOut.onOffsOut;
-                        if isempty( splitOnOffs ), splitOnOffs = zeros(0,2); end
-                        splitOnOffs( splitOnOffs(:,1) >= maxLen, : ) = [];
-                        splitOnOffs( splitOnOffs > maxLen ) = maxLen;
-                        obj.onOffsOut = sortAndMergeOnOffs( [obj.onOffsOut; splitOnOffs] );
-                    end
+                    
+                    tSplitAzms{srcIdx} = ...
+                                      [tSplitAzms{srcIdx} splitOut.annotations.srcAzms.t];
+                    splitAzms{srcIdx} = ...
+                                 [splitAzms{srcIdx} splitOut.annotations.srcAzms.srcAzms];
+                    obj.annotsOut.srcType.t.onset = [obj.annotsOut.srcType.t.onset ...
+                                                    splitOut.annotations.srcType.t.onset];
+                    obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
+                                                   splitOut.annotations.srcType.t.offset];
+                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType ...
+                                                    splitOut.annotations.srcType.srcType];
                 end
                 fprintf( ':' );
             end
-            fprintf( '::' );
-            obj.earSout = splitEarSignals{1};
-            for srcIdx = 1 : 2
-                [energy, tFramesSec] = DataProcs.SceneEarSignalProc.runningEnergy( ...
-                                                             obj.getDataFs(), ...
-                                                             double(obj.earSout(:,srcIdx)), ...
-                                                             100e-3, 50e-3 );
-                obj.annotsOut.srcEnergy(1,srcIdx,:) = single(energy);
+            if strcmp( obj.sceneConfig.lenRefType, 'source' )
+                mixLen = size( splitEarSignals{srcIdxs(1)}, 1 );
+            else
+                mixLen = min( cellfun( @(s)(size( s, 1 )), splitEarSignals ) );
             end
-            obj.annotsOut.srcEnergy_t = single(tFramesSec);
-            nTargetEnergyFrames = size( obj.annotsOut.srcEnergy, 3 );
-            targetSignal = splitEarSignals{1}; % as in "S" in "SNR"
-            for srcIdx = 2:length( splitEarSignals )
-                ovrlSignal = splitEarSignals{srcIdx}; % as in "N" in "SNR"
-                onOffs_samples = obj.onOffsOut .* obj.getDataFs();
-                if isempty( onOffs_samples ), onOffs_samples = 'energy'; end;
-                ovrlSignal = DataProcs.SceneEarSignalProc.adjustSNR( ...
-                                                            obj.getDataFs(), ...
-                                                            targetSignal, ...
-                                                            onOffs_samples, ...
-                                                            ovrlSignal, ...
-                                                            obj.SceneConfig.SNRs(srcIdx).value );
-                maxSignalsLen = min( length( obj.earSout ), length( ovrlSignal ) );
-                obj.earSout(1:maxSignalsLen,:) = ...
-                    obj.earSout(1:maxSignalsLen,:) + ovrlSignal(1:maxSignalsLen,:);
-                for jj = 1 : 2
-                    energy = DataProcs.SceneEarSignalProc.runningEnergy( ...
-                                                            obj.getDataFs(), ...
-                                                            double(ovrlSignal(:,jj)), ...
-                                                            100e-3, 50e-3 );
-                    obj.annotsOut.srcEnergy(srcIdx,jj,:) = ...
-                                                  single( energy(1:nTargetEnergyFrames) );
+            fprintf( '::' );
+            
+            obj.annotsOut.srcAzms = struct( 't', {[]}, 'srcAzms', {cell(numSrcs,0)} );
+            obj.annotsOut.srcAzms.t = unique( [tSplitAzms{:}] );
+            for ii = 1 : numSrcs
+                obj.annotsOut.srcAzms.srcAzms(ii,:) = ...
+                        interp1( tSplitAzms{ii}, splitAzms{ii}, obj.annotsOut.srcAzms.t );
+            end
+
+            obj.annotsOut.srcEnergy = struct( 't', {[]}, 'srcEnergy', {cell(numSrcs,0)} );
+            for ss = 1 : numSrcs
+                [energy1, tEnergy] = DataProcs.SceneEarSignalProc.runningEnergy( ...
+                                                     obj.getDataFs(), ...
+                                                     double(splitEarSignals{ss}(:,1)), ...
+                                                     100e-3, 50e-3 );
+                [energy2, ~] = DataProcs.SceneEarSignalProc.runningEnergy( ...
+                                                     obj.getDataFs(), ...
+                                                     double(splitEarSignals{ss}(:,2)), ...
+                                                     100e-3, 50e-3 );
+                if numel( tEnergy ) > numel( obj.annotsOut.srcEnergy.t )
+                    obj.annotsOut.srcEnergy.t = single( tEnergy );
                 end
+                energy = cellfun( @(e1,e2)({single([e1,e2])}), energy1, energy2 );
+                obj.annotsOut.srcEnergy(ss,:) = energy;
+            end
+            
+            obj.earSout = zeros( mixLen, 2 );
+            for srcIdx = 1 : numel( splitEarSignals )
+                srcNsignal = splitEarSignals{srcIdx};
+                srcSidx = obj.sceneConfig.snrRefs(srcIdx);
+                if srcSidx == srcIdx
+                    srcNsignal = splitEarSignals{srcSidx};
+                else
+                    srcSsignal = splitEarSignals{srcSidx};
+                    srcNsignal = DataProcs.SceneEarSignalProc.adjustSNR( ...
+                                                     obj.getDataFs(), ...
+                                                     srcSsignal, ...
+                                                    'energy', ...
+                                                     srcNsignal, ...
+                                                     obj.sceneConfig.SNRs(srcIdx).value );
+                end
+                maxSignalsLen = min( mixLen, length( srcNsignal ) );
+                obj.earSout(1:maxSignalsLen,:) = ...
+                    obj.earSout(1:maxSignalsLen,:) + srcNsignal(1:maxSignalsLen,:);
                 fprintf( '.' );
             end
+            
+            [energy1, tEnergy] = DataProcs.SceneEarSignalProc.runningEnergy( ...
+                                                             obj.getDataFs(), ...
+                                                             double(obj.earSout(:,1)), ...
+                                                             100e-3, 50e-3 );
+            [energy2, ~] = DataProcs.SceneEarSignalProc.runningEnergy( ...
+                                                             obj.getDataFs(), ...
+                                                             double(obj.earSout(:,2)), ...
+                                                             100e-3, 50e-3 );
+            obj.annotsOut.mixEnergy.t = single( tEnergy );
+            energy = cellfun( @(e1,e2)({single([e1,e2])}), energy1, energy2 );
+            obj.annotsOut.mixEnergy = energy;
         end
         
     end

@@ -66,6 +66,14 @@ classdef Base < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
+        % override of DataProcs.IdProcInterface's method
+        function save( obj, wavFilepath, ~ )
+            out.y = obj.y;
+            out.inDatPath = obj.inDatPath;
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
     
     %% -----------------------------------------------------------------------------------
@@ -90,14 +98,6 @@ classdef Base < Core.IdProcInterface
             out.x(any(isnan(out.y))) = [];
             out.a(any(isnan(out.y))) = [];
             out.y(any(isnan(out.y))) = [];
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of DataProcs.IdProcInterface's method
-        function save( obj, wavFilepath, ~ )
-            out.y = obj.y;
-            out.inDatPath = obj.inDatPath;
-            save@Core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
         

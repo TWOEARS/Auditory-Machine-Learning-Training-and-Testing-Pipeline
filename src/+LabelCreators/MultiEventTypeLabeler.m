@@ -4,7 +4,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     properties (SetAccess = protected)
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
-        eventIsType;
+        types;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -24,9 +24,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
-            for ii = 1 : numel( ip.Results.types )
-                obj.eventIsType{ii} = @(e)(any( strcmp( e, ip.Results.types{ii} ) ));
-            end
+            obj.types = ip.Results.types;
         end
         %% -------------------------------------------------------------------------------
 
@@ -38,8 +36,13 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
-            outputDeps.eventIsType = obj.eventIsType;
+            outputDeps.types = obj.types;
             outputDeps.v = 1;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function eit = eventIsType( obj, typeIdx, type )
+            eit = any( strcmp( type, obj.types{typeIdx} ) );
         end
         %% -------------------------------------------------------------------------------
         
@@ -67,7 +70,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             relBlockEventsOverlap = zeros( size( obj.eventIsType ) );
             for ii = 1 : numel( obj.types )
                 eventsAreType = cellfun( @(ba)(...
-                                  obj.eventIsType{ii}(ba)...
+                                  obj.eventIsType( ii, ba )...
                                               ), blockAnnotations.objectType.objectType );
                 isEventBlockOverlap = eventsAreType & (eventBlockOverlaps > 0);
                 eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );

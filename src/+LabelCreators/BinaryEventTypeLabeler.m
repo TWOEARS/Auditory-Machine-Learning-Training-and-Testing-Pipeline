@@ -3,6 +3,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
         negOut;
+        negOutType;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -28,11 +29,7 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
                            'types', multiTypes };
             obj = obj@LabelCreators.MultiEventTypeLabeler( multiParams{:} );
             obj.negOut = ip.Results.negOut;
-            if strcmp( ip.Results.negOutType, 'rest' )
-                obj.eventIsType{2} = @(e)( ~obj.eventIsType{1}( e ) );
-            else
-                obj.eventIsType{2} = @(e)( any( strcmp( ip.Results.negOutType, e ) ) );
-            end
+            obj.negOutType = ip.Results.negOutType;
         end
         %% -------------------------------------------------------------------------------
 
@@ -44,9 +41,23 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
         % override of LabelCreators.MultiEventTypeLabeler's method
         function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps.negOut = obj.negOut;
+            outputDeps.negOutType = obj.negOutType;
             outputDeps.internMulti = ...
                 getLabelInternOutputDependencies@LabelCreators.MultiEventTypeLabeler( obj );
             outputDeps.v = 1;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function eit = eventIsType( obj, typeIdx, type )
+            if typeIdx == 1
+                eit = eventIsType@LabelCreators.MultiEventTypeLabeler( obj, 1, type );
+            else
+                if strcmp( obj.negOutType, 'rest' )
+                    eit = ~eventIsType@LabelCreators.MultiEventTypeLabeler( obj, 1, type );
+                else
+                    eit = eventIsType@LabelCreators.MultiEventTypeLabeler( obj, 2, type );
+                end
+            end
         end
         %% -------------------------------------------------------------------------------
         

@@ -78,6 +78,21 @@ classdef Base < Core.IdProcInterface
             end
         end
         %% -------------------------------------------------------------------------------
+
+        % override of Core.IdProcInterface's method
+        function save( obj, wavFilepath, ~ )
+            out.x = obj.x;
+            out.inDatPath = obj.inDatPath;
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
+            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
+                description = obj.description;
+                fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
+                save( fdescFilepath, 'description' );
+                removefilesemaphore( fdescFileSema );
+            end
+        end
+        %% -------------------------------------------------------------------------------
         
     end
     
@@ -97,21 +112,6 @@ classdef Base < Core.IdProcInterface
             inDat = load( obj.inDatPath );
             out.blockAnnotations = inDat.blockAnnotations;
             out.x = obj.x;
-        end
-        %% -------------------------------------------------------------------------------
-
-        % override of Core.IdProcInterface's method
-        function save( obj, wavFilepath, ~ )
-            out.x = obj.x;
-            out.inDatPath = obj.inDatPath;
-            save@Core.IdProcInterface( obj, wavFilepath, out ); 
-            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
-            if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
-                description = obj.description;
-                fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
-                save( fdescFilepath, 'description' );
-                removefilesemaphore( fdescFileSema );
-            end
         end
         %% ------------ Feature Description Utilities ------------------------------------
 

@@ -242,6 +242,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 sigUpperAbs = median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
                 signal{1} = signal{1} * sceneConfig.sources(1).normalizeLevel/sigUpperAbs;
             end
+            error( 'TODO: add wavFilepath to annotations' );
         end
         %% ----------------------------------------------------------------
 

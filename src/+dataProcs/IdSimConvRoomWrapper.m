@@ -69,13 +69,15 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.earSout = signal{1};
                 t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
                 t = t / obj.getDataFs;
-                obj.annotsOut.srcAzms.t = t;
-                obj.annotsOut.srcAzms.srcAzms = repmat( {obj.srcAzimuth}, size( t ) );
+                obj.annotsOut.srcAzms.t = single( t );
+                obj.annotsOut.srcAzms.srcAzms(:,1) = ...
+                                            single( repmat( obj.srcAzimuth, size( t ) ) );
             else
                 obj.setSourceData( signal{1} );
                 obj.simulate();
                 obj.earSout = obj.convRoomSim.Sinks.getData();
             end
+            obj.earSout = single( obj.earSout );
         end
         %% ----------------------------------------------------------------
         
@@ -130,13 +132,13 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         function simulate( obj )
             obj.convRoomSim.set( 'ReInit', true );
             t = 0;
-            obj.annotsOut.srcAzms = struct( 't', {[]}, 'srcAzms', {{}} );
+            obj.annotsOut.srcAzms = struct( 't', {[]}, 'srcAzms', {[]} );
             while ~obj.convRoomSim.isFinished()
                 obj.convRoomSim.set('Refresh',true);  % refresh all objects
                 obj.convRoomSim.set('Process',true);  % processing
                 t = t + obj.convRoomSim.BlockSize / obj.getDataFs;
-                obj.annotsOut.srcAzms.srcAzms(end+1) = {obj.srcAzimuth};
-                obj.annotsOut.srcAzms.t(end+1) = t;
+                obj.annotsOut.srcAzms.srcAzms(end+1,1) = single( obj.srcAzimuth );
+                obj.annotsOut.srcAzms.t(end+1) = single( t );
                 fprintf( '.' );
             end
         end

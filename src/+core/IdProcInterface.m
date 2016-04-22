@@ -164,6 +164,15 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function save( obj, wavFilepath, out )
+            if isempty( wavFilepath ), return; end
+            outFilepath = obj.getOutputFilepath( wavFilepath );
+            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
+            save( outFilepath, '-struct', 'out' );
+            removefilesemaphore( obj.outFileSema );
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
     
     %% -----------------------------------------------------------------------------------
@@ -179,15 +188,6 @@ classdef (Abstract) IdProcInterface < handle
                 obj.procName = procName;
             end
             obj.cacheDirectory = Core.IdCacheDirectory();
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function save( obj, wavFilepath, out )
-            if isempty( wavFilepath ), return; end
-            outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
-            save( outFilepath, '-struct', 'out' );
-            removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
 

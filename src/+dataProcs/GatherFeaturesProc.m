@@ -67,6 +67,12 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             currentFolder = [];
         end
         %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function out = save( ~, ~, ~ )
+            out = [];
+        end
+        %% -------------------------------------------------------------------------------
     end
 
     %% -----------------------------------------------------------------------------------
@@ -78,12 +84,6 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function out = getOutput( ~ )
-            out = [];
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % override of Core.IdProcInterface's method
-        function out = save( ~, ~, ~ )
             out = [];
         end
         %% -------------------------------------------------------------------------------

@@ -94,6 +94,13 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
         
+        % override of DataProcs.IdProcInterface's method
+        function save( obj, wavFilepath, ~ )
+            out.indivFiles = obj.indivFiles;
+            save@Core.IdProcInterface( obj, wavFilepath, out ); 
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
 
     %% -----------------------------------------------------------------------------------
@@ -120,13 +127,6 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
                                                % individual annotations, they would have
                                                % to be joined here
     end
-        %% -------------------------------------------------------------------------------
-        
-        % override of DataProcs.IdProcInterface's method
-        function save( obj, wavFilepath, ~ )
-            out.indivFiles = obj.indivFiles;
-            save@Core.IdProcInterface( obj, wavFilepath, out ); 
-        end
         %% -------------------------------------------------------------------------------
 
     end

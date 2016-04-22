@@ -64,7 +64,9 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                 obj.wrappedProcs{1}.lastConfig = obj.wrappedLastConfigs{ii};
                 obj.wrappedProcs{1}.lastFolder = obj.wrappedLastFolders{ii};
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
-                obj.wrappedProcs{1}.processSaveAndGetOutput( wavFilepath );
+                wrapOut = obj.wrappedProcs{1}.processSaveAndGetOutput( wavFilepath );
+                wrapOut.annotations.mcSceneId = ii;
+                obj.wrappedProcs{1}.save( wavFilepath, wrapOut );
                 obj.wrappedLastConfigs{ii} = obj.wrappedProcs{1}.lastConfig;
                 obj.wrappedLastFolders{ii} = obj.wrappedProcs{1}.lastFolder;
                 fprintf( '#' );
@@ -95,16 +97,16 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
             currentFolder = [];
         end
         %% -------------------------------------------------------------------------------
-    end
-        
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
         
         % override of Core.IdProcInterface's method
         function out = save( ~, ~, ~ )
             out = [];
         end
         %% -------------------------------------------------------------------------------
+    end
+        
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
             for ii = 1 : numel( obj.sceneConfigurations )

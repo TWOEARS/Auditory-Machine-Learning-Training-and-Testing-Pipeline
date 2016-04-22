@@ -62,7 +62,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         %% ----------------------------------------------------------------
 
         function process( obj, wavFilepath )
-            sceneConfigInst = obj.SceneConfig.instantiate();
+            sceneConfigInst = obj.sceneConfig.instantiate();
             signal = obj.loadSound( sceneConfigInst, wavFilepath );
             obj.setupSceneConfig( sceneConfigInst );
             if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
@@ -87,7 +87,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.sceneConfig = copy( obj.sceneConfig );
             if ~isempty( outputDeps.sceneConfig )
-                outputDeps.SceneConfig.sources(1).data = []; % configs shall not include filename
+                outputDeps.sceneConfig.sources(1).data = []; % configs shall not include filename
             end
             outputDeps.SampleRate = obj.convRoomSim.SampleRate;
             outputDeps.ReverberationMaxOrder = obj.reverberationMaxOrder;
@@ -110,7 +110,6 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
 
         function out = getOutput( obj )
             out.earSout = obj.earSout;
-            out.onOffsOut = obj.onOffsOut;
             out.annotations = obj.annotsOut;
         end
         %% ----------------------------------------------------------------
@@ -191,7 +190,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 end
                 obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
                 obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
-                % TODO: calculate source azimuth
+                error( 'TODO: calculate source azimuth' );
             else % ~is diffuse
                 obj.convRoomSim.Sources{1} = simulator.source.Binaural();
                 channelMapping = [1 2];
@@ -209,7 +208,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             eventType = '';
             if ischar( src ) % then it is a filename
                 signal{1} = getPointSourceSignalFromWav( ...
-                                    src, obj.convRoomSim.SampleRate, startOffset, false );
+                             src, obj.convRoomSim.SampleRate, startOffset, false, 'max' );
                 eventType = IdEvalFrame.readEventClass( wavFilepath );
                 if strcmpi( eventType, 'general' )
                     onOffs = zeros(0,2);
@@ -227,8 +226,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             if isa( sceneConfig.sources(1), 'SceneConfig.DiffuseSource' )
                 signal{1} = repmat( signal{1}, 1, 2 );
             end
-            obj.annotsOut.srcType = struct( 't', struct( 'onset', {[]}, 'onset', {[]} ), ...
-                                            'srcType', {{}} );
+            obj.annotsOut.srcType = struct( 't', ...
+                        struct( 'onset', {[]}, 'offset', {[]} ), 'srcType', {cell(1,0)} );
             for ii = 1 : size( onOffs, 1 )
                 obj.annotsOut.srcType.t.onset(end+1) = onOffs(ii,1);
                 obj.annotsOut.srcType.t.offset(end+1) = onOffs(ii,2);
@@ -236,8 +235,9 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             end
             if sceneConfig.sources(1).normalize
                 sigSorted = sort( abs( signal{1}(:) ) );
-                nUpperSigSorted = round( numel( sigSorted ) * 0.9 );
-                sigUpperAbs = median( sigSorted(nUpperSigSorted:end) ); % ~0.95 percentile
+                sigSorted(sigSorted<=0.1*mean(sigSorted)) = [];
+                nUpperSigSorted = round( numel( sigSorted ) * 0.01 );
+                sigUpperAbs = median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
                 signal{1} = signal{1} * sceneConfig.sources(1).normalizeLevel/sigUpperAbs;
             end
         end

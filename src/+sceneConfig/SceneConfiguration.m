@@ -67,7 +67,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 confInst.SNRs(kk) = obj.SNRs(kk).instantiate();
             end
             confInst.snrRefs = obj.snrRefs;
-            confInst.brirAzmIdx = obj.brirAzmIdx;
+            confInst.brirHeadOrientIdx = obj.brirHeadOrientIdx;
             confInst.lenRefType = obj.lenRefType;
             confInst.lenRefArg = obj.lenRefArg;
             confInst.minLen = obj.minLen;
@@ -80,7 +80,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             singleConfig.sources = obj.sources(srcIdx);
             singleConfig.SNRs = SceneConfig.ValGen( 'manual', 0 );
             singleConfig.snrRefs = obj.snrRefs(srcIdx);
-            singleConfig.brirAzmIdx = obj.brirAzmIdx;
+            singleConfig.brirHeadOrientIdx = obj.brirHeadOrientIdx;
             singleConfig.lenRefType = obj.lenRefType;
             singleConfig.lenRefArg = obj.lenRefArg;
             singleConfig.minLen = obj.minLen;
@@ -92,7 +92,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if isempty( obj1 ) && isempty( obj2 ), e = true; return; end
             if isempty( obj1 ) || isempty( obj2 ), return; end
             if numel( obj1.sources ) ~= numel( obj2.sources ), return; end
-            if obj1.brirAzmIdx ~= obj2.brirAzmIdx, return; end
+            if obj1.brirHeadOrientIdx ~= obj2.brirHeadOrientIdx, return; end
             if obj1.lenRefType ~= obj2.lenRefType, return; end
             if obj1.lenRefArg ~= obj2.lenRefArg, return; end
             if obj1.minLen ~= obj2.minLen, return; end
@@ -126,7 +126,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             end
             csc.snrRefs = obj.snrRefs;
             csc.room = copy( obj.room );
-            csc.brirAzmIdx = obj.brirAzmIdx;
+            csc.brirHeadOrientIdx = obj.brirHeadOrientIdx;
             csc.lenRefType = obj.lenRefType;
             csc.lenRefArg = obj.lenRefArg;
             csc.minLen = obj.minLen;

@@ -79,7 +79,18 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                                              obj.getDataFs(), splitEarSignals{srcIdx}, ...
                                                           'energy', splitOut.earSout, 0 );
                     end
+                    tSoFar = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
                     splitEarSignals{srcIdx} = [splitEarSignals{srcIdx}; splitOut.earSout];
+                    tSplitAzms{srcIdx} = ...
+                             [tSplitAzms{srcIdx} (tSoFar+splitOut.annotations.srcAzms.t)];
+                    splitAzms{srcIdx} = ...
+                                 [splitAzms{srcIdx} splitOut.annotations.srcAzms.srcAzms];
+                    obj.annotsOut.srcType.t.onset = [obj.annotsOut.srcType.t.onset ...
+                                           (tSoFar+splitOut.annotations.srcType.t.onset)];
+                    obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
+                                          (tSoFar+splitOut.annotations.srcType.t.offset)];
+                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType ...
+                                                    splitOut.annotations.srcType.srcType];
                     
                     splitSignalLen = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
                     if adaptTargetLen && (srcIdx == targetLenSourceRef)
@@ -88,22 +99,11 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                                              && (splitSignalLen >= obj.sceneConfig.minLen)
                         break;
                     end
-                    
-                    tSplitAzms{srcIdx} = ...
-                                      [tSplitAzms{srcIdx} splitOut.annotations.srcAzms.t];
-                    splitAzms{srcIdx} = ...
-                                 [splitAzms{srcIdx} splitOut.annotations.srcAzms.srcAzms];
-                    obj.annotsOut.srcType.t.onset = [obj.annotsOut.srcType.t.onset ...
-                                                    splitOut.annotations.srcType.t.onset];
-                    obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
-                                                   splitOut.annotations.srcType.t.offset];
-                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType ...
-                                                    splitOut.annotations.srcType.srcType];
                 end
                 fprintf( ':' );
             end
             if strcmp( obj.sceneConfig.lenRefType, 'source' )
-                mixLen = size( splitEarSignals{srcIdxs(1)}, 1 );
+                mixLen = size( splitEarSignals{srcIndexes(1)}, 1 );
             else
                 mixLen = min( cellfun( @(s)(size( s, 1 )), splitEarSignals ) );
             end

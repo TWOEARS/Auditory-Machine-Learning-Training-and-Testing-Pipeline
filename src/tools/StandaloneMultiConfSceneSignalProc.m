@@ -8,6 +8,7 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
         multiConfBinauralSim;
         targetSourceFiles;
         targetWav;
+        targetsDir; % directory below which targetWav is stored
         targetLabels;
         targetOnOffs;
         earSout;
@@ -19,9 +20,9 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
     %% -----------------------------------------------------------------------------------
     methods
         function obj = StandaloneMultiConfSceneSignalProc( )
-            obj.binauralSim = dataProcs.IdSimConvRoomWrapper();
+            obj.binauralSim = dataProcs.IdSimConvRoomWrapper( 'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             obj.sceneConfBinauralSim = dataProcs.SceneEarSignalProc( obj.binauralSim );
-            obj.multiConfBinauralSim = dataProcs.MultiConfigurationsEarSignalProc( obj.sceneConfBinauralSim );
+            obj.multiConfBinauralSim = dataProcs.MultiSceneCfgsIdProcWrapper( obj.binauralSim, obj.sceneConfBinauralSim );
             obj.currentEarSoutPos = 1;
         end
         %% ----------------------------------------------------------------
@@ -95,6 +96,12 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
                     'Normalize', true, ...
                     'CellOutput', true);
                 sourceSignal = sourceSignals{1};
+                sourceSignal(:,1) = sourceSignal(:,1) - mean( sourceSignal(:,1) );
+                if size( sourceSignal, 2 ) == 1
+                    sourceSignal(:,2) = sourceSignal(:,1);
+                else
+                    sourceSignal(:,2) = sourceSignal(:,2) - mean( sourceSignal(:,2) );
+                end
                 for ii = 2 : numel( sourceSignals )
                     sourceSignals{ii} = dataProcs.SceneEarSignalProc.adjustSNR( obj.SampleRate, ...
                         sourceSignal, 'energy', sourceSignals{ii}, 0 );
@@ -117,7 +124,7 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
                 end
                 obj.targetLabels = labels;
                 audiohash = calcDataHash( wavs );
-                obj.targetWav = ['targets/' audiohash '_target.wav'];
+                obj.targetWav = fullfile(obj.targetsDir, [audiohash '_target.wav']);
                 audiowrite( obj.targetWav, sourceSignal, obj.SampleRate );
                 targetWav = obj.targetWav;
                 targetOnOffs = obj.targetOnOffs;
@@ -132,11 +139,8 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
         %% ----------------------------------------------------------------
 
         function preprocessScene( obj )
-            mcbfsOut = obj.multiConfBinauralSim.processSaveAndGetOutput( [pwd filesep obj.targetWav] );
-            if numel( obj.multiConfBinauralSim.singleScFiles ) > 1
-                error( 'TODO' );
-            end
-            targetSceneProcFile = mcbfsOut.singleScFiles{1};
+            obj.multiConfBinauralSim.processSaveAndGetOutput( obj.targetWav );
+            targetSceneProcFile = obj.multiConfBinauralSim.getOutputObject().getOutputFilepath( obj.targetWav );
             eo = load( targetSceneProcFile, 'earSout' );
             obj.earSout = eo.earSout;
             obj.currentEarSoutPos = 1;
@@ -149,7 +153,20 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
         %% ----------------------------------------------------------------
         
         function setSceneConfig( obj, sc )
+            obj.sceneConfBinauralSim.setSceneConfig( sc );
             obj.multiConfBinauralSim.setSceneConfig( sc );
+        end
+        
+        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName )
+            obj.multiConfBinauralSim.setCacheSystemDir( cacheSystemDir, nPathLevelsForCacheName );
+        end
+        
+        function setTargetsDir( obj, targetsDir )
+            if exist(targetsDir, 'dir')
+                obj.targetsDir = targetsDir;
+            else
+                error( 'Targets directory does not exist. Please create it. (%s)', targetsDir);
+            end
         end
         %% ----------------------------------------------------------------
     end

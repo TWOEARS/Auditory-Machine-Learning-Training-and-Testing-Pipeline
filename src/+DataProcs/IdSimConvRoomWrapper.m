@@ -229,11 +229,14 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 signal{1} = repmat( signal{1}, 1, 2 );
             end
             obj.annotsOut.srcType = struct( 't', ...
-                        struct( 'onset', {[]}, 'offset', {[]} ), 'srcType', {cell(1,0)} );
+                        struct( 'onset', {[]}, 'offset', {[]} ),...
+                        'srcType', {cell(1,0)},...
+                        'wavFilepath', {cell(1,0)});
             for ii = 1 : size( onOffs, 1 )
                 obj.annotsOut.srcType.t.onset(end+1) = onOffs(ii,1);
                 obj.annotsOut.srcType.t.offset(end+1) = onOffs(ii,2);
                 obj.annotsOut.srcType.srcType(end+1) = {eventType};
+                obj.annotsOut.srcType.wavFilepath(end+1) = {wavFilepath};
             end
             if sceneConfig.sources(1).normalize
                 sigSorted = sort( abs( signal{1}(:) ) );
@@ -242,7 +245,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 sigUpperAbs = median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
                 signal{1} = signal{1} * sceneConfig.sources(1).normalizeLevel/sigUpperAbs;
             end
-            error( 'TODO: add wavFilepath to annotations' );
+            %error( 'TODO: add wavFilepath to annotations' ); % see above
+            %aber wozu
         end
         %% ----------------------------------------------------------------
 

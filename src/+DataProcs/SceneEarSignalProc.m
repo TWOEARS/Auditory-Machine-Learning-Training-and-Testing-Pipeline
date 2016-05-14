@@ -54,10 +54,11 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             tSplitAzms = cell(numSrcs,1);
             splitAzms = cell(numSrcs,1);
             for srcIdx = srcIndexes
-                sc = obj.sceneConfig.getSingleConfig( srcIdx );
                 splitSignalLen = 0;
                 while (splitSignalLen == 0) || (splitSignalLen < targetSignalLen - 0.01)
-                    if (splitSignalLen == 0) || strcmp( sc.sources(1).loop, 'randomSeq' )
+                    if (splitSignalLen == 0) || ...
+                                  strcmpi( obj.sceneConfig.loopSrcs{srcIdx}, 'randomSeq' )
+                        sc = obj.sceneConfig.getSingleConfig( srcIdx );
                         scInst = sc.instantiate(); % TODO: problem: this not only creates
                                                    % loop variations in the files, but
                                                    % in all ValGens, so maybe azm etc...
@@ -95,7 +96,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                     splitSignalLen = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
                     if adaptTargetLen && (srcIdx == targetLenSourceRef)
                         targetSignalLen = max( splitSignalLen, targetSignalLen );
-                    elseif strcmp( scInst.sources(1).loop, 'no' ) ...
+                    elseif strcmp( obj.sceneConfig.loopSrcs{srcIdx}, 'no' ) ...
                                              && (splitSignalLen >= obj.sceneConfig.minLen)
                         break;
                     end

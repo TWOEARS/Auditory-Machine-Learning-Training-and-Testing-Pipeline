@@ -5,6 +5,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         sources; 
         SNRs;
         snrRefs;
+        loopSrcs; % 'no','self','randomSeq'
         room;
         brirHeadOrientIdx;
         lenRefType; % 'source', 'time'
@@ -20,6 +21,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             obj.room = SceneConfig.RoomValGen.empty;
             obj.SNRs = SceneConfig.ValGen.empty;
             obj.sources = SceneConfig.SourceBase.empty;
+            obj.loopSrcs = {};
             obj.snrRefs = [];
             obj.brirHeadOrientIdx = 1;
             obj.lenRefType = 'source';
@@ -32,10 +34,12 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             ip = inputParser;
             ip.addOptional( 'snr', SceneConfig.ValGen( 'manual', 0 ) );
             ip.addOptional( 'snrRef', 1 );
+            ip.addOptional( 'loop', 'no' );
             obj.sources(end+1) = source;
             ip.parse( varargin{:} );
             obj.SNRs(end+1) = ip.Results.snr;
             obj.snrRefs(end+1) = ip.Results.snrRef;
+            obj.loopSrcs{end+1} = ip.Results.loop;
         end
         %% -------------------------------------------------------------------------------
         
@@ -67,6 +71,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 confInst.SNRs(kk) = obj.SNRs(kk).instantiate();
             end
             confInst.snrRefs = obj.snrRefs;
+            confInst.loopSrcs = obj.loopSrcs;
             confInst.brirHeadOrientIdx = obj.brirHeadOrientIdx;
             confInst.lenRefType = obj.lenRefType;
             confInst.lenRefArg = obj.lenRefArg;
@@ -79,14 +84,15 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             singleConfig.room = obj.room;
             singleConfig.sources = obj.sources(srcIdx);
             singleConfig.SNRs = SceneConfig.ValGen( 'manual', 0 );
-            singleConfig.snrRefs = obj.snrRefs(srcIdx);
+            singleConfig.snrRefs = 1;
+            singleConfig.loopSrcs = {'no'};
             singleConfig.brirHeadOrientIdx = obj.brirHeadOrientIdx;
-            singleConfig.lenRefType = obj.lenRefType;
-            singleConfig.lenRefArg = obj.lenRefArg;
-            singleConfig.minLen = obj.minLen;
+            singleConfig.lenRefType = 'source';
+            singleConfig.lenRefArg = 1;
+            singleConfig.minLen = 0;
         end
         %% -------------------------------------------------------------------------------
-        
+
         function e = isequal( obj1, obj2 )
             e = false;
             if isempty( obj1 ) && isempty( obj2 ), e = true; return; end
@@ -96,13 +102,16 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if obj1.lenRefType ~= obj2.lenRefType, return; end
             if obj1.lenRefArg ~= obj2.lenRefArg, return; end
             if obj1.minLen ~= obj2.minLen, return; end
+            if ~(iscell( obj1.loopSrcs ) && iscell( obj2.loopSrcs )), return; end
             obj2srcsInCmpIdxs = ones( size( obj2.sources ) );
             for kk = 1 : numel( obj1.sources )
-                sequal = SceneConfig.SourceBase.isequalHetrgn( obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
+                sequal = SceneConfig.SourceBase.isequalHetrgn( ...
+                                     obj1.sources(kk), obj2.sources ) & obj2srcsInCmpIdxs;
                 if ~any( sequal ), return; 
                 else
-                    ssequal = isequal( obj1.SNRs(kk), obj2.SNRs ) & sequal & ...
-                                                       (obj1.snrRefs(kk) == obj2.snrRefs);
+                    ssequal = sequal & isequal( obj1.SNRs(kk), obj2.SNRs ) & ...
+                                            (obj1.snrRefs(kk) == obj2.snrRefs) & ...
+                                            (strcmpi( obj1.loopSrcs{kk}, obj2.loopSrcs ));
                     if ~any( ssequal ), return; 
                     else
                         sseFirstIdx = find( ssequal == 1, 1, 'first' );
@@ -125,6 +134,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
                 csc.SNRs(ii) = copy( obj.SNRs(ii) );
             end
             csc.snrRefs = obj.snrRefs;
+            csc.loopSrcs = obj.loopSrcs;
             csc.room = copy( obj.room );
             csc.brirHeadOrientIdx = obj.brirHeadOrientIdx;
             csc.lenRefType = obj.lenRefType;

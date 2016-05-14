@@ -32,6 +32,8 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             numSrcs = numel( obj.sceneConfig.sources );
             obj.annotsOut.srcType = struct( 't', struct( 'onset', {[]}, 'offset', {[]} ), ...
                                             'srcType', {cell(1,0)} );
+            obj.annotsOut.srcFile = struct( 't', struct( 'onset', {[]}, 'offset', {[]} ), ...
+                                            'srcFile', {cell(1,0)} );
             
             switch obj.sceneConfig.lenRefType
                 case 'time'
@@ -92,6 +94,12 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                                           (tSoFar+splitOut.annotations.srcType.t.offset)];
                     obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType ...
                                                     splitOut.annotations.srcType.srcType];
+                    obj.annotsOut.srcFile.t.onset = [obj.annotsOut.srcFile.t.onset ...
+                                           (tSoFar+splitOut.annotations.srcFile.t.onset)];
+                    obj.annotsOut.srcFile.t.offset = [obj.annotsOut.srcFile.t.offset ...
+                                          (tSoFar+splitOut.annotations.srcFile.t.offset)];
+                    obj.annotsOut.srcFile.srcFile = [obj.annotsOut.srcFile.srcFile ...
+                                                    splitOut.annotations.srcFile.srcFile];
                     
                     splitSignalLen = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
                     if adaptTargetLen && (srcIdx == targetLenSourceRef)

@@ -229,11 +229,11 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 signal{1} = repmat( signal{1}, 1, 2 );
             end
             obj.annotsOut.srcType = struct( 't', ...
-                        struct( 'onset', {[]}, 'offset', {[]} ), 'srcType', {cell(1,0)} );
+                        struct( 'onset', {[]}, 'offset', {[]} ), 'srcType', {cell(0,1)} );
             for ii = 1 : size( onOffs, 1 )
                 obj.annotsOut.srcType.t.onset(end+1) = onOffs(ii,1);
                 obj.annotsOut.srcType.t.offset(end+1) = onOffs(ii,2);
-                obj.annotsOut.srcType.srcType(end+1) = {eventType};
+                obj.annotsOut.srcType.srcType(end+1,1) = {eventType};
             end
             if sceneConfig.sources(1).normalize
                 sigSorted = sort( abs( signal{1}(:) ) );

@@ -41,9 +41,9 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
         function process( obj, pipeWavFilepath )
             numSrcs = numel( obj.sceneConfig.sources );
             obj.annotsOut.srcType = struct( 't', struct( 'onset', {[]}, 'offset', {[]} ), ...
-                                            'srcType', {cell(1,0)} );
+                                            'srcType', {cell(0,1)} );
             obj.annotsOut.srcFile = struct( 't', struct( 'onset', {[]}, 'offset', {[]} ), ...
-                                            'srcFile', {cell(1,0)} );
+                                            'srcFile', {cell(0,1)} );
             
             switch obj.sceneConfig.lenRefType
                 case 'time'
@@ -108,13 +108,13 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                                            (tSoFar+splitOut.annotations.srcType.t.onset)];
                     obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
                                           (tSoFar+splitOut.annotations.srcType.t.offset)];
-                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType ...
+                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType; ...
                                                     splitOut.annotations.srcType.srcType];
                     obj.annotsOut.srcFile.t.onset = [obj.annotsOut.srcFile.t.onset ...
                                            (tSoFar+splitOut.annotations.srcFile.t.onset)];
                     obj.annotsOut.srcFile.t.offset = [obj.annotsOut.srcFile.t.offset ...
                                           (tSoFar+splitOut.annotations.srcFile.t.offset)];
-                    obj.annotsOut.srcFile.srcFile = [obj.annotsOut.srcFile.srcFile ...
+                    obj.annotsOut.srcFile.srcFile = [obj.annotsOut.srcFile.srcFile; ...
                                                     splitOut.annotations.srcFile.srcFile];
                     
                     splitSignalLen = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
@@ -135,6 +135,10 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             for ss = 1 : numSrcs
                 if size( splitEarSignals{ss}, 1 ) > mixLen
                     splitEarSignals{ss}(mixLen+1:end,:) = [];
+                elseif size( splitEarSignals{ss}, 1 ) < mixLen
+                    splitEarSignals{ss}(end+1:mixLen,:) = ...
+                                     repmat( mean( splitEarSignals{ss} ), ...
+                                             mixLen - size( splitEarSignals{ss}, 1 ), 1 );
                 end
             end
             onsetOutside = obj.annotsOut.srcType.t.onset > (mixLen / obj.getDataFs());
@@ -148,11 +152,11 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             tAzmOutside = obj.annotsOut.srcAzms.t > (mixLen / obj.getDataFs());
             obj.annotsOut.srcAzms.t(tAzmOutside) = [];
             for ii = 1 : numSrcs
-                obj.annotsOut.srcAzms.srcAzms(ii,:) = single( interp1( tSplitAzms{ii}, ...
+                obj.annotsOut.srcAzms.srcAzms(:,ii) = single( interp1( tSplitAzms{ii}, ...
                              splitAzms{ii}, obj.annotsOut.srcAzms.t, 'next', 'extrap' ) );
             end
 
-            obj.annotsOut.srcEnergy = struct( 't', {[]}, 'srcEnergy', {cell(numSrcs,0)} );
+            obj.annotsOut.srcEnergy = struct( 't', {[]} );
             for ss = 1 : numSrcs
                 [energy1, tEnergy] = DataProcs.SceneEarSignalProc.runningEnergy( ...
                                                      obj.getDataFs(), ...
@@ -165,7 +169,8 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                 if numel( tEnergy ) > numel( obj.annotsOut.srcEnergy.t )
                     obj.annotsOut.srcEnergy.t = single( tEnergy );
                 end
-                obj.annotsOut.srcEnergy.srcEnergy{ss} = single( [energy1',energy2'] );
+                obj.annotsOut.srcEnergy.srcEnergy(:,ss) = ...
+                          arrayfun( @(e1,e2)( {single( [e1,e2] )} ), energy1', energy2' );
             end
             
             obj.earSout = zeros( mixLen, 2 );

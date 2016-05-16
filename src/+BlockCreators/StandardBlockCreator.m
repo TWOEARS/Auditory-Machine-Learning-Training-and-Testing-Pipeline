@@ -48,24 +48,24 @@ classdef StandardBlockCreator < BlockCreators.Base
                     seqAname = sequenceAfields{jj};
                     annot = annotations.(seqAname);
                     if ~isstruct( annot.t ) % time series
-                        if all( size( annot.t ) == size( annot.(seqAname) ) )
+                        if length( annot.t ) == size( annot.(seqAname), 1 )
                             isTinBlock = arrayfun( @(at)(...
                                                        at >= blockOn && at <= blockOff ...
                                                                              ), annot.t );
-                            blockAnnots(ii).(seqAname).(seqAname)(~isTinBlock) = [];
+                            blockAnnots(ii).(seqAname).(seqAname)(~isTinBlock,:) = [];
                             blockAnnots(ii).(seqAname).t(~isTinBlock) = [];
                         else
                             error( 'unexpected annotations sequence structure' );
                         end
                     elseif all( isfield( annot.t, {'onset','offset'} ) ) % event series
                         if isequal( size( annot.t.onset ), size( annot.t.offset ) ) && ...
-                              isequal( size( annot.t.onset ), size( annot.(sequenceAfields{jj}) ) )
+                           length( annot.t.onset ) == size( annot.(seqAname).(seqAname), 1 )
                             isEventInBlock = arrayfun( @(eon,eoff)(...
                                                (eon >= blockOn && eon <= blockOff) || ...
                                               (eoff >= blockOn && eoff <= blockOff) || ...
                                                (eon <= blockOn && eoff >= blockOff)...
                                                        ), annot.t.onset, annot.t.offset );
-                            blockAnnots(ii).(seqAname).(seqAname)(~isEventInBlock) = [];
+                            blockAnnots(ii).(seqAname).(seqAname)(~isEventInBlock,:) = [];
                             blockAnnots(ii).(seqAname).t.onset(~isEventInBlock) = [];
                             blockAnnots(ii).(seqAname).t.offset(~isEventInBlock) = [];
                         else

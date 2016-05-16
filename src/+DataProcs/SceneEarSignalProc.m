@@ -165,8 +165,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                 if numel( tEnergy ) > numel( obj.annotsOut.srcEnergy.t )
                     obj.annotsOut.srcEnergy.t = single( tEnergy );
                 end
-                energy = arrayfun( @(e1,e2)({single([e1,e2])}), energy1, energy2 );
-                obj.annotsOut.srcEnergy.srcEnergy{ss} = energy';
+                obj.annotsOut.srcEnergy.srcEnergy{ss} = single( [energy1',energy2'] );
             end
             
             obj.earSout = zeros( mixLen, 2 );
@@ -200,8 +199,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                                                              double(obj.earSout(:,2)), ...
                                                              20e-3, 10e-3 );
             obj.annotsOut.mixEnergy.t = single( tEnergy );
-            energy = arrayfun( @(e1,e2)({single([e1,e2])}), energy1, energy2 );
-            obj.annotsOut.mixEnergy.mixEnergy = energy';
+            obj.annotsOut.mixEnergy.mixEnergy = single( [energy1',energy2'] );
         end
         
     end

@@ -42,11 +42,13 @@ classdef StandardBlockCreator < BlockCreators.Base
                 afeBlocks{ii} = obj.cutDataBlock( afeData, backOffset_s );
                 blockOn = blockOnsets(ii);
                 blockOff = blockOffsets(ii);
+                blockAnnots(ii).blockOnset = blockOn;
+                blockAnnots(ii).blockOffset = blockOff;
                 for jj = 1 : numel( sequenceAfields )
                     seqAname = sequenceAfields{jj};
                     annot = annotations.(seqAname);
                     if ~isstruct( annot.t ) % time series
-                        if size( annot.t ) == size( annot.(seqAname) )
+                        if all( size( annot.t ) == size( annot.(seqAname) ) )
                             isTinBlock = arrayfun( @(at)(...
                                                        at >= blockOn && at <= blockOff ...
                                                                              ), annot.t );

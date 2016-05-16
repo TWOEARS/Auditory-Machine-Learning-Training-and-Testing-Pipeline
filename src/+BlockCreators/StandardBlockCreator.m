@@ -56,8 +56,8 @@ classdef StandardBlockCreator < BlockCreators.Base
                             error( 'unexpected annotations sequence structure' );
                         end
                     elseif all( isfield( annot.t, {'onset','offset'} ) ) % event series
-                        if size( annot.t.onset ) == size( annot.t.offset ) && ...
-                              size( annot.t.onset ) == size( annot.(sequenceAfields{jj}) )
+                        if isequal( size( annot.t.onset ), size( annot.t.offset ) ) && ...
+                              isequal( size( annot.t.onset ), size( annot.(sequenceAfields{jj}) ) )
                             isEventInBlock = arrayfun( @(eon,eoff)(...
                                                (eon >= blockOn && eon <= blockOff) || ...
                                               (eoff >= blockOn && eoff <= blockOff) || ...
@@ -65,7 +65,6 @@ classdef StandardBlockCreator < BlockCreators.Base
                                                        ), annot.t.onset, annot.t.offset );
                             blockAnnots(jj).(seqAname).(seqAname)(~isEventInBlock) = [];
                             blockAnnots(jj).(seqAname).t(~isEventInBlock) = [];
-                            
                         else
                             error( 'unexpected annotations sequence structure' );
                         end

@@ -4,6 +4,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
     properties (SetAccess = private)
         sceneConfig;
         binauralSim;        % binaural simulator
+%        ratemapAFE;
         earSout;
         annotsOut;
     end
@@ -12,9 +13,18 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
     methods (Access = public)
         
         function obj = SceneEarSignalProc( binauralSim )
+%            ratemapAfeRequest{1}.name = 'ratemap';
+%            ratemapAfeRequest{1}.params = genParStruct( ...
+%                'pp_bNormalizeRMS', false, ...
+%                'rm_scaling', 'power', ...
+%                'fb_nChannels', 64 );
+%            afe = DataProcs.AuditoryFEmodule( binauralSim.getDataFs(), ratemapAfeRequest );
+%            obj = obj@DataProcs.IdProcWrapper( {binauralSim,afe}, false );
             obj = obj@DataProcs.IdProcWrapper( binauralSim, false );
             obj.binauralSim = obj.wrappedProcs{1};
+%            obj.ratemapAFE = obj.wrappedProcs{2};
             obj.sceneConfig = SceneConfig.SceneConfiguration.empty;
+%            obj.ratemapAFE.setInputProc( obj.binauralSim );
         end
         %% ----------------------------------------------------------------
 
@@ -55,6 +65,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             splitEarSignals = cell( numSrcs, 1 );
             tSplitAzms = cell(numSrcs,1);
             splitAzms = cell(numSrcs,1);
+%            splitRms = cell(numSrcs,2);
             for srcIdx = srcIndexes
                 splitSignalLen = 0;
                 while (splitSignalLen == 0) || (splitSignalLen < targetSignalLen - 0.01)
@@ -76,6 +87,8 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                         obj.binauralSim.setSceneConfig( scInst );
                         splitOut = ...
                               obj.binauralSim.processSaveAndGetOutput( splitWavFilepath );
+%                        splitOutRm = ...
+%                               obj.ratemapAFE.processSaveAndGetOutput( splitWavFilepath );
                     end
                     if ~isempty( splitEarSignals{srcIdx} )
                         splitOut.earSout = DataProcs.SceneEarSignalProc.adjustSNR( ...
@@ -88,6 +101,9 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                              [tSplitAzms{srcIdx} (tSoFar+splitOut.annotations.srcAzms.t)];
                     splitAzms{srcIdx} = ...
                                  [splitAzms{srcIdx}; splitOut.annotations.srcAzms.srcAzms];
+ %                   rm = splitOutRm.afeData(1);
+ %                   splitRms{srcIdx,1} = [splitRms{srcIdx,1}; [rm{1}.Data(:); rm{1}.Data(end,:)]];
+ %                   splitRms{srcIdx,2} = [splitRms{srcIdx,2}; [rm{2}.Data(:); rm{2}.Data(end,:)]];
                     obj.annotsOut.srcType.t.onset = [obj.annotsOut.srcType.t.onset ...
                                            (tSoFar+splitOut.annotations.srcType.t.onset)];
                     obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
@@ -130,11 +146,11 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                 [energy1, tEnergy] = DataProcs.SceneEarSignalProc.runningEnergy( ...
                                                      obj.getDataFs(), ...
                                                      double(splitEarSignals{ss}(:,1)), ...
-                                                     100e-3, 50e-3 );
+                                                     20e-3, 10e-3 );
                 [energy2, ~] = DataProcs.SceneEarSignalProc.runningEnergy( ...
                                                      obj.getDataFs(), ...
                                                      double(splitEarSignals{ss}(:,2)), ...
-                                                     100e-3, 50e-3 );
+                                                     20e-3, 10e-3 );
                 if numel( tEnergy ) > numel( obj.annotsOut.srcEnergy.t )
                     obj.annotsOut.srcEnergy.t = single( tEnergy );
                 end
@@ -167,11 +183,11 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             [energy1, tEnergy] = DataProcs.SceneEarSignalProc.runningEnergy( ...
                                                              obj.getDataFs(), ...
                                                              double(obj.earSout(:,1)), ...
-                                                             100e-3, 50e-3 );
+                                                             20e-3, 10e-3 );
             [energy2, ~] = DataProcs.SceneEarSignalProc.runningEnergy( ...
                                                              obj.getDataFs(), ...
                                                              double(obj.earSout(:,2)), ...
-                                                             100e-3, 50e-3 );
+                                                             20e-3, 10e-3 );
             obj.annotsOut.mixEnergy.t = single( tEnergy );
             energy = arrayfun( @(e1,e2)({single([e1,e2])}), energy1, energy2 );
             obj.annotsOut.mixEnergy.mixEnergy = energy';

@@ -50,8 +50,8 @@ classdef StandardBlockCreator < BlockCreators.Base
                             isTinBlock = arrayfun( @(at)(...
                                                        at >= blockOn && at <= blockOff ...
                                                                              ), annot.t );
-                            blockAnnots(jj).(seqAname).(seqAname)(~isTinBlock) = [];
-                            blockAnnots(jj).(seqAname).t(~isTinBlock) = [];
+                            blockAnnots(ii).(seqAname).(seqAname)(~isTinBlock) = [];
+                            blockAnnots(ii).(seqAname).t(~isTinBlock) = [];
                         else
                             error( 'unexpected annotations sequence structure' );
                         end
@@ -63,8 +63,9 @@ classdef StandardBlockCreator < BlockCreators.Base
                                               (eoff >= blockOn && eoff <= blockOff) || ...
                                                (eon <= blockOn && eoff >= blockOff)...
                                                        ), annot.t.onset, annot.t.offset );
-                            blockAnnots(jj).(seqAname).(seqAname)(~isEventInBlock) = [];
-                            blockAnnots(jj).(seqAname).t(~isEventInBlock) = [];
+                            blockAnnots(ii).(seqAname).(seqAname)(~isEventInBlock) = [];
+                            blockAnnots(ii).(seqAname).t.onset(~isEventInBlock) = [];
+                            blockAnnots(ii).(seqAname).t.offset(~isEventInBlock) = [];
                         else
                             error( 'unexpected annotations sequence structure' );
                         end

@@ -29,10 +29,8 @@ classdef StandardBlockCreator < BlockCreators.Base
             backOffsets_s = ...
                        0.0 : obj.shiftSize_s : max( streamLen_s-obj.shiftSize_s+0.01, 0 );
             blockAnnots = repmat( annotations, numel( backOffsets_s ), 1 );
-            blockOffsets = {streamLen_s - backOffsets_s}';
-            blockOnsets = {[blockOffsets{:}] - obj.blockSize_s}';
-            [blockAnnots(:).blockOffset] = deal( blockOffsets{:} );
-            [blockAnnots(:).blockOnset] = deal( blockOnsets{:} );
+            blockOffsets = [streamLen_s - backOffsets_s]';
+            blockOnsets = max( 0, blockOffsets - obj.blockSize_s );
             aFields = fieldnames( annotations );
             isSequenceAnnotation = cellfun( @(af)(...
                       isstruct( annotations.(af) ) && isfield( annotations.(af), 't' ) ...
@@ -42,11 +40,11 @@ classdef StandardBlockCreator < BlockCreators.Base
             for ii = 1 : numel( backOffsets_s )
                 backOffset_s = backOffsets_s(ii);
                 afeBlocks{ii} = obj.cutDataBlock( afeData, backOffset_s );
+                blockOn = blockOnsets(ii);
+                blockOff = blockOffsets(ii);
                 for jj = 1 : numel( sequenceAfields )
                     seqAname = sequenceAfields{jj};
                     annot = annotations.(seqAname);
-                    blockOn = blockAnnots(jj).blockOnset;
-                    blockOff = blockAnnots(jj).blockOffset;
                     if ~isstruct( annot.t ) % time series
                         if size( annot.t ) == size( annot.(seqAname) )
                             isTinBlock = arrayfun( @(at)(...

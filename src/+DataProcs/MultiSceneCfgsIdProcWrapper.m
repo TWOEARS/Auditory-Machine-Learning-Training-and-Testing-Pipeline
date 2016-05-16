@@ -66,6 +66,7 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
                 wrapOut = obj.wrappedProcs{1}.processSaveAndGetOutput( wavFilepath );
                 wrapOut.annotations.mcSceneId = ii;
+                wrapOut.annotations.sceneConfig = obj.sceneConfigurations(ii);
                 obj.wrappedProcs{1}.save( wavFilepath, wrapOut );
                 obj.wrappedLastConfigs{ii} = obj.wrappedProcs{1}.lastConfig;
                 obj.wrappedLastFolders{ii} = obj.wrappedProcs{1}.lastFolder;

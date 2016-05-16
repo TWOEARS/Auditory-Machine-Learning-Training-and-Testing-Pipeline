@@ -132,10 +132,21 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             else
                 mixLen = min( cellfun( @(s)(size( s, 1 )), splitEarSignals ) );
             end
+            for ss = 1 : numSrcs
+                if size( splitEarSignals{ss}, 1 ) > mixLen
+                    splitEarSignals{ss}(mixLen+1:end,:) = [];
+                end
+            end
+            onsetOutside = obj.annotsOut.srcType.t.onset > (mixLen / obj.getDataFs());
+            obj.annotsOut.srcType.t.onset(onsetOutside) = [];
+            obj.annotsOut.srcType.t.offset(onsetOutside) = [];
+            obj.annotsOut.srcType.srcType(onsetOutside) = [];
             fprintf( '::' );
             
             obj.annotsOut.srcAzms = struct( 't', {[]}, 'srcAzms', {[]} );
             obj.annotsOut.srcAzms.t = single( unique( [tSplitAzms{:}] ) );
+            tAzmOutside = obj.annotsOut.srcAzms.t > (mixLen / obj.getDataFs());
+            obj.annotsOut.srcAzms.t(tAzmOutside) = [];
             for ii = 1 : numSrcs
                 obj.annotsOut.srcAzms.srcAzms(ii,:) = single( interp1( tSplitAzms{ii}, ...
                              splitAzms{ii}, obj.annotsOut.srcAzms.t, 'next', 'extrap' ) );

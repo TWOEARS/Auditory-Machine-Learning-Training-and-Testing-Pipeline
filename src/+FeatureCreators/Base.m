@@ -35,7 +35,7 @@ classdef Base < Core.IdProcInterface
             inData = obj.loadInputData( wavFilepath );
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.x = [];
-            for afeBlock = inData.afeBlocks
+            for afeBlock = inData.afeBlocks'
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
                 obj.x(end+1,:) = xd{1};

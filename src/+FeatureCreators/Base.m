@@ -52,6 +52,7 @@ classdef Base < Core.IdProcInterface
         % override of Core.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
             tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
+            obj.x = tmpOut.x;
             obj.inDatPath = tmpOut.inDatPath;
             try
                 out = obj.getOutput;

@@ -35,12 +35,12 @@ classdef Base < Core.IdProcInterface
             in = obj.loadInputData( wavFilepath );
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.y = [];
-            for blockAnnotation = in.blockAnnotations
+            for blockAnnotation = in.blockAnnotations'
                 if obj.labelBlockSize_auto
-                    obj.labelBlockSize_s = blockAnnotation{1}.blockOffset - ...
-                                                            blockAnnotation{1}.blockOnset;
+                    obj.labelBlockSize_s = ...
+                                 blockAnnotation.blockOffset - blockAnnotation.blockOnset;
                 end
-                obj.y(end+1,:) = obj.label( blockAnnotation{1} );
+                obj.y(end+1,:) = obj.label( blockAnnotation );
                 if obj.labelBlockSize_auto
                     obj.labelBlockSize_s = [];
                 end
@@ -52,6 +52,7 @@ classdef Base < Core.IdProcInterface
         % override of DataProcs.IdProcInterface's method
         function out = loadProcessedData( obj, wavFilepath )
             tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
+            obj.y = tmpOut.y;
             obj.inDatPath = tmpOut.inDatPath;
             try
                 out = obj.getOutput;

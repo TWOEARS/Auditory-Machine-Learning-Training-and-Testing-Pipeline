@@ -17,8 +17,7 @@ pipe.modelCreator = modelTrainers.GlmNetLambdaSelectTrainer( ...
     'cvFolds', 4, ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
-%pipe.trainset = 'learned_models/IdentityKS/trainTestSets/NIGENS_75pTrain_TrainSet_1.flist';
-pipe.trainset = 'learned_models/IdentityKS/trainTestSets/trainSet_miniMini2.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/NIGENS_75pTrain_TrainSet_1.flist';
 pipe.setupData();
 
 sc=sceneConfig.SceneConfiguration();

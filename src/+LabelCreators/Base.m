@@ -93,12 +93,13 @@ classdef Base < Core.IdProcInterface
                 error( 'LCB.FileCorrupt', '%s not found.', obj.inDatPath );
             end
             inDat = load( obj.inDatPath );
+            inDat2 = load( inDat.inDatPath );
             out.x = inDat.x;
-            out.a = inDat.blockAnnotations;
+            out.a = inDat2.blockAnnotations;
             out.y = obj.y;
-            out.x(any(isnan(out.y))) = [];
-            out.a(any(isnan(out.y))) = [];
-            out.y(any(isnan(out.y))) = [];
+            out.x(isnan(out.y),:) = [];
+            out.a(isnan(out.y)) = [];
+            out.y(isnan(out.y)) = [];
         end
         %% -------------------------------------------------------------------------------
         

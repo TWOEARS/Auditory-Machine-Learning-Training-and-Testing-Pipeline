@@ -64,16 +64,16 @@ classdef BinaryEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
         % override of LabelCreators.MultiEventTypeLabeler's method
         function y = label( obj, blockAnnotations )
             relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
-            if relBlockEventOverlap(1) > obj.minBlockToEventRatio
+            if relBlockEventOverlap(1) >= obj.minBlockToEventRatio
                 y = 1;
             elseif strcmp( obj.negOut, 'event' ) && ...
-                    (relBlockEventOverlap(2) > obj.minBlockToEventRatio)
+                    (relBlockEventOverlap(2) >= obj.minBlockToEventRatio)
                 y = -1;
             elseif strcmp( obj.negOut, 'non-event' ) && ...
-                    (max( relBlockEventOverlap ) < obj.maxNegBlockToEventRatio) 
+                    (max( relBlockEventOverlap ) <= obj.maxNegBlockToEventRatio) 
                 y = -1;
             elseif strcmp( obj.negOut, 'all' ) && ...
-                    (relBlockEventOverlap(1) < obj.maxNegBlockToEventRatio) 
+                    (relBlockEventOverlap(1) <= obj.maxNegBlockToEventRatio) 
                 y = -1;
             else
                 y = NaN;

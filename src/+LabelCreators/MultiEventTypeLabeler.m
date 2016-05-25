@@ -62,22 +62,26 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         function relBlockEventsOverlap = relBlockEventsOverlap( obj, blockAnnotations )
             blockOffset = blockAnnotations.blockOffset;
             labelBlockOnset = blockOffset - obj.labelBlockSize_s;
-            eventOnsets = blockAnnotations.objectType.t.onset;
-            eventOffsets = blockAnnotations.objectType.t.offset;
+            eventOnsets = blockAnnotations.srcType.t.onset;
+            eventOffsets = blockAnnotations.srcType.t.offset;
             eventBlockOverlaps = arrayfun( @(eon,eof)(...
                                   min( blockOffset, eof ) - max( labelBlockOnset, eon )...
                                                            ), eventOnsets, eventOffsets );
-            relBlockEventsOverlap = zeros( size( obj.eventIsType ) );
+            relBlockEventsOverlap = zeros( size( obj.types ) );
             for ii = 1 : numel( obj.types )
                 eventsAreType = cellfun( @(ba)(...
                                   obj.eventIsType( ii, ba )...
-                                              ), blockAnnotations.objectType.objectType );
-                isEventBlockOverlap = eventsAreType & (eventBlockOverlaps > 0);
+                                              ), blockAnnotations.srcType.srcType );
+                isEventBlockOverlap = eventsAreType & (eventBlockOverlaps' > 0);
                 eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );
-                eventLen = sum( eventOffsets(isEventBlockOverlap) ...
-                  - eventOnsets(isEventBlockOverlap) );
-                maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
-                relBlockEventsOverlap(ii) = eventBlockOverlapLen / maxBlockEventLen;
+                if eventBlockOverlapLen == 0
+                    relBlockEventsOverlap(ii) = 0;
+                else
+                    eventLen = sum( eventOffsets(isEventBlockOverlap) ...
+                                                     - eventOnsets(isEventBlockOverlap) );
+                    maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
+                    relBlockEventsOverlap(ii) = eventBlockOverlapLen / maxBlockEventLen;
+                end
             end
         end
         %% -------------------------------------------------------------------------------

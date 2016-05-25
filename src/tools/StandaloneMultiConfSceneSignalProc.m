@@ -95,6 +95,7 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
                     'Zeropadding', 0.25 * obj.SampleRate,...
                     'Normalize', true, ...
                     'CellOutput', true);
+                % concatenate and normalize
                 sourceSignal = sourceSignals{1};
                 sourceSignal(:,1) = sourceSignal(:,1) - mean( sourceSignal(:,1) );
                 if size( sourceSignal, 2 ) == 1
@@ -103,12 +104,14 @@ classdef StandaloneMultiConfSceneSignalProc < simulator.RobotInterface
                     sourceSignal(:,2) = sourceSignal(:,2) - mean( sourceSignal(:,2) );
                 end
                 for ii = 2 : numel( sourceSignals )
+                    % bring source signals on same energy level
                     sourceSignals{ii} = dataProcs.SceneEarSignalProc.adjustSNR( obj.SampleRate, ...
                         sourceSignal, 'energy', sourceSignals{ii}, 0 );
+                    % concatenate individual source signals
                     sourceSignal = [sourceSignal; sourceSignals{ii}];
                     fprintf( '.' );
                 end
-                sourceSignal = sourceSignal / max( abs( sourceSignal(:) ) ); % normalize
+                sourceSignal = sourceSignal / max( abs( sourceSignal(:) ) ); % normalize amplitude
                 obj.targetOnOffs = vertcat(sourceLabels.cumOnsetsOffsets);
                 labels = {};
                 for ii = 1 : numel( sourceLabels )

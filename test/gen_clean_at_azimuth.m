@@ -24,7 +24,7 @@ pipe.setupData();
 sc=sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource( ...
     'azimuth', sceneConfig.ValGen('manual', azimuths{aa}{1})));
-pipe.init([sc]);
+pipe.init([sc], 'sceneCfgDataUseRatio', 0.5 );
 modelPath = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
 
 %Generate Test Data
@@ -41,7 +41,7 @@ pipe.setupData();
 sc=sceneConfig.SceneConfiguration();
 sc.addSource( sceneConfig.PointSource( ...
     'azimuth', sceneConfig.ValGen('manual', azimuths{aa}{1})));
-pipe.init([sc]);
+pipe.init( [sc], 'sceneCfgDataUseRatio', 1 );
 modelPath1 = pipe.pipeline.run( {'dataStoreUni'}, 0 ); % universal format (x,y)
 
 fprintf( ' -- Training: Saved at %s -- \n\n', modelPath );

@@ -64,21 +64,26 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             labelBlockOnset = blockOffset - obj.labelBlockSize_s;
             eventOnsets = blockAnnotations.srcType.t.onset;
             eventOffsets = blockAnnotations.srcType.t.offset;
-            eventBlockOverlaps = arrayfun( @(eon,eof)(...
-                                  min( blockOffset, eof ) - max( labelBlockOnset, eon )...
-                                                           ), eventOnsets, eventOffsets );
             relBlockEventsOverlap = zeros( size( obj.types ) );
             for ii = 1 : numel( obj.types )
                 eventsAreType = cellfun( @(ba)(...
                                   obj.eventIsType( ii, ba )...
                                               ), blockAnnotations.srcType.srcType );
-                isEventBlockOverlap = eventsAreType & (eventBlockOverlaps' > 0);
+                thisTypeEventOnOffs = ...
+                               [eventOnsets(eventsAreType)' eventOffsets(eventsAreType)'];
+                thisTypeMergedEventOnOffs = sortAndMergeOnOffs( thisTypeEventOnOffs );
+                thisTypeMergedOnsets = thisTypeMergedEventOnOffs(:,1);
+                thisTypeMergedOffsets = thisTypeMergedEventOnOffs(:,2);
+                eventBlockOverlaps = arrayfun( @(eon,eof)(...
+                                  min( blockOffset, eof ) - max( labelBlockOnset, eon )...
+                                         ), thisTypeMergedOnsets, thisTypeMergedOffsets );
+                isEventBlockOverlap = eventBlockOverlaps' > 0;
                 eventBlockOverlapLen = sum( eventBlockOverlaps(isEventBlockOverlap) );
                 if eventBlockOverlapLen == 0
                     relBlockEventsOverlap(ii) = 0;
                 else
-                    eventLen = sum( eventOffsets(isEventBlockOverlap) ...
-                                                     - eventOnsets(isEventBlockOverlap) );
+                    eventLen = sum( thisTypeMergedOffsets(isEventBlockOverlap) ...
+                                            - thisTypeMergedOnsets(isEventBlockOverlap) );
                     maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
                     relBlockEventsOverlap(ii) = eventBlockOverlapLen / maxBlockEventLen;
                 end

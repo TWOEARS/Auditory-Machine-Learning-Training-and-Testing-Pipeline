@@ -58,6 +58,7 @@ classdef EnergyDependentLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function eTooLow = isEnergyTooLow( blockAnnots, sourceIds, sourcesMinEnergy )
+            sourceIds(sourceIds > size( blockAnnots.srcEnergy.srcEnergy, 2 )) = [];
             eOverTime = cellfun( @mean, blockAnnots.srcEnergy.srcEnergy(:,sourceIds) );
             eSrcsBlock = mean( eOverTime );
             eTooLow = sum( log( sourcesMinEnergy ./ eSrcsBlock ) ) < 0;

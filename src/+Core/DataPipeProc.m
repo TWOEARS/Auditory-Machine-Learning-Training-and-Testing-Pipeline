@@ -75,10 +75,13 @@ classdef DataPipeProc < handle
                      repmat( '=', 1, 9 + numel( obj.dataFileProcessor.procName ) ) );
             datalist = obj.data(:)';
             datalist = datalist(obj.fileListOverlay);
+            ndf = numel( datalist );
+            dfii = 1;
             for dataFile = datalist(randperm(length(datalist)))'
-                fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.fileName );
+                fprintf( '%s << (%d/%d) -- %s\n', ...
+                           obj.dataFileProcessor.procName, dfii, ndf, dataFile.fileName );
                 obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
-                % TODO: semaphore
+                dfii = dfii + 1;
                 fprintf( '\n' );
             end
             obj.dataFileProcessor.saveCacheDirectory();

@@ -86,7 +86,7 @@ classdef IdentTrainPipeData < handle
                         end
                         varargout{1:nargout} = ...
                                     vertcat( obj.data(fIdx).(dSubScript)(xyIdx,:,:,:,:) );
-                    elseif strcmp( dSubScript, 'fileName' )
+                    elseif any( strcmp( dSubScript, {'fileName','blockAnnotsCacheFile'} ) )
                         varargout{1:nargout} = { obj.data(fIdx).(dSubScript) }';
                     elseif strcmp( dSubScript, 'pointwiseFileIdxs' )
                         out = [];

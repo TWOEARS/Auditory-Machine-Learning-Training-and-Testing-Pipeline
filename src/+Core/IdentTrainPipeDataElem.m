@@ -5,7 +5,8 @@ classdef IdentTrainPipeDataElem < handle
         fileName;
         x;
         y;
-        a;
+        bIdxs;
+        blockAnnotsCacheFile;
         fileAnnotations = struct;
     end
     

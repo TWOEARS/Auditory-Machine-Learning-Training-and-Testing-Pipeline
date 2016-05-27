@@ -27,10 +27,10 @@ classdef GatherFeaturesProc < Core.IdProcInterface
 
         function process( obj, wavFilepath )
             xy = obj.loadInputData( wavFilepath );
-            dataFile = obj.idData(':',wavFilepath);
+            dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
             if obj.sceneCfgDataUseRatio < 1  &&  ...
-                    ~strcmp( obj.prioClass, IdEvalFrame.readEventClass( wavFilepath ) )
+                            ~strcmp( obj.prioClass, dataFile.getFileAnnotation( 'type' ) )
                 nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
                 useIdxs = randperm( size( xy.x, 1 ) );
                 useIdxs(nUsePoints+1:end) = [];
@@ -39,7 +39,9 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             end
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
             dataFile.y = [dataFile.y; xy.y(useIdxs)];
-%            dataFile.mc = [dataFile.mc; repmat( ii, size( xy.y(useIdxs) ) )];
+            dataFile.bIdxs = [dataFile.bIdxs; useIdxs'];
+            dataFile.blockAnnotsCacheFile = [dataFile.blockAnnotsCacheFile; ...
+                                        {obj.inputProc.getOutputFilepath( wavFilepath )}];
             fprintf( '.' );
         end
         %% -------------------------------------------------------------------------------

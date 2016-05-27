@@ -69,9 +69,9 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.earSout = signal{1};
                 t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
                 t = t / obj.getDataFs;
-                obj.annotsOut.srcAzms.t = single( t );
-                obj.annotsOut.srcAzms.srcAzms(:,1) = ...
-                                            single( repmat( obj.srcAzimuth, size( t ) ) );
+                obj.annotsOut.srcAzms = struct( ...
+                             't', {single( t )}, ...
+                             'srcAzms', {single( repmat( obj.srcAzimuth, numel( t ), 1 ) )} );
             else
                 obj.setSourceData( signal{1} );
                 obj.simulate();
@@ -222,6 +222,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 nZeros = floor( obj.convRoomSim.SampleRate * startOffset );
                 zeroOffset = zeros( nZeros, 1 ) + mean( signal{1} );
                 signal{1} = [zeroOffset; signal{1}; zeroOffset];
+                wavFilepath = 'directData';
             else
                 error( 'This was not foreseen.' );
             end

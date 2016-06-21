@@ -49,7 +49,7 @@ classdef GatherFeaturesProc < handle
                 catch err
                     if strcmp( err.identifier, 'MATLAB:load:couldNotReadFile' ) ...
                             && obj.deletedDirFiles
-                        return; 
+                        continue; 
                     else
                         rethrow( err );
                     end
@@ -76,7 +76,7 @@ classdef GatherFeaturesProc < handle
                                     rethrow( err );
                                 case 'c'
                                     delete( inFileName );
-                                    return;
+                                    continue;
                                 case 't'
                                     inFileDir = fileparts( inFileName );
                                     delete( [inFileDir filesep '*.wav.*'] );
@@ -85,7 +85,7 @@ classdef GatherFeaturesProc < handle
                                     inFileDir = fileparts( inFileName );
                                     delete( [inFileDir filesep '*.wav.*'] );
                                     obj.deletedDirFiles = true;
-                                    return;
+                                    break;
                                 otherwise
                                     rethrow( err );
                             end

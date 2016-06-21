@@ -109,7 +109,7 @@ classdef GatherFeaturesProc < handle
             end
             fprintf( ';\n' );
             if deletedDirFiles
-                quit;
+                rethrow( err );
             end
         end
         %% ----------------------------------------------------------------

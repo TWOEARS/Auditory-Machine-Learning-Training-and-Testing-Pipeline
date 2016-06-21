@@ -84,7 +84,7 @@ classdef GatherFeaturesProc < handle
                                 case 'a'
                                     inFileDir = fileparts( inFileName );
                                     delete( [inFileDir filesep '*.wav.*'] );
-                                    obj.deletedDirfiles = true;
+                                    obj.deletedDirFiles = true;
                                     return;
                                 otherwise
                                     rethrow( err );

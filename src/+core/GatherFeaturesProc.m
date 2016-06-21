@@ -8,7 +8,6 @@ classdef GatherFeaturesProc < handle
         inputFileNameBuilder;
         confDataUseRatio = 1;
         prioClass = [];
-        deletedDirFiles = false;
     end
     
     %% --------------------------------------------------------------------
@@ -40,6 +39,7 @@ classdef GatherFeaturesProc < handle
         %% ----------------------------------------------------------------
 
         function run( obj )
+            deletedDirFiles = false;
             fprintf( '\nRunning: GatherFeaturesProc\n==========================================\n' );
             for dataFile = obj.data(:)'
                 fprintf( '.%s ', dataFile.wavFileName );
@@ -48,7 +48,8 @@ classdef GatherFeaturesProc < handle
                     in = load( inFileName, 'singleConfFiles' );
                 catch err
                     if strcmp( err.identifier, 'MATLAB:load:couldNotReadFile' ) ...
-                            && obj.deletedDirFiles
+                            && deletedDirFiles
+                        fprintf( ';\n' );
                         continue; 
                     else
                         rethrow( err );
@@ -84,7 +85,7 @@ classdef GatherFeaturesProc < handle
                                 case 'a'
                                     inFileDir = fileparts( inFileName );
                                     delete( [inFileDir filesep '*.wav.*'] );
-                                    obj.deletedDirFiles = true;
+                                    deletedDirFiles = true;
                                     break;
                                 otherwise
                                     rethrow( err );
@@ -107,6 +108,9 @@ classdef GatherFeaturesProc < handle
                 fprintf( ';\n' );
             end
             fprintf( ';\n' );
+            if deletedDirFiles
+                quit;
+            end
         end
         %% ----------------------------------------------------------------
 

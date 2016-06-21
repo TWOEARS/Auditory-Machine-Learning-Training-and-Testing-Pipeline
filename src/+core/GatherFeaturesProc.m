@@ -51,10 +51,32 @@ classdef GatherFeaturesProc < handle
                         xy = load( in.singleConfFiles{ii} );
                     catch err
                         if strcmp( err.identifier, 'MATLAB:load:couldNotReadFile' )
-                            fprintf( '\n%s seems corrupt.\nDelete and rerun pipe.\n', ...
+                            fprintf( '\n%s seems corrupt.\n', ...
                                 inFileName );
+                            choice = input( ...
+                                ['Choose: [q]uit, [d]elete and quit, '...
+                                 'delete and [c]ontinue, '...
+                                 'delete all in directory and qui[t], '...
+                                 'delete [a]ll in directory and continue'], 's' );
+                            switch choice
+                                case 'q'
+                                    rethrow( err );
+                                case 'd'
+                                    delete( inFileName );
+                                    rethrow( err );
+                                case 'c'
+                                    delete( inFileName );
+                                case 't'
+                                    inFileDir = fileparts( inFileName );
+                                    delete( [inFileDir filesep '*.wav.*'] );
+                                    rethrow( err );
+                                case 'a'
+                                    inFileDir = fileparts( inFileName );
+                                    delete( [inFileDir filesep '*.wav.*'] );
+                                otherwise
+                                    rethrow( err );
+                            end
                         end
-                        rethrow( err );
                     end
                     if obj.confDataUseRatio < 1  &&  ...
                        ~strcmp( obj.prioClass, ...

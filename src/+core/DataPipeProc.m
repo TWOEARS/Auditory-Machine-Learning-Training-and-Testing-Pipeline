@@ -84,6 +84,7 @@ classdef DataPipeProc < handle
         %% ----------------------------------------------------------------
 
         function run( obj )
+            errs = {};
             fprintf( '\nRunning: %s\n==========================================\n',...
                 obj.dataFileProcessor.procName );
             data = obj.data(:);
@@ -92,13 +93,21 @@ classdef DataPipeProc < handle
                 fprintf( '%s << %s\n', obj.dataFileProcessor.procName, dataFile.wavFileName );
                 if ~obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.wavFileName )
                     inputFileName = obj.inputFileNameBuilder( dataFile.wavFileName );
-                    obj.dataFileProcessor.process( inputFileName );
-                    obj.dataFileProcessor.saveOutput( dataFile.wavFileName );
+                    try
+                        obj.dataFileProcessor.process( inputFileName );
+                        obj.dataFileProcessor.saveOutput( dataFile.wavFileName );
+                    catch err
+                        errs{end+1} = err;
+                    end
                 end
             end
             fprintf( '..' );
             obj.dataFileProcessor.savePreloadedConfigs();
             fprintf( ';\n' );
+            if numel( errs ) > 0
+                cellfun(@(c)(warning(c.message)), errs);
+                error( 'PipeProcError(s)' );
+            end
         end
         %% ----------------------------------------------------------------
 

@@ -29,6 +29,19 @@ classdef BAC2 < performanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
+        function npm = minus( obj, d )
+            npm = obj;
+            npm.performance = npm.performance - d;
+            npm.sensitivity = npm.sensitivity - d;
+            npm.specificity = npm.specificity - d;
+            npm.acc = npm.acc - d;
+            npm.tp = nan;
+            npm.fp = nan;
+            npm.tn = nan;
+            npm.fn = nan;
+        end
+        % -----------------------------------------------------------------
+    
         function d = double( obj )
             for ii = 1 : size( obj, 2 )
                 d(ii) = double( obj(ii).performance );

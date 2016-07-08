@@ -6,8 +6,8 @@ if numel( varargin ) > 1 && ischar( varargin{1} ) && strcmpi( varargin{1}, 'fid'
 else
     fid = figure;
 end
-set( fid, 'Name', figTitle,'defaulttextfontsize', 11, ...
-       'position', [0, 0, sqrt(numel( varargin )*40000), 600]);
+% set( fid, 'Name', figTitle,'defaulttextfontsize', 11, ...
+%        'position', [0, 0, sqrt(numel( varargin )*40000), 600]);
 
 boxplot_grps( labels, cgroup, nvPairs, varargin{:} );
 

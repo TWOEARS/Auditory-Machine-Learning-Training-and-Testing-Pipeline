@@ -39,7 +39,12 @@ classdef Base < core.IdProcInterface
         
         function process( obj, inputFileName )
             in = load( inputFileName );
-            [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
+            try
+                [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
+            catch err
+                fprintf( 'error connecting %s.', inputFileName );
+                rethrow( err );
+            end
             obj.x = [];
             for afeBlock = afeBlocks
                 obj.afeData = afeBlock{1};

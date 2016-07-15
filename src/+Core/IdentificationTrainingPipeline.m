@@ -125,8 +125,17 @@ classdef IdentificationTrainingPipeline < handle
                 obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
                 successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
             end
+            errs = {};
             for ii = 1 : length( obj.dataPipeProcs )
-                obj.dataPipeProcs{ii}.run();
+                try
+                    obj.dataPipeProcs{ii}.run();
+                catch err
+                    errs{end+1} = err;
+                end
+            end
+            if numel( errs ) > 0
+                cellfun(@(c)(warning(c.message)), errs);
+                error( 'PipeProcError(s)' );
             end
             
             if strcmp(modelname, 'onlyGenCache'), return; end;

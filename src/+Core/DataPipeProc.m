@@ -70,6 +70,7 @@ classdef DataPipeProc < handle
         %% ----------------------------------------------------------------
 
         function run( obj )
+            errs = {};
             fprintf( '\nRunning: %s\n%s\n', ...
                      obj.dataFileProcessor.procName, ...
                      repmat( '=', 1, 9 + numel( obj.dataFileProcessor.procName ) ) );
@@ -80,12 +81,20 @@ classdef DataPipeProc < handle
             for dataFile = datalist(randperm(length(datalist)))'
                 fprintf( '%s << (%d/%d) -- %s\n', ...
                            obj.dataFileProcessor.procName, dfii, ndf, dataFile.fileName );
-                obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
+                try
+                    obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
+                catch err
+                    errs{end+1} = err;
+                end
                 dfii = dfii + 1;
                 fprintf( '\n' );
             end
             obj.dataFileProcessor.saveCacheDirectory();
             fprintf( '..;\n' );
+            if numel( errs ) > 0
+                cellfun(@(c)(warning(c.message)), errs);
+                error( 'PipeProcError(s)' );
+            end
         end
         %% ----------------------------------------------------------------
 

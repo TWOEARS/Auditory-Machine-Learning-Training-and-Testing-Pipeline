@@ -25,7 +25,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            in = obj.loadInputData( wavFilepath );
+            in = obj.loadInputData( wavFilepath, 'afeData', 'annotations' );
             try
                 [obj.afeBlocks, obj.blockAnnotations] = ...
                                                obj.blockify( in.afeData, in.annotations );

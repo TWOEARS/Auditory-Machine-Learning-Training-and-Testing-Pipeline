@@ -74,16 +74,16 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function out = loadProcessedData( obj, wavFilepath )
+        function out = loadProcessedData( obj, wavFilepath, varargin )
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
-            out = load( obj.getOutputFilepath( wavFilepath ) );
+            out = load( obj.getOutputFilepath( wavFilepath ), varargin{:} );
             removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
         
-        function inData = loadInputData( obj, wavFilepath )
-            inData = obj.inputProc.loadProcessedData( wavFilepath );
+        function inData = loadInputData( obj, wavFilepath, varargin )
+            inData = obj.inputProc.loadProcessedData( wavFilepath, varargin{:} );
         end
         %% -------------------------------------------------------------------------------
 

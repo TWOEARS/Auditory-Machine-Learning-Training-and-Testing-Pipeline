@@ -29,7 +29,7 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             warning( 'off', 'BB:tNotIncreasing' );
-            inData = obj.loadInputData( wavFilepath );
+            inData = obj.loadInputData( wavFilepath, 'blockAnnotations', 'afeBlocks' );
             bas = inData.blockAnnotations;
             afes = inData.afeBlocks;
             obj.out = struct( 'afeBlocks', {{}}, 'blockAnnotations', {[]} );

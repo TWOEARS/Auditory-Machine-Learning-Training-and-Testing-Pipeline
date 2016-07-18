@@ -78,8 +78,8 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
         
         % override of DataProcs.IdProcInterface's method
-        function out = loadProcessedData( obj, wavFilepath )
-            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
+        function out = loadProcessedData( obj, wavFilepath, varargin )
+            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'indivFiles' );
             obj.indivFiles = tmpOut.indivFiles;
             try
                 out = obj.getOutput;
@@ -120,7 +120,7 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
                 if ~exist( obj.indivFiles{ii}, 'file' )
                     error( 'PRAFEM.FileCorrupt', '%s not found.', obj.indivFiles{ii} );
         end
-                tmp = load( obj.indivFiles{ii} );
+                tmp = load( obj.indivFiles{ii}, 'afeData', 'annotations' );
                 out.afeData(ii) = tmp.afeData(1);
             end
             out.annotations = tmp.annotations; % if individual AFE modules produced

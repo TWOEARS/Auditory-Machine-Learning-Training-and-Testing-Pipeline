@@ -26,7 +26,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
-            xy = obj.loadInputData( wavFilepath );
+            xy = obj.loadInputData( wavFilepath, 'x', 'y' );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
             if obj.sceneCfgDataUseRatio < 1  &&  ...

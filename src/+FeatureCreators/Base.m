@@ -32,7 +32,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            inData = obj.loadInputData( wavFilepath );
+            inData = obj.loadInputData( wavFilepath, 'afeBlocks' );
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.x = [];
             for afeBlock = inData.afeBlocks'
@@ -50,8 +50,8 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method
-        function out = loadProcessedData( obj, wavFilepath )
-            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
+        function out = loadProcessedData( obj, wavFilepath, varargin )
+            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'x', 'inDatPath' );
             obj.x = tmpOut.x;
             obj.inDatPath = tmpOut.inDatPath;
             try
@@ -110,7 +110,7 @@ classdef Base < Core.IdProcInterface
             if ~exist( obj.inDatPath, 'file' )
                 error( 'FCB.FileCorrupt', '%s not found.', obj.inDatPath );
             end
-            inDat = load( obj.inDatPath );
+            inDat = load( obj.inDatPath, 'blockAnnotations' );
             out.blockAnnotations = inDat.blockAnnotations;
             out.x = obj.x;
         end

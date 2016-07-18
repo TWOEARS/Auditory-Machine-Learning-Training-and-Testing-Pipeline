@@ -32,7 +32,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            in = obj.loadInputData( wavFilepath );
+            in = obj.loadInputData( wavFilepath, 'blockAnnotations' );
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.y = [];
             for blockAnnotation = in.blockAnnotations'
@@ -50,8 +50,8 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         % override of DataProcs.IdProcInterface's method
-        function out = loadProcessedData( obj, wavFilepath )
-            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath );
+        function out = loadProcessedData( obj, wavFilepath, varargin )
+            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'y', 'inDatPath' );
             obj.y = tmpOut.y;
             obj.inDatPath = tmpOut.inDatPath;
             try
@@ -92,8 +92,8 @@ classdef Base < Core.IdProcInterface
             if ~exist( obj.inDatPath, 'file' )
                 error( 'LCB.FileCorrupt', '%s not found.', obj.inDatPath );
             end
-            inDat = load( obj.inDatPath );
-            inDat2 = load( inDat.inDatPath );
+            inDat = load( obj.inDatPath, 'inDatPath', 'x' );
+            inDat2 = load( inDat.inDatPath, 'blockAnnotations' );
             out.x = inDat.x;
             out.a = inDat2.blockAnnotations;
             out.y = obj.y;

@@ -31,20 +31,9 @@ classdef Base < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
-<<<<<<< HEAD:src/+FeatureCreators/Base.m
         function process( obj, wavFilepath )
             inData = obj.loadInputData( wavFilepath );
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
-=======
-        function process( obj, inputFileName )
-            in = load( inputFileName );
-            try
-                [afeBlocks, obj.y] = obj.blockifyAndLabel( in.afeData, in.onOffsOut, in.annotsOut );
-            catch err
-                fprintf( 'error connecting %s.', inputFileName );
-                rethrow( err );
-            end
->>>>>>> master_BeforeCacheChange7-3-16:src/+featureCreators/Base.m
             obj.x = [];
             for afeBlock = inData.afeBlocks'
                 obj.afeData = afeBlock{1};

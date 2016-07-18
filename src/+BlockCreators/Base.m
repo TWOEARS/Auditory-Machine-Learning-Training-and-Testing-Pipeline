@@ -26,8 +26,14 @@ classdef Base < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             in = obj.loadInputData( wavFilepath );
-            [obj.afeBlocks, obj.blockAnnotations] = ...
+            try
+                [obj.afeBlocks, obj.blockAnnotations] = ...
                                                obj.blockify( in.afeData, in.annotations );
+            catch err
+                fprintf( 'error connecting %s.', ...
+                                         obj.inputProc.getOutputFilepath( wavFilepath ) );
+                rethrow( err );
+            end
         end
         %% -------------------------------------------------------------------------------
 

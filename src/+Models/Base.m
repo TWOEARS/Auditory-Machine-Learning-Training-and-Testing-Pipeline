@@ -61,11 +61,11 @@ classdef (Abstract) Base < handle
             x = testSet(:,'x');
             yTrue = testSet(:,'y');
 %             dpi.mc = testSet(:,'mc');
-            dpi.fileIdxs = testSet(:,'pointwiseFilenames');
+%             dpi.fileIdxs = testSet(:,'pointwiseFilenames');
             % remove samples with fuzzy labels
             x(yTrue==0,:) = [];
 %             dpi.mc(yTrue==0) = [];
-            dpi.wavIdxs(yTrue==0,:) = [];
+%             dpi.wavIdxs(yTrue==0,:) = [];
             yTrue(yTrue==0) = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData

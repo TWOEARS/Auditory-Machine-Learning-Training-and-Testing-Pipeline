@@ -59,7 +59,7 @@ classdef StandardBlockCreator < BlockCreators.Base
                         end
                     elseif all( isfield( annot.t, {'onset','offset'} ) ) % event series
                         if isequal( size( annot.t.onset ), size( annot.t.offset ) ) && ...
-                           length( annot.t.onset ) == size( annot.(seqAname), 1 )
+                                length( annot.t.onset ) == size( annot.(seqAname), 1 )
                             isEventInBlock = arrayfun( @(eon,eoff)(...
                                                (eon >= blockOn && eon <= blockOff) || ...
                                               (eoff >= blockOn && eoff <= blockOff) || ...
@@ -76,6 +76,13 @@ classdef StandardBlockCreator < BlockCreators.Base
                     end
                 end
             end
+%             for ii = 1 : numel( sequenceAfields )
+%                 seqAname = sequenceAfields{ii};
+%                 annot = annotations.(seqAname);
+%                 if all( isfield( annot.t, {'onset','offset'} ) ) % event series
+%                     annot.(seqAname).(seqAname)
+%                 end
+%             end
             afeBlocks = flipud( afeBlocks );
             blockAnnots = flipud( blockAnnots );
         end

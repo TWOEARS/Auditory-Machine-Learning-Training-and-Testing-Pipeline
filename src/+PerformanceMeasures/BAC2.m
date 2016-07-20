@@ -8,6 +8,7 @@ classdef BAC2 < PerformanceMeasures.Base
         fn;
         sensitivity;
         specificity;
+        bac;
         acc;
     end
     
@@ -80,6 +81,7 @@ classdef BAC2 < PerformanceMeasures.Base
             end
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
             obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
+            obj.bac = 0.5 * obj.sensitivity + 0.5 * obj.specificity;
         end
         % -----------------------------------------------------------------
     

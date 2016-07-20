@@ -1,4 +1,4 @@
-classdef DistractedBlockCreator < BlockCreators.StandardBlockCreator
+classdef DistractedBlockCreator < BlockCreators.MeanStandardBlockCreator
     % 
     %% ----------------------------------------------------------------------------------- 
     properties (SetAccess = private)
@@ -10,7 +10,7 @@ classdef DistractedBlockCreator < BlockCreators.StandardBlockCreator
     methods
         
         function obj = DistractedBlockCreator( blockSize_s, shiftSize_s, varargin )
-            obj = obj@BlockCreators.StandardBlockCreator( blockSize_s, shiftSize_s );
+            obj = obj@BlockCreators.MeanStandardBlockCreator( blockSize_s, shiftSize_s );
             ip = inputParser;
             ip.addOptional( 'distractorSources', 2 );
             ip.addOptional( 'rejectEnergyThreshold', -30 );
@@ -26,15 +26,15 @@ classdef DistractedBlockCreator < BlockCreators.StandardBlockCreator
     methods (Access = protected)
         
         function outputDeps = getBlockCreatorInternOutputDependencies( obj )
-            outputDeps.sbc = getBlockCreatorInternOutputDependencies@...
-                                                BlockCreators.StandardBlockCreator( obj );
-            outputDeps.v = 1;
+            outputDeps.msbc = getBlockCreatorInternOutputDependencies@...
+                                                BlockCreators.MeanStandardBlockCreator( obj );
+            outputDeps.v = 2;
         end
         %% ------------------------------------------------------------------------------- 
 
         function [afeBlocks, blockAnnots] = blockify( obj, afeData, annotations )
             [afeBlocks, blockAnnots] = ...
-                 blockify@BlockCreators.StandardBlockCreator( obj, afeData, annotations );
+                 blockify@BlockCreators.MeanStandardBlockCreator( obj, afeData, annotations );
             for ii = numel( afeBlocks ) : -1 : 1
                 rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
                                blockAnnots(ii), obj.distractorIdxs, obj.rejectThreshold );

@@ -44,8 +44,7 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
         %% -------------------------------------------------------------------------------
 
         function y = labelEnergeticBlock( obj, blockAnnotations )
-            blockAzms = [blockAnnotations.srcAzms.srcAzms{:}];
-            srcAzms = median( blockAzms(obj.sourceIds,:), 2 );
+            srcAzms = blockAnnotations.srcAzms(obj.sourceIds,:);
             srcAzmIdxs = mod( round( srcAzms / obj.angularResolution ) + 1, obj.nAngles );
             y = zeros( 1, obj.nAngles );
             y(srcAzmIdxs) = 1;

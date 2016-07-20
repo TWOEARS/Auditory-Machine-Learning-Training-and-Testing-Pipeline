@@ -35,9 +35,7 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
         %% -------------------------------------------------------------------------------
 
         function y = labelEnergeticBlock( obj, blockAnnotations )
-            blockAzms = [blockAnnotations.srcAzms.srcAzms{:}];
-            srcBlockAzms = blockAzms(obj.sourcesId,:);
-            y = median( srcBlockAzms );
+            y = blockAnnotations.srcAzms(obj.sourcesId);
         end
         %% -------------------------------------------------------------------------------
                 

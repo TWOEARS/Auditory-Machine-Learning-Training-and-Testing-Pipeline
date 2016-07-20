@@ -1,20 +1,26 @@
-classdef BAC2 < PerformanceMeasures.BAC
+classdef BAC < PerformanceMeasures.Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
-        bac;
+        tp;
+        fp;
+        tn;
+        fn;
+        sensitivity;
+        specificity;
+        acc;
     end
     
     %% --------------------------------------------------------------------
     methods
         
-        function obj = BAC2( yTrue, yPred, datapointInfo )
+        function obj = BAC( yTrue, yPred, datapointInfo )
            if nargin < 3
                 dpiarg = {};
             else
                 dpiarg = {datapointInfo};
             end
-            obj = obj@PerformanceMeasures.BAC( yTrue, yPred, dpiarg{:} );
+            obj = obj@PerformanceMeasures.Base( yTrue, yPred, dpiarg{:} );
         end
         % -----------------------------------------------------------------
     
@@ -44,15 +50,36 @@ classdef BAC2 < PerformanceMeasures.BAC
         % -----------------------------------------------------------------
     
         function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpi )
-           if nargin < 4
-                dpiarg = {};
+            tps = yTrue == 1 & yPred > 0;
+            tns = yTrue == -1 & yPred < 0;
+            fps = yTrue == -1 & yPred > 0;
+            fns = yTrue == 1 & yPred < 0;
+            if nargin < 4
+                dpi = struct.empty;
             else
-                dpiarg = {datapointInfo};
+                dpi.yTrue = yTrue;
+                dpi.yPred = yPred;
             end
-            [obj, performance, dpi] = ...
-                  calcPerformance@PerformanceMeasures.BAC( obj, yTrue, yPred, dpiarg{:} );
-            obj.bac = performance;
-            performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
+            obj.tp = sum( tps );
+            obj.tn = sum( tns );
+            obj.fp = sum( fps );
+            obj.fn = sum( fns );
+            tp_fn = sum( yTrue == 1 );
+            tn_fp = sum( yTrue == -1 );
+            if tp_fn == 0;
+                warning( 'No positive true label.' );
+                obj.sensitivity = nan;
+            else
+                obj.sensitivity = obj.tp / tp_fn;
+            end
+            if tn_fp == 0;
+                warning( 'No negative true label.' );
+                obj.specificity = nan;
+            else
+                obj.specificity = obj.tn / tn_fp;
+            end
+            obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
+            performance = 0.5 * obj.sensitivity + 0.5 * obj.specificity;
         end
         % -----------------------------------------------------------------
     
@@ -79,7 +106,7 @@ classdef BAC2 < PerformanceMeasures.BAC
                     end
                     iiDatapointInfo.(fn{1}) = obj.datapointInfo.(fn{1})(udfeIdxs);
                 end
-                dpiext(ii) = PerformanceMeasures.BAC2( iiDatapointInfo.yTrue, ...
+                dpiext(ii) = PerformanceMeasures.BAC( iiDatapointInfo.yTrue, ...
                                                        iiDatapointInfo.yPred,...
                                                        iiDatapointInfo );
                 compiled{ii,1} = udfe;

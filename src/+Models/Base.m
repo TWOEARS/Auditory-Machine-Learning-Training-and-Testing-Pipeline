@@ -55,48 +55,45 @@ classdef (Abstract) Base < handle
                 perf = 0;
                 return;
             end
-            if nargin < 5, maxDataSize = inf; end
-            if nargin < 6, balMaxData = false; end
-            if nargin < 7, getDatapointInfo = 'noInfo'; end
+            if nargin < 4, maxDataSize = inf; end
+            if nargin < 5, balMaxData = false; end
+            if nargin < 6, getDatapointInfo = 'noInfo'; end
             x = testSet(:,'x');
             yTrue = testSet(:,'y');
-%             dpi.mc = testSet(:,'mc');
-%             dpi.fileIdxs = testSet(:,'pointwiseFilenames');
-            % remove samples with fuzzy labels
-            x(yTrue==0,:) = [];
-%             dpi.mc(yTrue==0) = [];
-%             dpi.wavIdxs(yTrue==0,:) = [];
-            yTrue(yTrue==0) = [];
+            delPosIdxs = [];
+            delNegIdxs = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData
                     nPos = min( int32( maxDataSize/2 ), sum( yTrue == +1 ) );
                     nNeg = maxDataSize - nPos;
-                    posIdxs = find( yTrue == +1 );
-                    posIdxs = posIdxs(randperm(numel(posIdxs)));
-                    posIdxs(1:nPos) = [];
-                    negIdxs = find( yTrue == -1 );
-                    negIdxs = negIdxs(randperm(numel(negIdxs)));
-                    negIdxs(1:nNeg) = [];
-                    x([posIdxs; negIdxs],:) = [];
-                    yTrue([posIdxs; negIdxs]) = [];
-%                     dpi.mc([posIdxs; negIdxs],:) = [];
+                    delPosIdxs = find( yTrue == +1 );
+                    delPosIdxs = delPosIdxs(randperm(numel(delPosIdxs)));
+                    delPosIdxs(1:nPos) = [];
+                    delNegIdxs = find( yTrue == -1 );
+                    delNegIdxs = delNegIdxs(randperm(numel(delNegIdxs)));
+                    delNegIdxs(1:nNeg) = [];
                 else
-                    x(maxDataSize+1:end,:) = [];
-                    yTrue(maxDataSize+1:end) = [];
-%                     dpi.mc(maxDataSize+1:end,:) = [];
+                    delPosIdxs = maxDataSize + 1 : size( x, 1 );
                 end
+                x([delPosIdxs; delNegIdxs],:) = [];
+                yTrue([delPosIdxs; delNegIdxs]) = [];
             end
-            if isempty( x ), error( 'There is no data to test the model.' ); end
-            yModel = model.applyModel( x );
             if strcmpi( getDatapointInfo, 'datapointInfo' )
-                [uniqueDpiWavIdxs, ~, dpi.fileIdxs] = unique( dpi.wavIdxs, 'rows' );
-                for ii = 1 : numel( uniqueDpiWavIdxs )
-                    dpi.wavs(ii) = testSet(uniqueDpiWavIdxs(ii),'fileName');
-                end
+                dpi.fileIdxs = testSet(:,'pointwiseFileIdxs');
+                dpi.fileIdxs([delPosIdxs; delNegIdxs]) = [];
+                ufidxs = unique( dpi.fileIdxs );
+                dpi.blockAnnotsCacheFiles(ufidxs) = testSet(ufidxs,'blockAnnotsCacheFile');
+                dpi.fileNames(ufidxs) = testSet(ufidxs,'fileName');
+                dpi.bIdxs = testSet(:,'bIdxs');
+                dpi.bIdxs([delPosIdxs; delNegIdxs]) = [];
+                dpi.bacfIdxs = testSet(:,'bacfIdxs');
+                dpi.bacfIdxs([delPosIdxs; delNegIdxs]) = [];
                 dpiarg = {dpi};
             else
                 dpiarg = {};
             end
+            if isempty( x ), error( 'There is no data to test the model.' ); end
+            yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )
                 perf(ii) = perfMeasure( yTrue, yModel(:,ii), dpiarg{:} );
             end

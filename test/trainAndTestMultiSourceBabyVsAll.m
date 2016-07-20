@@ -108,7 +108,7 @@ pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
 babyLabeler = LabelCreators.BinaryEventTypeLabeler( 'posOutType', {'baby'} );
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
-    modelPath, 'performanceMeasure', @PerformanceMeasures.BAC );
+    [modelPath filesep 'interestingModel.model.mat'], 'performanceMeasure', @PerformanceMeasures.BAC );
 pipe.modelCreator.verbose( 'on' );
 
 % using the same as for training in this case just to save generation time

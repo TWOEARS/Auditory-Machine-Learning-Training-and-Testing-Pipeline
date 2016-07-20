@@ -74,11 +74,11 @@ classdef IdentTrainPipeData < handle
                     fIdx = fileSubScript;
                 end
                 % referencing fields of DataElems
-                if ~isempty( fIdx ) && size( S.subs, 2 ) >= dataElemFieldIdxPos 
+                if size( S.subs, 2 ) >= dataElemFieldIdxPos 
                     dSubScript = S.subs{1,dataElemFieldIdxPos};
                     if size( S.subs, 2 ) > dataElemFieldIdxPos
-                        if length( fIdx ) > 1
-                            error( 'Index for xy can only be chosen if specifying a file.' );
+                        if length( fIdx ) > 1 || isempty( fIdx )
+                            error( 'Index for xy can only be chosen if specifying ONE file.' );
                         end
                         xyIdx = S.subs{1,dataElemFieldIdxPos+1};
                         if ndims( obj.data(fIdx(1)).(dSubScript) )  > 5

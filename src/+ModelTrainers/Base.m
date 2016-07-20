@@ -99,6 +99,7 @@ classdef (Abstract) Base < handle
             if isempty( x )
                 warning( 'There is no data to train the model.' ); 
                 y = [];
+                return;
             else
                 y = obj.trainSet(:,'y');
             end

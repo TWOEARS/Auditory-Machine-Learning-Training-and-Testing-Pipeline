@@ -94,7 +94,7 @@ sc(2).addSource( SceneConfig.DiffuseSource( ...
     'snrRef', 1 );
 pipe.init( sc );
 
-modelPath = pipe.pipeline.run( 'interestingModel' );
+modelPath = pipe.pipeline.run( 'modelName', 'interestingModel', 'modelPath', 'iModelTr' );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
@@ -108,7 +108,8 @@ pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
 babyLabeler = LabelCreators.BinaryEventTypeLabeler( 'posOutType', {'baby'} );
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
-    [modelPath filesep 'interestingModel.model.mat'], 'performanceMeasure', @PerformanceMeasures.BAC );
+    [pwd filesep 'iModelTr/interestingModel.model.mat'], ...
+    'performanceMeasure', @PerformanceMeasures.BAC );
 pipe.modelCreator.verbose( 'on' );
 
 % using the same as for training in this case just to save generation time
@@ -147,7 +148,7 @@ sc(2).addSource( SceneConfig.DiffuseSource( ...
     'snrRef', 1 );
 pipe.init( sc );
 
-modelPath = pipe.pipeline.run( 'interestingModelTest' );
+modelPath = pipe.pipeline.run( 'modelName', 'interestingModel', 'modelPath', 'iModelTe' );
 
 fprintf( ' -- Model test is saved at %s -- \n\n', modelPath );
 

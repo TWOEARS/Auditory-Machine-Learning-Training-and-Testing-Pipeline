@@ -104,21 +104,25 @@ classdef IdentificationTrainingPipeline < handle
         %       All models trained in one run use the same training and
         %       test sets.
         %
-        %   modelname: name for model.
-        %              no training options:
-        %              'onlyGenCache' stops after data processing
-        %              'dataStore' saves data in native format
-        %              'dataStoreUni' saves data as x,y matrices
-        %           
-        %   nGenAssessFolds: number of folds of generalization assessment
-        %   cross validation (default: 0 - no folds)
+        %   modelName: name for model. default: 'amlttp.model.mat'
+        %   modelPath: path where to store model. default: 'amlttpRun.<curTimeString>'
+        %   runOption:
+        %                'onlyGenCache' stops after data processing
+        %                'dataStore' saves data in native format
+        %                'dataStoreUni' saves data as x,y matrices
+        %   nGenAssessFolds: number of folds of generalization assessment through
+        %                    cross validation (default: 0 - no folds)
         %
-        function modelPath = run( obj, modelname, nGenAssessFolds )
-            if nargin < 3
-                nGenAssessFolds = 0;
-            end
+        function modelPath = run( obj, varargin )
+            ip = inputParser;
+            ip.addOptional( 'nGenAssessFolds', 0 );
+            ip.addOptional( 'modelPath', ['amlttpRun' buildCurrentTimeString()] );
+            ip.addOptional( 'modelName', 'amlttp' );
+            ip.addOptional( 'runOption', [] );
+            ip.parse( varargin{:} );
+
             cleaner = onCleanup( @() obj.finish() );
-            modelPath = obj.createFilesDir();
+            modelPath = obj.createFilesDir( ip.Results.modelPath );
             
             successiveProcFileFilter = [];
             for ii = length( obj.dataPipeProcs ) : -1 : 1
@@ -138,17 +142,17 @@ classdef IdentificationTrainingPipeline < handle
                 error( 'PipeProcError(s)' );
             end
             
-            if strcmp(modelname, 'onlyGenCache'), return; end;
+            if strcmp(ip.Results.runOption, 'onlyGenCache'), return; end;
             
             featureCreator = obj.featureCreator;
             lastDataProcParams = ...
                 obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
-            if strcmp(modelname, 'dataStore')
+            if strcmp( ip.Results.runOption, 'dataStore' )
                 data = obj.data;
                 save( 'dataStore.mat', ...
                       'data', 'featureCreator', 'lastDataProcParams', '-v7.3' );
                 return; 
-            elseif strcmp(modelname, 'dataStoreUni')
+            elseif strcmp( ip.Results.runOption, 'dataStoreUni' )
                 x = obj.data(:,'x');
                 y = obj.data(:,'y');
                 featureNames = obj.featureCreator.description;
@@ -159,10 +163,10 @@ classdef IdentificationTrainingPipeline < handle
             
             fprintf( ['\n\n===================================\n',...
                           '##   Training model "%s"\n',...
-                          '===================================\n\n'], modelname );
-            if nGenAssessFolds > 1
+                          '===================================\n\n'], ip.Results.modelName );
+            if ip.Results.nGenAssessFolds > 1
                 fprintf( '\n==  Generalization performance assessment CV...\n\n' );
-                obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( nGenAssessFolds );
+                obj.generalizationPerfomanceAssessCVtrainer.setNumberOfFolds( ip.Results.nGenAssessFolds );
                 obj.generalizationPerfomanceAssessCVtrainer.setData( obj.trainSet );
                 obj.generalizationPerfomanceAssessCVtrainer.run();
                 genPerfCVresults = obj.generalizationPerfomanceAssessCVtrainer.getPerformance();
@@ -185,16 +189,16 @@ classdef IdentificationTrainingPipeline < handle
                     fprintf( ['\n\n===================================\n',...
                               '##   "%s" Performance: %f\n',...
                               '===================================\n\n'], ...
-                             modelname, testPerfresults.double() );
+                             ip.Results.modelName, testPerfresults.double() );
                 else
                     fprintf( ['\n\n===================================\n',...
                               '##   "%s" Performance: more than one value\n',...
                               '===================================\n\n'], ...
-                             modelname );
+                             ip.Results.modelName );
                 end
             end
             model = obj.trainer.getModel();
-            modelFilename = [modelname '.model.mat'];
+            modelFilename = [ip.Results.modelName '.model.mat'];
             save( modelFilename, ...
                 'model', 'featureCreator', ...
                 'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );
@@ -208,16 +212,14 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function path = createFilesDir( obj )
-            curTimeStr = buildCurrentTimeString();
-            saveDir = ['Training' curTimeStr];
-            mkdir( saveDir );
-            cd( saveDir );
+        function path = createFilesDir( obj, filesPath )
+            mkdir( filesPath );
+            cd( filesPath );
             path = pwd;
-            diary( ['IdTrainPipe' curTimeStr '.log'] );
-            obj.trainSet.saveFList( ['trainSet' curTimeStr '.flist'], 'sound_databases' );
+            diary( 'amlttp.run.log' );
+            obj.trainSet.saveFList( 'trainSet.flist', 'sound_databases' );
             if ~isempty( obj.testSet )
-                obj.testSet.saveFList( ['testSet' curTimeStr '.flist'], 'sound_databases' );
+                obj.testSet.saveFList( 'testSet.flist', 'sound_databases' );
             end
         end
         %% -------------------------------------------------------------------------------

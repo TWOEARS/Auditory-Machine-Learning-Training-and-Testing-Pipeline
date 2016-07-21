@@ -8,7 +8,8 @@ pipe.blockCreator = BlockCreators.DistractedBlockCreator( 1.0, 0.4, ...
                                                           'distractorSources', [2 3],...
                                                           'rejectEnergyThreshold', -30 );
 pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
-babyLabeler = LabelCreators.BinaryEventTypeLabeler( 'posOutType', {'baby'} );
+babyLabeler = LabelCreators.MultiEventTypeLabeler( ...
+                             'types', {{'baby'}}, 'negOut', 'all', 'negOutType', 'rest' );
 pipe.labelCreator = babyLabeler;
 %% other labeler examples
 % 

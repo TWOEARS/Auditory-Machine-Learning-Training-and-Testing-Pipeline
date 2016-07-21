@@ -5,6 +5,10 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         minBlockToEventRatio;
         maxNegBlockToEventRatio;
         types;
+        negOut;
+        negOutType;
+        posTypeIdxs;
+        negTypeIdx;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -20,11 +24,17 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
             ip.addOptional( 'labelBlockSize_s', [] );
             ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
+            ip.addOptional( 'negOut', 'all' ); % event, all, none
+            ip.addOptional( 'negOutType', 'rest' ); % typename, 'rest' (respective to pos)
             ip.parse( varargin{:} );
             obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             obj.types = ip.Results.types;
+            obj.negOut = ip.Results.negOut;
+            obj.negOutType = ip.Results.negOutType;
+            obj.posTypeIdxs = 1 : numel( obj.types );
+            obj.negTypeIdx = 1 + numel( obj.types );
         end
         %% -------------------------------------------------------------------------------
 
@@ -37,24 +47,41 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
             outputDeps.types = obj.types;
-            outputDeps.v = 1;
+            outputDeps.negOut = obj.negOut;
+            outputDeps.negOutType = obj.negOutType;
+            outputDeps.v = 2;
         end
         %% -------------------------------------------------------------------------------
         
         function eit = eventIsType( obj, typeIdx, type )
-            eit = any( strcmp( type, obj.types{typeIdx} ) );
+            if any( typeIdx == obj.posTypeIdxs )
+                eit = any( strcmp( type, obj.types{typeIdx} ) );
+            else
+                if strcmp( obj.negOutType, 'rest' )
+                    eit = true;
+                    for ti = obj.posTypeIdxs
+                        eit = eit & ~any( strcmp( type, obj.types{ti} ) );
+                    end
+                else
+                    eit = any( strcmp( type, obj.negOutType ) );
+                end
+            end
         end
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
             relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
-            [maxRelOverlap, maxIdx] = max( relBlockEventOverlap );
-            if maxRelOverlap < obj.maxNegBlockToEventRatio
+            [maxPosRelOverlap, maxPosIdx] = max( relBlockEventOverlap(obj.posTypeIdxs) );
+            if maxPosRelOverlap >= obj.minBlockToEventRatio
+                y = maxPosIdx;
+            elseif strcmp( obj.negOut, 'event' ) && ...
+                    (relBlockEventOverlap(obj.negTypeIdx) >= obj.minBlockToEventRatio)
                 y = -1;
-            elseif maxRelOverlap < obj.minBlockToEventRatio
-                y = NaN;
+            elseif strcmp( obj.negOut, 'all' ) && ...
+                    (maxPosRelOverlap <= obj.maxNegBlockToEventRatio) 
+                y = -1;
             else
-                y = maxIdx;
+                y = NaN;
             end
         end
         %% -------------------------------------------------------------------------------

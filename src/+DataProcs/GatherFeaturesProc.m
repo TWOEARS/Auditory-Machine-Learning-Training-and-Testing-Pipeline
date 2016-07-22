@@ -92,6 +92,12 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         function releaseSingleProcessCacheAccess( ~ )
         end
         %% -------------------------------------------------------------------------------
+        
+        % override of DataProcs.IdProcWrapper's method
+        function delete( obj )
+            removefilesemaphore( obj.outFileSema );
+        end
+        %% -------------------------------------------------------------------------------
     end
 
     %% -----------------------------------------------------------------------------------

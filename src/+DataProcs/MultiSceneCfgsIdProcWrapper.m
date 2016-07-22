@@ -129,6 +129,12 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        % override of DataProcs.IdProcWrapper's method
+        function delete( obj )
+            removefilesemaphore( obj.outFileSema );
+        end
+        %% -------------------------------------------------------------------------------
     end
         
     %% -----------------------------------------------------------------------------------

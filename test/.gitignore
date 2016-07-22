@@ -1,3 +1,5 @@
 /trainings
 Training.*.*.*
 amlttpRun.*.*.*
+/test_cleanBabyFemale_svm
+/cleanMulticlassData

@@ -47,7 +47,7 @@ classdef BAC2 < PerformanceMeasures.BAC
            if nargin < 4
                 dpiarg = {};
             else
-                dpiarg = {datapointInfo};
+                dpiarg = {dpi};
             end
             [obj, performance, dpi] = ...
                   calcPerformance@PerformanceMeasures.BAC( obj, yTrue, yPred, dpiarg{:} );

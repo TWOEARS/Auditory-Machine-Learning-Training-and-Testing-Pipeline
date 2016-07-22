@@ -99,7 +99,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if isempty( obj1 ) || isempty( obj2 ), return; end
             if numel( obj1.sources ) ~= numel( obj2.sources ), return; end
             if obj1.brirHeadOrientIdx ~= obj2.brirHeadOrientIdx, return; end
-            if obj1.lenRefType ~= obj2.lenRefType, return; end
+            if ~strcmpi(obj1.lenRefType, obj2.lenRefType), return; end
             if obj1.lenRefArg ~= obj2.lenRefArg, return; end
             if obj1.minLen ~= obj2.minLen, return; end
             if ~(iscell( obj1.loopSrcs ) && iscell( obj2.loopSrcs )), return; end

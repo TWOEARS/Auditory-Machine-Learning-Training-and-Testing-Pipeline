@@ -3,3 +3,5 @@ Training.*.*.*
 amlttpRun.*.*.*
 /test_cleanBabyFemale_svm
 /cleanMulticlassData
+/test_pointOvrl_testing
+/test_pointOvrl_training

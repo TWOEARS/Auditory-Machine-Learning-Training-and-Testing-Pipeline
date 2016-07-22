@@ -5,3 +5,4 @@ amlttpRun.*.*.*
 /cleanMulticlassData
 /test_pointOvrl_testing
 /test_pointOvrl_training
+/test_diffuseWhtNoiseOvrl

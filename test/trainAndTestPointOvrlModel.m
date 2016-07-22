@@ -7,7 +7,7 @@ startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
-% baby+female will be 1, rest -1
+% <classname> will be 1, rest -1
 oneVsRestLabeler = ... 
     LabelCreators.MultiEventTypeLabeler( 'types', {{classname}}, ...
                                           'negOut', 'all', 'negOutType', 'rest' );
@@ -40,7 +40,7 @@ fprintf( ' -- Model is saved at %s -- \n', modelPath );
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
-% baby+female will be 1, rest -1
+% <classname> will be 1, rest -1
 oneVsRestLabeler = ... 
     LabelCreators.MultiEventTypeLabeler( 'types', {{classname}}, ...
                                           'negOut', 'all', 'negOutType', 'rest' );

@@ -6,3 +6,5 @@ amlttpRun.*.*.*
 /test_pointOvrl_testing
 /test_pointOvrl_training
 /test_diffuseWhtNoiseOvrl
+/test_mc_1vsAll_testing
+/test_mc_1vsAll_training

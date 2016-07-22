@@ -28,7 +28,9 @@ classdef (Abstract) IdProcInterface < handle
         
         function delete( obj )
             removefilesemaphore( obj.outFileSema );
-            obj.saveCacheDirectory();
+            if ~isempty( obj.cacheDirectory )
+                obj.saveCacheDirectory();
+            end
         end
         %% -------------------------------------------------------------------------------
         

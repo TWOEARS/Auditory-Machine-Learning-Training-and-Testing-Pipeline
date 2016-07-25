@@ -110,7 +110,7 @@ classdef IdEvalFrame < handle
         end
         
         function onsetOffsets = readOnOffAnnotations( soundFileName, isAbsPath )
-            if nargin < 1
+            if nargin < 2
                 isAbsPath = false;
             end
             if ~isAbsPath

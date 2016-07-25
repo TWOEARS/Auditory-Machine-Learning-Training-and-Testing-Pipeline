@@ -9,6 +9,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         earSout;
         annotsOut;
         srcAzimuth;
+        brirSrcPos;
     end
     
     %% --------------------------------------------------------------------
@@ -173,26 +174,36 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                             xml.dbGetFile( sceneConfig.sources(1).brirFName ), 'nodata' );
                 headOrientIdx = ceil( sceneConfig.brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
                 headOrientation = SOFAconvertCoordinates( ...
-                                brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
+                         brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
                 if isempty( obj.IRDataset ) ...
                    || ~strcmp( obj.IRDataset.fname, sceneConfig.sources(1).brirFName ) ...
                    || (isfield( obj.IRDataset, 'speakerId' ) ~= ~isempty( sceneConfig.sources(1).speakerId ) ) ...
                    || obj.IRDataset.speakerId ~= sceneConfig.sources(1).speakerId
                     if isempty( sceneConfig.sources(1).speakerId )
-                       obj.IRDataset.dir = ...
+                        warning( 'off', 'all' ); % avoid messy "SOFA experimental" warning
+                        obj.IRDataset.dir = ...
                               simulator.DirectionalIR( sceneConfig.sources(1).brirFName );
+                        warning( 'on', 'all' );
+                        obj.brirSrcPos = SOFAconvertCoordinates( ...
+                            brirSofa.EmitterPosition(1,:) - brirSofa.ListenerPosition, ...
+                                                                'cartesian','spherical' );
                     else
-                       obj.IRDataset.dir = simulator.DirectionalIR( ...
+                        warning( 'off', 'all' ); % avoid messy "SOFA experimental" warning
+                        obj.IRDataset.dir = simulator.DirectionalIR( ...
                                                      sceneConfig.sources(1).brirFName, ...
                                                      sceneConfig.sources(1).speakerId );
-                       obj.IRDataset.speakerId = sceneConfig.sources(1).speakerId;
+                        warning( 'on', 'all' );
+                        obj.IRDataset.speakerId = sceneConfig.sources(1).speakerId;
+                        obj.brirSrcPos = SOFAconvertCoordinates( ...
+                          brirSofa.EmitterPosition(sceneConfig.sources(1).speakerId,:) ...
+                                   - brirSofa.ListenerPosition, 'cartesian','spherical' );
                     end
                     obj.IRDataset.isbrir = true;
                     obj.IRDataset.fname = sceneConfig.sources(1).brirFName;
                 end
                 obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
                 obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
-                error( 'TODO: calculate source azimuth' );
+                obj.srcAzimuth = obj.brirSrcPos(1) - headOrientation(1);
             else % ~is diffuse
                 obj.convRoomSim.Sources{1} = simulator.source.Binaural();
                 channelMapping = [1 2];

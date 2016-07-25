@@ -84,7 +84,16 @@ classdef DataPipeProc < handle
                 try
                     obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
                 catch err
-                    errs{end+1} = err;
+                    if any( strcmpi( err.identifier, ...
+                                            {'MATLAB:load:couldNotReadFile', ...
+                                             'MATLAB:load:unableToReadMatFile', ...
+                                             'AMLTTP:dataprocs:cacheFileCorrupt'} ...
+                                   ) )
+                        errs{end+1} = err;
+                        warning( err.message );
+                    else
+                        rethrow( err );
+                    end
                 end
                 dfii = dfii + 1;
                 fprintf( '\n' );
@@ -93,7 +102,9 @@ classdef DataPipeProc < handle
             fprintf( '..;\n' );
             if numel( errs ) > 0
                 cellfun(@(c)(warning(c.message)), errs);
-                error( 'PipeProcError(s)' );
+                error( 'AMLTTP:dataprocs:fileErrors', ...
+                       'errors occured with the %s dataPipeProc filehandling', ...
+                       obj.dataFileProcessor.procName );
             end
         end
         %% ----------------------------------------------------------------

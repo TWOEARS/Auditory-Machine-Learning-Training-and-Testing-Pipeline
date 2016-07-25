@@ -57,9 +57,10 @@ classdef Base < Core.IdProcInterface
             try
                 out = obj.getOutput;
             catch err
-                if strcmp( 'LCB.FileCorrupt', err.msgIdent )
-                    err( '%s \n%s corrupt -- delete and restart.', ...
-                                          err.msg, obj.getOutputFilepath( wavFilepath ) );
+                if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.msgIdent )
+                    error( 'AMLTTP:dataprocs:cacheFileCorrupt',...
+                           '%s \n%s corrupt -- delete and restart.', ...
+                           err.msg, obj.getOutputFilepath( wavFilepath ) );
                 else
                     rethrow( err );
                 end
@@ -90,7 +91,7 @@ classdef Base < Core.IdProcInterface
 
         function out = getOutput( obj )
             if ~exist( obj.inDatPath, 'file' )
-                error( 'LCB.FileCorrupt', '%s not found.', obj.inDatPath );
+                error( 'AMLTTP:dataprocs:cacheFileCorrupt', '%s not found.', obj.inDatPath );
             end
             inDat = load( obj.inDatPath, 'inDatPath', 'x' );
             inDat2 = load( inDat.inDatPath, 'blockAnnotations' );

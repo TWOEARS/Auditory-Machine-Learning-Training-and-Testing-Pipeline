@@ -134,7 +134,14 @@ classdef IdentificationTrainingPipeline < handle
                 try
                     obj.dataPipeProcs{ii}.run();
                 catch err
-                    errs{end+1} = err;
+                    if any( strcmpi( err.identifier, ...
+                                            {'AMLTTP:dataprocs:fileErrors'} ...
+                                   ) )
+                        errs{end+1} = err;
+                        warning( err.message );
+                    else
+                        rethrow( err );
+                    end
                 end
             end
             if numel( errs ) > 0

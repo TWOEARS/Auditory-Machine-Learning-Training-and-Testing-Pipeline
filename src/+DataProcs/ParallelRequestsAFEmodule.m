@@ -84,9 +84,10 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
             try
                 out = obj.getOutput;
             catch err
-                if strcmp( 'PRAFEM.FileCorrupt', err.msgIdent )
-                    err( '%s \n%s corrupt -- delete and restart.', ...
-                         err.msg, obj.getOutputFilepath( wavFilepath ) );
+                if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.msgIdent )
+                    error( 'AMLTTP:dataprocs:cacheFileCorrupt', ...
+                           '%s \n%s corrupt -- delete and restart.', ...
+                            err.msg, obj.getOutputFilepath( wavFilepath ) );
                 else
                     rethrow( err );
                 end
@@ -113,13 +114,13 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
 
-        % override of DataProcs.IdProcInterface's method
+        % override of Core.IdProcInterface's method
         function out = getOutput( obj )
             out.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for ii = 1 : numel( obj.indivFiles )
                 if ~exist( obj.indivFiles{ii}, 'file' )
-                    error( 'PRAFEM.FileCorrupt', '%s not found.', obj.indivFiles{ii} );
-        end
+                    error( 'AMLTTP:dataprocs:cacheFileCorrupt', '%s not found.', obj.indivFiles{ii} );
+                end
                 tmp = load( obj.indivFiles{ii}, 'afeData', 'annotations' );
                 out.afeData(ii) = tmp.afeData(1);
             end

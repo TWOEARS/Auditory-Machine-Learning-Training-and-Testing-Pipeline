@@ -1,4 +1,4 @@
-function trainAndTestMultiSourceBabyVsAll()
+function trainAndTestMultinomial()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startIdentificationTraining();
@@ -13,7 +13,7 @@ babyLabeler = LabelCreators.MultiEventTypeLabeler( ...
 pipe.labelCreator = babyLabeler;
 %% other labeler examples
 % 
-% % baby will be 1, fire -1, labels based on only 0.2s
+% % baby will be 1, fire -1
 % babyVsFireLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, ...
 %                                                           'negOut', 'event', ...
 %                                                           'negOutType', {'fire'} );

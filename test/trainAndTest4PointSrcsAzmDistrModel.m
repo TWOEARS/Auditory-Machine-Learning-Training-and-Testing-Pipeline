@@ -1,4 +1,4 @@
-function trainAndTest3PointOvrlsModel( classname )
+function trainAndTest4PointSrcsAzmDistrModel( classname )
 
 if nargin < 1, classname = 'baby'; end;
 

@@ -22,7 +22,9 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
                              'valFun', @(x)(isfloat(x) && x >= 0 && x <= 1.0) );
             pds{3} = struct( 'name', 'family', ...
                              'default', 'binomial', ...
-                             'valFun', @(x)(ischar(x) && any(strcmpi(x, {'binomial'}))) );
+                             'valFun', @(x)(ischar(x) && any(strcmpi(x, ...
+                                                                     {'binomial',...
+                                                                      'multinomial'}))) );
             pds{4} = struct( 'name', 'nLambda', ...
                              'default', 100, ...
                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
@@ -67,13 +69,13 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
         
         function wp = setDataWeights( obj, y )
-            ypShare = ( mean( y ) + 1 ) * 0.5;
-            cp = ( 1 - ypShare ) / ypShare;
-            if isnan( cp ) || isinf( cp )
-                warning( 'The share of positive to negative examples is inf or nan.' );
-            end
+            labels = unique( y );
             wp = ones( size(y) );
-            wp(y==1) = cp;
+            for ii = 1 : numel( labels )
+                labelShare = sum( y == labels(ii) ) / numel( y );
+                labelWeight = 1 / labelShare;
+                wp(y==labels(ii)) = labelWeight;
+            end
         end
         %% ----------------------------------------------------------------
         

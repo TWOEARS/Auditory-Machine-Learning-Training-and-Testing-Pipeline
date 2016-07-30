@@ -75,16 +75,22 @@ classdef (Abstract) Base < handle
             end
             if numel( y ) > obj.maxDataSize
                 if ModelTrainers.Base.balMaxData
-                    nPos = min( int32( obj.maxDataSize/2 ), sum( y == +1 ) );
-                    nNeg = obj.maxDataSize - nPos;
-                    posIdxs = find( y == +1 );
-                    posIdxs = posIdxs(randperm(numel(posIdxs)));
-                    posIdxs(1:nPos) = [];
-                    negIdxs = find( y == -1 );
-                    negIdxs = negIdxs(randperm(numel(negIdxs)));
-                    negIdxs(1:nNeg) = [];
-                    x([posIdxs; negIdxs],:) = [];
-                    y([posIdxs; negIdxs]) = [];
+                    labels = unique( y );
+                    nPerLabel = arrayfun( @(l)(sum( l == y )), labels );
+                    [~, labelOrder] = sort( nPerLabel );
+                    nLabels = numel( labels );
+                    nRemaining = obj.maxDataSize;
+                    throwoutIdxs = [];
+                    for ii = labelOrder'
+                        nKeep = min( int32( nRemaining/nLabels ), nPerLabel(ii) );
+                        nRemaining = nRemaining - nKeep;
+                        nLabels = nLabels - 1;
+                        lIdxs = find( y == labels(ii) );
+                        lIdxs = lIdxs(randperm(nPerLabel(ii)));
+                        throwoutIdxs = [throwoutIdxs; lIdxs(nKeep+1:end)];
+                    end
+                    x(throwoutIdxs,:) = [];
+                    y(throwoutIdxs,:) = [];
                 else
                     x(obj.maxDataSize+1:end,:) = [];
                     y(obj.maxDataSize+1:end) = [];
@@ -114,7 +120,7 @@ classdef (Abstract) Base < handle
             % permute data
             permutationIdxs = randperm( length( y ) );
             x = x(permutationIdxs,:);
-            y = y(permutationIdxs);
+            y = y(permutationIdxs,:);
         end
         %% ----------------------------------------------------------------
 

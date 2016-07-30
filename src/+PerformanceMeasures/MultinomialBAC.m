@@ -50,7 +50,8 @@ classdef MultinomialBAC < PerformanceMeasures.Base
             n_acc = 0;
             for tt = 1 : numel( labels )
                 for pp = 1 : numel( labels )
-                    obj.confusionMatrix(tt,pp) = sum( (yTrue == labels(tt)) & (yPred == labels(pp)) );
+                    obj.confusionMatrix(tt,pp) = ...
+                                     sum( (yTrue == labels(tt)) & (yPred == labels(pp)) );
                 end
                 n_tt = sum( obj.confusionMatrix(tt,:) );
                 if n_tt > 0
@@ -67,7 +68,8 @@ classdef MultinomialBAC < PerformanceMeasures.Base
                 dpi.yPred = yPred;
             end
             obj.acc = n_acc / sum( sum( obj.confusionMatrix ) ); 
-            performance = sum( obj.sens ) / numel( obj.sens );
+            performance = sum( obj.sens(~isnan(obj.sens)) ) / ...
+                                                      numel( obj.sens(~isnan(obj.sens)) );
         end
         % -----------------------------------------------------------------
     

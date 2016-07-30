@@ -5,8 +5,7 @@ startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
-babyLabeler = LabelCreators.MultiEventTypeLabeler( ...
-                             'types', {{'baby'}}, 'negOut', 'all', 'negOutType', 'rest' );
+babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
 

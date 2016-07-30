@@ -6,9 +6,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         maxNegBlockToEventRatio;
         types;
         negOut;
-        negOutType;
-        posTypeIdxs;
-        negTypeIdx;
+        srcPrioMethod;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -24,17 +22,15 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
             ip.addOptional( 'labelBlockSize_s', [] );
             ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
-            ip.addOptional( 'negOut', 'all' ); % event, all, none
-            ip.addOptional( 'negOutType', 'rest' ); % typename, 'rest' (respective to pos)
+            ip.addOptional( 'negOut', 'rest' ); % rest, none
+            ip.addOptional( 'srcPrioMethod', 'order' ); % energy, order, time
             ip.parse( varargin{:} );
             obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             obj.types = ip.Results.types;
             obj.negOut = ip.Results.negOut;
-            obj.negOutType = ip.Results.negOutType;
-            obj.posTypeIdxs = 1 : numel( obj.types );
-            obj.negTypeIdx = 1 + numel( obj.types );
+            obj.srcPrioMethod = ip.Results.srcPrioMethod;
         end
         %% -------------------------------------------------------------------------------
 
@@ -48,36 +44,37 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
             outputDeps.types = obj.types;
             outputDeps.negOut = obj.negOut;
-            outputDeps.negOutType = obj.negOutType;
-            outputDeps.v = 2;
+            outputDeps.srcPrioMethod = obj.srcPrioMethod;
+            outputDeps.v = 3;
         end
         %% -------------------------------------------------------------------------------
         
         function eit = eventIsType( obj, typeIdx, type )
-            if any( typeIdx == obj.posTypeIdxs )
-                eit = any( strcmp( type, obj.types{typeIdx} ) );
-            else
-                if strcmp( obj.negOutType, 'rest' )
-                    eit = true;
-                    for ti = obj.posTypeIdxs
-                        eit = eit & ~any( strcmp( type, obj.types{ti} ) );
-                    end
-                else
-                    eit = any( strcmp( type, obj.negOutType ) );
-                end
-            end
+            eit = any( strcmp( type, obj.types{typeIdx} ) );
         end
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
             relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
-            [maxPosRelOverlap, maxPosIdx] = max( relBlockEventOverlap(obj.posTypeIdxs) );
-            if maxPosRelOverlap >= obj.minBlockToEventRatio
-                y = maxPosIdx;
-            elseif strcmp( obj.negOut, 'event' ) && ...
-                    (relBlockEventOverlap(obj.negTypeIdx) >= obj.minBlockToEventRatio)
-                y = -1;
-            elseif strcmp( obj.negOut, 'all' ) && ...
+            [maxPosRelOverlap,maxTimeTypeIdx] = max( relBlockEventOverlap );
+            activeTypes = relBlockEventOverlap >= obj.minBlockToEventRatio;
+            if any( activeTypes )
+                switch obj.srcPrioMethod
+                    case 'energy'
+                        eSrcs = cellfun( @mean, blockAnnotations.srcEnergy(:,:) ); % mean over channels
+                        error( 'TODO: implement.' ); % activeTypes is NOT activeSrcs.
+                        eSrcs(~activeSrcs) = 0;
+                        [~,labelTypeIdx] = max( eSrcs );
+                    case 'order'
+                        labelTypeIdx = find( activeTypes, 1, 'first' );
+                    case 'time'
+                        labelTypeIdx = maxTimeTypeIdx;
+                    otherwise
+                        error( 'AMLTTP:unknownOptionValue', ['%s: unknown option value.'...
+                                     'Use ''energy'' or ''order''.'], obj.srcPrioMethod );
+                end
+                y = labelTypeIdx;
+            elseif strcmp( obj.negOut, 'rest' ) && ...
                     (maxPosRelOverlap <= obj.maxNegBlockToEventRatio) 
                 y = -1;
             else

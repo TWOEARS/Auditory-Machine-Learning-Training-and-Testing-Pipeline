@@ -10,3 +10,4 @@ amlttpRun.*.*.*
 /test_mc_1vsAll_training
 /test_featSelect
 /test_brir
+/overlappedMulticlass

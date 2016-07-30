@@ -75,20 +75,7 @@ classdef (Abstract) Base < handle
             end
             if numel( y ) > obj.maxDataSize
                 if ModelTrainers.Base.balMaxData
-                    labels = unique( y );
-                    nPerLabel = arrayfun( @(l)(sum( l == y )), labels );
-                    [~, labelOrder] = sort( nPerLabel );
-                    nLabels = numel( labels );
-                    nRemaining = obj.maxDataSize;
-                    throwoutIdxs = [];
-                    for ii = labelOrder'
-                        nKeep = min( int32( nRemaining/nLabels ), nPerLabel(ii) );
-                        nRemaining = nRemaining - nKeep;
-                        nLabels = nLabels - 1;
-                        lIdxs = find( y == labels(ii) );
-                        lIdxs = lIdxs(randperm(nPerLabel(ii)));
-                        throwoutIdxs = [throwoutIdxs; lIdxs(nKeep+1:end)];
-                    end
+                    throwoutIdxs = ModelTrainers.Base.getBalThrowoutIdxs( y, obj.maxDataSize );
                     x(throwoutIdxs,:) = [];
                     y(throwoutIdxs,:) = [];
                 else
@@ -140,6 +127,23 @@ classdef (Abstract) Base < handle
     %% --------------------------------------------------------------------
     methods (Static)
 
+        function throwoutIdxs = getBalThrowoutIdxs( y, maxDataSize )
+            labels = unique( y );
+            nPerLabel = arrayfun( @(l)(sum( l == y )), labels );
+            [~, labelOrder] = sort( nPerLabel );
+            nLabels = numel( labels );
+            nRemaining = maxDataSize;
+            throwoutIdxs = [];
+            for ii = labelOrder'
+                nKeep = min( int32( nRemaining/nLabels ), nPerLabel(ii) );
+                nRemaining = nRemaining - nKeep;
+                nLabels = nLabels - 1;
+                lIdxs = find( y == labels(ii) );
+                lIdxs = lIdxs(randperm(nPerLabel(ii)));
+                throwoutIdxs = [throwoutIdxs; lIdxs(nKeep+1:end)];
+            end
+        end
+    
         function b = balMaxData( setNewValue, newValue )
             persistent balMaxD;
             if isempty( balMaxD )

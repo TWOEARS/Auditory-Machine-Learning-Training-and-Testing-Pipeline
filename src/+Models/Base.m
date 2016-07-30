@@ -60,34 +60,27 @@ classdef (Abstract) Base < handle
             if nargin < 6, getDatapointInfo = 'noInfo'; end
             x = testSet(:,'x');
             yTrue = testSet(:,'y');
-            delPosIdxs = [];
-            delNegIdxs = [];
+            throwoutIdxs = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData
-                    nPos = min( int32( maxDataSize/2 ), sum( yTrue == +1 ) );
-                    nNeg = maxDataSize - nPos;
-                    delPosIdxs = find( yTrue == +1 );
-                    delPosIdxs = delPosIdxs(randperm(numel(delPosIdxs)));
-                    delPosIdxs(1:nPos) = [];
-                    delNegIdxs = find( yTrue == -1 );
-                    delNegIdxs = delNegIdxs(randperm(numel(delNegIdxs)));
-                    delNegIdxs(1:nNeg) = [];
+                    throwoutIdxs = ModelTrainers.Base.getBalThrowoutIdxs( y, maxDataSize );
                 else
-                    delPosIdxs = maxDataSize + 1 : size( x, 1 );
+                    throwoutIdxs = randperm(numel( yTrue ) );
+                    throwoutIdxs(1:maxDataSize) = [];
                 end
-                x([delPosIdxs; delNegIdxs],:) = [];
-                yTrue([delPosIdxs; delNegIdxs]) = [];
+                x(throwoutIdxs,:) = [];
+                yTrue(throwoutIdxs,:) = [];
             end
             if strcmpi( getDatapointInfo, 'datapointInfo' )
                 dpi.fileIdxs = testSet(:,'pointwiseFileIdxs');
-                dpi.fileIdxs([delPosIdxs; delNegIdxs]) = [];
+                dpi.fileIdxs(throwoutIdxs) = [];
                 ufidxs = unique( dpi.fileIdxs );
                 dpi.blockAnnotsCacheFiles(ufidxs) = testSet(ufidxs,'blockAnnotsCacheFile');
                 dpi.fileNames(ufidxs) = testSet(ufidxs,'fileName');
                 dpi.bIdxs = testSet(:,'bIdxs');
-                dpi.bIdxs([delPosIdxs; delNegIdxs]) = [];
+                dpi.bIdxs(throwoutIdxs) = [];
                 dpi.bacfIdxs = testSet(:,'bacfIdxs');
-                dpi.bacfIdxs([delPosIdxs; delNegIdxs]) = [];
+                dpi.bacfIdxs(throwoutIdxs) = [];
                 dpiarg = {dpi};
             else
                 dpiarg = {};

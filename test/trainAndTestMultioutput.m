@@ -1,4 +1,4 @@
-function trainAndTestMultinomial()
+function trainAndTestMultioutput()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startIdentificationTraining();

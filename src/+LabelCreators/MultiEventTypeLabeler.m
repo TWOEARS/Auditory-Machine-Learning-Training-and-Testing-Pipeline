@@ -45,7 +45,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.types = obj.types;
             outputDeps.negOut = obj.negOut;
             outputDeps.srcPrioMethod = obj.srcPrioMethod;
-            outputDeps.v = 3;
+            outputDeps.v = 5;
         end
         %% -------------------------------------------------------------------------------
         
@@ -55,16 +55,21 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
-            relBlockEventOverlap = obj.relBlockEventsOverlap( blockAnnotations );
+            [relBlockEventOverlap, srcIdxs] = obj.relBlockEventsOverlap( blockAnnotations );
             [maxPosRelOverlap,maxTimeTypeIdx] = max( relBlockEventOverlap );
             activeTypes = relBlockEventOverlap >= obj.minBlockToEventRatio;
             if any( activeTypes )
                 switch obj.srcPrioMethod
                     case 'energy'
                         eSrcs = cellfun( @mean, blockAnnotations.srcEnergy(:,:) ); % mean over channels
-                        error( 'TODO: implement.' ); % activeTypes is NOT activeSrcs.
-                        eSrcs(~activeSrcs) = 0;
-                        [~,labelTypeIdx] = max( eSrcs );
+                        for ii = 1 : numel( activeTypes )
+                            if activeTypes(ii)
+                                eTypes(ii) = 1/sum( 1./eSrcs([srcIdxs{ii}]) );
+                            else
+                                eTypes(ii) = -inf;
+                            end
+                        end
+                        [~,labelTypeIdx] = max( eTypes );
                     case 'order'
                         labelTypeIdx = find( activeTypes, 1, 'first' );
                     case 'time'
@@ -83,16 +88,17 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         end
         %% -------------------------------------------------------------------------------
         
-        function relBlockEventsOverlap = relBlockEventsOverlap( obj, blockAnnotations )
+        function [relBlockEventsOverlap, srcIdxs] = relBlockEventsOverlap( obj, blockAnnotations )
             blockOffset = blockAnnotations.blockOffset;
             labelBlockOnset = blockOffset - obj.labelBlockSize_s;
             eventOnsets = blockAnnotations.srcType.t.onset;
             eventOffsets = blockAnnotations.srcType.t.offset;
             relBlockEventsOverlap = zeros( size( obj.types ) );
+            srcIdxs = cell( size( obj.types ) );
             for ii = 1 : numel( obj.types )
                 eventsAreType = cellfun( @(ba)(...
                                   obj.eventIsType( ii, ba )...
-                                              ), blockAnnotations.srcType.srcType );
+                                              ), blockAnnotations.srcType.srcType(:,1) );
                 thisTypeEventOnOffs = ...
                                [eventOnsets(eventsAreType)' eventOffsets(eventsAreType)'];
                 thisTypeMergedEventOnOffs = sortAndMergeOnOffs( thisTypeEventOnOffs );
@@ -111,6 +117,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                     maxBlockEventLen = min( obj.labelBlockSize_s, eventLen );
                     relBlockEventsOverlap(ii) = eventBlockOverlapLen / maxBlockEventLen;
                 end
+                srcIdxs{ii} = unique( [blockAnnotations.srcType.srcType{eventsAreType,2}] );
             end
         end
         %% -------------------------------------------------------------------------------

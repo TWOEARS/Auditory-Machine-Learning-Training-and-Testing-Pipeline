@@ -82,6 +82,7 @@ classdef AuditoryFEmodule < Core.IdProcInterface
         
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.afeParams = obj.afeParams;
+            outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
 

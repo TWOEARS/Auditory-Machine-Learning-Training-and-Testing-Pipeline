@@ -111,6 +111,7 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         function outputDeps = getInternOutputDependencies( obj )
             afeDeps = obj.prAfeDepProducer.getInternOutputDependencies.afeParams;
             outputDeps.afeParams = afeDeps;
+            outputDeps.v = 2;
         end
         %% -------------------------------------------------------------------------------
 

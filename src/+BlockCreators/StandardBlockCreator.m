@@ -18,7 +18,7 @@ classdef StandardBlockCreator < BlockCreators.Base
     methods (Access = protected)
         
         function outputDeps = getBlockCreatorInternOutputDependencies( obj )
-            outputDeps.v = 1;
+            outputDeps.v = 2;
         end
         %% ------------------------------------------------------------------------------- 
 

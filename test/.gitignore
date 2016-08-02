@@ -11,3 +11,4 @@ amlttpRun.*.*.*
 /test_featSelect
 /test_brir
 /overlappedMulticlass
+/numSrcs

@@ -11,18 +11,16 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = SegmentKsWrapper( afeDataIndexOffset, name, varargin )
+        function obj = SegmentKsWrapper( name, varargin )
             segmentKs = SegmentationKS( name, varargin{:} );
-            obj = obj@DataProcs.BlackboardKsWrapper( segmentKs, afeDataIndexOffset );
+            obj = obj@DataProcs.BlackboardKsWrapper( segmentKs );
         end
         %% -------------------------------------------------------------------------------
         
         function preproc( obj, blockAnnotations )
             prior = zeros( size( 1, obj.ks.nSources ) );
             for ii = 1 : obj.ks.nSources
-                blockAzms = [blockAnnotations.srcAzms.srcAzms{:}];
-                srcBlockAzms = blockAzms(ii,:);
-                azm = median( srcBlockAzms );
+                azm = blockAnnotations.srcAzms(ii);
                 prior(ii) = deg2rad( azm );
                 if prior(ii) > pi, prior(ii) = -deg2rad( azm ); end
             end
@@ -32,16 +30,19 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         function postproc( obj, afeData, blockAnnotations )
             segHypos = obj.bbs.blackboard.getLastData( 'segmentationHypotheses' );
-            segHypos = segHypos.data;
-            for ii = 1 : numel( segHypos )
-                obj.out.afeBlocks{end+1} = obj.softmaskAFE( afeData, segHypos(ii) );
-                obj.out.blockAnnotations(end+1) = obj.maskBA( blockAnnotations, ii );
+            for ii = 1 : numel( segHypos.data )
+                obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ii );
+                if isempty(obj.out.blockAnnotations)
+                    obj.out.blockAnnotations = obj.maskBA( blockAnnotations, ii );
+                else
+                    obj.out.blockAnnotations(end+1,1) = obj.maskBA( blockAnnotations, ii );
+                end
             end
         end
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 1;
+            outputDeps.v = 2;
             outputDeps.blockSize = obj.ks.blockSize;
             outputDeps.nSources = obj.ks.nSources;
             outputDeps.positions = obj.ks.fixedPositions;
@@ -58,16 +59,33 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         %% -------------------------------------------------------------------------------
         
-        function afeBlocks = softmaskAFE( obj, afeBlock, segMask )
+        function afeBlock = softmaskAFE( obj, afeBlock, segHypos, idx_mask )
+            afeBlock = SegmentIdentityKS.maskAFEData( afeBlock, ...
+                                                      segHypos.data(idx_mask).softMask, ...
+                                                      segHypos.data(idx_mask).cfHz, ...
+                                                      segHypos.data(idx_mask).hopSize );
         end
         %% -------------------------------------------------------------------------------
         
         function blockAnnotations = maskBA( obj, blockAnnotations, srcIdx )
             baFields = fieldnames( blockAnnotations );
             for ff = 1 : numel( baFields )
-                blockAnnotations.(baFields{ii}).(baFields{ii}) = ...
-                         blockAnnotations.(baFields{ii}).(baFields{ii})(srcIdx,:,:,:,:,:);
+                if isstruct( blockAnnotations.(baFields{ff}) )
+                    baIsSrcIdEq = ...
+                          [blockAnnotations.(baFields{ff}).(baFields{ff}){:,2}] == srcIdx;
+                    blockAnnotations.(baFields{ff}).t.onset(~baIsSrcIdEq) = [];
+                    blockAnnotations.(baFields{ff}).t.offset(~baIsSrcIdEq) = [];
+                    blockAnnotations.(baFields{ff}).(baFields{ff})(~baIsSrcIdEq,:) = [];
+                    blockAnnotations.(baFields{ff}).(baFields{ff})(:,2) = ...
+                                                   repmat( {1}, sum( baIsSrcIdEq ), 1 );
+                elseif iscell( blockAnnotations.(baFields{ff}) ) ...
+                        || numel( blockAnnotations.(baFields{ff}) ) > 1
+                    baIsSrcIdEq = false( size( blockAnnotations.(baFields{ff}) ) );
+                    baIsSrcIdEq(srcIdx) = true;
+                    blockAnnotations.(baFields{ff})(~baIsSrcIdEq) = [];
+                end
             end
+            blockAnnotations.mixEnergy = blockAnnotations.srcEnergy{1};
         end
         %% -------------------------------------------------------------------------------
         

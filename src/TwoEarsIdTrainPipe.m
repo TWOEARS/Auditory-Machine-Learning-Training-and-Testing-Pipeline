@@ -79,6 +79,7 @@ classdef TwoEarsIdTrainPipe < handle
             end
             afeReqs = obj.featureCreator.getAFErequests();
             if ~isempty( obj.ksWrapper )
+                obj.ksWrapper.setAfeDataIndexOffset( numel( afeReqs ) );
                 afeReqs = [afeReqs obj.ksWrapper.ks.requests];
             end
             obj.pipeline.featureCreator = obj.featureCreator;

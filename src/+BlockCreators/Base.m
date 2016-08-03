@@ -42,6 +42,7 @@ classdef Base < Core.IdProcInterface
             for afeKey = afeData.keys
                 afeSignal = afeData(afeKey{1});
                 if isa( afeSignal, 'cell' )
+                    afeSignalExtract = cell( size( afeSignal ) );
                     for ii = 1 : numel( afeSignal )
                         afeSignalExtract{ii} = ...
                             afeSignal{ii}.cutSignalCopyReducedToArray( obj.blockSize_s,...
@@ -66,7 +67,7 @@ classdef Base < Core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.blockSize = obj.blockSize_s;
             outputDeps.shiftSize = obj.shiftSize_s;
-            outputDeps.v = 1;
+            outputDeps.v = 2;
             outputDeps.blockProc = obj.getBlockCreatorInternOutputDependencies();
         end
         %% ------------------------------------------------------------------------------- 

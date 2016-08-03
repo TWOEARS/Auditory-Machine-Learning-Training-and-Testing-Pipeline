@@ -13,7 +13,7 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
         
         function obj = AzmLabeler( varargin )
             ip = inputParser;
-            ip.addOptional( 'sourceMinEnergy', -20 );
+            ip.addOptional( 'sourceMinEnergy', -30 );
             ip.addOptional( 'labelBlockSize_s', [] );
             ip.addOptional( 'sourceId', 1 );
             ip.parse( varargin{:} );
@@ -24,6 +24,11 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
         end
         %% -------------------------------------------------------------------------------
 
+        function y = labelEnergeticBlock( obj, blockAnnotations )
+            y = blockAnnotations.srcAzms(obj.sourceIds);
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% -----------------------------------------------------------------------------------
@@ -31,11 +36,6 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
         
         function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps.v = 1;
-        end
-        %% -------------------------------------------------------------------------------
-
-        function y = labelEnergeticBlock( obj, blockAnnotations )
-            y = blockAnnotations.srcAzms(obj.sourcesId);
         end
         %% -------------------------------------------------------------------------------
                 

@@ -12,3 +12,4 @@ amlttpRun.*.*.*
 /test_brir
 /overlappedMulticlass
 /numSrcs
+/test_azm1

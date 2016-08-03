@@ -1,7 +1,7 @@
 classdef Base < Core.IdProcInterface
     % Base Abstract base class for labeling blocks
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         y;
         labelBlockSize_s;
         labelBlockSize_auto;
@@ -98,9 +98,9 @@ classdef Base < Core.IdProcInterface
             out.x = inDat.x;
             out.a = inDat2.blockAnnotations;
             out.y = obj.y;
-            out.x(isnan(out.y),:) = [];
-            out.a(isnan(out.y)) = [];
-            out.y(isnan(out.y)) = [];
+            out.x(any(isnan(out.y),2),:) = [];
+            out.a(any(isnan(out.y),2)) = [];
+            out.y(any(isnan(out.y),2),:) = [];
         end
         %% -------------------------------------------------------------------------------
         

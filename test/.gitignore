@@ -13,3 +13,4 @@ amlttpRun.*.*.*
 /overlappedMulticlass
 /numSrcs
 /test_azm1
+/test_multivarData

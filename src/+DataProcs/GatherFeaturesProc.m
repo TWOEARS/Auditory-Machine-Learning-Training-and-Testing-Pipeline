@@ -38,7 +38,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
                 useIdxs = 1 : size( xy.x, 1 );
             end
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
-            dataFile.y = [dataFile.y; xy.y(useIdxs)];
+            dataFile.y = [dataFile.y; xy.y(useIdxs,:)];
             dataFile.bIdxs = [dataFile.bIdxs; useIdxs'];
             dataFile.bacfIdxs = [dataFile.bacfIdxs; ...
                   repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, numel(useIdxs), 1 )];

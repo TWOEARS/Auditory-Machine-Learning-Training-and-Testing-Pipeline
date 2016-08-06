@@ -1,7 +1,8 @@
 classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     % Wrapping the SegmentationKS
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = private)
+    properties (SetAccess = public)
+        varAzmPrior;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -14,6 +15,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         function obj = SegmentKsWrapper( name, varargin )
             segmentKs = SegmentationKS( name, varargin{:} );
             obj = obj@DataProcs.BlackboardKsWrapper( segmentKs );
+            obj.varAzmPrior = 0;
         end
         %% -------------------------------------------------------------------------------
         
@@ -21,7 +23,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             prior = zeros( size( 1, obj.ks.nSources ) );
             for ii = 1 : obj.ks.nSources
                 azm = blockAnnotations.srcAzms(ii);
-                prior(ii) = deg2rad( azm );
+                azmVar = obj.varAzmPrior * 2 * rand - obj.varAzmPrior;
+                prior(ii) = deg2rad( azm + azmVar );
                 if prior(ii) > pi, prior(ii) = -deg2rad( azm ); end
             end
             obj.ks.setFixedPositions( prior );
@@ -49,6 +52,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.bBackground = obj.ks.bBackground;
             outputDeps.afeHashs = obj.ks.reqHashs;
             outputDeps.name = obj.ks.name;
+            outputDeps.varAzmPrior = obj.varAzmPrior;
         end
         %% -------------------------------------------------------------------------------
 

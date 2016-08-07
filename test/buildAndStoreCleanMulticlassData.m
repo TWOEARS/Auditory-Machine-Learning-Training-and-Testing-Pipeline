@@ -11,7 +11,7 @@ typeMulticlassLabeler = LabelCreators.MultiEventTypeLabeler( ...
 pipe.labelCreator = typeMulticlassLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
 
-pipe.data = 'learned_models\IdentityKS\trainTestSets/NIGENS_mini_TrainSet_1.flist';
+pipe.data = 'learned_models\IdentityKS\trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

@@ -24,7 +24,8 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
                              'default', 'binomial', ...
                              'valFun', @(x)(ischar(x) && any(strcmpi(x, ...
                                                                      {'binomial',...
-                                                                      'multinomial'}))) );
+                                                                      'multinomial',...
+                                                                      'multinomialGrouped'}))) );
             pds{4} = struct( 'name', 'nLambda', ...
                              'default', 100, ...
                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
@@ -51,9 +52,15 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             if ~isempty( obj.lambda )
                 glmOpts.lambda = obj.lambda;
             end
+            if strcmpi( obj.family, 'multinomialGrouped' )
+                family = 'multinomial';
+                glmOpts.mtype = 'grouped';
+            else
+                family = obj.family;
+            end
             verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(xScaled,1), size(xScaled,2) );
-            obj.model.model = glmnet( xScaled, y, obj.family, glmOpts );
+            obj.model.model = glmnet( xScaled, y, family, glmOpts );
             verboseFprintf( obj, '\n' );
         end
         %% ----------------------------------------------------------------

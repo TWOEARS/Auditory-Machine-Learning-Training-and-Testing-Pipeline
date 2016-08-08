@@ -15,3 +15,4 @@ amlttpRun.*.*.*
 /test_azm1
 /test_multivarData
 /test_segmented
+/test_multitarget

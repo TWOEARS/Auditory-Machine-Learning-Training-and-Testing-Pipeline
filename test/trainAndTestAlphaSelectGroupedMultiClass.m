@@ -22,8 +22,8 @@ pipe.modelCreator = ModelTrainers.GlmNetModelSelectTrainer( ...
  );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'learned_models\IdentityKS\trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
-pipe.testset = 'learned_models\IdentityKS\trainTestSets/NIGENS160807_mini_TestSet_1.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
+pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TestSet_1.flist';
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

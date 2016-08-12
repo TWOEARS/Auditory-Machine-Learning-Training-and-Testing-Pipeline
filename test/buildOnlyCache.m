@@ -9,7 +9,7 @@ babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut'
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
 
-pipe.data = 'learned_models\IdentityKS\trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
+pipe.data = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

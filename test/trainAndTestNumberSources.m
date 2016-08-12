@@ -53,7 +53,7 @@ pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     'performanceMeasure', @PerformanceMeasures.MultinomialBAC );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.testset = 'learned_models\IdentityKS\trainTestSets/NIGENS160807_mini_TestSet_1.flist';
+pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TestSet_1.flist';
 pipe.setupData();
 
 sc(1) = SceneConfig.SceneConfiguration();

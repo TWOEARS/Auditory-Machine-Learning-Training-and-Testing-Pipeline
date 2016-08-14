@@ -27,7 +27,7 @@ classdef FeatureSet1Blockmean < FeatureCreators.Base
             obj = obj@FeatureCreators.Base();
             obj.freqChannels = 16;
             obj.amFreqChannels = 8;
-            obj.freqChannelsStatistics = 32;
+            obj.freqChannelsStatistics = 16;
             obj.deltasLevels = 2;
             obj.amChannels = 9;
         end
@@ -179,7 +179,7 @@ classdef FeatureSet1Blockmean < FeatureCreators.Base
             [classname1, classname2] = strtok( classInfo.Name, '.' );
             if isempty( classname2 ), outputDeps.featureProc = classname1;
             else outputDeps.featureProc = classname2(2:end); end
-            outputDeps.v = 6;
+            outputDeps.v = 7;
         end
         %% ----------------------------------------------------------------
         

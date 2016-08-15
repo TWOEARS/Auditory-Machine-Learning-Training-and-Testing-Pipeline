@@ -76,13 +76,16 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
         
         function wp = setDataWeights( obj, y )
-            labels = unique( y );
             wp = ones( size(y) );
-            for ii = 1 : numel( labels )
-                labelShare = sum( y == labels(ii) ) / numel( y );
-                labelWeight = 1 / labelShare;
-                wp(y==labels(ii)) = labelWeight;
+            for cc = 1 : size( y, 2 )
+                labels = unique( y(:,cc) );
+                for ii = 1 : numel( labels )
+                    labelShare = sum( y(:,cc) == labels(ii) ) / size( y, 1 );
+                    labelWeight = 1 / labelShare;
+                    wp(y(:,cc)==labels(ii),cc) = labelWeight;
+                end
             end
+            wp = mean( wp, 2 );
         end
         %% ----------------------------------------------------------------
         

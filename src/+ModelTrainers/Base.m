@@ -80,7 +80,7 @@ classdef (Abstract) Base < handle
                     y(throwoutIdxs,:) = [];
                 else
                     x(obj.maxDataSize+1:end,:) = [];
-                    y(obj.maxDataSize+1:end) = [];
+                    y(obj.maxDataSize+1:end,:) = [];
                 end
             end
             obj.buildModel( x, y );

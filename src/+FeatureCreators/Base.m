@@ -59,8 +59,7 @@ classdef Base < Core.IdProcInterface
             catch err
                 if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.identifier )
                     error( 'AMLTTP:dataprocs:cacheFileCorrupt', ...
-                           '%s \n%s corrupt -- delete and restart.', ...
-                           err.message, obj.getOutputFilepath( wavFilepath ) );
+                           '%s', obj.getOutputFilepath( wavFilepath ) );
                 else
                     rethrow( err );
                 end

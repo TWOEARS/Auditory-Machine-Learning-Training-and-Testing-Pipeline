@@ -81,7 +81,8 @@ classdef IdCacheTreeElem < handle
         end
         %% -------------------------------------------------------------------------------
        
-        function integrateOtherTreeNode( obj, otherNode )
+        function changesMade = integrateOtherTreeNode( obj, otherNode )
+            changesMade = false;
             if ~isequalDeepCompare( obj.cfg, otherNode.cfg )
                 error( 'this should not happen' );
             end
@@ -95,6 +96,7 @@ classdef IdCacheTreeElem < handle
                 if isempty( obj.path ) && ~isempty( otherNode.path )
                     obj.path = otherNode.path;
                 end
+                changesMade = true;
             end
             otherSubKeys = otherNode.cfgSubs.keys;
             for ii = 1 : numel( otherSubKeys )
@@ -105,17 +107,20 @@ classdef IdCacheTreeElem < handle
                         foundSubCfg = false;
                         for kk = 1 : numel( subCfgs )
                             if isequalDeepCompare( subCfgs(kk).cfg, otherSubCfgs(jj).cfg )
-                                integrateOtherTreeNode( subCfgs(kk), otherSubCfgs(jj) );
+                                changesMade = integrateOtherTreeNode( ...
+                                                          subCfgs(kk), otherSubCfgs(jj) );
                                 foundSubCfg = true;
                                 break;
                             end
                         end
                         if ~foundSubCfg
                             obj.cfgSubs(otherSubKeys{ii}) = [otherSubCfgs(jj) subCfgs];
+                            changesMade = true;
                         end
                     end
                 else
                     obj.cfgSubs(otherSubKeys{ii}) = otherNode.cfgSubs(otherSubKeys{ii});
+                    changesMade = true;
                 end
             end
         end

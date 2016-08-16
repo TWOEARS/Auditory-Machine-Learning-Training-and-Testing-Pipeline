@@ -72,8 +72,8 @@ classdef IdCacheDirectory < handle
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
                 error( 'filename supposed to be only file name without any path' );
             end
-            obj.cacheDirectoryFilename = filename;
             if ~obj.cacheDirChanged, return; end
+            obj.cacheDirectoryFilename = filename;
             cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
             cacheWriteFilepath = [cacheFilepath '.write'];
             cacheWriteSema = setfilesemaphore( cacheWriteFilepath );
@@ -122,6 +122,18 @@ classdef IdCacheDirectory < handle
                 else
                     warning( 'could not load %s', cacheFilepath );
                     obj.cacheFileInfo(cacheFilepath) = [];
+                end
+            else
+                newCacheFileInfo = dir( cacheFilepath );
+                if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
+                                      newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
+                    obj.cacheFileRWsema.getReadAccess();
+                    Parameters.dynPropsOnLoad( true, false );
+                    newCacheFile = load( cacheFilepath );
+                    Parameters.dynPropsOnLoad( true, true );
+                    obj.cacheFileRWsema.releaseReadAccess();
+                    obj.cacheDirChanged = ...
+                            obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
                 end
             end
         end

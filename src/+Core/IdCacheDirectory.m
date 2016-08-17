@@ -138,6 +138,80 @@ classdef IdCacheDirectory < handle
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function maintenance( obj )
+            cDirs = dir( [obj.topCacheDirectory filesep 'cache.*'] );
+            cacheDirs = cell( 0, 3 );
+            for ii = 1 : numel( cDirs )
+                if ~exist( [obj.topCacheDirectory filesep cDirs(ii).name filesep 'cfg.mat'], 'file' )
+                    fprintf( '''%s'' does not contain a ''cfg.mat''.\nPress key to continue\n', cDirs(ii).name );
+                    pause;
+                else
+                    cacheDirs{end+1,1} = [obj.topCacheDirectory filesep cDirs(ii).name];
+                    cl = load( [cacheDirs{end,1} filesep 'cfg.mat'], 'cfg' );
+                    cacheDirs{end,2} = Core.IdCacheDirectory.unfoldCfgStruct( cl.cfg );
+                end
+            end
+            for ii = 1 : size( cacheDirs, 1 )-1
+            for jj = ii+1 : size( cacheDirs, 1 )
+                if isequalDeepCompare( cacheDirs{ii,2}, cacheDirs{jj,2} )
+                    cacheDirs{ii,3} = [cacheDirs{ii,3} jj];
+                    cacheDirs{jj,3} = [cacheDirs{jj,3} ii];
+                end
+            end
+            end
+            [leaves, ucfgs] = obj.treeRoot.findAllLeaves( [] );
+            remCfgs = {};
+            deleteCdIdxs = [];
+            for ii = 1 : numel( leaves )
+                leafPath = leaves(ii).path;
+                cdIdx = find( strcmp( leafPath, cacheDirs(:,1) ) );
+                if isempty( cdIdx )
+                    remCfgs{end+1} = ucfgs{ii};
+                elseif ~isequalDeepCompare( ucfgs{ii}, cacheDirs{cdIdx,2} )
+                    fprintf( 'cfg mismatch: ''%s''\nPress key to continue\n', leafPath );
+                elseif ~isempty( cacheDirs{cdIdx,3} )
+                    for jj = cacheDirs{cdIdx,3}
+                        duplDir = cacheDirs{jj,1};
+                        copyfile( fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
+                        rmdir( leafPath, 's' );
+                        movefile( duplDir, leafPath );
+                    end
+                    cacheDirs(cacheDirs{cdIdx,3},:) = [];
+                    deleteCdIdxs = [deleteCdIdxs cdIdx];
+                else
+                    deleteCdIdxs = [deleteCdIdxs cdIdx];
+                end
+            end
+            [cacheDirs{deleteCdIdxs,:}] = deal( [] );
+            for ii = 1 : numel( remCfgs )
+                obj.treeRoot.deleteCfg( remCfgs{ii} );
+                obj.cacheDirChanged = true;
+            end
+            ii = 1;
+            while any( false == cellfun( @isempty, cacheDirs(:,3) ) )
+                if ~isempty( cacheDirs{ii,3} )
+                    for jj = cacheDirs{ii,3}
+                        duplDir = cacheDirs{jj,1};
+                        copyfile( fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
+                        rmdir( duplDir, 's' );
+                    end
+                    [cacheDirs{cacheDirs{ii,3},:}] = deal( [] );
+                    cacheDirs{ii,3} = [];
+                else
+                    ii = ii + 1;
+                end
+            end
+            cacheDirs(all( cellfun(@isempty,cacheDirs), 2 ),:) = [];
+            for ii = 1 : size( cacheDirs, 1 )
+                newCacheLeaf = obj.treeRoot.getCfg( cacheDirs{ii,2}, true );
+                newCacheLeaf.path = cacheDirs{ii,1};
+                obj.cacheDirChanged = true;
+            end
+            obj.saveCacheDirectory();
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% -----------------------------------------------------------------------------------

@@ -175,7 +175,7 @@ classdef IdCacheDirectory < handle
                 if isempty( cdIdx )
                     remCfgs{end+1} = ucfgs{ii};
                 elseif ~isequalDeepCompare( ucfgs{ii}, cacheDirs{cdIdx,2} )
-                    fprintf( '\cfg mismatch: ''%s''\nPress key to continue\n', leafPath );
+                    fprintf( '\ncfg mismatch: ''%s''\nPress key to continue\n', leafPath );
                     pause;
                 elseif ~isempty( cacheDirs{cdIdx,3} )
                     for jj = cacheDirs{cdIdx,3}

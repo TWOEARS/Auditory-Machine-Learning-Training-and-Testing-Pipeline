@@ -160,19 +160,28 @@ classdef IdCacheDirectory < handle
                 end
             end
             end
+            fprintf( '-> findAllLeaves\n' );
             [leaves, ucfgs] = obj.treeRoot.findAllLeaves( [] );
+            if numel( leaves ) == 1  && leaves(1) == obj.treeRoot
+                leaves = [];
+                ucfgs = {};
+            end
             remCfgs = {};
             deleteCdIdxs = [];
+            fprintf( '-> check leaves ' );
             for ii = 1 : numel( leaves )
                 leafPath = leaves(ii).path;
                 cdIdx = find( strcmp( leafPath, cacheDirs(:,1) ) );
                 if isempty( cdIdx )
                     remCfgs{end+1} = ucfgs{ii};
                 elseif ~isequalDeepCompare( ucfgs{ii}, cacheDirs{cdIdx,2} )
-                    fprintf( 'cfg mismatch: ''%s''\nPress key to continue\n', leafPath );
+                    fprintf( '\cfg mismatch: ''%s''\nPress key to continue\n', leafPath );
+                    pause;
                 elseif ~isempty( cacheDirs{cdIdx,3} )
                     for jj = cacheDirs{cdIdx,3}
+                        fprintf( ':' );
                         duplDir = cacheDirs{jj,1};
+                        fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
                         copyfile( fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
                         rmdir( leafPath, 's' );
                         movefile( duplDir, leafPath );
@@ -182,17 +191,26 @@ classdef IdCacheDirectory < handle
                 else
                     deleteCdIdxs = [deleteCdIdxs cdIdx];
                 end
+                fprintf( '%d/%d ', ii, numel( leaves ) );
             end
+            fprintf( '\n' );
             [cacheDirs{deleteCdIdxs,:}] = deal( [] );
+            fprintf( '-> deleteCfg ' );
             for ii = 1 : numel( remCfgs )
                 obj.treeRoot.deleteCfg( remCfgs{ii} );
                 obj.cacheDirChanged = true;
+                fprintf( '%d/%d ', ii, numel( remCfgs ) );
             end
+            fprintf( '\n' );
             ii = 1;
+            fprintf( '-> unregistered duplicates ' );
             while any( false == cellfun( @isempty, cacheDirs(:,3) ) )
                 if ~isempty( cacheDirs{ii,3} )
+                    fprintf( '%d/%d ', ii, sum( cellfun( @isempty, cacheDirs(:,3) ) ) );
                     for jj = cacheDirs{ii,3}
+                        fprintf( ':' );
                         duplDir = cacheDirs{jj,1};
+                        fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
                         copyfile( fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
                         rmdir( duplDir, 's' );
                     end
@@ -202,12 +220,17 @@ classdef IdCacheDirectory < handle
                     ii = ii + 1;
                 end
             end
+            fprintf( '\n' );
             cacheDirs(all( cellfun(@isempty,cacheDirs), 2 ),:) = [];
+            fprintf( '-> add unregistered ' );
             for ii = 1 : size( cacheDirs, 1 )
                 newCacheLeaf = obj.treeRoot.getCfg( cacheDirs{ii,2}, true );
                 newCacheLeaf.path = cacheDirs{ii,1};
                 obj.cacheDirChanged = true;
+                fprintf( '%d/%d ', ii, size( cacheDirs, 1 ) );
             end
+            fprintf( '\n' );
+            fprintf( '-> saveCacheDirectory\n' );
             obj.saveCacheDirectory();
         end
         %% -------------------------------------------------------------------------------

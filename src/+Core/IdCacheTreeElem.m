@@ -54,6 +54,7 @@ classdef IdCacheTreeElem < handle
         %% -------------------------------------------------------------------------------
         
         function deleteCfg( obj, cfgList )
+            if isempty( cfgList ), return; end;
             treeNode = obj;
             for ii = 1 : numel( cfgList )
                 subTreeNode = [];

@@ -63,6 +63,7 @@ classdef TwoEarsIdTrainPipe < handle
             ip.addOptional( 'hrir', ...
                             'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             ip.addOptional( 'sceneCfgDataUseRatio', 1 );
+            ip.addOptional( 'gatherFeaturesProc', true );
             ip.parse( varargin{:} );
             obj.setupData( true );
             obj.pipeline.resetDataProcs();
@@ -97,10 +98,12 @@ classdef TwoEarsIdTrainPipe < handle
                       DataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.featureCreator );
             multiCfgProcs{end+1} =  ...
                         DataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.labelCreator );
-            gatherFeaturesProc = DataProcs.GatherFeaturesProc();
-            gatherFeaturesProc.setSceneCfgDataUseRatio( ip.Results.sceneCfgDataUseRatio );
-            multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( ...
+            if ip.Results.gatherFeaturesProc
+                gatherFeaturesProc = DataProcs.GatherFeaturesProc();
+                gatherFeaturesProc.setSceneCfgDataUseRatio( ip.Results.sceneCfgDataUseRatio );
+                multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( ...
                                                              binSim, gatherFeaturesProc );
+            end
             for ii = 1 : numel( multiCfgProcs )
                 multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
                 obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );

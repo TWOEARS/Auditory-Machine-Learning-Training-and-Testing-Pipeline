@@ -185,8 +185,7 @@ classdef IdCacheDirectory < handle
                         rmdir( leafPath, 's' );
                         movefile( duplDir, leafPath );
                     end
-                    cacheDirs(cacheDirs{cdIdx,3},:) = [];
-                    deleteCdIdxs = [deleteCdIdxs cdIdx];
+                    deleteCdIdxs = [deleteCdIdxs cdIdx cacheDirs{cdIdx,3}];
                 else
                     deleteCdIdxs = [deleteCdIdxs cdIdx];
                 end
@@ -205,7 +204,7 @@ classdef IdCacheDirectory < handle
             fprintf( '-> unregistered duplicates ' );
             while any( false == cellfun( @isempty, cacheDirs(:,3) ) )
                 if ~isempty( cacheDirs{ii,3} )
-                    fprintf( '%d/%d ', ii, sum( cellfun( @isempty, cacheDirs(:,3) ) ) );
+                    fprintf( '%d/%d ', ii, sum( ~cellfun( @isempty, cacheDirs(:,3) ) ) );
                     for jj = cacheDirs{ii,3}
                         fprintf( ':' );
                         duplDir = cacheDirs{jj,1};

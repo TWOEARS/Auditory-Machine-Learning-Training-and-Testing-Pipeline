@@ -53,6 +53,46 @@ classdef IdCacheTreeElem < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function deleteCfg( obj, cfgList )
+            if isempty( cfgList ), return; end;
+            treeNode = obj;
+            for ii = 1 : numel( cfgList )
+                subTreeNode = [];
+                cfgName = cfgList(ii).fieldname;
+                cfgField = cfgList(ii).field;
+                if treeNode.cfgSubs.isKey( cfgName )
+                    subTreeNodes = treeNode.cfgSubs(cfgName);
+                else
+                    break;
+                end
+                for jj = 1 : numel( subTreeNodes )
+                    subcfg = subTreeNodes(jj).cfg;
+                    subcfgEqualsCfg = isequalDeepCompare( subcfg, cfgField );
+                    if subcfgEqualsCfg
+                        subTreeNode = subTreeNodes(jj);
+                        break;
+                    end
+                end
+                if isempty( subTreeNode )
+                    break;
+                end
+                if numel( subTreeNodes ) > 1  ||  ~exist( 'lastMultiSubTreeNodes', 'var' )
+                    lastMultiSubTreeNodesTreeNode = treeNode;
+                    lastMultiSubTreeNodesKey = cfgName;
+                    lastMultiSubTreeNodesCfgIdx = jj;
+                    lastMultiSubTreeNodes = subTreeNodes;
+                end
+                treeNode = subTreeNode;
+            end
+            lastMultiSubTreeNodes(lastMultiSubTreeNodesCfgIdx) = [];
+            if isempty( lastMultiSubTreeNodes )
+                lastMultiSubTreeNodesTreeNode.cfgSubs.remove( lastMultiSubTreeNodesKey );
+            else
+                lastMultiSubTreeNodesTreeNode.cfgSubs(lastMultiSubTreeNodesKey) = lastMultiSubTreeNodes;
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
         function subTreeNode = getCfgSubtree( obj, cfgFieldName, cfg, createIfMissing )
             if nargin < 4, createIfMissing = false; end
             subTreeNode = [];
@@ -81,7 +121,8 @@ classdef IdCacheTreeElem < handle
         end
         %% -------------------------------------------------------------------------------
        
-        function integrateOtherTreeNode( obj, otherNode )
+        function changesMade = integrateOtherTreeNode( obj, otherNode )
+            changesMade = false;
             if ~isequalDeepCompare( obj.cfg, otherNode.cfg )
                 error( 'this should not happen' );
             end
@@ -95,6 +136,7 @@ classdef IdCacheTreeElem < handle
                 if isempty( obj.path ) && ~isempty( otherNode.path )
                     obj.path = otherNode.path;
                 end
+                changesMade = true;
             end
             otherSubKeys = otherNode.cfgSubs.keys;
             for ii = 1 : numel( otherSubKeys )
@@ -105,17 +147,43 @@ classdef IdCacheTreeElem < handle
                         foundSubCfg = false;
                         for kk = 1 : numel( subCfgs )
                             if isequalDeepCompare( subCfgs(kk).cfg, otherSubCfgs(jj).cfg )
-                                integrateOtherTreeNode( subCfgs(kk), otherSubCfgs(jj) );
+                                changesMade = integrateOtherTreeNode( ...
+                                                          subCfgs(kk), otherSubCfgs(jj) );
                                 foundSubCfg = true;
                                 break;
                             end
                         end
                         if ~foundSubCfg
                             obj.cfgSubs(otherSubKeys{ii}) = [otherSubCfgs(jj) subCfgs];
+                            changesMade = true;
                         end
                     end
                 else
                     obj.cfgSubs(otherSubKeys{ii}) = otherNode.cfgSubs(otherSubKeys{ii});
+                    changesMade = true;
+                end
+            end
+        end
+        %% -------------------------------------------------------------------------------
+       
+        function [leaves, cfgLists] = findAllLeaves( obj, cfgList )
+            leaves = [];
+            cfgLists = {};
+            subKeys = obj.cfgSubs.keys;
+            if isempty( subKeys )
+                leaves = obj;
+                cfgLists = {cfgList};
+                return;
+            end
+            for ii = 1 : numel( subKeys )
+                fn = subKeys{ii};
+                subCfgs = obj.cfgSubs(subKeys{ii});
+                for jj = 1 : numel( subCfgs )
+                    f = subCfgs(jj).cfg;
+                    fl = [cfgList struct('fieldname',{fn},'field',{f})];
+                    [lvs, cl] = subCfgs(jj).findAllLeaves( fl );
+                    leaves = [leaves; lvs];
+                    cfgLists = [cfgLists; cl];
                 end
             end
         end

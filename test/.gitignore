@@ -16,3 +16,4 @@ amlttpRun.*.*.*
 /test_multivarData
 /test_segmented
 /test_multitarget
+/test_cleanMultispeech

@@ -9,10 +9,10 @@ pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
 speechVsRestLabeler = ... 
     LabelCreators.MultiEventTypeLabeler( 'types', {{'maleSpeech', 'femaleSpeech'}}, ...
                                           'negOut', 'rest' );
-% male will be 1, female speech -1
+% male will be 1, female speech 2, rest -1
 maleVsFemaleLabeler = ... 
-    LabelCreators.MultiEventTypeLabeler( 'types', {{'maleSpeech'}}, ...
-                                          'negOut', 'femaleSpeech' );
+    LabelCreators.MultiEventTypeLabeler( 'types', {{'maleSpeech'},{'femaleSpeech'}}, ...
+                                          'negOut', 'rest' );
 % multivariate labels
 multiLabeler = LabelCreators.MultiLabeler( {speechVsRestLabeler, maleVsFemaleLabeler} );
 pipe.labelCreator = multiLabeler;
@@ -32,7 +32,7 @@ sc.addSource( SceneConfig.PointSource( ...
 sc.setLengthRef( 'time', 15 );
 pipe.init( sc );
 
-modelPath = pipe.pipeline.run( 'modelName', 'babyFemale', 'modelPath', 'test_cleanBabyFemale_svm' );
+modelPath = pipe.pipeline.run( 'modelName', 'multiSpeech', 'modelPath', 'test_cleanMultispeech' );
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

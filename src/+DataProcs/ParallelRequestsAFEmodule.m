@@ -84,10 +84,9 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
             try
                 out = obj.getOutput;
             catch err
-                if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.msgIdent )
+                if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.identifier )
                     error( 'AMLTTP:dataprocs:cacheFileCorrupt', ...
-                           '%s \n%s corrupt -- delete and restart.', ...
-                            err.msg, obj.getOutputFilepath( wavFilepath ) );
+                           '%s', obj.getOutputFilepath( wavFilepath ) );
                 else
                     rethrow( err );
                 end

@@ -147,6 +147,7 @@ classdef (Abstract) IdProcInterface < handle
             end
             obj.cacheDirectory.loadCacheDirectory();
             currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
+            obj.cacheDirectory.saveCacheDirectory();
             obj.lastFolder = currentFolder;
             obj.lastConfig = currentConfig;
         end

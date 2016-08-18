@@ -72,8 +72,8 @@ classdef IdCacheDirectory < handle
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
                 error( 'filename supposed to be only file name without any path' );
             end
-            obj.cacheDirectoryFilename = filename;
             if ~obj.cacheDirChanged, return; end
+            obj.cacheDirectoryFilename = filename;
             cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
             cacheWriteFilepath = [cacheFilepath '.write'];
             cacheWriteSema = setfilesemaphore( cacheWriteFilepath );
@@ -123,9 +123,116 @@ classdef IdCacheDirectory < handle
                     warning( 'could not load %s', cacheFilepath );
                     obj.cacheFileInfo(cacheFilepath) = [];
                 end
+            else
+                newCacheFileInfo = dir( cacheFilepath );
+                if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
+                                      newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
+                    obj.cacheFileRWsema.getReadAccess();
+                    Parameters.dynPropsOnLoad( true, false );
+                    newCacheFile = load( cacheFilepath );
+                    Parameters.dynPropsOnLoad( true, true );
+                    obj.cacheFileRWsema.releaseReadAccess();
+                    obj.cacheDirChanged = ...
+                            obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
+                end
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function maintenance( obj )
+            cDirs = dir( [obj.topCacheDirectory filesep 'cache.*'] );
+            cacheDirs = cell( 0, 3 );
+            for ii = 1 : numel( cDirs )
+                if ~exist( [obj.topCacheDirectory filesep cDirs(ii).name filesep 'cfg.mat'], 'file' )
+                    fprintf( '''%s'' does not contain a ''cfg.mat''.\nPress key to continue\n', cDirs(ii).name );
+                    pause;
+                else
+                    cacheDirs{end+1,1} = [obj.topCacheDirectory filesep cDirs(ii).name];
+                    cl = load( [cacheDirs{end,1} filesep 'cfg.mat'], 'cfg' );
+                    cacheDirs{end,2} = Core.IdCacheDirectory.unfoldCfgStruct( cl.cfg );
+                end
+            end
+            for ii = 1 : size( cacheDirs, 1 )-1
+            for jj = ii+1 : size( cacheDirs, 1 )
+                if isequalDeepCompare( cacheDirs{ii,2}, cacheDirs{jj,2} )
+                    cacheDirs{ii,3} = [cacheDirs{ii,3} jj];
+                    cacheDirs{jj,3} = [cacheDirs{jj,3} ii];
+                end
+            end
+            end
+            fprintf( '-> findAllLeaves\n' );
+            [leaves, ucfgs] = obj.treeRoot.findAllLeaves( [] );
+            if numel( leaves ) == 1  && leaves(1) == obj.treeRoot
+                leaves = [];
+                ucfgs = {};
+            end
+            remCfgs = {};
+            deleteCdIdxs = [];
+            fprintf( '-> check leaves ' );
+            for ii = 1 : numel( leaves )
+                leafPath = leaves(ii).path;
+                cdIdx = find( strcmp( leafPath, cacheDirs(:,1) ) );
+                if isempty( cdIdx )
+                    remCfgs{end+1} = ucfgs{ii};
+                elseif ~isequalDeepCompare( ucfgs{ii}, cacheDirs{cdIdx,2} )
+                    remCfgs{end+1} = ucfgs{ii};
+                elseif ~isempty( cacheDirs{cdIdx,3} )
+                    for jj = cacheDirs{cdIdx,3}
+                        fprintf( ':' );
+                        duplDir = cacheDirs{jj,1};
+                        fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
+                        copyfile( fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
+                        rmdir( leafPath, 's' );
+                        movefile( duplDir, leafPath );
+                    end
+                    deleteCdIdxs = [deleteCdIdxs cdIdx cacheDirs{cdIdx,3}];
+                else
+                    deleteCdIdxs = [deleteCdIdxs cdIdx];
+                end
+                fprintf( '%d/%d ', ii, numel( leaves ) );
+            end
+            fprintf( '\n' );
+            [cacheDirs{deleteCdIdxs,:}] = deal( [] );
+            fprintf( '-> deleteCfg ' );
+            for ii = 1 : numel( remCfgs )
+                obj.treeRoot.deleteCfg( remCfgs{ii} );
+                obj.cacheDirChanged = true;
+                fprintf( '%d/%d ', ii, numel( remCfgs ) );
+            end
+            fprintf( '\n' );
+            ii = 1;
+            fprintf( '-> unregistered duplicates ' );
+            while any( false == cellfun( @isempty, cacheDirs(:,3) ) )
+                if ~isempty( cacheDirs{ii,3} )
+                    fprintf( '%d/%d ', ii, sum( ~cellfun( @isempty, cacheDirs(:,3) ) ) );
+                    for jj = cacheDirs{ii,3}
+                        fprintf( ':' );
+                        duplDir = cacheDirs{jj,1};
+                        fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
+                        copyfile( fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
+                        rmdir( duplDir, 's' );
+                    end
+                    [cacheDirs{cacheDirs{ii,3},:}] = deal( [] );
+                    cacheDirs{ii,3} = [];
+                else
+                    ii = ii + 1;
+                end
+            end
+            fprintf( '\n' );
+            cacheDirs(all( cellfun(@isempty,cacheDirs), 2 ),:) = [];
+            fprintf( '-> add unregistered ' );
+            for ii = 1 : size( cacheDirs, 1 )
+                newCacheLeaf = obj.treeRoot.getCfg( cacheDirs{ii,2}, true );
+                newCacheLeaf.path = cacheDirs{ii,1};
+                obj.cacheDirChanged = true;
+                fprintf( '%d/%d ', ii, size( cacheDirs, 1 ) );
+            end
+            fprintf( '\n' );
+            fprintf( '-> saveCacheDirectory\n' );
+            obj.saveCacheDirectory();
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% -----------------------------------------------------------------------------------

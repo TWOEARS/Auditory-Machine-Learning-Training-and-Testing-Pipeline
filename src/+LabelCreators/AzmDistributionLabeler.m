@@ -45,6 +45,7 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
     methods (Access = protected)
         %% -----------------------------------------------------------------------------------
         function outputDeps = getLabelInternOutputDependencies( obj )
+            outputDeps = getLabelInternOutputDependencies@LabelCreators.EnergyDependentLabeler(obj);
             outputDeps.angularResolution = obj.angularResolution;
             outputDeps.v = 1;
         end   

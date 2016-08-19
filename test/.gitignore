@@ -17,3 +17,4 @@ amlttpRun.*.*.*
 /test_segmented
 /test_multitarget
 /test_cleanMultispeech
+/test_buildMultiPointSrcsAzmDistrData

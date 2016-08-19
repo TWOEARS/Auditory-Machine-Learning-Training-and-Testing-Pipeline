@@ -41,20 +41,13 @@ classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler & Label
             srcAzmIdxs = mod( round( srcAzms / obj.angularResolution ) + 1, obj.nAngles );
             % initialize output
             y = zeros( numel(obj.types), obj.nAngles+1 );
-            y(:, end) = 1; % set void bin to 1
-            % mark azimuths of axtive types for each source
-            typeAtSrc = blockAnnotations.srcType.srcType(:,1);
-            srcIdxs = blockAnnotations.srcType.srcType(:,2);
-            for ii = 1:numel(srcIdxs)
-                isType = cellfun(@(v) any(strcmp([v{:}], typeAtSrc(ii))), ...
-                    obj.types, 'un', false);
-                typeIdx = find(cellfun(@(v) isequal(v, 1), isType));
-                if ~isempty(typeIdx)
-                    % block events that don't qualify as active
-                    if activeTypes(typeIdx) && isequal(activeSrcIdxs(typeIdx), srcIdxs(ii))
-                        y(typeIdx, srcAzmIdxs(srcIdxs{ii})) = 1;
-                        y(typeIdx, end) = 0; % clear void bin
-                    end
+            y(:, end) = ~activeTypes'; % set void bin to inverse of active types
+            % mark azimuths of active types for each source
+            for activeTypeIdx = find(activeTypes)
+                activeSrcs = activeSrcIdxs(activeTypeIdx);
+                for activeSrcIdx = 1:numel(activeSrcs)
+                    y(activeTypeIdx, srcAzmIdxs(activeSrcs{activeSrcIdx})) = 1;
+                    y(activeTypeIdx, end) = 0; % clear void bin
                 end
             end
             y = reshape(y, 1, numel(obj.types) * (obj.nAngles + 1));

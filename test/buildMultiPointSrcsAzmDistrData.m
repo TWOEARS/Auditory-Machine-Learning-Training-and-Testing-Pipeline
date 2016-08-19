@@ -6,7 +6,7 @@ startIdentificationTraining();
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
 azmLabeler = LabelCreators.IdAzmDistributionLabeler( 'angularResolution', 5, ...
-    'types', {{'alarm'},{'baby'},{'femaleSpeech'},{'fire'}, {{'femaleScream'}, {'maleScream'}}});
+    'types', {{'alarm'},{'baby'},{'femaleSpeech'},{'fire'}, {'femaleScream', 'maleScream'}});
 pipe.labelCreator = azmLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
 pipe.modelCreator.verbose( 'on' );

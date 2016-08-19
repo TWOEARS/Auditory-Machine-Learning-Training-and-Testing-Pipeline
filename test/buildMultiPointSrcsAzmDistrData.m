@@ -25,7 +25,7 @@ sc(1).addSource( SceneConfig.PointSource( ...
         'loop', 'randomSeq' );
 pipe.init( sc );
 
-modelPath = pipe.pipeline.run( 'modelPath', 'test_multivarData', 'runOption', 'dataStoreUni' );
+modelPath = pipe.pipeline.run( 'modelPath', 'test_buildMultiPointSrcsAzmDistrData', 'runOption', 'dataStoreUni' );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 

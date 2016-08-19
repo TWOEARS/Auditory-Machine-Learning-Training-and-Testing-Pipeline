@@ -37,7 +37,7 @@ classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler
             for ii = 1:numel(srcIdx)
                 isType = cellfun(@(v) any(strcmp([v{:}], typeAtSrc(ii))), ...
                     obj.types, 'un', false);
-                typeIdx = find(not(cellfun('isempty', isType)));
+                typeIdx = find(cellfun(@(v) isequal(v, 1), isType));
                 if ~isempty(typeIdx)
                     y(typeIdx, srcAzmIdxs(srcIdx{ii})) = 1;
                     y(typeIdx, end) = 0; % clear void bin

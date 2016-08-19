@@ -35,8 +35,8 @@ classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler
             typeAtSrc = blockAnnotations.srcType.srcType(:,1);
             srcIdx = blockAnnotations.srcType.srcType(:,2);
             for ii = 1:numel(srcIdx)
-                isType = cellfun(@(v) strcmp([v{:}], typeAtSrc(ii)), ...
-                                obj.types, 'un', false);
+                isType = cellfun(@(v) any(strcmp([v{:}], typeAtSrc(ii))), ...
+                    obj.types, 'un', false);
                 typeIdx = find(not(cellfun('isempty', isType)));
                 if ~isempty(typeIdx)
                     y(typeIdx, srcAzmIdxs(srcIdx{ii})) = 1;

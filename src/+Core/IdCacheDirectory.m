@@ -134,6 +134,7 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileRWsema.releaseReadAccess();
                     obj.cacheDirChanged = ...
                             obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
+                        obj.cacheFileInfo(cacheFilepath) = newCacheFileInfo;
                 end
             end
         end

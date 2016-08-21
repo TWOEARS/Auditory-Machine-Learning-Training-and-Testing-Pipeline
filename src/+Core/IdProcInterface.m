@@ -17,6 +17,7 @@ classdef (Abstract) IdProcInterface < handle
         lastFolder;
         lastConfig;
         outFileSema;
+        sceneId;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -55,8 +56,9 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
         
         function init( obj )
-            obj.lastFolder = '';
-            obj.lastConfig = [];
+            obj.lastFolder = {};
+            obj.lastConfig = {};
+            obj.sceneId = 1;
         end
         %% -------------------------------------------------------------------------------
         
@@ -141,16 +143,17 @@ classdef (Abstract) IdProcInterface < handle
         
         function currentFolder = getCurrentFolder( obj )
             currentConfig = obj.getOutputDependencies();
-            if ~isempty( obj.lastFolder ) ...
-                    && isequalDeepCompare( currentConfig, obj.lastConfig )
-                currentFolder = obj.lastFolder;
+            if numel( obj.lastFolder ) >= obj.sceneId ...
+                    && ~isempty( obj.lastFolder{obj.sceneId} ) ...
+                    && isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId} )
+                currentFolder = obj.lastFolder{obj.sceneId};
                 return;
             end
             obj.cacheDirectory.loadCacheDirectory();
             currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
             obj.cacheDirectory.saveCacheDirectory();
-            obj.lastFolder = currentFolder;
-            obj.lastConfig = currentConfig;
+            obj.lastFolder{obj.sceneId} = currentFolder;
+            obj.lastConfig{obj.sceneId} = currentConfig;
         end
         %% -------------------------------------------------------------------------------
         

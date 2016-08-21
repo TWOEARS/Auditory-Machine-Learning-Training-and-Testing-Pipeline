@@ -26,6 +26,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
+            obj.inputProc.sceneId = obj.sceneId;
             [xy, inDataFilepath] = obj.loadInputData( wavFilepath, 'x', 'y' );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );

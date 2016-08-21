@@ -63,7 +63,7 @@ classdef (Abstract) Base < handle
             throwoutIdxs = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData
-                    throwoutIdxs = ModelTrainers.Base.getBalThrowoutIdxs( y, maxDataSize );
+                    throwoutIdxs = ModelTrainers.Base.getBalThrowoutIdxs( yTrue, maxDataSize );
                 else
                     throwoutIdxs = randperm(numel( yTrue ) );
                     throwoutIdxs(1:maxDataSize) = [];

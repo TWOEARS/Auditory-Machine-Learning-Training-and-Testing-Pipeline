@@ -63,8 +63,9 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method
-        function out = loadProcessedData( ~, ~ ) 
+        function [out, outFilepath] = loadProcessedData( ~, ~ ) 
             out = [];
+            outFilepath = '';
         end
         %% -------------------------------------------------------------------------------
 

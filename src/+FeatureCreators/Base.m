@@ -33,8 +33,7 @@ classdef Base < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            inData = obj.loadInputData( wavFilepath, 'afeBlocks' );
-            obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
+            [inData, obj.inDatPath] = obj.loadInputData( wavFilepath, 'afeBlocks' );
             obj.x = [];
             for afeBlock = inData.afeBlocks'
                 obj.afeData = afeBlock{1};
@@ -51,8 +50,9 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method
-        function out = loadProcessedData( obj, wavFilepath, varargin )
-            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'x', 'inDatPath' );
+        function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
+            [tmpOut, outFilepath] = loadProcessedData@Core.IdProcInterface( ...
+                                                     obj, wavFilepath, 'x', 'inDatPath' );
             obj.x = tmpOut.x;
             obj.inDatPath = tmpOut.inDatPath;
             try

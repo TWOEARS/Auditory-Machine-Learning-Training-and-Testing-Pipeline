@@ -33,8 +33,7 @@ classdef Base < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            in = obj.loadInputData( wavFilepath, 'blockAnnotations' );
-            obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
+            [in, obj.inDatPath] = obj.loadInputData( wavFilepath, 'blockAnnotations' );
             obj.y = [];
             for blockAnnotation = in.blockAnnotations'
                 if obj.labelBlockSize_auto

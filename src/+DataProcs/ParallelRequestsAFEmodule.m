@@ -78,8 +78,9 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
         
         % override of DataProcs.IdProcInterface's method
-        function out = loadProcessedData( obj, wavFilepath, varargin )
-            tmpOut = loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'indivFiles' );
+        function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
+            [tmpOut, outFilepath] = ...
+                 loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'indivFiles' );
             obj.indivFiles = tmpOut.indivFiles;
             try
                 out = obj.getOutput;

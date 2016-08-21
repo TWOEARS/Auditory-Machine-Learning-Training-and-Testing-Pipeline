@@ -111,9 +111,13 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function out = getOutput( obj )
-            out.earSout = obj.earSout;
-            out.annotations = obj.annotsOut;
+        function out = getOutput( obj, varargin )
+            if nargin < 2  || any( strcmpi( 'earSout', varargin ) )
+                out.earSout = obj.earSout;
+            end
+            if nargin < 2  || any( strcmpi( 'annotations', varargin ) )
+                out.annotations = obj.annotsOut;
+            end
         end
         %% ----------------------------------------------------------------
         

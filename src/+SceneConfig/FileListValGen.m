@@ -3,6 +3,7 @@ classdef FileListValGen < SceneConfig.ValGen
     %%
     properties
         filesepsAreUnix = false; % for compatibility with saved FileListValGens
+        eqTestFlistPrep = {};
     end
     
     %%
@@ -22,6 +23,19 @@ classdef FileListValGen < SceneConfig.ValGen
             end
             obj = obj@SceneConfig.ValGen( valGenArgs{:} );
             obj.filesepsAreUnix = true;
+            obj.prepEqTestFlist();
+        end
+        
+        function obj = prepEqTestFlist( obj )
+            if strcmpi( obj.type, 'set' )
+                fSepIdxs = strfind( obj.val, '/' );
+                obj.eqTestFlistPrep = cellfun( ...
+                                    @(f,idx)( f(idx(end-2):end) ), obj.val, fSepIdxs, ...
+                                                                 'UniformOutput', false );
+                obj.eqTestFlistPrep = sort( obj.eqTestFlistPrep );
+            else
+                obj.eqTestFlistPrep = obj.val;
+            end
         end
         
         function e = isequal( obj1, obj2 )
@@ -37,8 +51,6 @@ classdef FileListValGen < SceneConfig.ValGen
                 e = false;
                 return;
             end
-            files1 = cell( size( obj1.val ) );
-            files2 = cell( size( obj2.val ) );
             if ~obj1.filesepsAreUnix
                 obj1.val = strrep( obj1.val, '\', '/' );
                 obj1.filesepsAreUnix = true;
@@ -47,11 +59,13 @@ classdef FileListValGen < SceneConfig.ValGen
                 obj2.val = strrep( obj2.val, '\', '/' );
                 obj2.filesepsAreUnix = true;
             end
-            f1SepIdxs = strfind( obj1.val, '/' );
-            f2SepIdxs = strfind( obj2.val, '/' );
-            files1 = cellfun( @(f,idx)( f(idx(end-2):end) ), obj1.val, f1SepIdxs, 'UniformOutput', false );
-            files2 = cellfun( @(f,idx)( f(idx(end-2):end) ), obj2.val, f2SepIdxs, 'UniformOutput', false );
-            e = isequal( sort( files1 ), sort( files2 ) );
+            if isempty( obj1.eqTestFlistPrep )
+                obj1.prepEqTestFlist();
+            end
+            if isempty( obj2.eqTestFlistPrep )
+                obj2.prepEqTestFlist();
+            end
+            e = isequal( obj1.eqTestFlistPrep, obj2.eqTestFlistPrep );
         end
         
     end

@@ -231,7 +231,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
 
-        function out = getOutput( obj )
+        function out = getOutput( obj, varargin )
             out.earSout = obj.earSout;
             out.annotations = obj.annotsOut;
         end

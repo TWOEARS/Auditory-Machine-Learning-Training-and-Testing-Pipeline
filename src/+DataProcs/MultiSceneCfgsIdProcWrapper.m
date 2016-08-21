@@ -150,7 +150,7 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
 
-        function out = getOutput( obj )
+        function out = getOutput( obj, varargin )
             out = [];
         end
         %% ----------------------------------------------------------------

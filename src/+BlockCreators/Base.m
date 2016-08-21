@@ -72,9 +72,13 @@ classdef Base < Core.IdProcInterface
         end
         %% ------------------------------------------------------------------------------- 
 
-        function out = getOutput( obj )
-            out.afeBlocks = obj.afeBlocks;
-            out.blockAnnotations = obj.blockAnnotations;
+        function out = getOutput( obj, varargin )
+            if nargin < 2  || any( strcmpi( 'afeBlocks', varargin ) )
+                out.afeBlocks = obj.afeBlocks;
+            end
+            if nargin < 2  || any( strcmpi( 'blockAnnotations', varargin ) )
+                out.blockAnnotations = obj.blockAnnotations;
+            end
         end
         %% ------------------------------------------------------------------------------- 
         

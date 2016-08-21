@@ -84,7 +84,7 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function out = getOutput( obj )
+        function out = getOutput( obj, varargin )
             out.afeBlocks = obj.out.afeBlocks;
             out.blockAnnotations = obj.out.blockAnnotations;
         end

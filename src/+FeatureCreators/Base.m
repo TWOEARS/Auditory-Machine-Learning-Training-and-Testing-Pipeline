@@ -55,7 +55,7 @@ classdef Base < Core.IdProcInterface
             obj.x = tmpOut.x;
             obj.inDatPath = tmpOut.inDatPath;
             try
-                out = obj.getOutput;
+                out = obj.getOutput( varargin{:} );
             catch err
                 if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.identifier )
                     error( 'AMLTTP:dataprocs:cacheFileCorrupt', ...
@@ -106,13 +106,17 @@ classdef Base < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function out = getOutput( obj )
+        function out = getOutput( obj, varargin )
             if ~exist( obj.inDatPath, 'file' )
                 error( 'AMLTTP:dataprocs:cacheFileCorrupt', '%s not found.', obj.inDatPath );
             end
-            inDat = load( obj.inDatPath, 'blockAnnotations' );
-            out.blockAnnotations = inDat.blockAnnotations;
-            out.x = obj.x;
+            if nargin < 2  || any( strcmpi( 'blockAnnotations', varargin ) )
+                inDat = load( obj.inDatPath, 'blockAnnotations' );
+                out.blockAnnotations = inDat.blockAnnotations;
+            end
+            if nargin < 2  || any( strcmpi( 'x', varargin ) )
+                out.x = obj.x;
+            end
         end
         %% ------------ Feature Description Utilities ------------------------------------
 

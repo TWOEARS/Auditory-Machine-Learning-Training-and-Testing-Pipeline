@@ -86,7 +86,7 @@ classdef AuditoryFEmodule < Core.IdProcInterface
         end
         %% ----------------------------------------------------------------
 
-        function out = getOutput( obj )
+        function out = getOutput( obj, varargin )
             out = obj.output;
         end
         %% ----------------------------------------------------------------

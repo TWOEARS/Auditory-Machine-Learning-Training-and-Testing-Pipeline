@@ -115,7 +115,7 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method
-        function out = getOutput( obj )
+        function out = getOutput( obj, varargin )
             out.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for ii = 1 : numel( obj.indivFiles )
                 if ~exist( obj.indivFiles{ii}, 'file' )

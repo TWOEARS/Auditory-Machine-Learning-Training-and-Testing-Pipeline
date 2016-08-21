@@ -26,7 +26,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
-            xy = obj.loadInputData( wavFilepath, 'x', 'y' );
+            [xy, inDataFilepath] = obj.loadInputData( wavFilepath, 'x', 'y' );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
             if obj.sceneCfgDataUseRatio < 1  &&  ...
@@ -42,8 +42,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             dataFile.bIdxs = [dataFile.bIdxs; useIdxs'];
             dataFile.bacfIdxs = [dataFile.bacfIdxs; ...
                   repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, numel(useIdxs), 1 )];
-            dataFile.blockAnnotsCacheFile = [dataFile.blockAnnotsCacheFile; ...
-                                        {obj.inputProc.getOutputFilepath( wavFilepath )}];
+            dataFile.blockAnnotsCacheFile = [dataFile.blockAnnotsCacheFile; {inDataFilepath}];
             fprintf( '.' );
         end
         %% -------------------------------------------------------------------------------
@@ -108,7 +107,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function out = getOutput( ~ )
+        function out = getOutput( ~, ~ )
             out = [];
         end
         %% -------------------------------------------------------------------------------

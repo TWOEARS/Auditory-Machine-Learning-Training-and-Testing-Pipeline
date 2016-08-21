@@ -25,6 +25,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
+            obj.inputProc.sceneId = obj.sceneId;
             in = obj.loadInputData( wavFilepath, 'afeData', 'annotations' );
             try
                 [obj.afeBlocks, obj.blockAnnotations] = ...

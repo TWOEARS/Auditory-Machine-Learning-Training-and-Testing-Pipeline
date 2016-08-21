@@ -32,6 +32,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
+            obj.inputProc.sceneId = obj.sceneId;
             inData = obj.loadInputData( wavFilepath, 'afeBlocks' );
             obj.inDatPath = obj.inputProc.getOutputFilepath( wavFilepath );
             obj.x = [];

@@ -1,3 +1,4 @@
+
 classdef (Abstract) IdProcInterface < handle
     %% data file processor
     %
@@ -14,10 +15,10 @@ classdef (Abstract) IdProcInterface < handle
         cacheDirectory;
         inputProc;
         idData;
-        lastFolder;
-        lastConfig;
+        lastFolder = {};
+        lastConfig = {};
         outFileSema;
-        sceneId;
+        sceneId = 1;
     end
     
     %% -----------------------------------------------------------------------------------

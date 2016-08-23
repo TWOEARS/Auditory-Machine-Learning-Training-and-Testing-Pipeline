@@ -31,26 +31,23 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
             end
         end
         %% -------------------------------------------------------------------------------
-
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
         
-        function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps.angularResolution = obj.angularResolution;
-            outputDeps.v = 1;
-        end
-        %% -------------------------------------------------------------------------------
-
         function y = labelEnergeticBlock( obj, blockAnnotations )
             srcAzms = blockAnnotations.srcAzms(obj.sourceIds,:);
             srcAzmIdxs = mod( round( srcAzms / obj.angularResolution ) + 1, obj.nAngles );
             y = zeros( 1, obj.nAngles );
             y(srcAzmIdxs) = 1;
         end
-        %% -------------------------------------------------------------------------------
-                
+        
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+        %% -----------------------------------------------------------------------------------
+        function outputDeps = getLabelInternOutputDependencies( obj )
+            outputDeps.angularResolution = obj.angularResolution;
+            outputDeps.v = 1;
+        end   
     end
     %% -----------------------------------------------------------------------------------
     

@@ -55,9 +55,8 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
-            [relBlockEventOverlap, srcIdxs] = obj.relBlockEventsOverlap( blockAnnotations );
+            [activeTypes, relBlockEventOverlap, srcIdxs] = getActiveTypes( blockAnnotations );
             [maxPosRelOverlap,maxTimeTypeIdx] = max( relBlockEventOverlap );
-            activeTypes = relBlockEventOverlap >= obj.minBlockToEventRatio;
             if any( activeTypes )
                 switch obj.srcPrioMethod
                     case 'energy'
@@ -87,6 +86,10 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             end
         end
         %% -------------------------------------------------------------------------------
+        function [activeTypes, relBlockEventOverlap, srcIdxs] = getActiveTypes( obj, blockAnnotations )
+            [relBlockEventOverlap, srcIdxs] = obj.relBlockEventsOverlap( blockAnnotations );
+            activeTypes = relBlockEventOverlap >= obj.minBlockToEventRatio;
+        end
         
         function [relBlockEventsOverlap, srcIdxs] = relBlockEventsOverlap( obj, blockAnnotations )
             blockOffset = blockAnnotations.blockOffset;

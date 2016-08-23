@@ -44,11 +44,8 @@ classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler & Label
             y(:, end) = ~activeTypes'; % set void bin to inverse of active types
             % mark azimuths of active types for each source
             for activeTypeIdx = find(activeTypes)
-                activeSrcs = activeSrcIdxs(activeTypeIdx);
-                for activeSrcIdx = 1:numel(activeSrcs)
-                    y(activeTypeIdx, srcAzmIdxs(activeSrcs{activeSrcIdx})) = 1;
-                    y(activeTypeIdx, end) = 0; % clear void bin
-                end
+                activeSrcs = activeSrcIdxs{activeTypeIdx};
+                y(activeTypeIdx, srcAzmIdxs(activeSrcs)) = 1;
             end
             y = reshape(y, 1, numel(obj.types) * (obj.nAngles + 1));
         end

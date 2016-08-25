@@ -295,6 +295,14 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function standaloneMaintain( cacheTopDir )
+            cache = Core.IdCacheDirectory();
+            cache.setCacheTopDir( cacheTopDir );
+            cache.loadCacheDirectory();
+            cache.maintenance();
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
     
 end

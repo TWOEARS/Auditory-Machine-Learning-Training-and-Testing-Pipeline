@@ -7,6 +7,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         types;
         negOut;
         srcPrioMethod;
+        srcTypeFilterOut;
+        nrgSrcsFilter;
+        sourcesMinEnergy;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -24,6 +27,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
             ip.addOptional( 'negOut', 'rest' ); % rest, none
             ip.addOptional( 'srcPrioMethod', 'order' ); % energy, order, time
+            ip.addOptional( 'srcTypeFilterOut', [] ); % e.g. [2,1;3,2]: throw away type 1 blocks from src 2 and type 2 blocks from src 3
+            ip.addOptional( 'nrgSrcsFilter', [] ); % idxs of srcs to be account for block-filtering based on too low energy. If empty, do not use
+            ip.addOptional( 'sourcesMinEnergy', -20 ); 
             ip.parse( varargin{:} );
             obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
@@ -31,6 +37,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.types = ip.Results.types;
             obj.negOut = ip.Results.negOut;
             obj.srcPrioMethod = ip.Results.srcPrioMethod;
+            obj.srcTypeFilterOut = ip.Results.srcTypeFilterOut;
+            obj.nrgSrcsFilter = ip.Results.nrgSrcsFilter;
+            obj.sourcesMinEnergy = ip.Results.sourcesMinEnergy;
         end
         %% -------------------------------------------------------------------------------
 
@@ -45,7 +54,10 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.types = obj.types;
             outputDeps.negOut = obj.negOut;
             outputDeps.srcPrioMethod = obj.srcPrioMethod;
-            outputDeps.v = 5;
+            outputDeps.nrgSrcsFilter = obj.nrgSrcsFilter;
+            outputDeps.sourcesMinEnergy = obj.sourcesMinEnergy;
+            outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
+            outputDeps.v = 6;
         end
         %% -------------------------------------------------------------------------------
         
@@ -55,7 +67,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function y = label( obj, blockAnnotations )
-            [activeTypes, relBlockEventOverlap, srcIdxs] = getActiveTypes( blockAnnotations );
+            [activeTypes, relBlockEventOverlap, srcIdxs] = obj.getActiveTypes( blockAnnotations );
             [maxPosRelOverlap,maxTimeTypeIdx] = max( relBlockEventOverlap );
             if any( activeTypes )
                 switch obj.srcPrioMethod
@@ -83,6 +95,20 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                 y = -1;
             else
                 y = NaN;
+            end
+            for ii = 1 : size( obj.srcTypeFilterOut, 1 )
+                srcfo = obj.srcTypeFilterOut(ii,1);
+                typefo = obj.srcTypeFilterOut(ii,2);
+                if activeTypes(typefo) && any( srcIdxs{typefo} == srcfo )
+                    y = NaN;
+                end
+            end
+            if ~isempty( obj.nrgSrcsFilter )
+                rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
+                              blockAnnotations, obj.nrgSrcsFilter, obj.sourcesMinEnergy );
+                if rejectBlock
+                    y = NaN;
+                end
             end
         end
         %% -------------------------------------------------------------------------------

@@ -40,6 +40,7 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                            obj.wrappedProcs{1}.hasFileAlreadyBeenProcessed( wavFilepath );
                 % not stopping early because hasFileAlreadyBeenProcessed triggers cache
                 % directory creation
+                fprintf( '.' );
             end
         end
         %% -------------------------------------------------------------------------------

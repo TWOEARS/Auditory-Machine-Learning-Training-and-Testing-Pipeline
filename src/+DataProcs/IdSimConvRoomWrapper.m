@@ -10,6 +10,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         annotsOut;
         srcAzimuth;
         brirSrcPos;
+        outFs;
     end
     
     %% --------------------------------------------------------------------
@@ -26,8 +27,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             obj = obj@Core.IdProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
-                'BlockSize', 2048, ...
-                'SampleRate', fs, ...
+                'BlockSize', 4096, ...
+                'SampleRate', 44100, ...
                 'MaximumDelay', 0.05 ... % for distances up to ~15m
                 );
             if ~isempty( hrirFile )
@@ -46,6 +47,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 'Name', 'Head' ...
                 );
             set(obj.convRoomSim, 'Verbose', false);
+            obj.outFs = fs;
         end
         %% ----------------------------------------------------------------
         
@@ -60,7 +62,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         %% ----------------------------------------------------------------
 
         function fs = getDataFs( obj )
-            fs = obj.convRoomSim.SampleRate;
+            fs = obj.outFs;
         end
         
         %% ----------------------------------------------------------------
@@ -81,6 +83,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.simulate();
                 obj.earSout = obj.convRoomSim.Sinks.getData();
             end
+            obj.earSout = resample( double( obj.earSout ), obj.outFs, 44100 );
             obj.earSout = single( obj.earSout );
         end
         %% ----------------------------------------------------------------
@@ -96,6 +99,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 outputDeps.sceneConfig.sources(1).data = []; % configs shall not include filename
             end
             outputDeps.SampleRate = obj.convRoomSim.SampleRate;
+            outputDeps.outFs = obj.outFs;
             outputDeps.ReverberationMaxOrder = obj.reverberationMaxOrder;
             rendererFunction = functions( obj.convRoomSim.Renderer );
             rendererName = rendererFunction.function;
@@ -110,7 +114,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 hrirHash = calcDataHash( audioread( hrirFName ) );
             end
             outputDeps.hrir = hrirHash;
-            outputDeps.v = 1;
+            outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
 

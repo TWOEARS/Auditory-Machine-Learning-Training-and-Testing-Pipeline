@@ -41,7 +41,7 @@ sc.addSource( SceneConfig.BRIRsource( brirs{1}, 'speakerId', 2, ...
     'snr', SceneConfig.ValGen( 'manual', 0 ),...
     'loop', 'randomSeq' );
 sc.setBRIRheadOrientation( 0.4 ); % point of recorded azm range (0..1)
-pipe.init( sc, 'hrir', [] ); % empty hrir to avoid usage of default HRIR
+pipe.init( sc, 'hrir', [], 'fs', 16000 ); % empty hrir to avoid usage of default HRIR
 
 modelPath = pipe.pipeline.run( 'modelName', classname, 'modelPath', 'test_brir' );
 

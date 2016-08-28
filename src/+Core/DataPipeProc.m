@@ -54,6 +54,7 @@ classdef DataPipeProc < handle
             end
             datalist = obj.data(:)';
             obj.dataFileProcessor.getSingleProcessCacheAccess();
+            obj.dataFileProcessor.setDirectCacheSave( false );
             for ii = 1 : length( datalist )
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = datalist(ii);
@@ -64,6 +65,7 @@ classdef DataPipeProc < handle
             end
             fprintf( '..' );
             obj.dataFileProcessor.saveCacheDirectory();
+            obj.dataFileProcessor.setDirectCacheSave( true );
             obj.dataFileProcessor.releaseSingleProcessCacheAccess();
             fprintf( ';\n' );
         end

@@ -36,10 +36,10 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
             for ii = 1 : numel( obj.sceneConfigurations )
                 obj.sceneProc.setSceneConfig( obj.sceneConfigurations(ii) );
                 obj.wrappedProcs{1}.sceneId = ii;
-                processed = obj.wrappedProcs{1}.hasFileAlreadyBeenProcessed( wavFilepath );
-                if ~processed
-                    fileProcessed = false; return;
-                end
+                fileProcessed = fileProcessed && ...
+                           obj.wrappedProcs{1}.hasFileAlreadyBeenProcessed( wavFilepath );
+                % not stopping early because hasFileAlreadyBeenProcessed triggers cache
+                % directory creation
             end
         end
         %% -------------------------------------------------------------------------------

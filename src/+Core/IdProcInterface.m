@@ -19,6 +19,7 @@ classdef (Abstract) IdProcInterface < handle
         lastConfig = {};
         outFileSema;
         sceneId = 1;
+        saveImmediately = true;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -152,7 +153,9 @@ classdef (Abstract) IdProcInterface < handle
             end
             obj.cacheDirectory.loadCacheDirectory();
             currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
-            obj.cacheDirectory.saveCacheDirectory();
+            if obj.saveImmediately
+                obj.cacheDirectory.saveCacheDirectory();
+            end
             obj.lastFolder{obj.sceneId} = currentFolder;
             obj.lastConfig{obj.sceneId} = currentConfig;
         end
@@ -164,6 +167,11 @@ classdef (Abstract) IdProcInterface < handle
             end
             obj.inputProc = inputProc;
         end
+        %% -------------------------------------------------------------------------------
+        
+        function setDirectCacheSave( obj, saveImmediately )
+            obj.saveImmediately = saveImmediately;
+        end            
         %% -------------------------------------------------------------------------------
         
         % this can be overridden in subclasses

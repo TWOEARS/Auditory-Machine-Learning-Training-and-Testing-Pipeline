@@ -86,6 +86,15 @@ classdef IdProcWrapper < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
+        % override of Core.IdProcInterface's method
+        function setDirectCacheSave( obj, saveImmediately )
+            setDirectCacheSave@Core.IdProcInterface( obj, saveImmediately );
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.setDirectCacheSave( saveImmediately );
+            end
+        end            
+        %% -------------------------------------------------------------------------------
+        
     end
         
     %% -----------------------------------------------------------------------------------

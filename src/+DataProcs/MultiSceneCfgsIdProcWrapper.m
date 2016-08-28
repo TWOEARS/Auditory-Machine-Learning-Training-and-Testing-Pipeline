@@ -46,6 +46,7 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                     fprintf( '*' );
                 end
             end
+            fprintf( '\n' );
         end
         %% -------------------------------------------------------------------------------
        

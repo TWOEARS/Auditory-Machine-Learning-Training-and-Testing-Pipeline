@@ -64,11 +64,12 @@ classdef TwoEarsIdTrainPipe < handle
                             'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             ip.addOptional( 'sceneCfgDataUseRatio', 1 );
             ip.addOptional( 'gatherFeaturesProc', true );
+            ip.addOptional( 'fs', 44100 );
             ip.parse( varargin{:} );
             obj.setupData( true );
             obj.pipeline.resetDataProcs();
-            binSim = DataProcs.SceneEarSignalProc( ...
-                                      DataProcs.IdSimConvRoomWrapper( ip.Results.hrir ) );
+            binSim = DataProcs.SceneEarSignalProc( DataProcs.IdSimConvRoomWrapper( ...
+                                                       ip.Results.hrir, ip.Results.fs ) );
             if isempty( obj.blockCreator )
                 obj.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 0.4 );
             end

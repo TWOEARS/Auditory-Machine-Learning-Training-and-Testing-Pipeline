@@ -18,13 +18,16 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
-        function obj = IdSimConvRoomWrapper( hrirFile )
+        function obj = IdSimConvRoomWrapper( hrirFile, fs )
+            if nargin < 2
+                fs = 44100;
+            end
             % initialize the simulation tool
             obj = obj@Core.IdProcInterface();
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
-                'BlockSize', 4096, ...
-                'SampleRate', 44100, ...
+                'BlockSize', 2048, ...
+                'SampleRate', fs, ...
                 'MaximumDelay', 0.05 ... % for distances up to ~15m
                 );
             if ~isempty( hrirFile )

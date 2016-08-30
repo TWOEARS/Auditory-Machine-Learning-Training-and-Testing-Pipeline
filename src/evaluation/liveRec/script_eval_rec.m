@@ -22,7 +22,7 @@ session_onOffSet = [1.236e+05, 8582556;...   % alarm
                     1.1279e+05, min([15141980, 4867300, 30129257, 8166364]);...   % piano_baby -> baby_dog_fire_piano \
                    ];
 session_onOffSet = session_onOffSet / 44100.0; % from samples to seconds
-for ii = 2:4%numel(flist)
+for ii = 1 : numel(flist)
     fpath_mixture_mat = flist{ii};
     [idLabels{ii}, perf{ii}] = identify_rec(idModels, data_dir, fpath_mixture_mat, session_onOffSet(ii,:));
     close all

@@ -1,4 +1,4 @@
-classdef MultiEventTypeLabeler < LabelCreators.Base
+classdef MultiEventTypeLabeler < LabelCreators.EnergyDependentLabeler
     % class for multi-class labeling blocks by event
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -9,7 +9,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         srcPrioMethod;
         srcTypeFilterOut;
         nrgSrcsFilter;
-        sourcesMinEnergy;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -31,7 +30,10 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'nrgSrcsFilter', [] ); % idxs of srcs to be account for block-filtering based on too low energy. If empty, do not use
             ip.addOptional( 'sourcesMinEnergy', -20 ); 
             ip.parse( varargin{:} );
-            obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
+            obj = obj@LabelCreators.EnergyDependentLabeler( ...
+                                      'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
+                                      'sourcesMinEnergy', ip.Results.sourcesMinEnergy, ...
+                                      'sourceIds', ip.Results.nrgSrcsFilter);
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             obj.types = ip.Results.types;
@@ -39,7 +41,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.srcPrioMethod = ip.Results.srcPrioMethod;
             obj.srcTypeFilterOut = ip.Results.srcTypeFilterOut;
             obj.nrgSrcsFilter = ip.Results.nrgSrcsFilter;
-            obj.sourcesMinEnergy = ip.Results.sourcesMinEnergy;
         end
         %% -------------------------------------------------------------------------------
 

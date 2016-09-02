@@ -1,5 +1,11 @@
-idModels = setDefaultIdModels();
-idModels = idModels(1:2);
+idModels(1).name = 'alarm';
+idModels(1).dir = '../../../../twoears-data/learned_models/IdentityKS/IEEE_special_issue_models/';
+idModels(2).name = 'baby';
+idModels(2).dir = idModels(1).dir;
+idModels(3).name = 'fire';
+idModels(3).dir = idModels(1).dir;
+idModels(4).name = 'femaleSpeech';
+idModels(4).dir = idModels(1).dir;
 
 data_dir = '../../../../twoears-data';
 flist = ...

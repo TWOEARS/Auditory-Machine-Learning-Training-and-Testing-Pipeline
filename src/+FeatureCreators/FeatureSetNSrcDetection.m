@@ -1,4 +1,4 @@
-classdef FeatureSetNSrc < FeatureCreators.Base
+classdef FeatureSetNSrcDetection < FeatureCreators.Base
     % FeatureSetNSrc Specifies a feature set consisting of:
     %   ILD, ITD
     
@@ -8,6 +8,7 @@ classdef FeatureSetNSrc < FeatureCreators.Base
         wSizeSec;       % window size in seconds
         hSizeSec;       % window step size in seconds
         maxDelaySec;    % maximum cross-correleation delay
+        maxOffsetDB;    % offset for the onset/offset features on dB
     end
     
     %% --------------------------------------------------------------------
@@ -17,12 +18,13 @@ classdef FeatureSetNSrc < FeatureCreators.Base
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = FeatureSetNSrc( )
+        function obj = FeatureSetNSrcDetection( )
             obj = obj@FeatureCreators.Base();
-            obj.nFreqChannels = 32;
+            obj.nFreqChannels = 16;
             obj.wSizeSec = 0.02;
             obj.hSizeSec = 0.01;
-            obj.maxDelaySec = 0.0011;
+            obj.maxDelaySec = 0.00011;
+            obj.maxOffsetDB = 30;
         end
         %% ----------------------------------------------------------------
         
@@ -38,7 +40,9 @@ classdef FeatureSetNSrc < FeatureCreators.Base
                 'fb_nChannels', obj.nFreqChannels, ...
                 'ihc_method', 'halfwave', ...
                 'ild_wSizeSec', obj.wSizeSec, ...
-                'ild_hSizeSec', obj.hSizeSec ...
+                'ild_hSizeSec', obj.hSizeSec, ...
+                'ons_maxOffsetdB', obj.maxOffsetDB, ...
+                'ofs_maxOffsetdB', obj.maxOffsetDB ...
                 );
             
             % internaural level differences
@@ -72,6 +76,14 @@ classdef FeatureSetNSrc < FeatureCreators.Base
                 {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)),a.cfHz,'UniformOutput',false)))} );
             x = obj.concatFeats( x, obj.reshape2featVec( itd ) );
+            
+            % afeIdx 3: onset strengths
+            itd = obj.makeBlockFromAfe( 2, 1, ...
+                @(a)(compressAndScale( a.Data, 0.33 )), ...
+                {@(a)(a.Name),@(a)([num2str(numel(a.cfHz)) '-ch']),@(a)(a.Channel)}, ...
+                {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...
+                {@(a)(strcat('f', arrayfun(@(f)(num2str(f)),a.cfHz,'UniformOutput',false)))} );
+            x = obj.concatFeats( x, obj.reshape2featVec( itd ) );
         end
         %% ----------------------------------------------------------------
         
@@ -81,12 +93,13 @@ classdef FeatureSetNSrc < FeatureCreators.Base
             outputDeps.wSizeSec = obj.wSizeSec;
             outputDeps.hSizeSec = obj.hSizeSec;
             outputDeps.maxDelaySec = obj.maxDelaySec;
+            outputDeps.maxOffsetDB = obj.maxOffsetDB;
             % classname
             classInfo = metaclass( obj );
             classnames = strsplit( classInfo.Name, '.' );
             outputDeps.featureProc = classnames{end};
             % version
-            outputDeps.v = 1;
+            outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
         

@@ -1,4 +1,4 @@
-function trainAndTestNSrc()
+function nSrcDetection()
 
 %% inits
 
@@ -11,15 +11,20 @@ pipe = TwoEarsIdTrainPipe();
 % block creator
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 0.5, 0.2 );
 % feature creator
-pipe.featureCreator = FeatureCreators.FeatureSetNSrc();
+pipe.featureCreator = FeatureCreators.FeatureSetNSrcDetection();
 % label creator
 pipe.labelCreator = LabelCreators.NumberOfSourcesLabeler();
 % model creator
-pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
+%pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );
+pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
+    'performanceMeasure', @PerformanceMeasures.MultinomialBAC, ...
+    'family', 'multinomial', ... % deal with NumberOfSources as a multiclass label
+    'cvFolds', 4, ...
+    'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 % train and test set
 pipe.trainset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
-pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TestSet_1.flist';
+%pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TestSet_1.flist';
 % setup data
 pipe.setupData();
 
@@ -43,10 +48,13 @@ pipe.init( sc );
 
 %% output parameters
 
+% modelPath = pipe.pipeline.run( ...
+%     'modelName', 'nSrc', ...
+%     'modelPath', 'numSrcs', ...
+%     'runOption', 'dataStoreUni' );
 modelPath = pipe.pipeline.run( ...
     'modelName', 'nSrc', ...
-    'modelPath', 'test_buildMultiPointSrcsAzmDistrData', ...
-    'runOption', 'dataStoreUni' );
+    'modelPath', 'numSrcs' );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 

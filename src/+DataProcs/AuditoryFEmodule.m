@@ -140,14 +140,14 @@ classdef AuditoryFEmodule < Core.IdProcInterface
         %% ----------------------------------------------------------------
         
         function s = parameter2struct( p )
+            s = struct();
             k = p.map.keys;
             v = p.map.values;
-            if p.map.Count > 0
-                for ii = 1 : p.map.Count
-                    s.(k{ii}) = v{ii};
-                end
-            else
-                s.error = 'error converting empty parameter to struct';
+            for ii = 1 : p.map.Count
+                s.(k{ii}) = v{ii};
+            end
+            if length(fields(s)) < 1
+                s.warning = 'no parameters given!';
             end
         end
         %% ----------------------------------------------------------------

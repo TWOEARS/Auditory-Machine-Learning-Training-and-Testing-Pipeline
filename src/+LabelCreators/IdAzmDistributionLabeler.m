@@ -1,8 +1,10 @@
-classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler & LabelCreators.MultiEventTypeLabeler
-    % class for labeling blocks by azm distributions of a specified set of
+classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
+    % class for labeling blocks by azimuth distributions for a specified set of
     % types
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
+        angularResolution;
+        nAzimuthBins;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -14,13 +16,12 @@ classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler & Label
         function obj = IdAzmDistributionLabeler( varargin )
             ip = inputParser;
             ip.addOptional( 'labelBlockSize_s', [] );
-            % AzmDistributionLabeler parameters
             ip.addOptional( 'angularResolution', 5 );
-            ip.addOptional( 'sourcesMinEnergy', -20 );
             % MultiEventTypeLabeler parameters
             ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
             ip.addOptional( 'minBlockToEventRatio', 0.75 );
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
+            ip.addOptional( 'sourcesMinEnergy', -20 );
             ip.parse( varargin{:} );
             obj@LabelCreators.MultiEventTypeLabeler( ...
                                       'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
@@ -28,45 +29,43 @@ classdef IdAzmDistributionLabeler < LabelCreators.AzmDistributionLabeler & Label
                                       'maxNegBlockToEventRatio', ip.Results.maxNegBlockToEventRatio, ...
                                       'types', ip.Results.types, ...
                                       'sourcesMinEnergy', ip.Results.sourcesMinEnergy);
-            obj@LabelCreators.AzmDistributionLabeler( ...
-                                      'angularResolution', ip.Results.angularResolution, ...
-                                      'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
-                                      'sourcesMinEnergy', ip.Results.sourcesMinEnergy);
+            obj.angularResolution = ip.Results.angularResolution;
+            obj.nAzimuthBins = 360 / obj.angularResolution;
         end
         
         %% -------------------------------------------------------------------------------
-        function y = labelEnergeticBlock( obj, blockAnnotations )
-            
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function y = label( obj, blockAnnotations )
             [activeTypes, ~, activeSrcIdxs] = getActiveTypes( obj, blockAnnotations );
-            srcAzms = blockAnnotations.srcAzms(obj.sourceIds,:);
-            srcAzmIdxs = mod( round( srcAzms / obj.angularResolution ) + 1, obj.nAngles );
+            if ~isempty(obj.nrgSrcsFilter)
+                srcAzms = blockAnnotations.srcAzms(obj.nrgSrcsFilter, :);
+                srcAzmIdxs = LabelCreators.AzmDistributionLabeler.azimToIndex( srcAzms, ...
+                    obj.angularResolution, obj.nAzimuthBins );
+            else
+                srcAzmIdxs = LabelCreators.AzmDistributionLabeler.azimToIndex( blockAnnotations.srcAzms, ...
+                    obj.angularResolution, obj.nAzimuthBins );
+            end
             % initialize output
-            y = zeros( numel(obj.types), obj.nAngles+1 );
+            y = zeros( numel(obj.types), obj.nAzimuthBins+1 );
             y(:, end) = ~activeTypes'; % set void bin to inverse of active types
             % mark azimuths of active types for each source
             for activeTypeIdx = find(activeTypes)
                 activeSrcs = activeSrcIdxs{activeTypeIdx};
                 y(activeTypeIdx, srcAzmIdxs(activeSrcs)) = 1;
             end
-            y = reshape(y, 1, numel(obj.types) * (obj.nAngles + 1));
-        end
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
-        function y = label( obj, blockAnnotations )
-            y = label@LabelCreators.EnergyDependentLabeler(obj, blockAnnotations);
+            y = reshape(y, 1, numel(obj.types) * (obj.nAzimuthBins + 1));
         end
         
         %% -----------------------------------------------------------------------------------
         function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps = getLabelInternOutputDependencies@LabelCreators.AzmDistributionLabeler(obj);
-            outputDepsM = getLabelInternOutputDependencies@LabelCreators.MultiEventTypeLabeler(obj);
-            fieldsNew = fieldnames(outputDepsM);
-            for ii = 1:numel(fieldsNew)
-                outputDeps.(fieldsNew{ii}) = outputDepsM.(fieldsNew{ii});
-            end
-            outputDeps.v = 1;
+            outputDeps = getLabelInternOutputDependencies@LabelCreators.MultiEventTypeLabeler(obj);
+            outputDeps.nAzimuthBins = obj.nAzimuthBins;
+            outputDeps.angularResolution = obj.angularResolution;
+            outputDeps.v = 2;
         end
     end
     %% -----------------------------------------------------------------------------------

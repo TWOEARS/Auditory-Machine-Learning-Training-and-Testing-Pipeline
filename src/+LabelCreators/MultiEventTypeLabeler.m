@@ -31,6 +31,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'nrgSrcsFilter', [] ); % idxs of srcs to be account for block-filtering based on too low energy. If empty, do not use
             ip.addOptional( 'sourcesMinEnergy', -20 ); 
             ip.parse( varargin{:} );
+            obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             obj.types = ip.Results.types;

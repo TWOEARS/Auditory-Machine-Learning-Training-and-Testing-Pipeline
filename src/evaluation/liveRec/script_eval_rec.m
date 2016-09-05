@@ -1,13 +1,13 @@
 idModels(1).name = 'alarm';
-idModels(1).dir = '../../../../twoears-data/learned_models/IdentityKS/IEEE_special_issue_models/';
+idModels(1).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.22.13.39.54.9901';
 idModels(2).name = 'baby';
-idModels(2).dir = idModels(1).dir;
+idModels(2).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.21.23.04.24.7408';
 idModels(3).name = 'fire';
-idModels(3).dir = idModels(1).dir;
+idModels(3).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.21.23.04.31.4562';
 idModels(4).name = 'femaleSpeech';
-idModels(4).dir = idModels(1).dir;
+idModels(4).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.21.23.04.30.1632';
 
-data_dir = '../../../../twoears-data';
+data_dir = '../../../../twoears-database-internal';
 flist = ...
     {fullfile(data_dir, 'sound_databases/adream_1605/rec/raw/alarm.mat'),...
     fullfile(data_dir, 'sound_databases/adream_1605/rec/raw/baby.mat'),...

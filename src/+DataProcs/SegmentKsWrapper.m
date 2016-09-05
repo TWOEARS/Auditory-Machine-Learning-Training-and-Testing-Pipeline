@@ -12,22 +12,17 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = SegmentKsWrapper( name, varargin )
-            segmentKs = SegmentationKS( name, varargin{:} );
+        function obj = SegmentKsWrapper( paramFilepath, varargin )
+            segmentKs = StreamSegregationKS( paramFilepath, varargin{:} );
             obj = obj@DataProcs.BlackboardKsWrapper( segmentKs );
             obj.varAzmPrior = 0;
         end
         %% -------------------------------------------------------------------------------
         
         function preproc( obj, blockAnnotations )
-            prior = zeros( size( 1, obj.ks.nSources ) );
-            for ii = 1 : obj.ks.nSources
-                azm = blockAnnotations.srcAzms(ii);
-                azmVar = obj.varAzmPrior * 2 * rand - obj.varAzmPrior;
-                prior(ii) = deg2rad( azm + azmVar );
-                if prior(ii) > pi, prior(ii) = -deg2rad( azm ); end
-            end
-            obj.ks.setFixedPositions( prior );
+            absAzms = blockAnnotations.srcAzms;
+            azmVar = obj.varAzmPrior * (2*rand( size( absAzms ) ) - 1);
+            obj.ks.setAzimuths( absAzms + azmVar );
         end
         %% -------------------------------------------------------------------------------
         
@@ -45,11 +40,9 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 2;
+            outputDeps.v = 3;
+            outputDeps.params = obj.ks.observationModel.trainingParameters;
             outputDeps.blockSize = obj.ks.blockSize;
-            outputDeps.nSources = obj.ks.nSources;
-            outputDeps.positions = obj.ks.fixedPositions;
-            outputDeps.bBackground = obj.ks.bBackground;
             outputDeps.afeHashs = obj.ks.reqHashs;
             outputDeps.name = obj.ks.name;
             outputDeps.varAzmPrior = obj.varAzmPrior;

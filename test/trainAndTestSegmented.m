@@ -2,10 +2,10 @@ function trainAndTestSegmented()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startIdentificationTraining();
+addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/../../segmentation-training-pipeline/src'] ) ); 
 
 pipe = TwoEarsIdTrainPipe();
-pipe.ksWrapper = DataProcs.SegmentKsWrapper( 'DemoKS', ...
-                             'blockSize', 1, 'nSources', 2, 'doBackgroundEstimation', 0 );
+pipe.ksWrapper = DataProcs.SegmentKsWrapper( 'ourYamlParamFilepath', 'BlockSize', 1.0 );
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
@@ -27,7 +27,7 @@ sc.addSource( SceneConfig.PointSource( ...
         'offset', SceneConfig.ValGen( 'manual', 0 ) ),...
     'snr', SceneConfig.ValGen( 'manual', 0 ),...
     'loop', 'randomSeq' );
-pipe.init( sc );
+pipe.init( sc, 'fs', 16000 );
 
 modelPath = pipe.pipeline.run( 'modelName', 'segmModel', 'modelPath', 'test_segmented' );
 
@@ -36,8 +36,7 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 %% test
 
 pipe = TwoEarsIdTrainPipe();
-pipe.ksWrapper = DataProcs.SegmentKsWrapper( 'DemoKS', ...
-                             'blockSize', 1, 'nSources', 2, 'doBackgroundEstimation', 0 );
+pipe.ksWrapper = DataProcs.SegmentKsWrapper( 'ourYamlParamFilepath', 'BlockSize', 1.0 );
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
@@ -58,7 +57,7 @@ sc.addSource( SceneConfig.PointSource( ...
         'offset', SceneConfig.ValGen( 'manual', 0 ) ),...
     'snr', SceneConfig.ValGen( 'manual', 0 ),...
     'loop', 'randomSeq' );
-pipe.init( sc );
+pipe.init( sc, 'fs', 16000 );
 
 modelPath = pipe.pipeline.run( 'modelName', 'segmModel', 'modelPath', 'test_segmented' );
 

@@ -4,7 +4,7 @@ addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) );
 startIdentificationTraining();
 
 pipe = TwoEarsIdTrainPipe();
-pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();
+pipe.featureCreator = FeatureCreators.FeatureSetRmBlockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( 'noop' );

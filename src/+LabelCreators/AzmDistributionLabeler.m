@@ -59,7 +59,7 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
             if nargin < 3
                 nAngles = 360 / obj.angularResolution;
             end
-            azmIdxs = mod( round( azimuths / angularResolution ) + 1, nAngles );
+            azmIdxs = mod( round( azimuths / angularResolution ), nAngles ) + 1;
         end
     end
     

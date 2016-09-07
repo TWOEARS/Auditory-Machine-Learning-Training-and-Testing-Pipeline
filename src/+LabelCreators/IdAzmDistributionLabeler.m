@@ -55,7 +55,10 @@ classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
             % mark azimuths of active types for each source
             for activeTypeIdx = find(activeTypes)
                 activeSrcs = activeSrcIdxs{activeTypeIdx};
-                y(activeTypeIdx, srcAzmIdxs(activeSrcs)) = 1;
+                % no azimuth for diffuse sounds
+                if ~isnan(srcAzmIdxs(activeSrcs))
+                    y(activeTypeIdx, srcAzmIdxs(activeSrcs)) = 1;
+                end
             end
             y = reshape(y, 1, numel(obj.types) * (obj.nAzimuthBins + 1));
         end

@@ -74,7 +74,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
                 obj.earSout = signal{1};
                 t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
-                t = t / obj.getDataFs;
+                t = t / obj.convRoomSim.SampleRate;
                 obj.annotsOut.srcAzms = struct( ...
                              't', {single( t )}, ...
                              'srcAzms', {single( repmat( obj.srcAzimuth, numel( t ), 1 ) )} );
@@ -83,7 +83,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.simulate();
                 obj.earSout = obj.convRoomSim.Sinks.getData();
             end
-            obj.earSout = resample( double( obj.earSout ), obj.outFs, 44100 );
+            obj.earSout = resample( double( obj.earSout ), obj.outFs, obj.convRoomSim.SampleRate );
             obj.earSout = single( obj.earSout );
         end
         %% ----------------------------------------------------------------
@@ -148,7 +148,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             while ~obj.convRoomSim.isFinished()
                 obj.convRoomSim.set('Refresh',true);  % refresh all objects
                 obj.convRoomSim.set('Process',true);  % processing
-                t = t + obj.convRoomSim.BlockSize / obj.getDataFs;
+                t = t + obj.convRoomSim.BlockSize / obj.convRoomSim.SampleRate;
                 obj.annotsOut.srcAzms.srcAzms(end+1,1) = single( obj.srcAzimuth );
                 obj.annotsOut.srcAzms.t(end+1) = single( t );
                 fprintf( '.' );

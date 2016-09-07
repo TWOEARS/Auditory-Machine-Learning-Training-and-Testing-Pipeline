@@ -140,6 +140,7 @@ classdef AuditoryFEmodule < Core.IdProcInterface
         %% ----------------------------------------------------------------
         
         function s = parameter2struct( p )
+            s = struct();
             k = p.map.keys;
             v = p.map.values;
             for ii = 1 : p.map.Count

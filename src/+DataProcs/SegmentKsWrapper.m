@@ -44,7 +44,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         function outputDeps = getKsInternOutputDependencies( obj )
             outputDeps.v = 4;
             outputDeps.params = obj.ks.observationModel.trainingParameters;
-            outputDeps.blockSize = obj.ks.blockSize;
             outputDeps.afeHashs = obj.ks.reqHashs;
             outputDeps.varAzmPrior = obj.varAzmPrior;
         end

@@ -47,6 +47,7 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
 pipe = TwoEarsIdTrainPipe();
 pipe.ksWrapper = DataProcs.SegmentKsWrapper( 'SegmentationTrainerParameters.yaml', 'BlockSize', 1.0 );
+pipe.ksWrapper.varAzmPrior = 20;
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;

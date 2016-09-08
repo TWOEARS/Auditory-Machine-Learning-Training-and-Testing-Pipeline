@@ -22,7 +22,9 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         function preproc( obj, blockAnnotations )
             absAzms = blockAnnotations.srcAzms;
             azmVar = obj.varAzmPrior * (2*rand( size( absAzms ) ) - 1);
-            obj.ks.setAzimuths( absAzms + azmVar );
+            obj.ks.setFixedAzimuths( absAzms + azmVar );
+            obj.ks.setBlocksize( blockAnnotations.blockOffset ...
+                                                          - blockAnnotations.blockOnset );
         end
         %% -------------------------------------------------------------------------------
         
@@ -40,11 +42,10 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 3;
+            outputDeps.v = 4;
             outputDeps.params = obj.ks.observationModel.trainingParameters;
             outputDeps.blockSize = obj.ks.blockSize;
             outputDeps.afeHashs = obj.ks.reqHashs;
-            outputDeps.name = obj.ks.name;
             outputDeps.varAzmPrior = obj.varAzmPrior;
         end
         %% -------------------------------------------------------------------------------

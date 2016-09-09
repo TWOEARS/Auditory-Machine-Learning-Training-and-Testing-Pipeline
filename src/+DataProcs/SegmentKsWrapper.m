@@ -3,6 +3,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = public)
         varAzmPrior;
+        currentVarAzms;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -21,8 +22,14 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         function preproc( obj, blockAnnotations )
             absAzms = blockAnnotations.srcAzms;
+            if isstruct( absAzms ) || size( absAzms, 1 ) > 1
+                error( 'AMLTTP:procBinding:singleValueBlockAnnotationsNeeded', ...
+                    'SegmentKsWrapper can only handle one azm value per source per block.' );
+            end
+            absAzms(isnan(absAzms)) = [];
             azmVar = obj.varAzmPrior * (2*rand( size( absAzms ) ) - 1);
-            obj.ks.setFixedAzimuths( absAzms + azmVar );
+            obj.currentVarAzms = absAzms + azmVar;
+            obj.ks.setFixedAzimuths( obj.currentVarAzms );
             obj.ks.setBlocksize( blockAnnotations.blockOffset ...
                                                           - blockAnnotations.blockOnset );
         end
@@ -32,17 +39,22 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             segHypos = obj.bbs.blackboard.getLastData( 'segmentationHypotheses' );
             for ii = 1 : numel( segHypos.data )
                 obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ii );
+                baIdx = find( obj.currentVarAzms == segHypos.data(ii).refAzm );
+                if numel( baIdx ) > 1
+                    nSameRefAzms = find( segHypos.data(ii).refAzm == [segHypos.data(1:ii).refAzm] );
+                    baIdx = baIdx(numel( nSameRefAzms ));
+                end
                 if isempty(obj.out.blockAnnotations)
-                    obj.out.blockAnnotations = obj.maskBA( blockAnnotations, ii );
+                    obj.out.blockAnnotations = obj.maskBA( blockAnnotations, baIdx );
                 else
-                    obj.out.blockAnnotations(end+1,1) = obj.maskBA( blockAnnotations, ii );
+                    obj.out.blockAnnotations(end+1,1) = obj.maskBA( blockAnnotations, baIdx );
                 end
             end
         end
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 4;
+            outputDeps.v = 5;
             outputDeps.params = obj.ks.observationModel.trainingParameters;
             outputDeps.afeHashs = obj.ks.reqHashs;
             outputDeps.varAzmPrior = obj.varAzmPrior;

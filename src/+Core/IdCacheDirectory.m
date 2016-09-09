@@ -126,9 +126,13 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileInfo(cacheFilepath) = [];
                 end
             else
-                obj.cacheFileRWsema.getReadAccess();
-                newCacheFileInfo = dir( cacheFilepath );
-                obj.cacheFileRWsema.releaseReadAccess();
+                try
+                    newCacheFileInfo = dir( cacheFilepath );
+                catch
+                    % another process just have written the cache, try again
+                    pause(1);
+                    newCacheFileInfo = dir( cacheFilepath );
+                end
                 if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
                                       newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                     obj.cacheFileRWsema.getReadAccess();

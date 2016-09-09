@@ -82,6 +82,10 @@ classdef DataPipeProc < handle
             ndf = numel( datalist );
             dfii = 1;
             for dataFile = datalist(randperm(length(datalist)))'
+                if dfii == 1 % with the first file, caches of wrapped procs often update
+                    obj.dataFileProcessor.getSingleProcessCacheAccess();
+                    obj.dataFileProcessor.setDirectCacheSave( false );
+                end
                 fprintf( '%s << (%d/%d) -- %s\n', ...
                            obj.dataFileProcessor.procName, dfii, ndf, dataFile.fileName );
                 try
@@ -102,6 +106,11 @@ classdef DataPipeProc < handle
                     else
                         rethrow( err );
                     end
+                end
+                if dfii == 1
+                    obj.dataFileProcessor.saveCacheDirectory();
+                    obj.dataFileProcessor.setDirectCacheSave( true );
+                    obj.dataFileProcessor.releaseSingleProcessCacheAccess();
                 end
                 dfii = dfii + 1;
                 fprintf( '\n' );

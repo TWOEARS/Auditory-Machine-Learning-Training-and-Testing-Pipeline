@@ -77,7 +77,9 @@ classdef IdCacheDirectory < handle
             cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
             cacheWriteFilepath = [cacheFilepath '.write'];
             cacheWriteSema = setfilesemaphore( cacheWriteFilepath );
+            obj.cacheFileRWsema.getReadAccess();
             newCacheFileInfo = dir( cacheFilepath );
+            obj.cacheFileRWsema.releaseReadAccess();
             if ~isempty( newCacheFileInfo ) && ...
                     ~isequalDeepCompare( newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                 obj.cacheFileRWsema.getReadAccess();
@@ -124,7 +126,9 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileInfo(cacheFilepath) = [];
                 end
             else
+                obj.cacheFileRWsema.getReadAccess();
                 newCacheFileInfo = dir( cacheFilepath );
+                obj.cacheFileRWsema.releaseReadAccess();
                 if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
                                       newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                     obj.cacheFileRWsema.getReadAccess();

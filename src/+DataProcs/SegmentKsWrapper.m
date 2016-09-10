@@ -33,7 +33,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 return;
             end
             azmVar = obj.varAzmPrior * (2*rand( size( absAzms ) ) - 1);
-            obj.currentVarAzms = absAzms + azmVar;
+            obj.currentVarAzms = wrapTo180( absAzms + azmVar );
             obj.ks.setFixedAzimuths( obj.currentVarAzms );
             obj.ks.setBlocksize( blockAnnotations.blockOffset ...
                                                           - blockAnnotations.blockOnset );

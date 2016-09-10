@@ -72,7 +72,10 @@ classdef DataPipeProc < handle
         end
         %% ----------------------------------------------------------------
 
-        function run( obj )
+        function run( obj, varargin )
+            ip = inputParser;
+            ip.addOptional( 'debug', false );
+            ip.parse( varargin{:} );
             errs = {};
             fprintf( '\nRunning: %s\n%s\n', ...
                      obj.dataFileProcessor.procName, ...
@@ -88,24 +91,28 @@ classdef DataPipeProc < handle
                 end
                 fprintf( '%s << (%d/%d) -- %s\n', ...
                            obj.dataFileProcessor.procName, dfii, ndf, dataFile.fileName );
-                try
-                    obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
-                catch err
-                    if any( strcmpi( err.identifier, ...
-                                            {'MATLAB:load:couldNotReadFile', ...
-                                             'MATLAB:load:unableToReadMatFile'} ...
-                                   ) )
-                        errs{end+1} = err;
-                        warning( err.message );
-                    elseif any( strcmpi( err.identifier, ...
-                                            {'AMLTTP:dataprocs:cacheFileCorrupt'} ...
-                                   ) )
-                        delete( err.message ); % err.msg contains corrupt cache file name
-                        erpl.message = ['deleted corrupt cache file: ' err.message];
-                        errs{end+1} = erpl;
-                    else
-                        rethrow( err );
+                if ~ip.Results.debug
+                    try
+                        obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
+                    catch err
+                        if any( strcmpi( err.identifier, ...
+                                {'MATLAB:load:couldNotReadFile', ...
+                                'MATLAB:load:unableToReadMatFile'} ...
+                                ) )
+                            errs{end+1} = err;
+                            warning( err.message );
+                        elseif any( strcmpi( err.identifier, ...
+                                {'AMLTTP:dataprocs:cacheFileCorrupt'} ...
+                                ) )
+                            delete( err.message ); % err.msg contains corrupt cache file name
+                            erpl.message = ['deleted corrupt cache file: ' err.message];
+                            errs{end+1} = erpl;
+                        else
+                            rethrow( err );
+                        end
                     end
+                else
+                    obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
                 end
                 if dfii == 1
                     obj.dataFileProcessor.saveCacheDirectory();

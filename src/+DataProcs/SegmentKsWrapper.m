@@ -20,13 +20,18 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         end
         %% -------------------------------------------------------------------------------
         
-        function preproc( obj, blockAnnotations )
+        function procBlock = preproc( obj, blockAnnotations )
+            procBlock = true;
             absAzms = blockAnnotations.srcAzms;
             if isstruct( absAzms ) || size( absAzms, 1 ) > 1
                 error( 'AMLTTP:procBinding:singleValueBlockAnnotationsNeeded', ...
                     'SegmentKsWrapper can only handle one azm value per source per block.' );
             end
             absAzms(isnan(absAzms)) = [];
+            if isempty( absAzms )
+                procBlock = false; 
+                return;
+            end
             azmVar = obj.varAzmPrior * (2*rand( size( absAzms ) ) - 1);
             obj.currentVarAzms = absAzms + azmVar;
             obj.ks.setFixedAzimuths( obj.currentVarAzms );

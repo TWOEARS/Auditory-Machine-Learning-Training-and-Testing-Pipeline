@@ -40,6 +40,11 @@ classdef (Abstract) IdProcInterface < handle
             obj.cacheDirectory.saveCacheDirectory();
         end
         %% -------------------------------------------------------------------------------
+        
+        function loadCacheDirectory( obj )
+            obj.cacheDirectory.loadCacheDirectory();
+        end
+        %% -------------------------------------------------------------------------------
 
         function getSingleProcessCacheAccess( obj )
             obj.cacheDirectory.getSingleProcessCacheAccess();

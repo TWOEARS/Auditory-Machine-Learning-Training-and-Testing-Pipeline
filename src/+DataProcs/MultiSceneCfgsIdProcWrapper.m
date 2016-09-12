@@ -106,6 +106,14 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        % override of DataProcs.IdProcWrapper's method
+        function loadCacheDirectory( obj )
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.loadCacheDirectory();
+            end
+        end
+        %% -----------------------------------------------------------------        
 
         % override of DataProcs.IdProcWrapper's method
         function getSingleProcessCacheAccess( obj )

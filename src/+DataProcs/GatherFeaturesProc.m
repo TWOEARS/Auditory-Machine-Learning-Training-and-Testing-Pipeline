@@ -83,6 +83,16 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         function setCacheSystemDir( ~, ~, ~ )
         end
         %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function saveCacheDirectory( ~ )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function loadCacheDirectory( ~ )
+        end
+        %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method
         function getSingleProcessCacheAccess( ~ )

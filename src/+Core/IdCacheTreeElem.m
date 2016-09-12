@@ -133,7 +133,8 @@ classdef IdCacheTreeElem < handle
                     rmdir( obj.path, 's' );
                     obj.path = otherNode.path;
                 end
-                if isempty( obj.path ) && ~isempty( otherNode.path )
+                if (isempty( obj.path ) || ~exist( obj.path, 'dir' )) ...
+                        && ~isempty( otherNode.path )
                     obj.path = otherNode.path;
                 end
                 changesMade = true;

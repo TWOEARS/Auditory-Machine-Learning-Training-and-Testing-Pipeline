@@ -77,7 +77,9 @@ classdef IdCacheDirectory < handle
             cacheFilepath = [obj.topCacheDirectory filesep obj.cacheDirectoryFilename];
             cacheWriteFilepath = [cacheFilepath '.write'];
             cacheWriteSema = setfilesemaphore( cacheWriteFilepath );
+            obj.cacheFileRWsema.getReadAccess();
             newCacheFileInfo = dir( cacheFilepath );
+            obj.cacheFileRWsema.releaseReadAccess();
             if ~isempty( newCacheFileInfo ) && ...
                     ~isequalDeepCompare( newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                 obj.cacheFileRWsema.getReadAccess();
@@ -124,7 +126,13 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileInfo(cacheFilepath) = [];
                 end
             else
-                newCacheFileInfo = dir( cacheFilepath );
+                try
+                    newCacheFileInfo = dir( cacheFilepath );
+                catch
+                    % another process just have written the cache, try again
+                    pause(1);
+                    newCacheFileInfo = dir( cacheFilepath );
+                end
                 if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
                                       newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                     obj.cacheFileRWsema.getReadAccess();
@@ -134,7 +142,7 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileRWsema.releaseReadAccess();
                     obj.cacheDirChanged = ...
                             obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
-                        obj.cacheFileInfo(cacheFilepath) = newCacheFileInfo;
+                    obj.cacheFileInfo(cacheFilepath) = newCacheFileInfo;
                 end
             end
         end

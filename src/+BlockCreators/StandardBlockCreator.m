@@ -49,9 +49,7 @@ classdef StandardBlockCreator < BlockCreators.Base
                     annot = annotations.(seqAname);
                     if ~isstruct( annot.t ) % time series
                         if length( annot.t ) == size( annot.(seqAname), 1 )
-                            isTinBlock = arrayfun( @(at)(...
-                                                       at >= blockOn && at <= blockOff ...
-                                                                             ), annot.t );
+                            isTinBlock = (annot.t >= blockOn) & (annot.t <= blockOff);
                             blockAnnots(ii).(seqAname).(seqAname)(~isTinBlock,:) = [];
                             blockAnnots(ii).(seqAname).t(~isTinBlock) = [];
                         else

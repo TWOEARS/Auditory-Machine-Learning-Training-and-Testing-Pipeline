@@ -1,4 +1,3 @@
-
 classdef (Abstract) IdProcInterface < handle
     %% data file processor
     %

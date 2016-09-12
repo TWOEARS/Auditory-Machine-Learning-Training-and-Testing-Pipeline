@@ -34,7 +34,8 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
         
         function y = labelEnergeticBlock( obj, blockAnnotations )
             srcAzms = blockAnnotations.srcAzms(obj.sourceIds,:);
-            srcAzmIdxs = azimToIndex( srcAzms, obj.angularResolution, obj.nAngles );
+            srcAzmIdxs = LabelCreators.AzmDistributionLabeler.azimToIndex( ...
+                            srcAzms, obj.angularResolution, obj.nAngles );
             y = zeros( 1, obj.nAngles );
             y(srcAzmIdxs) = 1;
         end
@@ -57,9 +58,9 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
         function azmIdxs = azimToIndex(azimuths, angularResolution, nAngles )
             % Determine Azimuth bin index from azimuth angle(s)
             if nargin < 3
-                nAngles = 360 / obj.angularResolution;
+                nAngles = 360 / angularResolution;
             end
-            azmIdxs = mod( round( azimuths / angularResolution ) + 1, nAngles );
+            azmIdxs = mod( round( azimuths / angularResolution ), nAngles ) + 1;
         end
     end
     

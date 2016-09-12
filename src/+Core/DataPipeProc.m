@@ -53,7 +53,8 @@ classdef DataPipeProc < handle
                 obj.fileListOverlay =  true( 1, length( obj.data(:) ) ) ;
             end
             datalist = obj.data(:)';
-            obj.dataFileProcessor.getSingleProcessCacheAccess();
+%             obj.dataFileProcessor.getSingleProcessCacheAccess();
+%           singleProcessCacheAccess probably not necessary and slows down multi processes
             obj.dataFileProcessor.setDirectCacheSave( false );
             for ii = 1 : length( datalist )
                 if ~obj.fileListOverlay(ii), continue; end
@@ -66,12 +67,15 @@ classdef DataPipeProc < handle
             fprintf( '..' );
             obj.dataFileProcessor.saveCacheDirectory();
             obj.dataFileProcessor.setDirectCacheSave( true );
-            obj.dataFileProcessor.releaseSingleProcessCacheAccess();
+%             obj.dataFileProcessor.releaseSingleProcessCacheAccess();
             fprintf( ';\n' );
         end
         %% ----------------------------------------------------------------
 
-        function run( obj )
+        function run( obj, varargin )
+            ip = inputParser;
+            ip.addOptional( 'debug', false );
+            ip.parse( varargin{:} );
             errs = {};
             fprintf( '\nRunning: %s\n%s\n', ...
                      obj.dataFileProcessor.procName, ...
@@ -81,26 +85,39 @@ classdef DataPipeProc < handle
             ndf = numel( datalist );
             dfii = 1;
             for dataFile = datalist(randperm(length(datalist)))'
+                if dfii == 1 % with the first file, caches of wrapped procs often update
+                    obj.dataFileProcessor.getSingleProcessCacheAccess();
+                    obj.dataFileProcessor.setDirectCacheSave( false );
+                end
                 fprintf( '%s << (%d/%d) -- %s\n', ...
                            obj.dataFileProcessor.procName, dfii, ndf, dataFile.fileName );
-                try
-                    obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
-                catch err
-                    if any( strcmpi( err.identifier, ...
-                                            {'MATLAB:load:couldNotReadFile', ...
-                                             'MATLAB:load:unableToReadMatFile'} ...
-                                   ) )
-                        errs{end+1} = err;
-                        warning( err.message );
-                    elseif any( strcmpi( err.identifier, ...
-                                            {'AMLTTP:dataprocs:cacheFileCorrupt'} ...
-                                   ) )
-                        delete( err.message ); % err.msg contains corrupt cache file name
-                        erpl.message = ['deleted corrupt cache file: ' err.message];
-                        errs{end+1} = erpl;
-                    else
-                        rethrow( err );
+                if ~ip.Results.debug
+                    try
+                        obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
+                    catch err
+                        if any( strcmpi( err.identifier, ...
+                                {'MATLAB:load:couldNotReadFile', ...
+                                'MATLAB:load:unableToReadMatFile'} ...
+                                ) )
+                            errs{end+1} = err;
+                            warning( err.message );
+                        elseif any( strcmpi( err.identifier, ...
+                                {'AMLTTP:dataprocs:cacheFileCorrupt'} ...
+                                ) )
+                            delete( err.message ); % err.msg contains corrupt cache file name
+                            erpl.message = ['deleted corrupt cache file: ' err.message];
+                            errs{end+1} = erpl;
+                        else
+                            rethrow( err );
+                        end
                     end
+                else
+                    obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
+                end
+                if dfii == 1
+                    obj.dataFileProcessor.saveCacheDirectory();
+                    obj.dataFileProcessor.setDirectCacheSave( true );
+                    obj.dataFileProcessor.releaseSingleProcessCacheAccess();
                 end
                 dfii = dfii + 1;
                 fprintf( '\n' );

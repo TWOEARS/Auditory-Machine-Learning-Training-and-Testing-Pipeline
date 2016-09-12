@@ -59,16 +59,17 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
                 % TODO: read head orientation from block annotations
                 obj.bbs.blackboard.addData( 'headOrientation', blockHeadOrientation );
                 % run ks
-                obj.preproc( bas(aa) ); % add any ks-specific data to blackboard
-                fprintf( '`' );
+                procBlock = obj.preproc( bas(aa) ); % add any ks-specific data to blackboard
+                if ~procBlock, continue; end
+                fprintf( '.' );
                 obj.ks.execute();
-                fprintf( '''' );
+                fprintf( '.' );
                 for ii = (1 : numel( obj.ks.reqHashs )) + obj.afeDataIndexOffset
                     afeData.remove( ii );
                 end
                 obj.postproc( afeData, bas(aa) ); % read ks results from bb, create output
                 obj.bbs.blackboard.deleteData();
-                fprintf( '´' );
+                fprintf( ',' );
             end
             warning( 'on', 'BB:tNotIncreasing' );
         end

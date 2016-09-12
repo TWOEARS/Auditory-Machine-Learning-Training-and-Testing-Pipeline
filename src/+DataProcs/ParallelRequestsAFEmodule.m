@@ -53,6 +53,9 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
                     obj.currentNewAfeProc.nPathLevelsForCacheName = obj.nPathLevelsForCacheName;
                     obj.currentNewAfeRequestsIdx = newAfeRequestsIdx;
                 end
+                fprintf( ' [ ' );
+                fprintf( '%d ', newAfeRequestsIdx );
+                fprintf( '] ' );
                 obj.currentNewAfeProc.process( wavFilepath );
                 for jj = 1 : numel( newAfeRequestsIdx )
                     ii = newAfeRequestsIdx(jj);

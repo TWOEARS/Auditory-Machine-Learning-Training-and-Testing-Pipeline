@@ -119,6 +119,7 @@ classdef IdentificationTrainingPipeline < handle
             ip.addOptional( 'modelPath', ['amlttpRun' buildCurrentTimeString()] );
             ip.addOptional( 'modelName', 'amlttp' );
             ip.addOptional( 'runOption', [] );
+            ip.addOptional( 'debug', false );
             ip.parse( varargin{:} );
 
             cleaner = onCleanup( @() obj.finish() );
@@ -131,17 +132,21 @@ classdef IdentificationTrainingPipeline < handle
             end
             errs = {};
             for ii = 1 : length( obj.dataPipeProcs )
-                try
-                    obj.dataPipeProcs{ii}.run();
-                catch err
-                    if any( strcmpi( err.identifier, ...
-                                            {'AMLTTP:dataprocs:fileErrors'} ...
-                                   ) )
-                        errs{end+1} = err;
-                        warning( err.message );
-                    else
-                        rethrow( err );
+                if ~ip.Results.debug
+                    try
+                        obj.dataPipeProcs{ii}.run();
+                    catch err
+                        if any( strcmpi( err.identifier, ...
+                                {'AMLTTP:dataprocs:fileErrors'} ...
+                                ) )
+                            errs{end+1} = err;
+                            warning( err.message );
+                        else
+                            rethrow( err );
+                        end
                     end
+                else
+                    obj.dataPipeProcs{ii}.run( 'debug', true );
                 end
             end
             if numel( errs ) > 0

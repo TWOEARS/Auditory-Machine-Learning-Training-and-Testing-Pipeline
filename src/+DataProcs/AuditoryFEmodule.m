@@ -146,9 +146,6 @@ classdef AuditoryFEmodule < Core.IdProcInterface
             for ii = 1 : p.map.Count
                 s.(k{ii}) = v{ii};
             end
-            if length(fields(s)) < 1
-                s.warning = 'no parameters given!';
-            end
         end
         %% ----------------------------------------------------------------
         

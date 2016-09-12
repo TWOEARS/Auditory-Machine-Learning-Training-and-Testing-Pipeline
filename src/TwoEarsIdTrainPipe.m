@@ -13,7 +13,7 @@ classdef TwoEarsIdTrainPipe < handle
     %
     %% --------------------------------------------------------------------
     properties (SetAccess = public)
-        blockCreator = [];
+        blockCreator = [];      % (default: BlockCreators.MeanStandardBlockCreator( 1.0, 0.4 ))
         labelCreator = [];
         ksWrapper = [];
         featureCreator = [];    % feature extraction (default: featureCreators.RatemapPlusDeltasBlockmean())
@@ -73,6 +73,7 @@ classdef TwoEarsIdTrainPipe < handle
             if isempty( obj.blockCreator )
                 obj.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 0.4 );
             end
+            obj.pipeline.blockCreator = obj.blockCreator;
             if isempty( obj.labelCreator )
                 error( 'Please specify labelCreator(s).' );
             end

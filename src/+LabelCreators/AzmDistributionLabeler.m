@@ -34,7 +34,8 @@ classdef AzmDistributionLabeler < LabelCreators.EnergyDependentLabeler
         
         function y = labelEnergeticBlock( obj, blockAnnotations )
             srcAzms = blockAnnotations.srcAzms(obj.sourceIds,:);
-            srcAzmIdxs = azimToIndex( srcAzms, obj.angularResolution, obj.nAngles );
+            srcAzmIdxs = LabelCreators.AzmDistributionLabeler.azimToIndex( ...
+                            srcAzms, obj.angularResolution, obj.nAngles );
             y = zeros( 1, obj.nAngles );
             y(srcAzmIdxs) = 1;
         end

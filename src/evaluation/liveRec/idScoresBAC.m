@@ -2,7 +2,7 @@ function [idLabels, perfs] = idScoresBAC(bbs, labels, onOffsets)
 
 fprintf( '\n\nEvaluate scores...\n\n' );
 idHyps = bbs.blackboard.getData( 'identityHypotheses' );
-idMismatch = getIdScores( idHyps );
+idMismatch = getIdDecisions( idHyps );
 idLabels = sort( fieldnames( idMismatch ) );
 
 % assume blockSize remains constant throughout

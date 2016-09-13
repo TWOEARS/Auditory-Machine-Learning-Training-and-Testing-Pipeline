@@ -26,7 +26,10 @@ labeler = StandaloneMultiEventTypeLabeler( ...
             'labelBlockSize_s', labelBlockSize_s, ...
             'types', types );
 
+% populate the ground truth
 groundTruth = zeros(numel( idHyps ), numel( labels ));
+% for each hypothesis, create a block annotation struct to use with the
+% labelcreator instance
 for ih = 1:numel(idHyps)
     blockAnnotations.blockOffset =  idHyps(ih).sndTmIdx;
     blockAnnotations.blockOnset = max( 0, ...
@@ -47,7 +50,7 @@ for ih = 1:numel(idHyps)
         end
         %blockAnnotations_list = [blockAnnotations_list; blockAnnotations];
         if ~isempty( blockAnnotations.srcType.srcType )
-            groundTruth(ih,:) = labeler.label( blockAnnotations );
+            groundTruth(ih,:) = labeler.labelBlock( blockAnnotations );
         end
     end % labels, onOffsets
 end % idHyps
@@ -65,7 +68,7 @@ for idl = 1 : numel( idLabels )
     % remove uncertain blocks
     yTrue = yTrue(~isnan(yTrue));
     yPred = yPred(~isnan(yTrue));
-    perfmeasure = performanceMeasures.BAC2( yTrue, yPred );
+    perfmeasure = PerformanceMeasures.BAC( yTrue, yPred );
     [~, perf, ~] = perfmeasure.calcPerformance( yTrue, yPred );
     disp(idLabels{idl})
     disp(perf)

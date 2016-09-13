@@ -55,40 +55,54 @@ classdef IdCacheTreeElem < handle
         
         function deleteCfg( obj, cfgList )
             if isempty( cfgList ), return; end;
-            treeNode = obj;
+            treeNodeUnderInvestigation = obj;
+            deleteTreeParts = true;
             for ii = 1 : numel( cfgList )
-                subTreeNode = [];
+                subTreeNodeWithSameCfg = [];
                 cfgName = cfgList(ii).fieldname;
                 cfgField = cfgList(ii).field;
-                if treeNode.cfgSubs.isKey( cfgName )
-                    subTreeNodes = treeNode.cfgSubs(cfgName);
+                if treeNodeUnderInvestigation.cfgSubs.isKey( cfgName )
+                    subTreeNodesWithSameCfgName = treeNodeUnderInvestigation.cfgSubs(cfgName);
                 else
-                    break;
+                    deleteTreeParts = treeNodeUnderInvestigation.cfgSubs.Count == 0;
+                    break; % arrived at a dead end -- cfgList does not exist in tree
                 end
-                for jj = 1 : numel( subTreeNodes )
-                    subcfg = subTreeNodes(jj).cfg;
+                for jj = 1 : numel( subTreeNodesWithSameCfgName )
+                    subcfg = subTreeNodesWithSameCfgName(jj).cfg;
                     subcfgEqualsCfg = isequalDeepCompare( subcfg, cfgField );
                     if subcfgEqualsCfg
-                        subTreeNode = subTreeNodes(jj);
+                        subTreeNodeWithSameCfg = subTreeNodesWithSameCfgName(jj);
                         break;
                     end
                 end
-                if isempty( subTreeNode )
-                    break;
+                if isempty( subTreeNodeWithSameCfg )
+                    deleteTreeParts = false;
+                    break; % arrived at a dead end -- cfgList does not exist in tree
+                    % delete nothing
                 end
-                if numel( subTreeNodes ) > 1  ||  ~exist( 'lastMultiSubTreeNodes', 'var' )
-                    lastMultiSubTreeNodesTreeNode = treeNode;
+                if numel( subTreeNodesWithSameCfgName ) > 1  ||  ...
+                        ~exist( 'lastMultiSubTreeNodes', 'var' )  ||  ...
+                        ~isempty( treeNodeUnderInvestigation.path )  || ...
+                        treeNodeUnderInvestigation.cfgSubs.Count > 1
+                    lastMultiSubTreeNodesTreeNode = treeNodeUnderInvestigation;
                     lastMultiSubTreeNodesKey = cfgName;
                     lastMultiSubTreeNodesCfgIdx = jj;
-                    lastMultiSubTreeNodes = subTreeNodes;
+                    lastMultiSubTreeNodes = subTreeNodesWithSameCfgName;
                 end
-                treeNode = subTreeNode;
+                treeNodeUnderInvestigation = subTreeNodeWithSameCfg;
             end
-            lastMultiSubTreeNodes(lastMultiSubTreeNodesCfgIdx) = [];
-            if isempty( lastMultiSubTreeNodes )
-                lastMultiSubTreeNodesTreeNode.cfgSubs.remove( lastMultiSubTreeNodesKey );
-            else
-                lastMultiSubTreeNodesTreeNode.cfgSubs(lastMultiSubTreeNodesKey) = lastMultiSubTreeNodes;
+            if deleteTreeParts
+                if ~isempty( subTreeNodeWithSameCfg )
+                    subTreeNodeWithSameCfg.path = [];
+                    if subTreeNodeWithSameCfg.cfgSubs.Count == 0
+                        lastMultiSubTreeNodes(lastMultiSubTreeNodesCfgIdx) = [];
+                        if isempty( lastMultiSubTreeNodes )
+                            lastMultiSubTreeNodesTreeNode.cfgSubs.remove( lastMultiSubTreeNodesKey );
+                        else
+                            lastMultiSubTreeNodesTreeNode.cfgSubs(lastMultiSubTreeNodesKey) = lastMultiSubTreeNodes;
+                        end
+                    end
+                end
             end
         end
         %% -------------------------------------------------------------------------------

@@ -5,7 +5,7 @@ bbs.setRobotConnect(sim);
 bbs.setDataConnect('AuditoryFrontEndKS');
 for ii = 1 : numel( idModels )
     idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir});
-    idKss{ii}.setInvocationFrequency(50);
+    idKss{ii}.setInvocationFrequency(4);
 end
 %idCheat = bbs.createKS('IdTruthPlotKS', {labels, onOffsets});
 %idCheat.setYLimTimeSignal([-3, 3]*1e-2);

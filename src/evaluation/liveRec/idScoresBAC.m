@@ -66,8 +66,8 @@ for idl = 1 : numel( idLabels )
     end
     yPred = idMismatch.(idLabels{idl}).y(1:end-1)';
     % remove uncertain blocks
-    yTrue = yTrue(~isnan(yTrue));
     yPred = yPred(~isnan(yTrue));
+    yTrue = yTrue(~isnan(yTrue));
     perfmeasure = PerformanceMeasures.BAC( yTrue, yPred );
     [~, perf, ~] = perfmeasure.calcPerformance( yTrue, yPred );
     disp(idLabels{idl})

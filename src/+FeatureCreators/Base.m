@@ -122,10 +122,14 @@ classdef Base < Core.IdProcInterface
         %% ------------ Feature Description Utilities ------------------------------------
 
         function b = makeBlockFromAfe( obj, afeIdx, chIdx, func, grps, varargin )
-            % makeBlockFromAfe transform AFE data into a featrue block
+            % makeBlockFromAfe transform AFE data into a feature block
             %
             afedat = obj.afeData(afeIdx);
-            afedat = afedat{chIdx};
+            % handle single channel AFE data not stored inside a cell,
+            % in that case the channel index is ingored
+            if isa(afedat, 'cell')
+                afedat = afedat{chIdx};
+            end
             b{1} = func( afedat );
             if obj.descriptionBuilt, return; end
             b2 = {};

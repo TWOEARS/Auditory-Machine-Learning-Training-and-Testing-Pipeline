@@ -151,17 +151,28 @@ classdef IdCacheDirectory < handle
         function maintenance( obj )
             cDirs = dir( [obj.topCacheDirectory filesep 'cache.*'] );
             cacheDirs = cell( 0, 3 );
+            fprintf( '-> read cache folders\n' );
             for ii = 1 : numel( cDirs )
+                fprintf( '%d/%d ', ii, numel( cDirs ) );
                 if ~exist( [obj.topCacheDirectory filesep cDirs(ii).name filesep 'cfg.mat'], 'file' )
                     fprintf( '''%s'' does not contain a ''cfg.mat''.\nPress key to continue\n', cDirs(ii).name );
                     pause;
                 else
-                    cacheDirs{end+1,1} = [obj.topCacheDirectory filesep cDirs(ii).name];
-                    cl = load( [cacheDirs{end,1} filesep 'cfg.mat'], 'cfg' );
-                    cacheDirs{end,2} = Core.IdCacheDirectory.unfoldCfgStruct( cl.cfg );
+                    cdContents = dir( [obj.topCacheDirectory filesep cDirs(ii).name filesep '*.mat'] );
+                    if all( strcmpi( 'cfg.mat', {cdContents.name} ) | strcmpi( 'fdesc.mat', {cdContents.name} ) )
+                        rmdir( [obj.topCacheDirectory filesep cDirs(ii).name], 's' );
+                        fprintf( 'deleting empty cache folder ' );
+                    else
+                        cacheDirs{end+1,1} = [obj.topCacheDirectory filesep cDirs(ii).name];
+                        cl = load( [cacheDirs{end,1} filesep 'cfg.mat'], 'cfg' );
+                        cacheDirs{end,2} = Core.IdCacheDirectory.unfoldCfgStruct( cl.cfg );
+                    end
                 end
             end
+            fprintf( '\n' );
+            fprintf( '-> find cache folder duplicates\n' );
             for ii = 1 : size( cacheDirs, 1 )-1
+                fprintf( '%d/%d ', ii, size( cacheDirs, 1 )-1 );
             for jj = ii+1 : size( cacheDirs, 1 )
                 if isequalDeepCompare( cacheDirs{ii,2}, cacheDirs{jj,2} )
                     cacheDirs{ii,3} = [cacheDirs{ii,3} jj];
@@ -169,6 +180,7 @@ classdef IdCacheDirectory < handle
                 end
             end
             end
+            fprintf( '\n' );
             fprintf( '-> findAllLeaves\n' );
             [leaves, ucfgs] = obj.treeRoot.findAllLeaves( [] );
             if numel( leaves ) == 1  && leaves(1) == obj.treeRoot
@@ -181,28 +193,28 @@ classdef IdCacheDirectory < handle
             for ii = 1 : numel( leaves )
                 leafPath = leaves(ii).path;
                 cdIdx = find( strcmp( leafPath, cacheDirs(:,1) ) );
-                if isempty( cdIdx )
-                    remCfgs{end+1} = ucfgs{ii};
-                elseif ~isequalDeepCompare( ucfgs{ii}, cacheDirs{cdIdx,2} )
-                    remCfgs{end+1} = ucfgs{ii};
-                elseif ~isempty( cacheDirs{cdIdx,3} )
+                if isempty( cdIdx ) % leafPath not existing
+                    remCfgs{end+1} = ucfgs{ii}; % remove cfg from tree
+                elseif ~isequalDeepCompare( ucfgs{ii}, cacheDirs{cdIdx,2} ) % leafPath hosts differing cfg
+                    remCfgs{end+1} = ucfgs{ii}; % remove cfg from tree
+                elseif ~isempty( cacheDirs{cdIdx,3} ) % leafPath has same cfg, but duplicate folders existing
                     for jj = cacheDirs{cdIdx,3}
                         fprintf( ':' );
                         duplDir = cacheDirs{jj,1};
                         fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
                         copyfile( fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
-                        rmdir( leafPath, 's' );
-                        movefile( duplDir, leafPath );
+                        rmdir( leafPath, 's' ); 
+                        movefile( duplDir, leafPath ); % remove duplicate folder
                     end
-                    deleteCdIdxs = [deleteCdIdxs cdIdx cacheDirs{cdIdx,3}];
-                else
-                    deleteCdIdxs = [deleteCdIdxs cdIdx];
+                    deleteCdIdxs = [deleteCdIdxs cdIdx cacheDirs{cdIdx,3}]; % remove leafPath and duplicate folders from folder list
+                else % leafPath hosts same cfg as tree
+                    deleteCdIdxs = [deleteCdIdxs cdIdx]; % remove leafPath from folder list
                 end
                 fprintf( '%d/%d ', ii, numel( leaves ) );
             end
             fprintf( '\n' );
-            [cacheDirs{deleteCdIdxs,:}] = deal( [] );
-            fprintf( '-> deleteCfg ' );
+            [cacheDirs{deleteCdIdxs,:}] = deal( [] ); % remove folder pathes that are found and valid
+            fprintf( '-> deleteCfg ' ); % delete cfgs that have not been found in folders
             for ii = 1 : numel( remCfgs )
                 obj.treeRoot.deleteCfg( remCfgs{ii} );
                 obj.cacheDirChanged = true;

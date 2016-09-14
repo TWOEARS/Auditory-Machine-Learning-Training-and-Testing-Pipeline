@@ -159,10 +159,13 @@ classdef IdentificationTrainingPipeline < handle
             featureCreator = obj.featureCreator;
             lastDataProcParams = ...
                 obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
+            blockCreator = obj.blockCreator;
             if strcmp( ip.Results.runOption, 'dataStore' )
                 data = obj.data;
                 save( 'dataStore.mat', ...
-                      'data', 'featureCreator', 'lastDataProcParams', '-v7.3' );
+                      'data', ...,
+                      'featureCreator', 'blockCreator', ...
+                      'lastDataProcParams', '-v7.3' );
                 return; 
             elseif strcmp( ip.Results.runOption, 'dataStoreUni' )
                 x = obj.data(:,'x');
@@ -212,7 +215,7 @@ classdef IdentificationTrainingPipeline < handle
             model = obj.trainer.getModel();
             modelFilename = [ip.Results.modelName '.model.mat'];
             save( modelFilename, ...
-                'model', 'featureCreator', ...
+                'model', 'featureCreator', 'blockCreator', ...
                 'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );
         end
         

@@ -53,21 +53,27 @@ classdef DataPipeProc < handle
                 obj.fileListOverlay =  true( 1, length( obj.data(:) ) ) ;
             end
             datalist = obj.data(:)';
-%             obj.dataFileProcessor.getSingleProcessCacheAccess();
-%           singleProcessCacheAccess probably not necessary and slows down multi processes
             obj.dataFileProcessor.setDirectCacheSave( false );
             for ii = 1 : length( datalist )
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = datalist(ii);
                 fprintf( '%s\n', dataFile.fileName );
+                if ii == 1 % with the first file, caches often update
+                    % load cache before restricting access, because it takes long
+                    obj.dataFileProcessor.loadCacheDirectory();
+                    obj.dataFileProcessor.getSingleProcessCacheAccess();
+                end
                 fileHasBeenProcessed = ...
                     obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.fileName );
+                if ii == 1
+                    obj.dataFileProcessor.saveCacheDirectory();
+                    obj.dataFileProcessor.releaseSingleProcessCacheAccess();
+                end
                 obj.fileListOverlay(ii) = ~fileHasBeenProcessed;
             end
             fprintf( '..' );
             obj.dataFileProcessor.saveCacheDirectory();
             obj.dataFileProcessor.setDirectCacheSave( true );
-%             obj.dataFileProcessor.releaseSingleProcessCacheAccess();
             fprintf( ';\n' );
         end
         %% ----------------------------------------------------------------

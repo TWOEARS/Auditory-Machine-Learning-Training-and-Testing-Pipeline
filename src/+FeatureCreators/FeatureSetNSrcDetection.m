@@ -77,7 +77,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
         
         function x = constructVector( obj )
             % constructVector from afe requests
-            %   #1: DUET |-, #2: ILD, #3: ITD, #4: OnS, #5: OfS
+            %   #1: DUET, #2: ILD, #3: ITD, #4: OnS
             %
             %   See getAFErequests
             
@@ -163,7 +163,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             classnames = strsplit( classInfo.Name, '.' );
             outputDeps.featureProc = classnames{end};
             % version
-            outputDeps.v = 26;
+            outputDeps.v = 27;
         end
         
     end
@@ -174,14 +174,14 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
         
         function rval = createDuetFeatureBlocks(...
                 tfL, tfR,...
-                sampleFactor, requestDescription)
-%                 maxAlpha, maxDelta, binsAlpha, binsDelta,...
-%                 preproc)
+                sampleFactor, requestDescription,...
+                maxAlpha, maxDelta, binsAlpha, binsDelta,...
+                preproc)
             %createDuetFeatureBlocks   builds a duet histogram over the block
             %   returns the weighted, smoothed histogram and a summary of
             %   its moments and peak spectrum in seperate blocks
             
-            % init, default parameters from [1]
+            % init
             if nargin < 2
                 error('method needs at least the two time-frequency mixtures as input!');
             end
@@ -190,45 +190,52 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             end
             if nargin < 4
                 requestDescription = false;
-            end            
-%             if nargin < 5
+            end
+            % default parameters from [1]
+            if nargin < 5
                 maxAlpha = 0.7;
-%             end
-%             if nargin < 6
+            end
+            if nargin < 6
                 maxDelta = 3.6;
-%             end
-%             if nargin < 7
+            end
+            if nargin < 7
                 binsAlpha = 35;
-%             end
-%             if nargin < 8
+            end
+            if nargin < 8
                 binsDelta = 51;
-%             end
-%             if nargin < 9
+            end
+            if nargin < 9
                 preproc = {'noDC'};
-%             end
+%                 preproc = {'noDC','noSymmetry'};
+            end
             
-            % init and preprocess tf data
+            % preprocess tf data
             [nFrames, nFFT] = size(tfL);
-            freq = [ (0:nFFT/2) ((-nFFT/2)+1:-1) ] * (2*pi/nFFT);
-            if any(cellfun(@(a)(any(a)), arrayfun(@(a)(strfind(a,'positive')),preproc)))
+            freqInfo = [ (0:nFFT/2) ((-nFFT/2)+1:-1) ] * (2*pi/nFFT);
+            if any(cellfun(@(a)(any(a)), arrayfun(@(a)(strfind(a,'noSymmetry')),preproc)))
                 tfL(:,nFFT/2+1:end) = [];
                 tfR(:,nFFT/2+1:end) = [];
-                freq(nFFT/2+1:end) = [];
+                freqInfo(nFFT/2+1:end) = [];
             end
             if any(cellfun(@(a)(any(a)), arrayfun(@(a)(strfind(a,'noDC')),preproc)))
                 tfL(:,1) = [];
                 tfR(:,1) = [];
-                freq(1) = [];
+                freqInfo(1) = [];
             end
-            fmat = freq(ones(nFrames,1),:);
+            fmat = freqInfo(ones(nFrames,1),:);
             
-            % DUET: estimation of alpha and delta using 
+            % DUET: estimation of alpha (power) and delta (delay) mixture parameters
             tfRL = (tfR + eps)./(tfL + eps);
+            % following projection is called symmetric attenuation in [1]
             alpha = abs(tfRL) - 1./abs(tfRL);
+            % positive alpha means more power on the R channel
+            % negative alpha means more power on the L channel
             delta = -imag(log(tfRL))./fmat;
+            % delta is the phase difference in radiants, means R phase earlier than L
+            % negative delta means L phase earlier than R
             
             % DUET: calculate weighted histogram
-            % weighting powers according ot [1]
+            % weighting powers according to [1]
             % p=0; q=0; % simple counting
             % p=1; q=0; % only symetric attenuation
             % p=1; q=2; % emphasis on delays
@@ -237,19 +244,17 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             % we settle for p=2 and q=0
             p=2; q=2;
             tfWeight = (abs(tfL).*abs(tfR)).^p.*abs(fmat).^q; % weights vector
-            
             % mask tf-points yielding estimates in bounds
             mask = (abs(alpha)<maxAlpha) & (abs(delta)<maxDelta);
             vecAlpha = alpha(mask);
             vecDelta = delta(mask);
-            tfWeight = tfWeight(mask);
-            
+            tfWeight = tfWeight(mask);            
             % determine histogram indices
             idxAlpha = round(1+(binsAlpha-1)*(vecAlpha+maxAlpha)/(2*maxAlpha));
             idxDelta = round(1+(binsDelta-1)*(vecDelta+maxDelta)/(2*maxDelta));
-
             % full sparse trick to create 2d weighted histogram
             duet_hist_raw = full(sparse(idxAlpha, idxDelta, tfWeight, binsAlpha, binsDelta));
+            
             % salvitzky-golay smoothing filter
             duet_hist = sgolayfilt(duet_hist_raw, 3, 5);
             duet_hist = sgolayfilt(duet_hist', 3, 5)';
@@ -266,22 +271,22 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             block_hist = { duet_hist };
             
             % the smothed and max-scaled histogram should contain the peak information
-            % in accessible form. biggest problem here is that the peaks are transient
-            % we have to find a way to project them into stationary features somehow.
+            % in accessible form. main problem here is that the peaks are transient
+            % and we have to find a way to project them onto stationary features.
             
             % debug: to watch the histogram
             % surf(linspace(-maxDelta,maxDelta,binsDelta),linspace(-maxAlpha,maxAlpha,binsAlpha),duet_hist);
             
             if requestDescription
                 % build histogram block description
-                histGrpInfo = {'duet_hist', [num2str(binsAlpha) 'x' num2str(binsDelta) '-hist'], 'stereo'};
+                histGrpInfo = {'duet_hist', [num2str(binsAlpha) 'x' num2str(binsDelta) '-hist'], 'mono'};
                 alphaAxisVal = arrayfun(@(a)(['a' num2str(a)]),linspace(-maxAlpha, maxAlpha, binsAlpha),'UniformOutput',false);
                 deltaAxisVal = arrayfun(@(a)(['d' num2str(a)]),linspace(-maxDelta, maxDelta, binsDelta),'UniformOutput',false);
                 for ii = 1:binsAlpha
-                    alphaInfo{ii} = {histGrpInfo{:}, alphaAxisVal{ii}};
+                    alphaInfo{ii} = { histGrpInfo{:}, alphaAxisVal{ii} };
                 end
                 for ii = 1:binsDelta
-                    deltaInfo{ii} = {histGrpInfo{:}, deltaAxisVal{ii}};
+                    deltaInfo{ii} = { histGrpInfo{:}, deltaAxisVal{ii} };
                 end
                 block_hist = { duet_hist, alphaInfo, deltaInfo };
             end

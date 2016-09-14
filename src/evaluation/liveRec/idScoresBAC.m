@@ -30,29 +30,22 @@ labeler = StandaloneMultiEventTypeLabeler( ...
 groundTruth = zeros(numel( idHyps ), numel( labels ));
 % for each hypothesis, create a block annotation struct to use with the
 % labelcreator instance
+blockAnnotations.srcType.t.onset = [];
+blockAnnotations.srcType.t.offset = [];
+blockAnnotations.srcType.srcType = {};
+for il = 1 : numel( labels )
+    ons = onOffsets{il}(:,1);
+    offs = onOffsets{il}(:,2);
+    labelsExtract = cellfun( @(c)( c{1} ), labels{il}, 'UniformOutput', false );
+    blockAnnotations.srcType.t.onset = [blockAnnotations.srcType.t.onset; ons'];
+    blockAnnotations.srcType.t.offset = [blockAnnotations.srcType.t.offset; offs'];
+    blockAnnotations.srcType.srcType = [blockAnnotations.srcType.srcType; [labelsExtract', repmat( {NaN}, size( labelsExtract' ) )]];
+end % labels, onOffsets
 for ih = 1:numel(idHyps)
     blockAnnotations.blockOffset =  idHyps(ih).sndTmIdx;
     blockAnnotations.blockOnset = max( 0, ...
-        blockAnnotations.blockOffset - idHyps(ih).data(1).concernsBlocksize_s );
-    blockAnnotations.srcType.t.onset = [];
-    blockAnnotations.srcType.t.offset = [];
-    blockAnnotations.srcType.srcType = {};
-    for il = 1 : numel( labels )
-        ons = onOffsets{il}(:,1);
-        offs = onOffsets{il}(:,2);
-        rows = find(blockAnnotations.blockOnset >= ons & ...
-            blockAnnotations.blockOffset < offs, 1);
-        blockAnnotations.srcType.t.onset = [blockAnnotations.srcType.t.onset, ons(rows)];
-        blockAnnotations.srcType.t.offset = [blockAnnotations.srcType.t.offset, offs(rows)];
-        for r = 1 : numel( rows )
-            blockAnnotations.srcType.srcType = [blockAnnotations.srcType.srcType; ...
-                labels{il}(r), NaN];
-        end
-        %blockAnnotations_list = [blockAnnotations_list; blockAnnotations];
-        if ~isempty( blockAnnotations.srcType.srcType )
-            groundTruth(ih,:) = labeler.labelBlock( blockAnnotations );
-        end
-    end % labels, onOffsets
+                  blockAnnotations.blockOffset - idHyps(ih).data(1).concernsBlocksize_s );
+    groundTruth(ih,:) = labeler.labelBlock( blockAnnotations );
 end % idHyps
 
 groundTruth(groundTruth == 0) = -1; % from [0, 1] to [-1, 1]
@@ -69,7 +62,7 @@ for idl = 1 : numel( idLabels )
     yPred = yPred(~isnan(yTrue));
     yTrue = yTrue(~isnan(yTrue));
     perfmeasure = PerformanceMeasures.BAC( yTrue, yPred );
-    [~, perf, ~] = perfmeasure.calcPerformance( yTrue, yPred );
+    perf = perfmeasure.performance;
     disp(idLabels{idl})
     disp(perf)
     perfs(idl) = perf;

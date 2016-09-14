@@ -18,7 +18,7 @@ classdef StandaloneMultiEventTypeLabeler < LabelCreators.MultiEventTypeLabeler
         %% -------------------------------------------------------------------------------
         function y = labelBlock( obj, blockAnnotations )
             [activeTypes, relBlockEventOverlap, ~] = obj.getActiveTypes( blockAnnotations );
-            y = int16(activeTypes);
+            y = single(activeTypes);
             if strcmp( obj.negOut, 'rest' )
                 y(~activeTypes & relBlockEventOverlap > obj.maxNegBlockToEventRatio) = NaN;
             end

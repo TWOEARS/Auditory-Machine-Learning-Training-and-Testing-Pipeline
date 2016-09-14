@@ -109,8 +109,13 @@ classdef IdEvalFrame < handle
             eventClass = soundFileName(classPos1+1:classPos2-1);
         end
         
-        function onsetOffsets = readOnOffAnnotations( soundFileName )
-            soundFileName = getPathPart( soundFileName, 'sound_databases' );
+        function onsetOffsets = readOnOffAnnotations( soundFileName, isAbsPath )
+            if nargin < 2
+                isAbsPath = false;
+            end
+            if ~isAbsPath
+                soundFileName = getPathPart( soundFileName, 'sound_databases' );
+            end
             annotFid = -1;
             try
                 annotFid = fopen( xml.dbGetFile([soundFileName '.txt']) );

@@ -9,6 +9,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         srcPrioMethod;
         srcTypeFilterOut;
         nrgSrcsFilter;
+        fileFilterOut;
         sourcesMinEnergy;
     end
     
@@ -29,6 +30,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'srcPrioMethod', 'order' ); % energy, order, time
             ip.addOptional( 'srcTypeFilterOut', [] ); % e.g. [2,1;3,2]: throw away type 1 blocks from src 2 and type 2 blocks from src 3
             ip.addOptional( 'nrgSrcsFilter', [] ); % idxs of srcs to be account for block-filtering based on too low energy. If empty, do not use
+            ip.addOptional( 'fileFilterOut', {} ); % blocks containing these files get filtered out
             ip.addOptional( 'sourcesMinEnergy', -20 ); 
             ip.parse( varargin{:} );
             obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
@@ -40,6 +42,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.srcTypeFilterOut = ip.Results.srcTypeFilterOut;
             obj.nrgSrcsFilter = ip.Results.nrgSrcsFilter;
             obj.sourcesMinEnergy = ip.Results.sourcesMinEnergy;
+            obj.fileFilterOut = sort( ip.Results.fileFilterOut );
         end
         %% -------------------------------------------------------------------------------
 
@@ -57,7 +60,8 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.nrgSrcsFilter = obj.nrgSrcsFilter;
             outputDeps.sourcesMinEnergy = obj.sourcesMinEnergy;
             outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
-            outputDeps.v = 6;
+            outputDeps.fileFilterOut = obj.fileFilterOut;
+            outputDeps.v = 7;
         end
         %% -------------------------------------------------------------------------------
         
@@ -95,12 +99,14 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                 y = -1;
             else
                 y = NaN;
+                return;
             end
             for ii = 1 : size( obj.srcTypeFilterOut, 1 )
                 srcfo = obj.srcTypeFilterOut(ii,1);
                 typefo = obj.srcTypeFilterOut(ii,2);
                 if activeTypes(typefo) && any( srcIdxs{typefo} == srcfo )
                     y = NaN;
+                    return;
                 end
             end
             if ~isempty( obj.nrgSrcsFilter )
@@ -108,6 +114,13 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                               blockAnnotations, obj.nrgSrcsFilter, obj.sourcesMinEnergy );
                 if rejectBlock
                     y = NaN;
+                    return;
+                end
+            end
+            for ii = 1 : numel( obj.fileFilterOut )
+                if any( strcmpi( obj.fileFilterOut{ii}, blockAnnotations.srcFile.srcFile(:,1) ) )
+                    y = NaN;
+                    return;
                 end
             end
         end

@@ -43,6 +43,15 @@ classdef IdProcWrapper < Core.IdProcInterface
             end
         end
         %% -----------------------------------------------------------------        
+        
+        % override of Core.IdProcInterface's method
+        function loadCacheDirectory( obj )
+            loadCacheDirectory@Core.IdProcInterface( obj );
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.loadCacheDirectory();
+            end
+        end
+        %% -----------------------------------------------------------------        
 
         % override of Core.IdProcInterface's method
         function getSingleProcessCacheAccess( obj )

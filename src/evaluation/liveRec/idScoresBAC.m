@@ -50,7 +50,6 @@ end % idHyps
 
 groundTruth(groundTruth == 0) = -1; % from [0, 1] to [-1, 1]
 
-perfs = zeros(1, numel( idLabels ));
 for idl = 1 : numel( idLabels )
     if isfield( idMismatch.(idLabels{idl}) , 'labelIdx' )
         yTrue = groundTruth(:, idMismatch.(idLabels{idl}).labelIdx);

@@ -76,9 +76,10 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
             lPerfs = zeros( numel( lambdas ), numel( cvModels ) );
             for ii = 1 : numel( cvModels )
                 cvModels{ii}.setLambda( [] );
-                lPerfs(:,ii) = Models.Base.getPerformance( ...
+                thisFoldPerfs = Models.Base.getPerformance( ...
                     cvModels{ii}, obj.cvTrainer.folds{ii}, ...
                     obj.performanceMeasure );
+                lPerfs(1:numel(thisFoldPerfs),ii) = thisFoldPerfs;
                 verboseFprintf( obj, '.' );
             end
             obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );

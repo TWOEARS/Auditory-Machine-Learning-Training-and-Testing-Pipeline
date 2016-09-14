@@ -62,8 +62,7 @@ for idl = 1 : numel( idLabels )
     yPred = yPred(~isnan(yTrue));
     yTrue = yTrue(~isnan(yTrue));
     perfmeasure = PerformanceMeasures.BAC( yTrue, yPred );
-    perf = perfmeasure.performance;
     disp(idLabels{idl})
-    disp(perf)
-    perfs(idl) = perf;
+    disp(perfmeasure.performance)
+    perfs(idl) = perfmeasure;
 end

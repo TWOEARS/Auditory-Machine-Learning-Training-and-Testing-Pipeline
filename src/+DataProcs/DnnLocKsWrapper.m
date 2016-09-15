@@ -23,6 +23,7 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
         
         function procBlock = preproc( obj, blockAnnotations )
             procBlock = true;
+            warning( 'off', 'BBS:badBlockTimeRequest' );
         end
         %% -------------------------------------------------------------------------------
         
@@ -35,6 +36,7 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
             else
                 obj.out.blockAnnotations(end+1,1) = blockAnnotations;
             end
+            warning( 'on', 'BBS:badBlockTimeRequest' );
         end
         %% -------------------------------------------------------------------------------
         

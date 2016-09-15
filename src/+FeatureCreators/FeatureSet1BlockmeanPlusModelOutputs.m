@@ -28,7 +28,12 @@ classdef FeatureSet1BlockmeanPlusModelOutputs < FeatureCreators.Base
         %% ----------------------------------------------------------------
 
         function x = constructVector( obj )
+            obj.baseFS1creator.setAfeData( obj.afeData );
             x = obj.baseFS1creator.constructVector();
+            if ~obj.baseFS1creator.descriptionBuilt
+                obj.baseFS1creator.description = x{2};
+                obj.baseFS1creator.descriptionBuilt = true;
+            end
             dnnLocFeatures = obj.makeBlockFromAfe( obj.numOrdinaryAFErequests+1, 1, ...
                 @(a)(a.Data), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.azms)) '-azms'])}, ...

@@ -101,11 +101,15 @@ classdef CaffeModel < Models.Base
             y = {};
             for ii = 1:numel(obj.net.outputs)
                 score.(obj.net.outputs{ii}) = double(blobs_out{ii});
+                d = blobs_out{ii};
                 if obj.has_thr
-                    y.(obj.net.outputs{ii}) = blobs_out{ii} >= obj.thr{ii};
+                    thr_tmp = obj.thr{ii};
                 else
-                    y.(obj.net.outputs{ii}) = blobs_out{ii} >= 0.5;
+                    thr_tmp = 0.5;
                 end
+                d(d >= thr_tmp) = 1;
+                d(d < thr_tmp) = -1;
+                y.(obj.net.outputs{ii}) = d;
             end
         end
         %% -----------------------------------------------------------------

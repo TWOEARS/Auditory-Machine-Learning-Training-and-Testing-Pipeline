@@ -37,8 +37,8 @@ for il = 1 : numel( labels )
     ons = onOffsets{il}(:,1);
     offs = onOffsets{il}(:,2);
     labelsExtract = cellfun( @(c)( c{1} ), labels{il}, 'UniformOutput', false );
-    blockAnnotations.srcType.t.onset = [blockAnnotations.srcType.t.onset; ons'];
-    blockAnnotations.srcType.t.offset = [blockAnnotations.srcType.t.offset; offs'];
+    blockAnnotations.srcType.t.onset = [blockAnnotations.srcType.t.onset, ons'];
+    blockAnnotations.srcType.t.offset = [blockAnnotations.srcType.t.offset, offs'];
     blockAnnotations.srcType.srcType = [blockAnnotations.srcType.srcType; [labelsExtract', repmat( {NaN}, size( labelsExtract' ) )]];
 end % labels, onOffsets
 for ih = 1:numel(idHyps)

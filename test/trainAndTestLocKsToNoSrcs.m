@@ -6,7 +6,7 @@ startIdentificationTraining();
 pipe = TwoEarsIdTrainPipe();
 pipe.ksWrapper = DataProcs.DnnLocKsWrapper(); % uses 0.5s blocksize
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 0.5, 0.2 );
-pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
+pipe.featureCreator = FeatureCreators.FeatureSet1BlockmeanPlusModelOutputs();
 pipe.labelCreator = LabelCreators.NumberOfSourcesLabeler();
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @PerformanceMeasures.MultinomialBAC, ...
@@ -44,7 +44,7 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 pipe = TwoEarsIdTrainPipe();
 pipe.ksWrapper = DataProcs.DnnLocKsWrapper(); % uses 0.5s blocksize
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 0.5, 0.2 );
-pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
+pipe.featureCreator = FeatureCreators.FeatureSet1BlockmeanPlusModelOutputs();
 pipe.labelCreator = LabelCreators.NumberOfSourcesLabeler();
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep 'test_dnnlocNoSrcs/dnnlocNoSrcsModel.model.mat'], ...

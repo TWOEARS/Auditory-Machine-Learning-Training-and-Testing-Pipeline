@@ -56,6 +56,15 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
         
         %% -------------------------------------------------------------------------------
         
+        function afeData = addLocData( obj, afeData, locData )
+            locFakeAFEsignal = struct();
+            locFakeAFEsignal.Data = locData.sourcesDistribution;
+            locFakeAFEsignal.Name = 'DnnLocationDistribution';
+            locFakeAFEsignal.azms = locData.azimuths;
+            afeData(afeData.Count+1) = locFakeAFEsignal;
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
     %% -----------------------------------------------------------------------------------
     

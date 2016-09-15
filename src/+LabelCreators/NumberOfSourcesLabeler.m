@@ -34,7 +34,8 @@ classdef NumberOfSourcesLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
 
         function y = label( obj, blockAnnotations )
-            srcsBlockEnergies = cellfun( @mean, blockAnnotations.srcEnergy );
+            pointSrcIdxs = ~isnan( blockAnnotations.srcAzms ) ;
+            srcsBlockEnergies = cellfun( @mean, blockAnnotations.srcEnergy(pointSrcIdxs) );
             y = sum( srcsBlockEnergies > obj.srcMinEnergy );
         end
         %% -------------------------------------------------------------------------------

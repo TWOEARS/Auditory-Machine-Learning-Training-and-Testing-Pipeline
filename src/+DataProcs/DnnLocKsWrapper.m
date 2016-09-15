@@ -2,6 +2,8 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
     % Wrapping the SegmentationKS
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = public)
+        dnnHash;
+        nfHash;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -14,6 +16,8 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
         function obj = DnnLocKsWrapper()
             dnnLocKs = DnnLocationKS();
             obj = obj@DataProcs.BlackboardKsWrapper( dnnLocKs );
+            obj.dnnHash = calcDataHash( dnnLocKs.DNNs );
+            obj.nfHash = calcDataHash( dnnLocKs.normFactors );
         end
         %% -------------------------------------------------------------------------------
         
@@ -39,8 +43,8 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.bs = obj.ks.blockSize;
             outputDeps.nc = obj.ks.nChannels;
             outputDeps.fr = obj.ks.freqRange;
-            outputDeps.dn = obj.ks.DNNs;
-            outputDeps.nf = obj.ks.normFactors;
+            outputDeps.dn = obj.dnnHash;
+            outputDeps.nf = obj.nfHash;
             outputDeps.an = obj.ks.angles;
         end
         %% -------------------------------------------------------------------------------

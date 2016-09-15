@@ -36,7 +36,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             obj.nFreqChannels = 16;
             obj.wSizeSec = 0.02;
             obj.hSizeSec = 0.01;
-            obj.maxDelaySec = 0.0011;
+            obj.maxDelaySec = 0.001;
             obj.maxOffsetDB = 30;
         end
         

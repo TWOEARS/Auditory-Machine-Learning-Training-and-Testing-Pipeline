@@ -1,12 +1,28 @@
+%% mc1_models_dataset_1
 idModels(1).name = 'alarm';
-idModels(1).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.22.13.39.54.9901';
 idModels(2).name = 'baby';
-idModels(2).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.21.23.04.24.7408';
 idModels(3).name = 'fire';
-idModels(3).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.21.23.04.31.4562';
 idModels(4).name = 'femaleSpeech';
-idModels(4).dir = '../../../../twoears-database-internal/learned_models/IdentityKS/new_mc1_models_data_set_1/amlttpRun.2016.08.21.23.04.30.1632';
+idModels(5).name = 'dog';
+idModels(6).name = 'piano';
+[idModels(1:6).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1_models_dataset_1' );
 
+%% mc1b_models_dataset_1
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(3).name = 'fire';
+% idModels(4).name = 'femaleSpeech';
+% idModels(5).name = 'dog';
+% [idModels(1:5).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1b_models_dataset_1' );
+
+%% mc2_models_dataset_1
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(3).name = 'fire';
+% idModels(4).name = 'femaleSpeech';
+% [idModels(1:4).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc2_models_dataset_1' );
+
+%%
 data_dir = '../../../../twoears-database-internal';
 flist = ...
     {fullfile(data_dir, 'sound_databases/adream_1605/rec/raw/alarm.mat'),...

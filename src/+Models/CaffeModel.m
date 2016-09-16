@@ -91,11 +91,7 @@ classdef CaffeModel < Models.Base
                     end
                 end
             end
-            % TODO: remove this line, only used for debugging at the
-            % momment
-            data_in_pad = {cat(1, zeros(13,16,2), data_in{1})};
-            blobs_out = obj.net.forward(data_in_pad);
-            %blobs_out = obj.net.forward(data_in);
+            blobs_out = obj.net.forward(data_in);
             % extract predictions from network
             score = {};
             y = {};

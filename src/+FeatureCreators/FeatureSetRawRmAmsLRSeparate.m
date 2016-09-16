@@ -1,12 +1,11 @@
-classdef FeatureSetRawRmAmsLRSeparate < featureCreators.Base
+classdef FeatureSetRawRmAmsLRSeparate < FeatureCreators.Base
 % 
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
-        freqChannels;
-        amFreqChannels;
-        deltasLevels;
-        amChannels;
+        freqChannels;       % no. of frequency bins for rate maps
+        amFreqChannels;     % no. of frequency bins for amsFeatures
+        amChannels;         % no. of modulation frequencies
         wsize;
         shift;
     end
@@ -19,7 +18,7 @@ classdef FeatureSetRawRmAmsLRSeparate < featureCreators.Base
     methods (Access = public)
         
         function obj = FeatureSetRawRmAmsLRSeparate( )
-            obj = obj@featureCreators.Base( 1, 0.5/3, 0.75, 1.0 );
+            obj = obj@FeatureCreators.Base( );
             obj.freqChannels = 16;
             obj.amFreqChannels = 16;
             obj.amChannels = 9;

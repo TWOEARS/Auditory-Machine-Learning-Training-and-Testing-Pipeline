@@ -10,7 +10,7 @@ classdef CaffeModel < Models.Base
         has_thr;
     end
     
-    properties (SetAccess = ?ModelTrainers.CaffeModel, Transient=false)
+    properties (SetAccess = ?ModelTrainers.CaffeModel, Transient=true)
         net;
     end
     

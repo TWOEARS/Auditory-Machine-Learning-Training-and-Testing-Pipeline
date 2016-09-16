@@ -27,7 +27,7 @@ classdef CaffeModel < Models.Base
                 error('Could not find matcaffe.');
             end
             obj.net = [];
-            initNet(modelDir, fname_net_def, fname_weights);
+            obj.initNet(modelDir, fname_net_def, fname_weights);
             if exist('thr', 'var') && ~isempty(thr)
                 obj.thr = thr;
                 if ~isa(obj.thr, 'cell')

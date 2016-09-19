@@ -1,28 +1,45 @@
 %% mc1_models_dataset_1
 idModels(1).name = 'alarm';
 idModels(2).name = 'baby';
-idModels(3).name = 'fire';
+idModels(5).name = 'fire';
 idModels(4).name = 'femaleSpeech';
-idModels(5).name = 'dog';
+idModels(3).name = 'dog';
 idModels(6).name = 'piano';
 [idModels(1:6).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1_models_dataset_1' );
 
 %% mc1b_models_dataset_1
 % idModels(1).name = 'alarm';
 % idModels(2).name = 'baby';
-% idModels(3).name = 'fire';
+% idModels(5).name = 'fire';
 % idModels(4).name = 'femaleSpeech';
-% idModels(5).name = 'dog';
+% idModels(3).name = 'dog';
 % [idModels(1:5).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1b_models_dataset_1' );
 
 %% mc2_models_dataset_1
 % idModels(1).name = 'alarm';
 % idModels(2).name = 'baby';
-% idModels(3).name = 'fire';
-% idModels(4).name = 'femaleSpeech';
+% idModels(4).name = 'fire';
+% idModels(3).name = 'femaleSpeech';
 % [idModels(1:4).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc2_models_dataset_1' );
 
+%% mc2b_models_dataset_1
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(4).name = 'fire';
+% idModels(3).name = 'femaleSpeech';
+% [idModels(1:4).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc2b_models_dataset_1' );
+
+%% mc2segmented_models_dataset_1
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(4).name = 'fire';
+% idModels(3).name = 'femaleSpeech';
+% [idModels(1:4).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc2segmented_models_dataset_1' );
+
 %%
+ppRemoveDc = true;
+fs = 44100;
+
 data_dir = '../../../../twoears-database-internal';
 flist = ...
     {fullfile(data_dir, 'sound_databases/adream_1605/rec/raw/alarm.mat'),...
@@ -46,6 +63,21 @@ session_onOffSet = [1.236e+05, 8582556;...   % alarm
 session_onOffSet = session_onOffSet / 44100.0; % from samples to seconds
 for ii = 1 : numel(flist)
     fpath_mixture_mat = flist{ii};
-    [idLabels{ii}, perf{ii}] = identify_rec(idModels, data_dir, fpath_mixture_mat, session_onOffSet(ii,:));
+    [idLabels{ii}, perf{ii}] = identify_rec(idModels, data_dir, fpath_mixture_mat, session_onOffSet(ii,:), ppRemoveDc, fs);
     close all
 end
+
+p = arrayfun( @(x)(x.performance), vertcat( perf{:} ) );
+disp( p );
+
+tp = sum( arrayfun( @(x)(x.tp), vertcat( perf{:} ) ) );
+fp = sum( arrayfun( @(x)(x.fp), vertcat( perf{:} ) ) );
+tn = sum( arrayfun( @(x)(x.tn), vertcat( perf{:} ) ) );
+fn = sum( arrayfun( @(x)(x.fn), vertcat( perf{:} ) ) );
+
+tpfn = tp + fn;
+tnfp = tn + fp;
+
+sens = tp ./ tpfn;
+spec = tn ./ tnfp;
+bac = 0.5*sens + 0.5*spec;

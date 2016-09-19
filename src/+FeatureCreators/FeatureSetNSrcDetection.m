@@ -1,6 +1,6 @@
 classdef FeatureSetNSrcDetection < FeatureCreators.Base
-% FeatureSetNSrc   Number of Sources estimation with features consisting ok:
-%     DUET, ILD, ITD, Onset Str., Offset Str.
+% FeatureSetNSrc   Number of Sources estimation with features consisting of:
+%     DUET, ILD, ITD, Onset Str.
 %
 % DUET is a binaural blind source seperation algorithm based on a histogram
 % of differences in level and phase of the time-frequency representation of
@@ -19,12 +19,13 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
     
     %% PROPERTIES
     
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         nFreqChannels;  % # of frequency channels
         wSizeSec;       % window size in seconds
         hSizeSec;       % window step size in seconds
         maxDelaySec;    % maximum cross-correleation delay
         maxOffsetDB;    % offset for the onset/offset features on dB
+        duetIntegrate;  % will integrate duet features over the whole block
     end
     
     %% METHODS
@@ -38,29 +39,32 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             obj.hSizeSec = 0.01;
             obj.maxDelaySec = 0.001;
             obj.maxOffsetDB = 30;
+            obj.duetIntegrate = true;
         end
         
         function afeRequests = getAFErequests( obj )
-            % stft
-            afeRequests{1}.name = 'stft';
+            % duet
+            % wSTFTSec;   % window size in seconds for STFT
+            % wDUETSec;   % window size in seconds for DUET histogram
+            % hDUETSec;   % window shift for duet historgram
+            % binsAlpha;  % number of histogram bins for alpha dimension
+            % binsDelta;  % number of histogram bins for delta dimension
+            % maxAlpha;   % masking threshold for alpha dimension
+            % maxDelta;   % masking threshold for delta dimension
+            afeRequests{1}.name = 'duet';
             afeRequests{1}.params = genParStruct( ...
-                'fb_type', 'gammatone',...
-                'fb_lowFreqHz', 80,...
-                'fb_highFreqHz', 8000,...
-                'fb_nChannels', obj.nFreqChannels,...
-                'stft_wSizeSec', obj.wSizeSec,...
-                'stft_hSizeSec', obj.hSizeSec...
-                );
+                'duet_wSTFTSec', obj.wSizeSec,...
+                'duet_wDUETSec', (1/2),...
+                'duet_hDUETSec', (1/6));
             
             % internaural level differences
             afeRequests{2}.name = 'ild';
             afeRequests{2}.params = genParStruct( ...
                 'fb_type', 'gammatone',...
                 'fb_nChannels', obj.nFreqChannels,...
-                'ihc_method', 'halfwave',...
+                'ihc_method', 'halfwave',... % why is this different for itd and ild?
                 'ild_wSizeSec', obj.wSizeSec,...
-                'ild_hSizeSec', obj.hSizeSec...
-                );
+                'ild_hSizeSec', obj.hSizeSec);
             
             % internaural time differences
             afeRequests{3}.name = 'itd';
@@ -70,10 +74,9 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                 'cc_maxDelaySec', obj.maxDelaySec,...
                 'pp_bMiddleEarFiltering', true,...
                 'pp_bNormalizeRMS', true,...
-                'ihc_method', 'dau',...
+                'ihc_method', 'dau',... % why is this different for itd and ild?
                 'fb_type', 'gammatone',...
-                'fb_nChannels', obj.nFreqChannels...
-                );
+                'fb_nChannels', obj.nFreqChannels);
             
             % onset strengths
             afeRequests{4}.name = 'onsetStrength';
@@ -81,15 +84,13 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                 'pp_bNormalizeRMS', false, ...
                 'ons_maxOffsetdB', obj.maxOffsetDB,...
                 'ofs_maxOffsetdB', obj.maxOffsetDB,...
-                'fb_nChannels', obj.nFreqChannels ...
-                );
+                'fb_nChannels', obj.nFreqChannels);
 
             % spectral statistics
             afeRequests{5}.name = 'spectralFeatures';
             afeRequests{5}.params = genParStruct( ...
                 'pp_bNormalizeRMS', false, ...
-                'fb_nChannels', obj.nFreqChannels ...
-                );
+                'fb_nChannels', obj.nFreqChannels);
         end
         
         function x = constructVector( obj )
@@ -99,15 +100,17 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             %   See getAFErequests
             
             % afeIdx 1: STFT -> DUET histogram & summary
-            stft_l = obj.makeBlockFromAfe( 1, 1, @(a)(a.Data), []);
-            stft_r = obj.makeBlockFromAfe( 1, 2, @(a)(a.Data), []);
-            duet_blocks = obj.createDuetFeatureBlocks(...
-                stft_l{1}, stft_r{1},...
-                3, ~obj.descriptionBuilt);
+            duet = obj.afeData(1);
+            duet_blocks = obj.makeDuetFeatureBlocks(...
+                duet{1},...
+                ~obj.descriptionBuilt,...
+                obj.duetIntegrate);
             % duet histogram in sym. attenuation / phase space
-            x = obj.reshape2featVec( duet_blocks{1} );
+            duet_hist = obj.reshapeBlock( duet_blocks{1}, 1 );
+            duet_hist = obj.reshape2featVec( duet_hist );
             % duet histogram summary featues
-            x = obj.concatFeats( x, duet_blocks{2} );
+            duet_summ = obj.reshape2featVec( duet_blocks{2} );
+            x = obj.concatFeats( duet_hist, duet_summ );
             
             % afeIdx 2: ILD
             ild = obj.makeBlockFromAfe( 2, 1, ...
@@ -175,12 +178,13 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             outputDeps.hSizeSec = obj.hSizeSec;
             outputDeps.maxDelaySec = obj.maxDelaySec;
             outputDeps.maxOffsetDB = obj.maxOffsetDB;
+            outputDeps.duetIntegrate = obj.duetIntegrate;
             % classname
             classInfo = metaclass( obj );
             classnames = strsplit( classInfo.Name, '.' );
             outputDeps.featureProc = classnames{end};
             % version
-            outputDeps.v = 28;
+            outputDeps.v = 32;
         end
         
     end
@@ -189,165 +193,101 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
     
     methods (Static)
         
-        function rval = createDuetFeatureBlocks(...
-                tfL, tfR,...
-                sampleFactor, requestDescription,...
-                maxAlpha, maxDelta, binsAlpha, binsDelta,...
-                preproc)
-            %createDuetFeatureBlocks   builds a duet histogram over the block
-            %   returns the weighted, smoothed histogram and a summary of
-            %   its moments and peak spectrum in seperate blocks
+        function rval = makeDuetFeatureBlocks(sig, request_description, do_integration)
+            %createDuetFeatureBlocks   creates valid blocks with description (optional)
+            %   firsst block is a time series of histograms
+            %   second block is a time series of peak-spectrum and moments of the histogram
+            %
+            % INPUTS:
+            %   duet                : histogram input
+            %   requestDescription  : if true, build block annotations
+            %   do_integration      : if true, integrate the stream in to one histogram
+            %
             
             % init
+            if nargin < 1
+                error('method needs at least the histogram as input!');
+            end
             if nargin < 2
-                error('method needs at least the two time-frequency mixtures as input!');
+                request_description = false;
             end
             if nargin < 3
-                sampleFactor = 1;
+                do_integration = false;
             end
-            if nargin < 4
-                requestDescription = false;
+            if iscell(sig)
+                sig = sig{1};
             end
-            % default parameters from [1]
-            if nargin < 5
-                maxAlpha = 0.7;
-            end
-            if nargin < 6
-                maxDelta = 3.6;
-            end
-            if nargin < 7
-                binsAlpha = 35;
-            end
-            if nargin < 8
-                binsDelta = 51;
-            end
-            if nargin < 9
-                preproc = {'noDC'};
-%                 preproc = {'noDC','noSymmetry'};
-            end
+            data = sig.Data;
+            nFrames = size(data, 1);
             
-            % preprocess tf data
-            [nFrames, nFFT] = size(tfL);
-            freqInfo = [ (0:nFFT/2) ((-nFFT/2)+1:-1) ] * (2*pi/nFFT);
-            if any(cellfun(@(a)(any(a)), arrayfun(@(a)(strfind(a,'noSymmetry')),preproc)))
-                tfL(:,nFFT/2+1:end) = [];
-                tfR(:,nFFT/2+1:end) = [];
-                freqInfo(nFFT/2+1:end) = [];
+            % build histgram block
+            if do_integration
+                data = mean(data,1);
+                nFrames = 1;
             end
-            if any(cellfun(@(a)(any(a)), arrayfun(@(a)(strfind(a,'noDC')),preproc)))
-                tfL(:,1) = [];
-                tfR(:,1) = [];
-                freqInfo(1) = [];
-            end
-            fmat = freqInfo(ones(nFrames,1),:);
-            
-            % DUET: estimation of alpha (power) and delta (delay) mixture parameters
-            tfRL = (tfR + eps)./(tfL + eps);
-            % following projection is called symmetric attenuation in [1]
-            alpha = abs(tfRL) - 1./abs(tfRL);
-            % positive alpha means more power on the R channel
-            % negative alpha means more power on the L channel
-            delta = -imag(log(tfRL))./fmat;
-            % delta is the phase difference in radiants, means R phase earlier than L
-            % negative delta means L phase earlier than R
-            
-            % DUET: calculate weighted histogram
-            % weighting powers according to [1]
-            % p=0; q=0; % simple counting
-            % p=1; q=0; % only symetric attenuation
-            % p=1; q=2; % emphasis on delays
-            % p=2; q=0; % reducing bias on the delay estimator
-            % p=2; q=2; % low SRN and speech mixtures
-            % we settle for p=2 and q=0
-            p=2; q=2;
-            tfWeight = (abs(tfL).*abs(tfR)).^p.*abs(fmat).^q; % weights vector
-            % mask tf-points yielding estimates in bounds
-            mask = (abs(alpha)<maxAlpha) & (abs(delta)<maxDelta);
-            vecAlpha = alpha(mask);
-            vecDelta = delta(mask);
-            tfWeight = tfWeight(mask);            
-            % determine histogram indices
-            idxAlpha = round(1+(binsAlpha-1)*(vecAlpha+maxAlpha)/(2*maxAlpha));
-            idxDelta = round(1+(binsDelta-1)*(vecDelta+maxDelta)/(2*maxDelta));
-            % full sparse trick to create 2d weighted histogram
-            duet_hist_raw = full(sparse(idxAlpha, idxDelta, tfWeight, binsAlpha, binsDelta));
-            
-            % salvitzky-golay smoothing filter
-            duet_hist = sgolayfilt(duet_hist_raw, 3, 5);
-            duet_hist = sgolayfilt(duet_hist', 3, 5)';
-            % down sampling
-            if sampleFactor ~= 1
-                duet_hist = resample(duet_hist, 1, sampleFactor, 1);
-                duet_hist = resample(duet_hist', 1, sampleFactor, 1)';
-                [binsAlpha, binsDelta] = size(duet_hist);
-            end
-            % cut filter artifacts and use max scaling
-            duet_hist(duet_hist < 0) = 0;
-            duet_hist_max = max(max(duet_hist));
-            duet_hist = duet_hist ./ duet_hist_max;
-            block_hist = { duet_hist };
-            
-            % the smothed and max-scaled histogram should contain the peak information
-            % in accessible form. main problem here is that the peaks are transient
-            % and we have to find a way to project them onto stationary features.
-            
-            % debug: to watch the histogram
-            % surf(linspace(-maxDelta,maxDelta,binsDelta),linspace(-maxAlpha,maxAlpha,binsAlpha),duet_hist);
-            
-            if requestDescription
+            block_hist = { data };
+            if request_description
                 % build histogram block description
-                histGrpInfo = {'duet_hist', [num2str(binsAlpha) 'x' num2str(binsDelta) '-hist'], 'mono'};
-                alphaAxisVal = arrayfun(@(a)(['a' num2str(a)]),linspace(-maxAlpha, maxAlpha, binsAlpha),'UniformOutput',false);
-                deltaAxisVal = arrayfun(@(a)(['d' num2str(a)]),linspace(-maxDelta, maxDelta, binsDelta),'UniformOutput',false);
-                for ii = 1:binsAlpha
+                histGrpInfo = {'duet_hist',...
+                               [num2str(nFrames) 'x' ...
+                                num2str(sig.binsAlpha) 'x' ...
+                                num2str(sig.binsDelta) '-hist'],...
+                               'mono'};
+                timeAxisVal = arrayfun(@(a)(['t' num2str(a)]),1:nFrames,'UniformOutput',false);
+                alphaAxisVal = arrayfun(@(a)(['a' num2str(a)]),linspace(-sig.maxAlpha, sig.maxAlpha, sig.binsAlpha),'UniformOutput',false);
+                deltaAxisVal = arrayfun(@(a)(['d' num2str(a)]),linspace(-sig.maxDelta, sig.maxDelta, sig.binsDelta),'UniformOutput',false);
+                for ii = 1:nFrames
+                    timeInfo{ii} = { histGrpInfo{:}, timeAxisVal{ii} };
+                end
+                for ii = 1:sig.binsAlpha
                     alphaInfo{ii} = { histGrpInfo{:}, alphaAxisVal{ii} };
                 end
-                for ii = 1:binsDelta
+                for ii = 1:sig.binsDelta
                     deltaInfo{ii} = { histGrpInfo{:}, deltaAxisVal{ii} };
                 end
-                block_hist = { duet_hist, alphaInfo, deltaInfo };
+                block_hist = { block_hist{:}, timeInfo, alphaInfo, deltaInfo };
             end
             
             % build summary block
-            idx = 1;
-            summaryData(idx) = duet_hist_max;
-            if requestDescription
-                summaryGrpInfo = {'duet_summary', '1x15', 'stereo'};
-                summaryInfo{1} = {summaryGrpInfo{:}, 'abs_max_peak'};
-            end
-            
-            histPeaks = extrema2(duet_hist);
-            for ii = 1:10
+            summaryData = zeros(nFrames, 14);
+            for ff = 1:nFrames
+                frame_data = squeeze(data(ff,:,:));
                 try
-                    summaryData(idx+ii) = histPeaks(ii);
+                    frame_peaks = extrema2(frame_data);
                 catch
-                    % pass
+                    frame_peaks = zeros(1,10);
                 end
-                if requestDescription
-                    summaryInfo{idx+ii} = {summaryGrpInfo{:}, ['peak' num2str(ii)]};
+                for ii = 1:min(10,numel(frame_peaks))
+                    try
+                        summaryData(ff,ii) = frame_peaks(ii);
+                    catch
+                        % pass
+                    end
                 end
-            end
-            idx = idx + ii;
-            
-            duet_hist_flat = reshape(duet_hist, numel(duet_hist), 1);
-            for ii = 1:4
-                try
-                    summaryData(idx+ii) = lMoments(duet_hist_flat, ii);
-                catch
-                    % pass
-                end
-                if requestDescription
-                    summaryInfo{idx+ii} = {summaryGrpInfo{:}, ['lmom' num2str(ii)]};
+                frame_data_flat = reshape(frame_data, numel(frame_data), 1);
+                for ii = 1:4
+                    try
+                        summaryData(ff,10+ii) = lMoments(frame_data_flat, ii);
+                    catch
+                        % pass
+                    end
                 end
             end
             block_summary = { summaryData };
-            if requestDescription
-                block_summary = { summaryData, summaryInfo };
+            if request_description
+                % build summary block desctiption
+                summaryGrpInfo = {'duet_summary', [nFrames 'x14'], 'mono'};
+                for ii = 1:10
+                    summaryInfo{ii} = {summaryGrpInfo{:}, ['peak' num2str(ii)]};
+                end
+                for ii = 1:4
+                    summaryInfo{10+ii} = {summaryGrpInfo{:}, ['lmom' num2str(ii)]};
+                end
+                block_summary = { block_summary{:}, timeInfo, summaryInfo };
             end
             
             % return both blocks
-            rval = { block_hist, block_summary };
-  
+            rval = { block_hist, block_summary };  
         end
         
     end

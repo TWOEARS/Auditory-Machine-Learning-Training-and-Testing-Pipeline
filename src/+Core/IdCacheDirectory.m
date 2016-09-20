@@ -201,10 +201,7 @@ classdef IdCacheDirectory < handle
                     for jj = cacheDirs{cdIdx,3}
                         fprintf( ':' );
                         duplDir = cacheDirs{jj,1};
-                        fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
-                        copyfile( fullfile( leafPath, '*' ), fullfile( duplDir, filesep ) );
-                        rmdir( leafPath, 's' ); 
-                        movefile( duplDir, leafPath ); % remove duplicate folder
+                        Core.IdCacheDirectory.cacheDuplicateRemove( leafPath, duplDir );
                     end
                     deleteCdIdxs = [deleteCdIdxs cdIdx cacheDirs{cdIdx,3}]; % remove leafPath and duplicate folders from folder list
                 else % leafPath hosts same cfg as tree
@@ -229,9 +226,7 @@ classdef IdCacheDirectory < handle
                     for jj = cacheDirs{ii,3}
                         fprintf( ':' );
                         duplDir = cacheDirs{jj,1};
-                        fprintf( '\ncopy from ''%s'' to ''%s''\n', fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
-                        copyfile( fullfile( duplDir, '*' ), fullfile( cacheDirs{ii,1}, filesep ) );
-                        rmdir( duplDir, 's' );
+                        Core.IdCacheDirectory.cacheDuplicateRemove( cacheDirs{ii,1}, duplDir );
                     end
                     [cacheDirs{cacheDirs{ii,3},:}] = deal( [] );
                     cacheDirs{ii,3} = [];
@@ -320,6 +315,54 @@ classdef IdCacheDirectory < handle
             cache.setCacheTopDir( cacheTopDir );
             cache.loadCacheDirectory();
             cache.maintenance();
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function cacheDuplicateRemove( dir1, dir2 ) % dir2 will be removed
+            fprintf( '\ncopy from ''%s'' to ''%s''', dir2, dir1 );
+            d1_to_d2 = dir( [dir1 filesep '*.mat'] );
+            d2_to_d1 = dir( [dir2 filesep '*.mat'] );
+            d1_to_d2_copy = d1_to_d2;
+            d2_to_d1_copy = d2_to_d1;
+            for ii = numel( d1_to_d2 ) : -1 : 1
+                fileContainedInD2 = strcmp( d1_to_d2(ii).name, {d2_to_d1(:).name} );
+                if ~any( fileContainedInD2 )
+                    continue; % needs to be copied
+                elseif (d1_to_d2(ii).bytes ~= d2_to_d1(fileContainedInD2).bytes) && ...
+                        (d1_to_d2(ii).datenum > d2_to_d1(fileContainedInD2).datenum)
+                    continue; % needs to be copied
+                else
+                    d1_to_d2_copy(ii) = []; % same or newer file in dir2
+                end
+            end
+            for ii = numel( d2_to_d1 ) : -1 : 1
+                fileContainedInD1 = strcmp( d2_to_d1(ii).name, {d1_to_d2(:).name} );
+                if ~any( fileContainedInD1 )
+                    continue; % needs to be copied
+                elseif (d2_to_d1(ii).bytes ~= d1_to_d2(fileContainedInD1).bytes) && ...
+                        (d2_to_d1(ii).datenum > d1_to_d2(fileContainedInD1).datenum)
+                    continue; % needs to be copied
+                else
+                    d2_to_d1_copy(ii) = []; % same or newer file in dir1
+                end
+            end
+            d1_to_d2_bytes = sum( [d1_to_d2_copy(:).bytes] );
+            d2_to_d1_bytes = sum( [d2_to_d1_copy(:).bytes] );
+            if d1_to_d2_bytes < d2_to_d1_bytes
+                for ii = 1 : numel( d1_to_d2_copy )
+                    copyfile( fullfile( dir1, d1_to_d2_copy(ii).name ), fullfile( dir2, filesep ) );
+                    fprintf( '.' );
+                end
+                rmdir( dir1, 's' );
+                movefile( dir2, dir1 );
+            else
+                for ii = 1 : numel( d2_to_d1_copy )
+                    copyfile( fullfile( dir2, d2_to_d1_copy(ii).name ), fullfile( dir1, filesep ) );
+                    fprintf( '.' );
+                end
+                rmdir( dir2, 's' );
+            end
+            fprintf( '\n' );
         end
         %% -------------------------------------------------------------------------------
         

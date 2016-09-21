@@ -4,7 +4,7 @@ classdef Base < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
         x;
-        inDatPath;
+        blockAnnotations;
         afeData;                    % current AFE signals used for vector construction
         description;
         descriptionBuilt = false;
@@ -33,7 +33,8 @@ classdef Base < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            [inData, obj.inDatPath] = obj.loadInputData( wavFilepath, 'afeBlocks' );
+            inData = obj.loadInputData( wavFilepath );
+            obj.blockAnnotations = inData.blockAnnotations;
             obj.x = [];
             for afeBlock = inData.afeBlocks'
                 obj.afeData = afeBlock{1};
@@ -52,19 +53,19 @@ classdef Base < Core.IdProcInterface
         % override of Core.IdProcInterface's method
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             [tmpOut, outFilepath] = loadProcessedData@Core.IdProcInterface( ...
-                                                     obj, wavFilepath, 'x', 'inDatPath' );
+                                                     obj, wavFilepath );
             obj.x = tmpOut.x;
-            obj.inDatPath = tmpOut.inDatPath;
-            try
-                out = obj.getOutput( varargin{:} );
-            catch err
-                if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.identifier )
-                    error( 'AMLTTP:dataprocs:cacheFileCorrupt', ...
-                           '%s', obj.getOutputFilepath( wavFilepath ) );
-                else
-                    rethrow( err );
+            if nargin < 3  || any( strcmpi( 'blockAnnotations', varargin ) )
+                if isfield( tmpOut, 'blockAnnotations' ) % new version
+                    obj.blockAnnotations = tmpOut.blockAnnotations;
+                else % old version; ba was saved in blockCreator cache
+                    obj.inputProc.sceneId = obj.sceneId;
+                    inData = obj.loadInputData( wavFilepath, 'blockAnnotations' );
+                    obj.blockAnnotations = inData.blockAnnotations;
+                    obj.save( wavFilepath );
                 end
             end
+            out = obj.getOutput( varargin{:} );
             fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
             if ~obj.descriptionBuilt 
                 if exist( fdescFilepath, 'file' )
@@ -84,7 +85,7 @@ classdef Base < Core.IdProcInterface
         % override of Core.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.x = obj.x;
-            out.inDatPath = obj.inDatPath;
+            out.blockAnnotations = obj.blockAnnotations;
             save@Core.IdProcInterface( obj, wavFilepath, out ); 
             fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
             if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
@@ -108,12 +109,8 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj, varargin )
-            if ~exist( obj.inDatPath, 'file' )
-                error( 'AMLTTP:dataprocs:cacheFileCorrupt', '%s not found.', obj.inDatPath );
-            end
             if nargin < 2  || any( strcmpi( 'blockAnnotations', varargin ) )
-                inDat = load( obj.inDatPath, 'blockAnnotations' );
-                out.blockAnnotations = inDat.blockAnnotations;
+                out.blockAnnotations = obj.blockAnnotations;
             end
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
                 out.x = obj.x;

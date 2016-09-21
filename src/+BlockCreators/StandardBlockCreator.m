@@ -22,7 +22,7 @@ classdef StandardBlockCreator < BlockCreators.Base
         end
         %% ------------------------------------------------------------------------------- 
 
-        function [afeBlocks, blockAnnots] = blockify( obj, afeData, annotations )
+        function [blockAnnots,afeBlocks] = blockify( obj, afeData, annotations )
             anyAFEsignal = afeData(1);
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
             streamLen_s = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
@@ -39,7 +39,9 @@ classdef StandardBlockCreator < BlockCreators.Base
             afeBlocks = cell( numel( backOffsets_s ), 1 );
             for ii = 1 : numel( backOffsets_s )
                 backOffset_s = backOffsets_s(ii);
-                afeBlocks{ii} = obj.cutDataBlock( afeData, backOffset_s );
+                if nargout > 1
+                    afeBlocks{ii} = obj.cutDataBlock( afeData, backOffset_s );
+                end
                 blockOn = blockOnsets(ii);
                 blockOff = blockOffsets(ii);
                 blockAnnots(ii).blockOnset = blockOn;
@@ -74,13 +76,6 @@ classdef StandardBlockCreator < BlockCreators.Base
                     end
                 end
             end
-%             for ii = 1 : numel( sequenceAfields )
-%                 seqAname = sequenceAfields{ii};
-%                 annot = annotations.(seqAname);
-%                 if all( isfield( annot.t, {'onset','offset'} ) ) % event series
-%                     annot.(seqAname).(seqAname)
-%                 end
-%             end
             afeBlocks = flipud( afeBlocks );
             blockAnnots = flipud( blockAnnots );
         end

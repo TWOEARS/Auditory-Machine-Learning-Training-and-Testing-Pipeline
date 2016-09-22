@@ -26,6 +26,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
         maxDelaySec;    % maximum cross-correleation delay
         maxOffsetDB;    % offset for the onset/offset features on dB
         duetIntegrate;  % will integrate duet features over the whole block
+        nSummaryPeaks;  % number of summary peaks
     end
     
     %% METHODS
@@ -86,7 +87,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                 'ofs_maxOffsetdB', obj.maxOffsetDB,...
                 'fb_nChannels', obj.nFreqChannels);
 
-            % spectral statistics
+            % spectral features
             afeRequests{5}.name = 'spectralFeatures';
             afeRequests{5}.params = genParStruct( ...
                 'pp_bNormalizeRMS', false, ...
@@ -95,26 +96,32 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
         
         function x = constructVector( obj )
             % constructVector from afe requests
-            %   #1: DUET, #2: ILD, #3: ITD, #4: OnS
+            %   #1: DUET, #2: ILD, #3: ITD, #4: OnS, #5: Spectral
             %
             %   See getAFErequests
             
-            % afeIdx 1: STFT -> DUET histogram & summary
+            x = {};
+            
+            % afeIdx 1: STFT -> DUET histogram + summary
             duet = obj.afeData(1);
-            duet_blocks = obj.makeDuetFeatureBlocks(...
+            duet_hist = obj.makeDuetFeatureBlock(...
                 duet{1},...
                 ~obj.descriptionBuilt,...
                 obj.duetIntegrate);
-            % duet histogram in sym. attenuation / phase space
-            duet_hist = obj.reshapeBlock( duet_blocks{1}, 1 );
-            duet_hist = obj.reshape2featVec( duet_hist );
-            % duet histogram summary featues
-            duet_summ = obj.reshape2featVec( duet_blocks{2} );
-            x = obj.concatFeats( duet_hist, duet_summ );
+            duet_hist = obj.reshapeBlock(duet_hist, 1);
+            duet_hist = obj.reshape2featVec(duet_hist);
+            x = obj.concatFeats(x, duet_hist);
+            % duet histogram summary
+            duet_summ = obj.makePeakSummaryFeatureBlock(...
+                duet_hist{1},...
+                ~obj.descriptionBuilt,...
+                7, 4);
+            duet_summ = obj.reshape2featVec(duet_summ);
+            x = obj.concatFeats(x, duet_summ);
             
-            % afeIdx 2: ILD
-            ild = obj.makeBlockFromAfe( 2, 1, ...
-                @(a)(compressAndScale( a.Data, 0.33 )), ...
+            % afeIdx 2+3: ILD/ITD LMoments per freq-channel
+            ild = obj.makeBlockFromAfe(2, 1, ...
+                @(a)(a.Data), ...
                 {@(a)(a.Name),@(a)([num2str(numel(a.cfHz)) '-ch']),@(a)(a.Channel)}, ...
                 {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)),a.cfHz,'UniformOutput',false)))} );
@@ -127,26 +134,34 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                  {'2.LMom',@(idxs)(idxs(2:4:end))},...
                  {'3.LMom',@(idxs)(idxs(3:4:end))},...
                  {'4.LMom',@(idxs)(idxs(4:4:end))}} ); 
-            x = obj.concatFeats( x, ildLM );
-            
-            % afeIdx 3: ITD
-            itd = obj.makeBlockFromAfe( 3, 1, ...
-                @(a)(compressAndScale( a.Data, 0.33 )), ...
+            x = obj.concatFeats(x, ildLM);
+            itd = obj.makeBlockFromAfe(3, 1, ...
+                @(a)(a.Data), ...
                 {@(a)(a.Name),@(a)([num2str(numel(a.cfHz)) '-ch']),@(a)(a.Channel)}, ...
                 {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)),a.cfHz,'UniformOutput',false)))} );
             itdLM = obj.block2feat(...
                 itd,...
-                @(b)(lMomentAlongDim( b, [1,2,3,4], 1, true )),...
+                @(b)(lMomentAlongDim(b, [1,2,3,4], 1, true)),...
                 2,...
                 @(idxs)(sort([idxs idxs idxs idxs])),...
                 {{'1.LMom',@(idxs)(idxs(1:4:end))},...
                  {'2.LMom',@(idxs)(idxs(2:4:end))},...
                  {'3.LMom',@(idxs)(idxs(3:4:end))},...
                  {'4.LMom',@(idxs)(idxs(4:4:end))}} ); 
-            x = obj.concatFeats( x, itdLM );
+            x = obj.concatFeats(x, itdLM);
             
-            % afeIdx 4: onsetStrengths (same as in FeatureSet1Blockmean)
+            % afeIdx 2+3: ILD + ITD 2D histogram, peak summary + LMoments
+            itd_ild_hist_data = histcounts2(ild{1}, itd{1}, 'Normalization', 'probability');
+            itd_ild_hist_data = itd_ild_hist_data./max(max(itd_ild_hist_data));
+            itd_ild_hist_summ = obj.makePeakSummaryFeatureBlock(...
+                itd_ild_hist_data,...
+                ~obj.descriptionBuilt,...
+                7, 4);
+            itd_ild_hist_summ = obj.reshape2featVec(itd_ild_hist_summ);
+            x = obj.concatFeats(x, itd_ild_hist_summ);
+            
+            % afeIdx 4: onsetStrengths LMoments
             onsR = obj.makeBlockFromAfe( 4, 1,...
                 @(a)(compressAndScale( a.Data, 0.33 )),...
                 {@(a)(a.Name),@(a)([num2str(numel(a.cfHz)) '-ch']),@(a)(a.Channel)},...
@@ -158,7 +173,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                 {'t'},...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz, 'UniformOutput', false)))} );
             ons = obj.combineBlocks( @(b1,b2)(0.5*b1+0.5*b2), 'LRmean', onsR, onsL );
-            onsLm = obj.block2feat(...
+            onsLM = obj.block2feat(...
                 ons,...
                 @(b)(lMomentAlongDim( b, [1,2,3,4], 1, true )),...
                 2,...
@@ -167,8 +182,32 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                  {'2.LMom',@(idxs)(idxs(2:4:end))},...
                  {'3.LMom',@(idxs)(idxs(3:4:end))},...
                  {'4.LMom',@(idxs)(idxs(4:4:end))}} );
-             x = obj.concatFeats( x, onsLm );
+             x = obj.concatFeats( x, onsLM );
              
+            % afeIdx 5: spectralFeatures
+            spfR = obj.makeBlockFromAfe( 5, 1, ...
+                @(a)(compressAndScale( a.Data, 0.33 )), ...
+                {@(a)(a.Name),[num2str(obj.nFreqChannels) '-ch'], ...
+                @(a)(a.Channel)}, ...
+                {'t'}, ...
+                {@(a)(a.fList)} );
+            spfL = obj.makeBlockFromAfe( 5, 2, ...
+                @(a)(compressAndScale( a.Data, 0.33 )), ...
+                {@(a)(a.Name),[num2str(obj.nFreqChannels) '-ch'],...
+                @(a)(a.Channel)}, ...
+                {'t'}, ...
+                {@(a)(a.fList)} );
+            spf = obj.combineBlocks( @(b1,b2)(0.5*b1+0.5*b2), 'LRmean', spfR, spfL );
+            spgLM = obj.block2feat(...
+                spf,...
+                @(b)(lMomentAlongDim( b, [1,2,3,4], 1, true )),...
+                2,...
+                @(idxs)(sort([idxs idxs idxs idxs])),...
+                {{'1.LMom',@(idxs)(idxs(1:4:end))},...
+                 {'2.LMom',@(idxs)(idxs(2:4:end))},...
+                 {'3.LMom',@(idxs)(idxs(3:4:end))},...
+                 {'4.LMom',@(idxs)(idxs(4:4:end))}} );
+             x = obj.concatFeats( x, spgLM );
         end
         
         function outputDeps = getFeatureInternOutputDependencies( obj )
@@ -184,7 +223,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             classnames = strsplit( classInfo.Name, '.' );
             outputDeps.featureProc = classnames{end};
             % version
-            outputDeps.v = 32;
+            outputDeps.v = 35;
         end
         
     end
@@ -193,10 +232,11 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
     
     methods (Static)
         
-        function rval = makeDuetFeatureBlocks(sig, request_description, do_integration)
-            %createDuetFeatureBlocks   creates valid blocks with description (optional)
-            %   firsst block is a time series of histograms
-            %   second block is a time series of peak-spectrum and moments of the histogram
+        function rval = makeDuetFeatureBlock(...
+            data_in,...
+            request_description,...
+            integrate_time)
+            %createDuetFeatureBlock   creates valid block with description (optional)
             %
             % INPUTS:
             %   duet                : histogram input
@@ -212,82 +252,109 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                 request_description = false;
             end
             if nargin < 3
-                do_integration = false;
+                integrate_time = false;
             end
-            if iscell(sig)
-                sig = sig{1};
-            end
-            data = sig.Data;
+            data = data_in.Data;
             nFrames = size(data, 1);
             
             % build histgram block
-            if do_integration
+            if integrate_time
                 data = mean(data,1);
                 nFrames = 1;
             end
-            block_hist = { data };
+            rval = { data };
             if request_description
                 % build histogram block description
                 histGrpInfo = {'duet_hist',...
                                [num2str(nFrames) 'x' ...
-                                num2str(sig.binsAlpha) 'x' ...
-                                num2str(sig.binsDelta) '-hist'],...
+                                num2str(data_in.binsAlpha) 'x' ...
+                                num2str(data_in.binsDelta) '-hist'],...
                                'mono'};
                 timeAxisVal = arrayfun(@(a)(['t' num2str(a)]),1:nFrames,'UniformOutput',false);
-                alphaAxisVal = arrayfun(@(a)(['a' num2str(a)]),linspace(-sig.maxAlpha, sig.maxAlpha, sig.binsAlpha),'UniformOutput',false);
-                deltaAxisVal = arrayfun(@(a)(['d' num2str(a)]),linspace(-sig.maxDelta, sig.maxDelta, sig.binsDelta),'UniformOutput',false);
+                alphaAxisVal = arrayfun(@(a)(['a' num2str(a)]),...
+                    linspace(-data_in.maxAlpha, data_in.maxAlpha, data_in.binsAlpha),...
+                    'UniformOutput',false);
+                deltaAxisVal = arrayfun(@(a)(['d' num2str(a)]),...
+                    linspace(-data_in.maxDelta, data_in.maxDelta, data_in.binsDelta),...
+                    'UniformOutput',false);
                 for ii = 1:nFrames
                     timeInfo{ii} = { histGrpInfo{:}, timeAxisVal{ii} };
                 end
-                for ii = 1:sig.binsAlpha
+                for ii = 1:data_in.binsAlpha
                     alphaInfo{ii} = { histGrpInfo{:}, alphaAxisVal{ii} };
                 end
-                for ii = 1:sig.binsDelta
+                for ii = 1:data_in.binsDelta
                     deltaInfo{ii} = { histGrpInfo{:}, deltaAxisVal{ii} };
                 end
-                block_hist = { block_hist{:}, timeInfo, alphaInfo, deltaInfo };
+                rval = { rval{:}, timeInfo, alphaInfo, deltaInfo };
+            end
+        end
+        
+        function rval = makePeakSummaryFeatureBlock(...
+            data,...
+            request_description,...
+            n_summary_peaks,...
+            n_l_moments)
+            %makePeakSummaryFeatureBlock   creates a summary block from 2d histgram
+            %   containing the highest peaks and the first LMoments of the histogram
+            %
+            % INPUTS:
+            %   data                : histogram input
+            %   requestDescription  : if true, build block annotations
+            %   n_summary_peaks     : # of peaks in the summary
+            %   n_l_moments         : # of LMoments to compute
+            %
+            
+            % init
+            if nargin < 1
+                error('method needs at least the histogram as input!');
+            end
+            if nargin < 2
+                request_description = false;
+            end
+            if nargin < 3
+                n_summary_peaks = 10;
+            end
+            if nargin < 4
+                n_l_moments = 10;
             end
             
             % build summary block
-            summaryData = zeros(nFrames, 14);
-            for ff = 1:nFrames
-                frame_data = squeeze(data(ff,:,:));
+            summaryData = zeros(1, n_summary_peaks+n_l_moments);
+            try
+                frame_peaks = extrema2(data);
+            catch
+                frame_peaks = zeros(1,n_summary_peaks);
+            end
+            for ii = 1:min(n_summary_peaks,numel(frame_peaks))
                 try
-                    frame_peaks = extrema2(frame_data);
+                    summaryData(ii) = frame_peaks(ii);
                 catch
-                    frame_peaks = zeros(1,10);
-                end
-                for ii = 1:min(10,numel(frame_peaks))
-                    try
-                        summaryData(ff,ii) = frame_peaks(ii);
-                    catch
-                        % pass
-                    end
-                end
-                frame_data_flat = reshape(frame_data, numel(frame_data), 1);
-                for ii = 1:4
-                    try
-                        summaryData(ff,10+ii) = lMoments(frame_data_flat, ii);
-                    catch
-                        % pass
-                    end
+                    % pass
                 end
             end
-            block_summary = { summaryData };
+            data_flat = reshape(data, numel(data), 1);
+            for ii = 1:n_l_moments
+                try
+                    summaryData(n_summary_peaks+ii) = lMoments(data_flat, ii);
+                catch
+                    % pass
+                end
+            end
+            rval = { summaryData };
             if request_description
                 % build summary block desctiption
-                summaryGrpInfo = {'duet_summary', [nFrames 'x14'], 'mono'};
-                for ii = 1:10
-                    summaryInfo{ii} = {summaryGrpInfo{:}, ['peak' num2str(ii)]};
+                grpInfo = {'duet_summary',...
+                           ['1x' num2str(n_summary_peaks+n_l_moments)],...
+                           'mono'};
+                for ii = 1:n_summary_peaks
+                    summaryInfo{ii} = {grpInfo{:}, [num2str(ii) '.Peak']};
                 end
-                for ii = 1:4
-                    summaryInfo{10+ii} = {summaryGrpInfo{:}, ['lmom' num2str(ii)]};
+                for ii = 1:n_l_moments
+                    summaryInfo{n_summary_peaks+ii} = {grpInfo{:}, [num2str(ii) '.LMom']};
                 end
-                block_summary = { block_summary{:}, timeInfo, summaryInfo };
+                rval = { rval{:}, {{ grpInfo{:}, 't1' }}, summaryInfo };
             end
-            
-            % return both blocks
-            rval = { block_hist, block_summary };  
         end
         
     end

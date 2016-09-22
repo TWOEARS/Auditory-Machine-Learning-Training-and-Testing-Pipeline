@@ -4,11 +4,7 @@ classdef AllInclusiveFeatureSet < FeatureCreators.Base
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
-        freqChannels;           % no. of frequency bins for gabor maps
-        freqChannelsStatistics;
-        amFreqChannels;         % no. of frequency bins for amsFeatures
         deltasLevels;
-        amChannels;             % no. of modulation frequencies
     end
     
     %% --------------------------------------------------------------------
@@ -156,10 +152,6 @@ classdef AllInclusiveFeatureSet < FeatureCreators.Base
         %% ----------------------------------------------------------------
         
         function outputDeps = getFeatureInternOutputDependencies( obj )
-            outputDeps.freqChannels = obj.freqChannels;
-            outputDeps.amFreqChannels = obj.amFreqChannels;
-            outputDeps.freqChannelsStatistics = obj.freqChannelsStatistics;
-            outputDeps.amChannels = obj.amChannels;
             outputDeps.deltasLevels = obj.deltasLevels;
             classInfo = metaclass( obj );
             [classname1, classname2] = strtok( classInfo.Name, '.' );

@@ -6,12 +6,13 @@ classdef Base < Core.IdProcInterface
         blockSize_s;                % size of the AFE data block in seconds
         afeBlocks;
         blockAnnotations;
+        curWavFilepath;
     end
     
     %% -----------------------------------------------------------------------------------
     methods (Abstract, Access = protected)
         outputDeps = getBlockCreatorInternOutputDependencies( obj )
-        [afeBlocks, blockAnnotations] = blockify( obj, afeStream, streamAnnotations )
+        [blockAnnotations,afeBlocks] = blockify( obj, afeStream, streamAnnotations )
     end
 
     %% ----------------------------------------------------------------------------------- 
@@ -25,19 +26,10 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
-            in = obj.loadInputData( wavFilepath, 'afeData', 'annotations' );
-            try
-                [obj.afeBlocks, obj.blockAnnotations] = ...
-                                               obj.blockify( in.afeData, in.annotations );
-            catch err
-                fprintf( 'error connecting %s.', ...
-                                         obj.inputProc.getOutputFilepath( wavFilepath ) );
-                rethrow( err );
-            end
+            obj.curWavFilepath = wavFilepath;
         end
         %% -------------------------------------------------------------------------------
-
+        
         function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
             afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for afeKey = afeData.keys
@@ -59,27 +51,112 @@ classdef Base < Core.IdProcInterface
             end
         end
         %% ------------------------------------------------------------------------------- 
-        
-    end
-    
-    %% ----------------------------------------------------------------------------------- 
-    methods (Access = protected)
-        
-        function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.blockSize = obj.blockSize_s;
-            outputDeps.shiftSize = obj.shiftSize_s;
-            outputDeps.v = 2;
-            outputDeps.blockProc = obj.getBlockCreatorInternOutputDependencies();
-        end
-        %% ------------------------------------------------------------------------------- 
 
+        % override of Core.IdProcInterface's method
+        function fileProcessed = hasFileAlreadyBeenProcessed( ~, ~ )
+            fileProcessed = false;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
+            outFilepath = obj.getOutputFilepath( wavFilepath );
+            obj.curWavFilepath = wavFilepath;
+            out = obj.getOutput( varargin{:} );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function out = saveOutput( obj, wavFilepath )
+            obj.curWavFilepath = wavFilepath;
+            if nargout > 0
+                out = obj.getOutput();
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function save( ~, ~, ~ )
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of Core.IdProcInterface's method
+        function outFilepath = getOutputFilepath( ~, ~ )
+            outFilepath = [];
+        end
+        %% -------------------------------------------------------------------------------
+       
+        % override of Core.IdProcInterface's method
+        function currentFolder = getCurrentFolder( ~ )
+            currentFolder = [];
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function setCacheSystemDir( ~, ~, ~ )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function saveCacheDirectory( ~ )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function loadCacheDirectory( ~ )
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of Core.IdProcInterface's method
+        function getSingleProcessCacheAccess( ~ )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function releaseSingleProcessCacheAccess( ~ )
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function delete( obj )
+            removefilesemaphore( obj.outFileSema );
+        end
+        %% -------------------------------------------------------------------------------        
+    end
+
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+
+        %% -------------------------------------------------------------------------------
+        function processInternal( obj, varargin )
+            obj.inputProc.sceneId = obj.sceneId;
+            in = obj.loadInputData( obj.curWavFilepath, 'afeData', 'annotations' );
+            if nargin < 2  || any( strcmpi( 'afeBlocks', varargin ) )
+                [obj.blockAnnotations,obj.afeBlocks] = ...
+                                               obj.blockify( in.afeData, in.annotations );
+            else
+                obj.blockAnnotations = obj.blockify( in.afeData, in.annotations );
+            end                
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
         function out = getOutput( obj, varargin )
+            obj.processInternal( varargin{:} );
             if nargin < 2  || any( strcmpi( 'afeBlocks', varargin ) )
                 out.afeBlocks = obj.afeBlocks;
             end
             if nargin < 2  || any( strcmpi( 'blockAnnotations', varargin ) )
                 out.blockAnnotations = obj.blockAnnotations;
             end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function outputDeps = getInternOutputDependencies( obj )
+            outputDeps.blockSize = obj.blockSize_s;
+            outputDeps.shiftSize = obj.shiftSize_s;
+            outputDeps.v = 2;
+            outputDeps.blockProc = obj.getBlockCreatorInternOutputDependencies();
         end
         %% ------------------------------------------------------------------------------- 
         

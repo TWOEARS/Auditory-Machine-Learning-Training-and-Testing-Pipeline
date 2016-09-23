@@ -32,10 +32,15 @@ classdef DistractedBlockCreator < BlockCreators.MeanStandardBlockCreator
         end
         %% ------------------------------------------------------------------------------- 
 
-        function [afeBlocks, blockAnnots] = blockify( obj, afeData, annotations )
-            [afeBlocks, blockAnnots] = ...
-                 blockify@BlockCreators.MeanStandardBlockCreator( obj, afeData, annotations );
-            for ii = numel( afeBlocks ) : -1 : 1
+        function [blockAnnots,afeBlocks] = blockify( obj, afeData, annotations )
+            if nargout > 1
+                [blockAnnots,afeBlocks] = blockify@BlockCreators.MeanStandardBlockCreator( ...
+                                                              obj, afeData, annotations );
+            else
+                blockAnnots = blockify@BlockCreators.MeanStandardBlockCreator( ...
+                                                              obj, afeData, annotations );
+            end
+            for ii = numel( blockAnnots ) : -1 : 1
                 rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
                                blockAnnots(ii), obj.distractorIdxs, obj.rejectThreshold );
                 if rejectBlock

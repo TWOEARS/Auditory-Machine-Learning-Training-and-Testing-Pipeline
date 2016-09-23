@@ -8,6 +8,19 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
     
     %% -----------------------------------------------------------------------------------
     methods (Static)
+        
+        function b = doEarlyHasProcessedStop( bSet, newValue )
+            persistent dehps;
+            if isempty( dehps )
+                dehps = false;
+            end
+            if nargin > 0  &&  bSet
+                dehps = newValue;
+            end
+            b = dehps;
+        end
+        %% ----------------------------------------------------------------
+        
     end
     
     %% -----------------------------------------------------------------------------------
@@ -44,6 +57,10 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                     fprintf( '.' );
                 else
                     fprintf( '*' );
+                end
+                if DataProcs.MultiSceneCfgsIdProcWrapper.doEarlyHasProcessedStop ...
+                        && ~fileProcessed
+                    return;
                 end
             end
             fprintf( '\n' );

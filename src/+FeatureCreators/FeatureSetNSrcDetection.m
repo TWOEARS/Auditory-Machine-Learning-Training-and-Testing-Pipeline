@@ -295,7 +295,7 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             request_description,...
             n_summary_peaks,...
             n_l_moments)
-            %makePeakSummaryFeatureBlock   creates a summary block from 2d histgram
+            %makePeakSummaryFeatureBlock   creates a summary block from 1d or 2d histgram
             %   containing the highest peaks and the first LMoments of the histogram
             %
             % INPUTS:
@@ -316,21 +316,26 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
                 n_summary_peaks = 10;
             end
             if nargin < 4
-                n_l_moments = 10;
+                n_l_moments = 4;
             end
             
             % build summary block
             summaryData = zeros(1, n_summary_peaks+n_l_moments);
             try
-                frame_peaks = extrema2(data);
+                if isvector(data)
+                    frame_peaks = extrema(data);
+                else
+                    frame_peaks = extrema2(data);
+                end
             catch
                 frame_peaks = zeros(1,n_summary_peaks);
+                warning('could not find peaks, replacing with zeros');
             end
             for ii = 1:min(n_summary_peaks,numel(frame_peaks))
                 try
                     summaryData(ii) = frame_peaks(ii);
                 catch
-                    % pass
+                    warning('could not write peaks, replacing with zeros');
                 end
             end
             data_flat = reshape(data, numel(data), 1);

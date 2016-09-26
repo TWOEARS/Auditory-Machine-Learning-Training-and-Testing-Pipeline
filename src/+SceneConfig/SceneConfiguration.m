@@ -11,6 +11,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         lenRefType; % 'source', 'time'
         lenRefArg; % srcId, time in s
         minLen; % time in s
+        normalize;
+        normalizeLevel;
     end
 
     %% --------------------------------------------------------------------
@@ -27,6 +29,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             obj.lenRefType = 'source';
             obj.lenRefArg = 1;
             obj.minLen = 0;
+            obj.normalize = false;
+            obj.normalizeLevel = 1.0;
         end
         %% ----------------------------------------------------------------
         
@@ -50,6 +54,12 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         
         function setBRIRheadOrientation( obj, brirHeadOrientIdx )
             obj.brirHeadOrientIdx = brirHeadOrientIdx;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function setSceneNormalization( obj, normalize, normalizeLevel )
+            obj.normalize = normalize;
+            obj.normalizeLevel = normalizeLevel;
         end
         %% -------------------------------------------------------------------------------
 
@@ -76,6 +86,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             confInst.lenRefType = obj.lenRefType;
             confInst.lenRefArg = obj.lenRefArg;
             confInst.minLen = obj.minLen;
+            confInst.normalizeLevel = obj.normalizeLevel;
+            confInst.normalize = obj.normalize;
         end
         %% -------------------------------------------------------------------------------
 
@@ -90,6 +102,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             singleConfig.lenRefType = 'source';
             singleConfig.lenRefArg = 1;
             singleConfig.minLen = 0;
+            singleConfig.normalizeLevel = obj.normalizeLevel;
+            singleConfig.normalize = obj.normalize;
         end
         %% -------------------------------------------------------------------------------
 
@@ -99,6 +113,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             if isempty( obj1 ) || isempty( obj2 ), return; end
             if numel( obj1.sources ) ~= numel( obj2.sources ), return; end
             if obj1.brirHeadOrientIdx ~= obj2.brirHeadOrientIdx, return; end
+            if obj1.normalizeLevel ~= obj2.normalizeLevel, return; end
+            if obj1.normalize ~= obj2.normalize, return; end
             if ~strcmpi(obj1.lenRefType, obj2.lenRefType), return; end
             if obj1.lenRefArg ~= obj2.lenRefArg, return; end
             if obj1.minLen ~= obj2.minLen, return; end
@@ -140,6 +156,8 @@ classdef SceneConfiguration < matlab.mixin.Copyable
             csc.lenRefType = obj.lenRefType;
             csc.lenRefArg = obj.lenRefArg;
             csc.minLen = obj.minLen;
+            csc.normalizeLevel = obj.normalizeLevel;
+            csc.normalize = obj.normalize;
         end
         %% -------------------------------------------------------------------------------
     end

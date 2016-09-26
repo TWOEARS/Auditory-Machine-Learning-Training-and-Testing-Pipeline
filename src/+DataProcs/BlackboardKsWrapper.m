@@ -20,13 +20,9 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         
         function obj = BlackboardKsWrapper( ks )
             obj = obj@Core.IdProcInterface();
-            if ~iscell( ks )
-                obj.ks = {ks};
-            else
-                obj.ks = ks;
-            end
+            obj.ks = ks;
             obj.bbs = BlackboardSystem( false );
-            cellfun( @(k)( k.setBlackboardAccess( obj.bbs.blackboard, obj.bbs ) ), obj.ks );
+            obj.ks.setBlackboardAccess( obj.bbs.blackboard, obj.bbs );
         end
         %% -------------------------------------------------------------------------------
 

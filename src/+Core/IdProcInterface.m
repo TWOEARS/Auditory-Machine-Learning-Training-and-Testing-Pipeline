@@ -77,7 +77,11 @@ classdef (Abstract) IdProcInterface < handle
         function out = processSaveAndGetOutput( obj, wavFilepath )
             if ~obj.hasFileAlreadyBeenProcessed( wavFilepath )
                 obj.process( wavFilepath );
-                out = obj.saveOutput( wavFilepath );
+                if nargout > 0
+                    out = obj.saveOutput( wavFilepath );
+                else
+                    obj.saveOutput( wavFilepath );
+                end
             elseif nargout > 0
                 out = obj.loadProcessedData( wavFilepath );
             end

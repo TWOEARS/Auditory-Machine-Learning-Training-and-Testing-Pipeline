@@ -3,9 +3,10 @@ classdef Base < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
         y;
+        x;
+        blockAnnotations;
         labelBlockSize_s;
         labelBlockSize_auto;
-        inDatPath;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -33,7 +34,7 @@ classdef Base < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            [in, obj.inDatPath] = obj.loadInputData( wavFilepath, 'blockAnnotations' );
+            in = obj.loadInputData( wavFilepath, 'blockAnnotations' );
             obj.y = [];
             for blockAnnotation = in.blockAnnotations'
                 if obj.labelBlockSize_auto
@@ -52,26 +53,34 @@ classdef Base < Core.IdProcInterface
         % override of DataProcs.IdProcInterface's method
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             [tmpOut, outFilepath] = loadProcessedData@Core.IdProcInterface( ...
-                                                     obj, wavFilepath, 'y', 'inDatPath' );
+                                                                  obj, wavFilepath, 'y' );
             obj.y = tmpOut.y;
-            obj.inDatPath = tmpOut.inDatPath;
-            try
-                out = obj.getOutput( varargin{:} );
-            catch err
-                if strcmp( 'AMLTTP:dataprocs:cacheFileCorrupt', err.identifier )
-                    error( 'AMLTTP:dataprocs:cacheFileCorrupt',...
-                           '%s', obj.getOutputFilepath( wavFilepath ) );
-                else
-                    rethrow( err );
-                end
+            obj.inputProc.sceneId = obj.sceneId;
+            if nargin < 3  || (any( strcmpi( 'x', varargin ) ) && any( strcmpi( 'a', varargin ) ))
+                inData = obj.loadInputData( wavFilepath, 'x', 'blockAnnotations' );
+                obj.x = inData.x;
+                obj.blockAnnotations = inData.blockAnnotations;
+            elseif any( strcmpi( 'a', varargin ) )
+                inData = obj.loadInputData( wavFilepath, 'blockAnnotations' );
+                obj.blockAnnotations = inData.blockAnnotations;
+            elseif any( strcmpi( 'x', varargin ) )
+                inData = obj.loadInputData( wavFilepath, 'x' );
+                obj.x = inData.x;
             end
+            out = obj.getOutput( varargin{:} );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function out = saveOutput( obj, wavFilepath )
+            out = obj.getOutput( 'y' );
+            obj.save( wavFilepath, out );
         end
         %% -------------------------------------------------------------------------------
         
         % override of DataProcs.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.y = obj.y;
-            out.inDatPath = obj.inDatPath;
             save@Core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
@@ -90,21 +99,13 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj, varargin )
-            if ~exist( obj.inDatPath, 'file' )
-                error( 'AMLTTP:dataprocs:cacheFileCorrupt', '%s not found.', obj.inDatPath );
-            end
             out.y = obj.y;
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
-                inDat = load( obj.inDatPath, 'inDatPath', 'x' );
-                out.x = inDat.x;
+                out.x = obj.x;
                 out.x(any(isnan(out.y),2),:) = [];
             end
             if nargin < 2  || any( strcmpi( 'a', varargin ) )
-                if ~exist( 'inDat', 'var' )
-                    inDat = load( obj.inDatPath, 'inDatPath' );
-                end
-                inDat2 = load( inDat.inDatPath, 'blockAnnotations' );
-                out.a = inDat2.blockAnnotations;
+                out.a = obj.blockAnnotations;
                 out.a(any(isnan(out.y),2)) = [];
             end
             out.y(any(isnan(out.y),2),:) = [];

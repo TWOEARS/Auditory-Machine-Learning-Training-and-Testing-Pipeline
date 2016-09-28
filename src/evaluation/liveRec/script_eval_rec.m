@@ -1,19 +1,19 @@
 %% mc1_models_dataset_1
-idModels(1).name = 'alarm';
-idModels(2).name = 'baby';
-idModels(5).name = 'fire';
-idModels(4).name = 'femaleSpeech';
-idModels(3).name = 'dog';
-idModels(6).name = 'piano';
-[idModels(1:6).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1_models_dataset_1' );
-
-%% mc1b_models_dataset_1
 % idModels(1).name = 'alarm';
 % idModels(2).name = 'baby';
 % idModels(5).name = 'fire';
 % idModels(4).name = 'femaleSpeech';
 % idModels(3).name = 'dog';
-% [idModels(1:5).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1b_models_dataset_1' );
+% idModels(6).name = 'piano';
+% [idModels(1:6).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1_models_dataset_1' );
+
+%% mc1b_models_dataset_1
+idModels(1).name = 'alarm';
+idModels(2).name = 'baby';
+idModels(5).name = 'fire';
+idModels(4).name = 'femaleSpeech';
+idModels(3).name = 'dog';
+[idModels(1:5).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1b_models_dataset_1' );
 
 %% mc2_models_dataset_1
 % idModels(1).name = 'alarm';
@@ -70,14 +70,27 @@ end
 p = arrayfun( @(x)(x.performance), vertcat( perf{:} ) );
 disp( p );
 
-tp = sum( arrayfun( @(x)(x.tp), vertcat( perf{:} ) ) );
-fp = sum( arrayfun( @(x)(x.fp), vertcat( perf{:} ) ) );
-tn = sum( arrayfun( @(x)(x.tn), vertcat( perf{:} ) ) );
-fn = sum( arrayfun( @(x)(x.fn), vertcat( perf{:} ) ) );
+perfOverview = vertcat( perf{:} );
+tp1 = sum( arrayfun( @(x)(x.tp), perfOverview([1,2,5,7],:) ) );
+fp1 = sum( arrayfun( @(x)(x.fp), perfOverview([1,2,5,7],:) ) );
+tn1 = sum( arrayfun( @(x)(x.tn), perfOverview([1,2,5,7],:) ) );
+fn1 = sum( arrayfun( @(x)(x.fn), perfOverview([1,2,5,7],:) ) );
 
-tpfn = tp + fn;
-tnfp = tn + fp;
+tpfn1 = tp1 + fn1;
+tnfp1 = tn1 + fp1;
 
-sens = tp ./ tpfn;
-spec = tn ./ tnfp;
-bac = 0.5*sens + 0.5*spec;
+sens1 = tp1 ./ tpfn1;
+spec1 = tn1 ./ tnfp1;
+bac1 = 0.5*sens1 + 0.5*spec1;
+
+tp2 = sum( arrayfun( @(x)(x.tp), perfOverview([3,4,6,8],:) ) );
+fp2 = sum( arrayfun( @(x)(x.fp), perfOverview([3,4,6,8],:) ) );
+tn2 = sum( arrayfun( @(x)(x.tn), perfOverview([3,4,6,8],:) ) );
+fn2 = sum( arrayfun( @(x)(x.fn), perfOverview([3,4,6,8],:) ) );
+
+tpfn2 = tp2 + fn2;
+tnfp2 = tn2 + fp2;
+
+sens2 = tp2 ./ tpfn2;
+spec2 = tn2 ./ tnfp2;
+bac2 = 0.5*sens2 + 0.5*spec2;

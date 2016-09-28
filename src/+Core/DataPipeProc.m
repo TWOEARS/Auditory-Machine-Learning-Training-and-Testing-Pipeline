@@ -62,10 +62,12 @@ classdef DataPipeProc < handle
                     % load cache before restricting access, because it takes long
                     obj.dataFileProcessor.loadCacheDirectory();
                     obj.dataFileProcessor.getSingleProcessCacheAccess();
+                    DataProcs.MultiSceneCfgsIdProcWrapper.doEarlyHasProcessedStop( true, false );
                 end
                 fileHasBeenProcessed = ...
                     obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.fileName );
                 if ii == 1
+                    DataProcs.MultiSceneCfgsIdProcWrapper.doEarlyHasProcessedStop( true, true );
                     obj.dataFileProcessor.saveCacheDirectory();
                     obj.dataFileProcessor.releaseSingleProcessCacheAccess();
                 end

@@ -118,7 +118,7 @@ classdef IdEvalFrame < handle
             end
             annotFid = -1;
             try
-                annotFid = fopen( xml.dbGetFile([soundFileName '.txt']) );
+                annotFid = fopen( db.getFile([soundFileName '.txt']) );
             catch err
                 warning( err.message );
             end

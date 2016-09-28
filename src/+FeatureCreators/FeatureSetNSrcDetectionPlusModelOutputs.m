@@ -58,7 +58,7 @@ classdef FeatureSetNSrcDetectionPlusModelOutputs < FeatureCreators.Base
             classnames = strsplit( classInfo.Name, '.' );
             outputDeps.featureProc = classnames{end};
             % version
-            outputDeps.v = 4;
+            outputDeps.v = 5;
         end
         
     end

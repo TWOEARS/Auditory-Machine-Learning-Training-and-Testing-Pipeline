@@ -312,7 +312,7 @@ classdef IdentTrainPipeData < handle
             if isempty( flistName ), return; end
             obj.data = Core.IdentTrainPipeDataElem.empty;
             try
-                fid = fopen( xml.dbGetFile( flistName ) );
+                fid = fopen( db.getFile( flistName ) );
             catch err
                 warning( err.message );
                 error( '%s not found!', flistName );
@@ -321,7 +321,7 @@ classdef IdentTrainPipeData < handle
             for ff = 1 : length( fileList{1} )
                 fprintf( '.' );
                 try
-                    filepath = xml.dbGetFile( fileList{1}{ff}, 1 );
+                    filepath = db.getFile( fileList{1}{ff}, 1 );
                     filepath = cleanPathFromRelativeRefs( filepath );
                     fprintf( '%s\n', filepath );
                 catch err

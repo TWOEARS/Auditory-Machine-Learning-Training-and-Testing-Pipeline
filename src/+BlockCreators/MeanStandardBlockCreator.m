@@ -24,9 +24,14 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
         end
         %% ------------------------------------------------------------------------------- 
 
-        function [afeBlocks, blockAnnots] = blockify( obj, afeData, annotations )
-            [afeBlocks, blockAnnots] = ...
-                 blockify@BlockCreators.StandardBlockCreator( obj, afeData, annotations );
+        function [blockAnnots,afeBlocks] = blockify( obj, afeData, annotations )
+            if nargout > 1
+                [blockAnnots,afeBlocks] = blockify@BlockCreators.StandardBlockCreator( ...
+                                                              obj, afeData, annotations );
+            else
+                blockAnnots = blockify@BlockCreators.StandardBlockCreator( ...
+                                                              obj, afeData, annotations );
+            end
             aFields = fieldnames( blockAnnots );
             isSequenceAnnotation = cellfun( @(af)(...
                                             isstruct( blockAnnots(1).(af) ) && ...
@@ -34,7 +39,7 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                                             ~isstruct( blockAnnots(1).(af).t ) ...
                                                                              ), aFields );
             sequenceAfields = aFields(isSequenceAnnotation);
-            for ii = 1 : numel( afeBlocks )
+            for ii = 1 : numel( blockAnnots )
                 for jj = 1 : numel( sequenceAfields )
                     seqAname = sequenceAfields{jj};
                     annot = blockAnnots(ii).(seqAname);

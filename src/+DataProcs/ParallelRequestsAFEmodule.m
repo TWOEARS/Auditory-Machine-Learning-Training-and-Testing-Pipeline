@@ -131,7 +131,7 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
             out.annotations = tmp.annotations; % if individual AFE modules produced
                                                % individual annotations, they would have
                                                % to be joined here
-    end
+        end
         %% -------------------------------------------------------------------------------
 
     end

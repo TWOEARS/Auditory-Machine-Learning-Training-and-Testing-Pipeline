@@ -36,7 +36,7 @@ classdef JidoRecInterface < handle
             sigSorted = sort( abs( [obj.bass(1:obj.bass(1).nChunksOnPort:end).left obj.bass(1:obj.bass(1).nChunksOnPort:end).left] ) );
             sigSorted(sigSorted<=0.1*mean(sigSorted)) = [];
             nUpperSigSorted = round( numel( sigSorted ) * 0.01 );
-            obj.normFactor = 0.01 / median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
+            obj.normFactor = 0.2 / median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
 
             % Load KEMAR module
             obj.kemar = load(pathToRecording, 'JidoCurrentPosition');

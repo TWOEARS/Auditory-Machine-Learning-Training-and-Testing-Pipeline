@@ -131,6 +131,9 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             
             % afeIdx 1: STFT -> DUET histogram + summary
             duet = obj.afeData(1);
+            if ~isa(duet, 'cell')
+                duet = {duet};
+            end
             duet_hist = obj.makeDuetFeatureBlock(...
                 duet{1},...
                 ~obj.descriptionBuilt,...
@@ -179,6 +182,14 @@ classdef FeatureSetNSrcDetection < FeatureCreators.Base
             x = obj.concatFeats(x, itdLM);
             
             % afeIdx 2+3: ILD + ITD 2D histogram, peak summary + LMoments
+%             itd{1} = interp1( freq_src, mask', sObj.cfHz, 'linear', 'extrap' )';
+%             ild{1} = ild{1}(:,1:16);
+            if size( ild{1}, 2 ) > size( itd{1}, 2 )
+                itd{1} = resample( itd{1}', size( ild{1}, 2 ), size( itd{1}, 2 ) )';
+            elseif size( ild{1}, 2 ) < size( itd{1}, 2 )
+                ild{1} = resample( ild{1}', size( itd{1}, 2 ), size( ild{1}, 2 ) )';
+            end
+            
             itd_ild_hist_data = histcounts2(ild{1}, itd{1}, 'Normalization', 'probability');
             itd_ild_hist_data = itd_ild_hist_data./max(max(itd_ild_hist_data));
             itd_ild_hist_summ = obj.makePeakSummaryFeatureBlock(...

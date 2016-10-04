@@ -18,3 +18,5 @@ amlttpRun.*.*.*
 /test_multitarget
 /test_cleanMultispeech
 /test_buildMultiPointSrcsAzmDistrData
+/numSrc
+/test_dnnlocNoSrcs

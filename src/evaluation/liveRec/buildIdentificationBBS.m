@@ -1,11 +1,11 @@
-function bbs = buildIdentificationBBS(sim,idModels,labels,onOffsets)
+function bbs = buildIdentificationBBS(sim,idModels,ppRemoveDc,fs,labels,onOffsets)
 
 bbs = BlackboardSystem(1);
 bbs.setRobotConnect(sim);
-bbs.setDataConnect('AuditoryFrontEndKS');
+bbs.setDataConnect('AuditoryFrontEndKS',fs);
 for ii = 1 : numel( idModels )
-    idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir});
-    idKss{ii}.setInvocationFrequency(4);
+    idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
+    idKss{ii}.setInvocationFrequency(10);
 end
 %idCheat = bbs.createKS('IdTruthPlotKS', {labels, onOffsets});
 %idCheat.setYLimTimeSignal([-3, 3]*1e-2);

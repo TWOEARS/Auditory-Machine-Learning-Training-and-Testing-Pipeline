@@ -33,7 +33,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 );
             if ~isempty( hrirFile )
                 set( obj.convRoomSim, 'Renderer', @ssr_binaural );
-                obj.IRDataset.dir = simulator.DirectionalIR( xml.dbGetFile( hrirFile ) );
+                obj.IRDataset.dir = simulator.DirectionalIR( db.getFile( hrirFile ) );
                 obj.IRDataset.fname = hrirFile;
                 set( obj.convRoomSim, 'HRIRDataset', obj.IRDataset.dir );
             else
@@ -182,7 +182,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             elseif isa( sceneConfig.sources(1), 'SceneConfig.BRIRsource' ) 
                 obj.convRoomSim.Sources{1} = simulator.source.Point();
                 brirSofa = SOFAload( ...
-                            xml.dbGetFile( sceneConfig.sources(1).brirFName ), 'nodata' );
+                            db.getFile( sceneConfig.sources(1).brirFName ), 'nodata' );
                 headOrientIdx = ceil( sceneConfig.brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
                 headOrientation = SOFAconvertCoordinates( ...
                          brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );

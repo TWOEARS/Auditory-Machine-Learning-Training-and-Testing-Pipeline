@@ -14,6 +14,7 @@ classdef JidoRecInterface < handle
         blockIdx
         curTime_s
         endTime_s
+        normFactor
     end
     
     properties (Access = public)
@@ -22,7 +23,7 @@ classdef JidoRecInterface < handle
     end
     
     methods (Access = public)
-        function obj = JidoRecInterface(pathToRecording)
+        function obj = JidoRecInterface(pathToRecording,blockSize)
             % JIDOINTERFACE Constructor...
             if exist(pathToRecording, 'file') ~= 2
                 error('Invalid path to recorded data');
@@ -31,15 +32,27 @@ classdef JidoRecInterface < handle
             % Load BASS module
             obj.bass = load(pathToRecording, 'BASS');
             obj.bass = obj.bass.('BASS');
-            
+
+            sigSorted = sort( abs( [obj.bass(1:obj.bass(1).nChunksOnPort:end).left obj.bass(1:obj.bass(1).nChunksOnPort:end).left] ) );
+            sigSorted(sigSorted<=0.1*mean(sigSorted)) = [];
+            nUpperSigSorted = round( numel( sigSorted ) * 0.01 );
+            obj.normFactor = 0.2 / median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
+
             % Load KEMAR module
             obj.kemar = load(pathToRecording, 'JidoCurrentPosition');
             
             % Get BASS status info
             obj.blockIdx = 1;
             obj.SampleRate =  obj.bass(obj.blockIdx).sampleRate;
-            obj.BlockSize = obj.bass(obj.blockIdx).nFramesPerChunk * ...
-                obj.bass(obj.blockIdx).nChunksOnPort;
+            if nargin > 1
+                if mod( blockSize, obj.bass(obj.blockIdx).nFramesPerChunk ) ~= 0
+                    error( 'choose blocklengths that are multiples of bass chunk size' );
+                end
+                obj.BlockSize = blockSize;
+            else
+                obj.BlockSize = obj.bass(obj.blockIdx).nFramesPerChunk * ...
+                    obj.bass(obj.blockIdx).nChunksOnPort;
+            end
             obj.seekTime(0);
             obj.setEndTime( obj.calcRelBlockTimeStamp( numel(obj.bass) ) );
             
@@ -80,8 +93,10 @@ classdef JidoRecInterface < handle
             
             % Get binaural signals
             % Sclaing factor estimated empirically
-            earSignals = [audioBuffer.left ./ (2^31); ...
-                0.7612 .* (audioBuffer.right ./ (2^31))]';
+%             earSignals = [audioBuffer.left ./ (2^31); ...
+%                 0.7612 .* (audioBuffer.right ./ (2^31))]';
+            earSignals = [audioBuffer.left * obj.normFactor; ...
+                          audioBuffer.right * obj.normFactor]';
             
             % Get default buffer size of the audio stream server
             bufferSize = size(earSignals, 1);
@@ -93,6 +108,11 @@ classdef JidoRecInterface < handle
                 chunkLength = bufferSize;
             end
             
+            chunkLenSec = obj.bass(obj.blockIdx).nFramesPerChunk / ...
+                                                        obj.bass(obj.blockIdx).sampleRate;
+            if mod( timeDurationSec, chunkLenSec ) ~= 0
+                error( 'choose blocklengths that are multiples of bass chunk size' );
+            end
             % Check if chunk length is smaller than buffer length
             if chunkLength > bufferSize
                 error(['Desired chunk length exceeds length of the ', ...
@@ -100,14 +120,14 @@ classdef JidoRecInterface < handle
             end
             
             % Get corresponding signal chunk
-            earSignals = earSignals(bufferSize - chunkLength + 1 : end, :);
+            earSignals = earSignals(1:chunkLength, :);
             
             % Get signal length
             signalLengthSec = length(earSignals) / ...
                 audioBuffer.sampleRate;
             
             obj.curTime_s = obj.calcRelBlockTimeStamp(obj.blockIdx);
-            obj.blockIdx = obj.blockIdx + audioBuffer.nChunksOnPort;
+            obj.blockIdx = obj.blockIdx + (timeDurationSec / chunkLenSec);
         end
         
         function moveRobot(obj, posX, posY, theta, varargin)

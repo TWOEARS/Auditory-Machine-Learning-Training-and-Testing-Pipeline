@@ -203,6 +203,10 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                     obj.earSout(1:maxSignalsLen,:) + srcNsignal(1:maxSignalsLen,:);
                 fprintf( '.' );
             end
+            if obj.sceneConfig.normalize
+                earSoutRMS = max( rms( obj.earSout ) );
+                obj.earSout = obj.earSout * obj.sceneConfig.normalizeLevel / earSoutRMS;
+            end
             obj.earSout = single( obj.earSout );
             
             [energy1, tEnergy] = DataProcs.SceneEarSignalProc.runningEnergy( ...

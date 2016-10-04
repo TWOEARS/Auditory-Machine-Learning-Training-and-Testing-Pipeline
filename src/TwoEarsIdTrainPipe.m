@@ -64,6 +64,7 @@ classdef TwoEarsIdTrainPipe < handle
                             'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             ip.addOptional( 'sceneCfgDataUseRatio', 1 );
             ip.addOptional( 'gatherFeaturesProc', true );
+            ip.addOptional( 'stopAfterProc', inf );
             ip.addOptional( 'fs', 44100 );
             ip.parse( varargin{:} );
             obj.setupData( true );
@@ -106,7 +107,7 @@ classdef TwoEarsIdTrainPipe < handle
                 multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( ...
                                                              binSim, gatherFeaturesProc );
             end
-            for ii = 1 : numel( multiCfgProcs )
+            for ii = 1 : min( numel( multiCfgProcs ), ip.Results.stopAfterProc )
                 multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
                 obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );
             end

@@ -27,7 +27,9 @@ classdef GatherFeaturesProc < Core.IdProcInterface
 
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            [xy, inDataFilepath] = obj.loadInputData( wavFilepath, 'x', 'y' );
+            xy = obj.loadInputData( wavFilepath, 'x', 'y' );
+            obj.inputProc.inputProc.sceneId = obj.sceneId;
+            inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
             if obj.sceneCfgDataUseRatio < 1  &&  ...
@@ -104,7 +106,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
         
-        % override of DataProcs.IdProcWrapper's method
+        % override of Core.IdProcInterface's method
         function delete( obj )
             removefilesemaphore( obj.outFileSema );
         end

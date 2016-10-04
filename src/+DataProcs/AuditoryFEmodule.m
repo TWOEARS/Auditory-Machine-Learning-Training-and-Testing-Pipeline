@@ -72,7 +72,20 @@ classdef AuditoryFEmodule < Core.IdProcInterface
                 obj.managerObject.processChunk( earSignals(chunkBegin:chunkEnd,:), 1 );
                 fprintf( '.' );
             end
-            afeData = obj.afeSignals;
+            afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
+            for ii = 1 : obj.afeSignals.Count
+                sigii = obj.afeSignals(ii);
+                if iscell( sigii )
+                    for jj = 1 : numel( sigii )
+                        sigii{jj} = sigii{jj}.copy();
+                        sigii{jj}.reduceBufferToArray();
+                    end
+                else
+                    sigii = sigii.copy();
+                    sigii.reduceBufferToArray();
+                end
+                afeData(ii) = sigii;
+            end
         end
         %% ----------------------------------------------------------------
 

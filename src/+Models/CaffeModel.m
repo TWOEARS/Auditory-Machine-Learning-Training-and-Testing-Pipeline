@@ -62,8 +62,8 @@ classdef CaffeModel < Models.Base
 %                 obj.fpath_weights = fullfile(modelDir, fname_weights);
 %             end
 
-            obj.fpath_net_def = xml.dbGetFile(fullfile(modelDir, fname_net_def));
-            obj.fpath_weights = xml.dbGetFile(fullfile(modelDir, fname_weights));
+            obj.fpath_net_def = db.getFile(fullfile(modelDir, fname_net_def));
+            obj.fpath_weights = db.getFile(fullfile(modelDir, fname_weights));
             
             phase = 'test'; % run with phase test (so that dropout isn't applied)
             if ~isempty(obj.net)
@@ -131,10 +131,10 @@ classdef CaffeModel < Models.Base
                     gpu_id = 0;  % we will use the first gpu in this demo
                 end
                 caffe.set_device(gpu_id);
-                verboseFprintf( obj, 'Using caffe in GPU mode, device id:%d.\n', gpu_id );
+                fprintf( 'Using caffe in GPU mode, device id:%d.\n', gpu_id );
             else
                 caffe.set_mode_cpu();
-                verboseFprintf( obj, 'Using caffe in CPU mode.\n' );
+                fprintf( 'Using caffe in CPU mode.\n' );
             end
         end
         %% -----------------------------------------------------------------

@@ -63,14 +63,30 @@ classdef CaffeModel < handle
         function [y,score] = applyModel( obj, x )
             blobs_in = x{1};
             blobs_in_names = x{2};
-            data_in = cell(numel(obj.net.inputs));
+            data_in = cell(1, numel(obj.net.inputs));
             % prepare input data by selecting required features
+            net_needs_reshape = false;
             for ii = 1:numel(obj.net.inputs)
                 for jj = 1:numel(blobs_in_names)
                     if strcmp(blobs_in_names{jj}, obj.net.inputs{ii})
                         data_in{ii} = blobs_in{jj};
+                        sz_data = size(data_in{ii});
+                        batch_sz_data = sz_data(numel(sz_data));
+                        
+                        expected_sz_data = obj.net.blobs(obj.net.inputs{ii}).shape;
+                        expected_batch_sz_data = expected_sz_data();
+                        % reshape input blob if necessary
+                        if batch_sz_data ~= expected_batch_sz_data
+                            batch_sz_data_new = expected_batch_sz_data;
+                            batch_sz_data_new(numel(expected_sz_data)) = batch_sz_data;
+                            obj.net.blobs(obj.net.inputs{ii}).reshape(batch_sz_data_new)
+                            net_needs_reshape = true;
+                        end
                     end
                 end
+            end
+            if net_needs_reshape
+                obj.net.reshape();
             end
             blobs_out = obj.net.forward(data_in);
             % extract predictions from network

@@ -1,25 +1,25 @@
-classdef CaffeModel < Models.Base
+classdef StandaloneCaffeModel
     % PREREQUISITE:
     % 1. caffe library path (directory containing libcaffe.so must be added to
     % the LD_LIBRARY_PATH environment variable PRIOR to launching MATLAB)
     % 2. the path to caffe's matlab interface needs to be added to the
     % matlab search path Example addpath(/home/myuser/src/caffe/matlab/+caffe')
     %% --------------------------------------------------------------------
-    properties (SetAccess = ?ModelTrainers.CaffeModel)
+    properties (SetAccess = protected)
         fpath_net_def;
         fpath_weights;
         thr;            % output node thresholds, default is 0.5
         has_thr;
     end
     
-    properties (SetAccess = ?ModelTrainers.CaffeModel, Transient=true)
+    properties (SetAccess = protected, Transient=true)
         net;
     end
     
     %% --------------------------------------------------------------------
     methods
 
-        function obj = CaffeModel(modelDir, ...
+        function obj = StandaloneCaffeModel(modelDir, ...
                 fname_net_def, fname_weights, ...
                 thr)
             obj.net = [];
@@ -43,21 +43,6 @@ classdef CaffeModel < Models.Base
             % innitialize underlying caffe network object from definition
             % and weight files
             %% --------------------------------------------------------------------
-            
-%             if ~exist(modelDir, 'dir')
-%                 error('Could not find model directory %s.', modelDir);
-%             end
-%             if ~exist(fullfile(modelDir, fname_net_def), 'file')
-%                 error('Could not find network definition prototxt.');
-%             else
-%                 obj.fpath_net_def = fullfile(modelDir, fname_net_def);
-%             end
-%             if ~exist(fullfile(modelDir, fname_weights), 'file')
-%                 error('Could not find network weights file.');
-%             else
-%                 obj.fpath_weights = fullfile(modelDir, fname_weights);
-%             end
-
             obj.fpath_net_def = db.getFile(fullfile(modelDir, fname_net_def));
             obj.fpath_weights = db.getFile(fullfile(modelDir, fname_weights));
             

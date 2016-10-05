@@ -30,7 +30,7 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
         function postproc( obj, afeData, blockAnnotations )
             locHypos = obj.bbs.blackboard.getLastData( 'sourcesAzimuthsDistributionHypotheses' );
             assert( numel( locHypos.data ) == 1 );
-            obj.out.afeBlocks{end+1,1} = DnnLocKsWrapper.addLocData( afeData, locHypos.data );
+            obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocData( afeData, locHypos.data );
             if isempty(obj.out.blockAnnotations)
                 obj.out.blockAnnotations = blockAnnotations;
             else

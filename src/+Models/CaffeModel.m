@@ -1,7 +1,9 @@
 classdef CaffeModel < Models.Base
     % PREREQUISITE:
-    % caffe library path (directory containing libcaffe.so must be added to
-    % the LD_LIBRARY_PATH environment variable prior to launching MATLAB)
+    % 1. caffe library path (directory containing libcaffe.so must be added to
+    % the LD_LIBRARY_PATH environment variable PRIOR to launching MATLAB)
+    % 2. the path to caffe's matlab interface needs to be added to the
+    % matlab search path Example addpath(/home/myuser/src/caffe/matlab/+caffe')
     %% --------------------------------------------------------------------
     properties (SetAccess = ?ModelTrainers.CaffeModel)
         fpath_net_def;
@@ -17,15 +19,9 @@ classdef CaffeModel < Models.Base
     %% --------------------------------------------------------------------
     methods
 
-        function obj = CaffeModel(dir_matcaffe, ...
-                modelDir, fname_net_def, fname_weights, ...
+        function obj = CaffeModel(modelDir, ...
+                fname_net_def, fname_weights, ...
                 thr)
-           % Add caffe/matlab to our Matlab search PATH to use matcaffe
-            if exist([dir_matcaffe, filesep, '+caffe'], 'dir')
-                addpath(dir_matcaffe);
-            else
-                error('Could not find matcaffe.');
-            end
             obj.net = [];
             obj.initNet(modelDir, fname_net_def, fname_weights);
             if exist('thr', 'var') && ~isempty(thr)

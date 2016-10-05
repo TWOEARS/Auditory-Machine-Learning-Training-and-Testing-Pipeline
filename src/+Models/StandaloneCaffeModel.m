@@ -1,4 +1,4 @@
-classdef StandaloneCaffeModel
+classdef CaffeModel < handle
     % PREREQUISITE:
     % 1. caffe library path (directory containing libcaffe.so must be added to
     % the LD_LIBRARY_PATH environment variable PRIOR to launching MATLAB)
@@ -19,7 +19,7 @@ classdef StandaloneCaffeModel
     %% --------------------------------------------------------------------
     methods
 
-        function obj = StandaloneCaffeModel(modelDir, ...
+        function obj = CaffeModel(modelDir, ...
                 fname_net_def, fname_weights, ...
                 thr)
             obj.net = [];
@@ -58,9 +58,9 @@ classdef StandaloneCaffeModel
     end
     
     %% -----------------------------------------------------------------------------------
-    methods(Access = protected)
+    methods(Access = public)
         
-        function [y,score] = applyModelMasked( obj, x )
+        function [y,score] = applyModel( obj, x )
             blobs_in = x{1};
             blobs_in_names = x{2};
             data_in = cell(numel(obj.net.inputs));

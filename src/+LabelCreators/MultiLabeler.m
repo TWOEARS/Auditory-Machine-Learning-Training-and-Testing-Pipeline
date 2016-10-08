@@ -24,9 +24,10 @@ classdef MultiLabeler < LabelCreators.Base
     methods (Access = protected)
         
         function y = label( obj, blockAnnotations )
+            y = [];
             for ii = 1 : numel( obj.individualLabelers )
                 obj.individualLabelers{ii}.labelBlockSize_s = obj.labelBlockSize_s;
-                y(1,ii) = obj.individualLabelers{ii}.label( blockAnnotations );
+                y = [y, obj.individualLabelers{ii}.label( blockAnnotations )];
             end
         end
         %% -------------------------------------------------------------------------------

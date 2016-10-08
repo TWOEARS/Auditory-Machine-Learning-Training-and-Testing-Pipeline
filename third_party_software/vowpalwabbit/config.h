@@ -1,0 +1,1 @@
+#define PACKAGE_VERSION "8.2.0"

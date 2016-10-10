@@ -70,8 +70,12 @@ classdef (Abstract) Base < handle
 
         function run( obj )
             [x,y] = obj.getPermutedTrainingData();
-            if any( any( isnan( x ) ) ) || any( any( isinf( x ) ) ) 
-                warning( 'There are NaNs or INFs in the data!' );
+            nanXidxs = any( isnan( x ), 2 );
+            infXidxs = any( isinf( x ), 2 );
+            if any( nanXidxs ) || any( infXidxs ) 
+                warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
+                x(nanXidxs | infXidxs,:) = [];
+                y(nanXidxs | infXidxs,:) = [];
             end
             if numel( y ) > obj.maxDataSize
                 if ModelTrainers.Base.balMaxData

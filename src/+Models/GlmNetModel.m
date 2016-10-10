@@ -27,7 +27,12 @@ classdef GlmNetModel < Models.DataScalingModel
 
         function [impact, cIdx] = getCoefImpacts( obj, lambda )
             if nargin < 2, lambda = obj.lambda; end
-            coefsAtLambda = abs( glmnetCoef( obj.model, lambda ) );
+            coefs = glmnetCoef( obj.model, lambda );
+            if iscell( coefs )
+                coefs = squeeze( cellSqueezeFun( @(c)(mean( c, 2 )), coefs, 2, true ) );
+                coefs = coefs{1};
+            end
+            coefsAtLambda = abs( coefs );
             sumCoefs = sum( coefsAtLambda(2:end) );
             if sumCoefs > 0
                 coefsAtLambda = coefsAtLambda(2:end) / sumCoefs;

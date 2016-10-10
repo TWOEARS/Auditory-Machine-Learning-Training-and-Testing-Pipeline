@@ -25,7 +25,7 @@ classdef StandardBlockCreator < BlockCreators.Base
         function [blockAnnots,afeBlocks] = blockify( obj, afeData, annotations )
             anyAFEsignal = afeData(1);
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
-            streamLen_s = double( length( anyAFEsignal.Data ) ) / anyAFEsignal.FsHz;
+            streamLen_s = double( size( anyAFEsignal.Data, 1 ) ) / anyAFEsignal.FsHz;
             backOffsets_s = ...
                        0.0 : obj.shiftSize_s : max( streamLen_s-obj.shiftSize_s+0.01, 0 );
             blockAnnots = repmat( annotations, numel( backOffsets_s ), 1 );

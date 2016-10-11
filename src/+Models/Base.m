@@ -60,6 +60,13 @@ classdef (Abstract) Base < handle
             if nargin < 6, getDatapointInfo = 'noInfo'; end
             x = testSet(:,'x');
             yTrue = testSet(:,'y');
+            nanXidxs = any( isnan( x ), 2 );
+            infXidxs = any( isinf( x ), 2 );
+            if any( nanXidxs ) || any( infXidxs ) 
+                warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
+                x(nanXidxs | infXidxs,:) = [];
+                yTrue(nanXidxs | infXidxs,:) = [];
+            end
             throwoutIdxs = [];
             if numel( yTrue ) > maxDataSize
                 if balMaxData

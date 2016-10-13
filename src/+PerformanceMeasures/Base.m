@@ -29,6 +29,12 @@ classdef (Abstract) Base
         end
         % -----------------------------------------------------------------
     
+        function po = strapOffDpi( obj )
+            po = obj;
+            po.datapointInfo = [];
+        end
+        % -----------------------------------------------------------------
+    
         function b = le( obj, otherPm )
             b = ~( obj > otherPm );
         end

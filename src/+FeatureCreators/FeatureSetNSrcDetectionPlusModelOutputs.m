@@ -26,6 +26,7 @@ classdef FeatureSetNSrcDetectionPlusModelOutputs < FeatureCreators.Base
 
         function x = constructVector( obj )
             % emulate super call by delegation
+            obj.baseFC.descriptionBuilt = obj.descriptionBuilt;
             obj.baseFC.setAfeData( obj.afeData );
             x = obj.baseFC.constructVector();
             if ~obj.baseFC.descriptionBuilt

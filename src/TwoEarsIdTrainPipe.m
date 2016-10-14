@@ -84,7 +84,7 @@ classdef TwoEarsIdTrainPipe < handle
             afeReqs = obj.featureCreator.getAFErequests();
             if ~isempty( obj.ksWrapper )
                 obj.ksWrapper.setAfeDataIndexOffset( numel( afeReqs ) );
-                afeReqs = [afeReqs obj.ksWrapper.ks.requests];
+                afeReqs = [afeReqs obj.ksWrapper.getAfeRequests];
             end
             obj.pipeline.featureCreator = obj.featureCreator;
             multiCfgProcs{1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim );

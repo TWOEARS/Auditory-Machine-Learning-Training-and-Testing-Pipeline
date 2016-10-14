@@ -2,7 +2,7 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
     % Abstract base class for wrapping KS into an emulated blackboard
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
-        ks;
+        kss;
         bbs;
         afeDataIndexOffset;
         out;
@@ -18,11 +18,27 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = BlackboardKsWrapper( ks )
+        function obj = BlackboardKsWrapper( kss )
             obj = obj@Core.IdProcInterface();
-            obj.ks = ks;
+            if ~iscell( kss )
+                obj.kss = {kss};
+            else
+                obj.kss = kss;
+            end
             obj.bbs = BlackboardSystem( false );
-            obj.ks.setBlackboardAccess( obj.bbs.blackboard, obj.bbs );
+            for ii = 1 : numel( kss )
+                obj.kss{ii}.setBlackboardAccess( obj.bbs.blackboard, obj.bbs );
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
+        function [afeRequests, ksReqHashes] = getAfeRequests( obj )
+            afeRequests = [];
+            ksReqHashes = [];
+            for ii = 1 : numel( obj.kss )
+                afeRequests = [afeRequests obj.kss{ii}.requests];
+                ksReqHashes = [ksReqHashes obj.kss{ii}.reqHashs];
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -38,23 +54,26 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
             bas = inData.blockAnnotations;
             afes = inData.afeBlocks;
             obj.out = struct( 'afeBlocks', {{}}, 'blockAnnotations', {[]} );
+            [~,ksReqHashes] = obj.getAfeRequests();
             for aa = 1 : numel( afes )
                 afeData = afes{aa};
                 % initialize blackboard environment for block
-                for ii = 1 : numel( obj.ks.reqHashs )
+                for ii = 1 : numel( ksReqHashes )
                     reqSignal = afeData(ii + obj.afeDataIndexOffset);
                     if iscell(reqSignal) && length(reqSignal)==1
                         reqSignal = reqSignal{1};
                     end
                     obj.bbs.blackboard.addSignal( ...
-                              obj.ks.reqHashs{ii}, reqSignal );
+                              ksReqHashes{ii}, reqSignal );
                 end
-                obj.ks.setActiveArgument( 'nil', 0, 'nil' );
-                obj.ks.lastBlockEnd = zeros( 1, numel( obj.ks.reqHashs ) );
                 obj.bbs.blackboard.setSoundTimeIdx( 0 );
-                obj.ks.timeStamp();
+                for ii = 1 : numel( obj.kss )
+                    obj.kss{ii}.setActiveArgument( 'nil', 0, 'nil' );
+                    obj.kss{ii}.lastBlockEnd = zeros( 1, numel( obj.kss{ii}.reqHashs ) );
+                    obj.kss{ii}.timeStamp();
+                end
                 obj.bbs.blackboard.setSoundTimeIdx( ...
-                                               bas(aa).blockOffset - bas(aa).blockOnset );
+                                     bas(aa).blockOffset - bas(aa).blockOnset );
                 blockHeadOrientation = 0;
                 % TODO: read head orientation from block annotations
                 obj.bbs.blackboard.addData( 'headOrientation', blockHeadOrientation );
@@ -62,10 +81,12 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
                 procBlock = obj.preproc( bas(aa) ); % add any ks-specific data to blackboard
                 if ~procBlock, continue; end
                 fprintf( '.' );
-                obj.ks.execute();
-                fprintf( '.' );
-                for ii = (1 : numel( obj.ks.reqHashs )) + obj.afeDataIndexOffset
-                    afeData.remove( ii );
+                for ii = 1 : numel( obj.kss )
+                    obj.kss{ii}.execute();
+                    fprintf( '.' );
+                end
+                for ii = 1 : numel( ksReqHashes )
+                    afeData.remove(ii + obj.afeDataIndexOffset);
                 end
                 obj.postproc( afeData, bas(aa) ); % read ks results from bb, create output
                 obj.bbs.blackboard.deleteData();

@@ -20,6 +20,7 @@ classdef (Abstract) DataScalingModel < Models.Base
             if nargin > 2 && strcmp( saveScalingFactors, 'saveScalingFactors' )
                 obj.dataTranslators = mean( x );
                 obj.dataScalors = 1 ./ std( x );
+                obj.dataScalors(isinf(obj.dataScalors)) = 1;
             end
             x = x - repmat( obj.dataTranslators, size(x,1), 1 );
             x = x .* repmat( obj.dataScalors, size(x,1), 1 );

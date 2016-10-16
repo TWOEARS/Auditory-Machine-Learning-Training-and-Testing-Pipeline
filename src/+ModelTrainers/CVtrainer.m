@@ -23,7 +23,7 @@ classdef CVtrainer < ModelTrainers.Base
             end
             obj.trainer = trainer;
             obj.nFolds = 5;
-            obj.abortPerfMin = 0;
+            obj.abortPerfMin = -inf;
             obj.performanceMeasure = trainer.performanceMeasure;
         end
         %% ----------------------------------------------------------------

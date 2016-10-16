@@ -42,12 +42,12 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
         
         function outputDeps = getKsInternOutputDependencies( obj )
             outputDeps.v = 1;
-            outputDeps.bs = obj.ks.blockSize;
-            outputDeps.nc = obj.ks.nChannels;
-            outputDeps.fr = obj.ks.freqRange;
+            outputDeps.bs = obj.kss{1}.blockSize;
+            outputDeps.nc = obj.kss{1}.nChannels;
+            outputDeps.fr = obj.kss{1}.freqRange;
             outputDeps.dn = obj.dnnHash;
             outputDeps.nf = obj.nfHash;
-            outputDeps.an = obj.ks.angles;
+            outputDeps.an = obj.kss{1}.angles;
         end
         %% -------------------------------------------------------------------------------
 

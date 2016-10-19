@@ -57,6 +57,35 @@ classdef NSE < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
+        function [cm, performance, acc, sens] = getConfusionMatrix( obj, ypRange )
+            if isempty( obj.datapointInfo )
+                cm = [];
+                return;
+            end
+            if nargin < 2, ypRange = [-inf inf]; end
+            ypOrd = round( obj.datapointInfo.yPred );
+            ypOrd = max( ypOrd, ypRange(1) );
+            ypOrd = min( ypOrd, ypRange(2) );
+            yTrue = obj.datapointInfo.yTrue;
+            labels = unique( [yTrue;ypOrd] );
+            n_acc = 0;
+            for tt = 1 : numel( labels )
+                for pp = 1 : numel( labels )
+                    cm(tt,pp) = sum( (yTrue == labels(tt)) & (ypOrd == labels(pp)) );
+                end
+                n_tt = sum( cm(tt,:) );
+                if n_tt > 0
+                    sens(tt) = cm(tt,tt) / n_tt;
+                else
+                    sens(tt) = nan;
+                end
+                n_acc = n_acc + cm(tt,tt);
+            end
+            acc = n_acc / sum( sum( cm ) ); 
+            performance = sum( sens(~isnan(sens)) ) / numel( sens(~isnan(sens)) );
+        end
+        % -----------------------------------------------------------------
+    
         function [dpiext, compiled] = makeDatapointInfoStats( obj, fieldname, compiledPerfField )
             if isempty( obj.datapointInfo ), dpiext = []; return; end
             if ~isfield( obj.datapointInfo, fieldname )

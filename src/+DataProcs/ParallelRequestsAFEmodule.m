@@ -105,6 +105,15 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         end
         %% -------------------------------------------------------------------------------
         
+        % override of DataProcs.IdProcInterface's method
+        function out = saveOutput( obj, wavFilepath )
+            obj.save( wavFilepath, [] );
+            if nargout > 0
+                out = obj.getOutput();
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
 
     %% -----------------------------------------------------------------------------------
@@ -121,12 +130,17 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
         % override of Core.IdProcInterface's method
         function out = getOutput( obj, varargin )
             out.afeData = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
-            for ii = 1 : numel( obj.indivFiles )
+            [~,ia,ic] = unique( obj.indivFiles );
+            for ii = ia'
                 if ~exist( obj.indivFiles{ii}, 'file' )
                     error( 'AMLTTP:dataprocs:cacheFileCorrupt', '%s not found.', obj.indivFiles{ii} );
                 end
                 tmp = load( obj.indivFiles{ii}, 'afeData', 'annotations' );
                 out.afeData(ii) = tmp.afeData(1);
+            end
+            for ii = 1 : numel( obj.indivFiles )
+                if any( ii == ia ), continue; end
+                out.afeData(ii) = out.afeData(ia(ic(ii)));
             end
             out.annotations = tmp.annotations; % if individual AFE modules produced
                                                % individual annotations, they would have

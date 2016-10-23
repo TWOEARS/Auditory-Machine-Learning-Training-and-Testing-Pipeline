@@ -47,8 +47,8 @@ classdef Base < Core.IdProcInterface
                                                                backOffset_s );
                 end
                 afeBlock(afeKey{1}) = afeSignalExtract;
-                fprintf( '.' );
             end
+            fprintf( '.' );
         end
         %% ------------------------------------------------------------------------------- 
 

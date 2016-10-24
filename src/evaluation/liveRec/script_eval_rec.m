@@ -63,7 +63,16 @@ session_onOffSet = [1.236e+05, 8582556;...   % alarm
 session_onOffSet = session_onOffSet / 44100.0; % from samples to seconds
 for ii = 1 : numel(flist)
     fpath_mixture_mat = flist{ii};
-    [idLabels{ii}, perf{ii}] = identify_rec(idModels, data_dir, fpath_mixture_mat, session_onOffSet(ii,:), ppRemoveDc, fs);
+    [~, fname, ext] = fileparts(fpath_mixture_mat);
+    if strcmp(ext, '.mat')
+        wav_dir = fullfile(data_dir, 'sound_databases/adream_1605/rec/wav');
+        fpath_mixture_wav = fullfile(wav_dir, [fname, '.wav']);
+    elseif strcmp(ext, '.wav')
+        % do nothing
+    else
+        error('Unrecognized mixture file %s', fpath_mixture_mat);
+    end
+    %[idLabels{ii}, perf{ii}] = identify_rec(idModels, fpath_mixture_mat, fpath_mixture_wav, session_onOffSet(ii,:), ppRemoveDc, fs);
     close all
 end
 

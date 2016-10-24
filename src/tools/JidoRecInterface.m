@@ -23,7 +23,7 @@ classdef JidoRecInterface < handle
     end
     
     methods (Access = public)
-        function obj = JidoRecInterface(pathToRecording,blockSize)
+        function obj = JidoRecInterface(pathToRecording, blockSize)
             % JIDOINTERFACE Constructor...
             if exist(pathToRecording, 'file') ~= 2
                 error('Invalid path to recorded data');

@@ -72,7 +72,7 @@ flist = ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929/mat/baby_fire.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929/mat/baby_fire_alarm_femaleScream-maleScream.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929/mat/fire_alarm_femaleScream-maleScream.mat'), ...
-    fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929/mat/general_malaleSpeech_femaleSpeech.mat'), ...
+    fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929/mat/general_maleSpeech_femaleSpeech.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_B/mat/alarm.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_B/mat/baby.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_B/mat/baby_fire_alarm_femaleScream-maleScream.mat'), ...
@@ -86,7 +86,7 @@ flist = ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_C/mat/fire_alarm_baby_femaleSpeech.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_D/mat/femaleSpeech.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_D/mat/fire_alarm_baby_femaleSpeech.mat'), ...
-    fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/alarm_general_footstaps_fire.mat'), ...
+    fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/alarm_general_footsteps_fire.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/baby_fire_alarm_femaleScream-maleScream.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/femaleScream-maleScream_baby.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/femaleSpeech.mat'), ...
@@ -127,7 +127,7 @@ session_onOffSet = [1.236e+05, 8582556;...   % alarm
                     138386, inf; ...% baby_fire
                     121716, inf; ...% baby_fire_alarm_femaleScream-maleScream
                     186984, inf; ...% fire_alarm_femaleScream-maleScream
-                    45026 inf; ...% general_malaleSpeech_femaleSpeech
+                    45026 inf; ...% general_maleSpeech_femaleSpeech
                     % bagfiles_20160929_B:
                     63284,   inf; ...% alarm
                     70560,   inf; ...% baby
@@ -145,15 +145,13 @@ session_onOffSet = [1.236e+05, 8582556;...   % alarm
                     92831, inf; ...% femaleSpeech
                     76293, inf; ...% fire_alarm_baby_femaleSpeech
                     % bagfiles_20160929_E
-                    430416, inf; ...% alarm_general_footstaps_fire
+                    430416, inf; ...% alarm_general_footsteps_fire
                     380583, inf; ...% baby_fire_alarm_femaleScream-maleScream
                     323694, inf; ...% femaleScream-maleScream_baby
                     304378, inf; ...% femaleSpeech
                     323694, inf; ...% maleSpeech
                     323694, inf; ...% maleSpeech_femaleSpeech
                    ];
-disp(numel(flist));
-disp(size(session_onOffSet));
 session_onOffSet = session_onOffSet / 44100.0; % from samples to seconds
 for ii = 1 : numel(flist)
     fpath_mixture_mat = flist{ii};
@@ -166,39 +164,37 @@ for ii = 1 : numel(flist)
     else
         error('Unrecognized mixture file %s', fpath_mixture_mat);
     end
-    disp(fpath_mixture_mat);
-    disp(fpath_mixture_wav);
-%     [idLabels{ii}, perf{ii}] = identify_rec(idModels, ...
-%         fpath_mixture_mat, fpath_mixture_wav, ...
-%         session_onOffSet(ii,:), ...
-%         ppRemoveDc, fs);
+    [idLabels{ii}, perf{ii}] = identify_rec(idModels, ...
+        fpath_mixture_mat, fpath_mixture_wav, ...
+        session_onOffSet(ii,:), ...
+        ppRemoveDc, fs);
     close all
 end
 
-% p = arrayfun( @(x)(x.performance), vertcat( perf{:} ) );
-% disp( p );
-% 
-% perfOverview = vertcat( perf{:} );
-% tp1 = sum( arrayfun( @(x)(x.tp), perfOverview([1,2,5,7],:) ) );
-% fp1 = sum( arrayfun( @(x)(x.fp), perfOverview([1,2,5,7],:) ) );
-% tn1 = sum( arrayfun( @(x)(x.tn), perfOverview([1,2,5,7],:) ) );
-% fn1 = sum( arrayfun( @(x)(x.fn), perfOverview([1,2,5,7],:) ) );
-% 
-% tpfn1 = tp1 + fn1;
-% tnfp1 = tn1 + fp1;
-% 
-% sens1 = tp1 ./ tpfn1;
-% spec1 = tn1 ./ tnfp1;
-% bac1 = 0.5*sens1 + 0.5*spec1;
-% 
-% tp2 = sum( arrayfun( @(x)(x.tp), perfOverview([3,4,6,8],:) ) );
-% fp2 = sum( arrayfun( @(x)(x.fp), perfOverview([3,4,6,8],:) ) );
-% tn2 = sum( arrayfun( @(x)(x.tn), perfOverview([3,4,6,8],:) ) );
-% fn2 = sum( arrayfun( @(x)(x.fn), perfOverview([3,4,6,8],:) ) );
-% 
-% tpfn2 = tp2 + fn2;
-% tnfp2 = tn2 + fp2;
-% 
-% sens2 = tp2 ./ tpfn2;
-% spec2 = tn2 ./ tnfp2;
-% bac2 = 0.5*sens2 + 0.5*spec2;
+p = arrayfun( @(x)(x.performance), vertcat( perf{:} ) );
+disp( p );
+
+perfOverview = vertcat( perf{:} );
+tp1 = sum( arrayfun( @(x)(x.tp), perfOverview([1,2,5,7],:) ) );
+fp1 = sum( arrayfun( @(x)(x.fp), perfOverview([1,2,5,7],:) ) );
+tn1 = sum( arrayfun( @(x)(x.tn), perfOverview([1,2,5,7],:) ) );
+fn1 = sum( arrayfun( @(x)(x.fn), perfOverview([1,2,5,7],:) ) );
+
+tpfn1 = tp1 + fn1;
+tnfp1 = tn1 + fp1;
+
+sens1 = tp1 ./ tpfn1;
+spec1 = tn1 ./ tnfp1;
+bac1 = 0.5*sens1 + 0.5*spec1;
+
+tp2 = sum( arrayfun( @(x)(x.tp), perfOverview([3,4,6,8],:) ) );
+fp2 = sum( arrayfun( @(x)(x.fp), perfOverview([3,4,6,8],:) ) );
+tn2 = sum( arrayfun( @(x)(x.tn), perfOverview([3,4,6,8],:) ) );
+fn2 = sum( arrayfun( @(x)(x.fn), perfOverview([3,4,6,8],:) ) );
+
+tpfn2 = tp2 + fn2;
+tnfp2 = tn2 + fp2;
+
+sens2 = tp2 ./ tpfn2;
+spec2 = tn2 ./ tnfp2;
+bac2 = 0.5*sens2 + 0.5*spec2;

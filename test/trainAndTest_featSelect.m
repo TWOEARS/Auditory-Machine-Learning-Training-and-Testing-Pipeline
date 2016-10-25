@@ -3,7 +3,7 @@ function trainAndTest_featSelect( classname )
 if nargin < 1, classname = 'baby'; end;
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean();

@@ -1,7 +1,7 @@
 function trainAndTestLocKsToNoSrcs()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.ksWrapper = DataProcs.DnnLocKsWrapper(); % uses 0.5s blocksize

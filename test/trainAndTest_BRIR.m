@@ -3,7 +3,7 @@ function trainAndTest_BRIR( classname )
 if nargin < 1, classname = 'baby'; end;
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 brirs = { ...
     'impulse_responses/twoears_kemar_adream/TWOEARS_KEMAR_ADREAM_pos1.sofa'; ...

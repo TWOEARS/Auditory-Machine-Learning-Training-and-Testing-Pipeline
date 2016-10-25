@@ -6,7 +6,7 @@ function [idLabels, perf] = identify_rec(idModels, data_dir, fpath_mixture_mat, 
 %warning('off', 'all');
 disp( 'Initializing Two!Ears, setting up interface to mixture recorded from the robot...' );
 startTwoEars('Config.xml');
-startIdentificationTraining;
+startAMLTTP;
 
 [~, fname, ext] = fileparts(fpath_mixture_mat);
 if strcmp(ext, '.mat')

@@ -33,7 +33,7 @@ classdef JidoRecInterface < handle
             obj.bass = load(pathToRecording, 'BASS');
             obj.bass = obj.bass.('BASS');
 
-            sigSorted = sort( abs( [obj.bass(1:obj.bass(1).nChunksOnPort:end).left obj.bass(1:obj.bass(1).nChunksOnPort:end).left] ) );
+            sigSorted = sort( abs( [obj.bass(1:obj.bass(1).nChunksOnPort:end).left obj.bass(1:obj.bass(1).nChunksOnPort:end).right] ) );
             sigSorted(sigSorted<=0.1*mean(sigSorted)) = [];
             nUpperSigSorted = round( numel( sigSorted ) * 0.01 );
             obj.normFactor = 0.2 / median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile

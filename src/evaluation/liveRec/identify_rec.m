@@ -20,7 +20,7 @@ labels_cat = [labels_cat{:}];
 mixture_onOffSets_cat = cat(1, mixture_onOffSets{:});
 
 % === Initialize Interface to Jido Recording
-jido = JidoRecInterface(fpath_mixture_mat, 2205*4);
+jido = JidoRecInterface(fpath_mixture_mat, 2205*4); % blocksize = 0.05s * 4 
 if numel(session_onOffSet) > 0
     jido.seekTime(session_onOffSet(1));
     mixture_onOffSets_cat = mixture_onOffSets_cat - jido.curTime_s;

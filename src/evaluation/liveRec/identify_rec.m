@@ -11,9 +11,14 @@ startAMLTTP;
 % === load ground truth
 [mixture_onOffSets, target_names] = readMixtureOnOffSets(fpath_mixture_wav);
 labels = cell(size(mixture_onOffSets));
+numSrcs = numel(target_names);
 for ii = 1 : numel(target_names)
-    labels{ii} = cell(1, size(mixture_onOffSets{ii}, 1));
-    labels{ii}(:) = {target_names(ii)};
+    if strcmp(target_names(ii), 'moving')
+        numSrcs = numSrcs-1;
+    else
+        labels{ii} = cell(1, size(mixture_onOffSets{ii}, 1));
+        labels{ii}(:) = {target_names(ii)};
+    end
 end
 labels_cat = cat(2, labels{:});
 labels_cat = [labels_cat{:}];

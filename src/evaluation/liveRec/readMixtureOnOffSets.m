@@ -11,4 +11,7 @@ if numel( target_names ) > 1
 else
     mixture_onOffSets{1} = IdEvalFrame.readOnOffAnnotations(fpath_mixture, true);
 end
+% remove '-' from grouped classes to match model naming convention
+target_names = cellfun(@(x) strrep(x, '-', ''), ...
+        target_names, 'un', false);
 end

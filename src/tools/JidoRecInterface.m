@@ -23,7 +23,7 @@ classdef JidoRecInterface < handle
     end
     
     methods (Access = public)
-        function obj = JidoRecInterface(pathToRecording,blockSize)
+        function obj = JidoRecInterface(pathToRecording, blockSize)
             % JIDOINTERFACE Constructor...
             if exist(pathToRecording, 'file') ~= 2
                 error('Invalid path to recorded data');
@@ -39,7 +39,14 @@ classdef JidoRecInterface < handle
             obj.normFactor = 0.2 / median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
 
             % Load KEMAR module
-            obj.kemar = load(pathToRecording, 'JidoCurrentPosition');
+            vars = whos('-file', pathToRecording);
+            if ismember('JidoCurrentPosition', {vars.name})
+                 obj.kemar = load(pathToRecording, 'JidoCurrentPosition');
+                % Get KEMAR properties
+                obj.kemar = obj.kemar.('JidoCurrentPosition');
+            else
+                obj.kemar = [];
+            end
             
             % Get BASS status info
             obj.blockIdx = 1;
@@ -56,8 +63,6 @@ classdef JidoRecInterface < handle
             obj.seekTime(0);
             obj.setEndTime( obj.calcRelBlockTimeStamp( numel(obj.bass) ) );
             
-            % Get KEMAR properties
-            obj.kemar = obj.kemar.('JidoCurrentPosition');
         end
         
         function t = calcRelBlockTimeStamp(obj, idx)
@@ -142,7 +147,12 @@ classdef JidoRecInterface < handle
         
         function azimuth = getCurrentHeadOrientation(obj)
             % GETCURRENTHEADORIENTATION
-            azimuth = 0;%obj.kemar(ceil(obj.blockIdx/2)).pose.orientation.w;
+            % TODO proper implementation
+            if isempty(obj.kemar)
+                azimuth = 0;%error('Operation not supported for this recording.');
+            else
+                azimuth = 0;%obj.kemar(ceil(obj.blockIdx/2)).pose.orientation.w;
+            end
         end
         
         function delete(obj)
@@ -151,6 +161,15 @@ classdef JidoRecInterface < handle
             % Shut down the audio stream
             delete(obj.bass);
             clear obj.bass;
+            
+            if ~isempty(obj.kemar)
+                delete(obj.kemar);
+                clear obj.kemar;
+            end
+        end
+        
+        function result = isActive(obj)
+            result = ~obj.isFinished();
         end
         
         function result = isFinished(obj)

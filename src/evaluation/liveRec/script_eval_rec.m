@@ -8,12 +8,12 @@
 % [idModels(1:6).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1_models_dataset_1' );
 
 %% mc1b_models_dataset_1
-idModels(1).name = 'alarm';
-idModels(2).name = 'baby';
-idModels(5).name = 'fire';
-idModels(4).name = 'femaleSpeech';
-idModels(3).name = 'dog';
-[idModels(1:5).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1b_models_dataset_1' );
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(5).name = 'fire';
+% idModels(4).name = 'femaleSpeech';
+% idModels(3).name = 'dog';
+% [idModels(1:5).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc1b_models_dataset_1' );
 
 %% mc2_models_dataset_1
 % idModels(1).name = 'alarm';
@@ -36,9 +36,56 @@ idModels(3).name = 'dog';
 % idModels(3).name = 'femaleSpeech';
 % [idModels(1:4).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc2segmented_models_dataset_1' );
 
+%% mc3_fc3_models_dataset_1
+idModels(1).name = 'alarm';
+idModels(2).name = 'baby';
+idModels(3).name = 'crash';
+idModels(4).name = 'dog';
+idModels(5).name = 'engine';
+idModels(6).name = 'femaleScreammaleScream';
+idModels(7).name = 'femaleSpeech';
+idModels(8).name = 'fire';
+idModels(9).name = 'footsteps';
+idModels(10).name = 'knock';
+idModels(11).name = 'maleSpeech';
+idModels(12).name = 'phone';
+idModels(13).name = 'piano';
+[idModels(1:13).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc3_fc3_models_dataset_1' );
+
+%% mc3_fc4_0.5s_models_dataset_1
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(3).name = 'crash';
+% idModels(4).name = 'dog';
+% idModels(5).name = 'engine';
+% idModels(6).name = 'femaleScreammaleScream';
+% idModels(7).name = 'femaleSpeech';
+% idModels(8).name = 'fire';
+% idModels(9).name = 'footsteps';
+% idModels(10).name = 'knock';
+% idModels(11).name = 'maleSpeech';
+% idModels(12).name = 'phone';
+% idModels(13).name = 'piano';
+% [idModels(1:13).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc3_fc4_0.5s_models_dataset_1' );
+
+%% mc3_fc4_1s_models_dataset_1
+% idModels(1).name = 'alarm';
+% idModels(2).name = 'baby';
+% idModels(3).name = 'crash';
+% idModels(4).name = 'dog';
+% idModels(5).name = 'engine';
+% idModels(6).name = 'femaleScreammaleScream';
+% idModels(7).name = 'femaleSpeech';
+% idModels(8).name = 'fire';
+% idModels(9).name = 'footsteps';
+% idModels(10).name = 'knock';
+% idModels(11).name = 'maleSpeech';
+% idModels(12).name = 'phone';
+% idModels(13).name = 'piano';
+% [idModels(1:13).dir] = deal( '../../../../twoears-database-internal/learned_models/IdentityKS/mc3_fc4_1s_models_dataset_1' );
 %%
-ppRemoveDc = true;
-fs = 44100;
+ppRemoveDc = false;
+fs = 16000;
 
 data_dir = '../../../../twoears-database-internal';
 flist = ...
@@ -92,7 +139,7 @@ flist = ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/femaleSpeech.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/maleSpeech.mat'), ...
     fullfile(data_dir, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/maleSpeech_femaleSpeech.mat'), ...
-    }; 
+    };
 % onset of first chirp (inclusive) to offset of final chirp
 % (inclusive) in samples
 session_onOffSet = [1.236e+05, 8582556;...   % alarm

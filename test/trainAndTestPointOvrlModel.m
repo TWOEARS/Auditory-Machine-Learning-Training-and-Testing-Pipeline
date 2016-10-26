@@ -3,7 +3,7 @@ function trainAndTestPointOvrlModel( classname )
 if nargin < 1, classname = 'piano'; end;
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();

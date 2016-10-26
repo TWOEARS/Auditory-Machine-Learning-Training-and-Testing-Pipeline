@@ -1,7 +1,7 @@
 function trainAndTestOverlappedMultiClass()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.DistractedBlockCreator( 1.0, 0.4, ...

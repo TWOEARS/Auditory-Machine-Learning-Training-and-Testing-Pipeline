@@ -3,7 +3,7 @@ function testNumSrc(modelNameIdent)
 %% inits
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) );
-startIdentificationTraining();
+startAMLTTP();
 if nargin < 1
     modelNameIdent = '';
 end

@@ -1,7 +1,7 @@
 function trainAndTestNumberSources()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 0.5, 0.2 );

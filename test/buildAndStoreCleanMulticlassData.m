@@ -1,7 +1,7 @@
 function buildAndStoreCleanMulticlassData( )
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmBlockmean();

@@ -4,7 +4,7 @@ if nargin < 1, classname = 'baby'; end;
 
 %startTwoEars( '../IdentificationTraining.xml' );
 addpath( '..' );
-startIdentificationTraining();
+startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmBlockmean();

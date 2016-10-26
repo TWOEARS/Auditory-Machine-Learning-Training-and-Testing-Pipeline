@@ -3,7 +3,7 @@ function trainAndTestDiffuseNoiseOvrlModel( classname )
 if nargin < 1, classname = 'footsteps'; end;
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startIdentificationTraining();
+startAMLTTP();
 
 
 pipe = TwoEarsIdTrainPipe();

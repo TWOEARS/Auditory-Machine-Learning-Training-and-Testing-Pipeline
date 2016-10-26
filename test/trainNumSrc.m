@@ -3,7 +3,7 @@ function trainNumSrc(useCaffe,modelNameIdent)
 %% inits
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) );
-startIdentificationTraining();
+startAMLTTP();
 if nargin < 1, useCaffe = false; end
 if useCaffe
     addpath('/home/kashefy/sabik/src/caffe/matlab/');

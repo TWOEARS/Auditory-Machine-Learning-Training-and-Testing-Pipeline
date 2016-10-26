@@ -1,9 +1,10 @@
-function startIdentificationTraining
+function startAMLTTP
 % This function initialises the path variables that are needed for running
-% the Identification Training Pipeline of the Two!Ears Blackboard System
+% the Auditory Machine Learning Training and Testing Pipeline 
+% of the Two!Ears Blackboard System
 % module
 
-startTwoEars( 'IdentificationTraining.xml' );
+startTwoEars( 'AMLTTP.xml' );
 
 basePath = fileparts(mfilename('fullpath'));
 

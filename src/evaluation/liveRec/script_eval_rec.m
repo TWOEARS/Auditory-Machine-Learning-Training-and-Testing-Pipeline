@@ -74,7 +74,7 @@ flist = ...
     fullfile(db.path, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/femaleSpeech.mat'), ...
     fullfile(db.path, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/maleSpeech.mat'), ...
     fullfile(db.path, 'sound_databases/adream_1609/rec/bagfiles_20160929_E/mat/maleSpeech_femaleSpeech.mat'), ...
-    }; 
+    };
 % onset of first chirp (inclusive) to offset of final chirp
 % (inclusive) in samples
 session_onOffSet = [1.236e+05, 8582556;...   % alarm
@@ -86,7 +86,7 @@ session_onOffSet = [1.236e+05, 8582556;...   % alarm
                     5.4325e+04, 30012327;...   % fire
                     1.1279e+05, min([15141980, 4867300, 30129257, 8166364]);...   % piano_baby -> baby_dog_fire_piano \
                     % bagfiles_20160928_A
-                    71663, inf; ... %  alarm
+                    71663, inf; ... % alarm
                     120393, inf; ... % 10 alarm_general_footsteps_fire
                     148617, inf; ... % baby
                     134505, inf; ... % baby_maleSpeech_femaleSpeech_femaleScream-maleScream

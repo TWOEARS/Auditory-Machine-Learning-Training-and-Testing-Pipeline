@@ -1,4 +1,4 @@
-function [idLabels, perf] = identify_rec(idModels, fpath_mixture_mat, fpath_mixture_wav, session_onOffSet, ppRemoveDc,fs)
+function [idLabels, perf] = identify_rec(idModels, fpath_mixture_mat, fpath_mixture_wav, session_onOffSet, ppRemoveDc,fs, segmBb)
 %IDENTIFY identifies sources detected in a recording and returns predicted
 % source labels as well as corresponding ground truth (correct source
 % label)
@@ -34,7 +34,7 @@ end
 
 % === Initialise and run model(s)
 disp( 'Building blackboard system...' );
-bbs = buildIdentificationBBS(jido, idModels, ppRemoveDc,fs, labels_cat, mixture_onOffSets_cat);
+bbs = buildIdentificationBBS(jido, idModels, ppRemoveDc,fs, labels_cat, mixture_onOffSets_cat, segmBb);
 disp( 'Starting blackboard system.' );
 bbs.run();
 

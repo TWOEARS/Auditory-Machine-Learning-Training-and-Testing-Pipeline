@@ -160,37 +160,9 @@ p = arrayfun( @(x)(x.performance), vertcat( perf{:} ) );
 disp( p );
 
 perfOverview = vertcat( perf{:} );
+[bac,sens,spec,baca,sensa,speca] = getCmplRecEvalPerf( perfOverview );
 
 [~,md] = fileparts( modelsDir );
 save( ['recEval_' md '_' buildCurrentTimeString() '.mat'] );
 
-if recIdxs < 50, return; end
 
-sceneIdxs{1} = [1,2,5,7]; % 1 src, old files
-sceneIdxs{2} = [3,4,6,8]; % 2-4 srcs, old files
-sceneIdxs{3} = [9,11,13,15,17,19,20,21,24]; % 1 src, pos A, new files
-sceneIdxs{4} = [32,33,38]; % 1 src, pos B, new files
-sceneIdxs{5} = [41]; % 1 src, pos C, new files
-sceneIdxs{6} = [43]; % 1 src, moving, new files
-sceneIdxs{7} = [48,49]; % 1 src, pos e, new files
-sceneIdxs{8} = [14,16,22,25,26,28]; % 2 srcs, pos A, new files
-sceneIdxs{9} = [36,39]; % 2 srcs, pos B, new files
-sceneIdxs{10} = [47,50]; % 2 srcs, pos E, new files
-sceneIdxs{11} = [23,27,31]; % 3 srcs, pos A, new files
-sceneIdxs{12} = [10,12,18,29]; % 4 srcs, pos A, new files
-sceneIdxs{13} = [34,35]; % 4 srcs, pos B, new files
-sceneIdxs{14} = [40]; % 4 srcs, pos C, new files
-sceneIdxs{15} = [44]; % 4 srcs, moving, new files
-sceneIdxs{16} = [45,46]; % 4 srcs, pos E, new files
-
-bac = [];
-sens = [];
-spec = [];
-for ii = 1 : numel( sceneIdxs )
-    [bac(ii,:),sens(ii,:),spec(ii,:)] = getLiveEvalPerf( perfOverview, sceneIdxs{ii} );
-end
-
-[bac1,sens1,spec1] = getLiveEvalPerf( perfOverview, [sceneIdxs{3:7}] );
-[bac2,sens2,spec2] = getLiveEvalPerf( perfOverview, [sceneIdxs{8:10}] );
-[bac3,sens3,spec3] = getLiveEvalPerf( perfOverview, [sceneIdxs{11}] );
-[bac4,sens4,spec4] = getLiveEvalPerf( perfOverview, [sceneIdxs{[12,13,14,15,16]}] );

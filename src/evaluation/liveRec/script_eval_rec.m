@@ -1,4 +1,4 @@
-function script_eval_rec( modelsDir, fs, recIdxs, segmBb, ppRemoveDc )
+function script_eval_rec( modelsDir, fs, recIdxs, segmBb, ppRemoveDc, blocklen )
 
 if nargin < 1 || isempty( modelsDir )
     modelsDir = 'learned_models/IdentityKS/mc1b_models_dataset_1';
@@ -15,8 +15,11 @@ end
 if nargin < 5 || isempty( ppRemoveDc )
     ppRemoveDc = false;
 end
+if nargin < 6 || isempty( blocklen )
+    blocklen = 0.2;
+end
 
-modelsDir = db.getFile( modelsDir );
+modelsDir = cleanPathFromRelativeRefs( db.getFile( modelsDir ) );
 modelsDirContents = dir( [modelsDir filesep '*.model.mat'] );
 idModels = arrayfun( @(x)(struct('name',{x.name(1:end-10)})), modelsDirContents );
 [idModels(1:numel(idModels)).dir] = deal( modelsDir );
@@ -149,7 +152,7 @@ for ii = recIdxs
     [idLabels{ii}, perf{ii}] = identify_rec(idModels, ...
         fpath_mixture_mat, fpath_mixture_wav, ...
         session_onOffSet(ii,:), ...
-        ppRemoveDc, fs, segmBb);
+        ppRemoveDc, fs, segmBb, blocklen);
     close all
 end
 
@@ -157,6 +160,12 @@ p = arrayfun( @(x)(x.performance), vertcat( perf{:} ) );
 disp( p );
 
 perfOverview = vertcat( perf{:} );
+
+[~,md] = fileparts( modelsDir );
+save( ['recEval_' md '_' buildCurrentTimeString() '.mat'] );
+
+if recIdxs < 50, return; end
+
 sceneIdxs{1} = [1,2,5,7]; % 1 src, old files
 sceneIdxs{2} = [3,4,6,8]; % 2-4 srcs, old files
 sceneIdxs{3} = [9,11,13,15,17,19,20,21,24]; % 1 src, pos A, new files

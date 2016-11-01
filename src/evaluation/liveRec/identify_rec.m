@@ -1,4 +1,4 @@
-function [idLabels, perf] = identify_rec(idModels, fpath_mixture_mat, fpath_mixture_wav, session_onOffSet, ppRemoveDc,fs, segmBb)
+function [idLabels, perf] = identify_rec(idModels, fpath_mixture_mat, fpath_mixture_wav, session_onOffSet, ppRemoveDc,fs, segmBb, blocklen)
 %IDENTIFY identifies sources detected in a recording and returns predicted
 % source labels as well as corresponding ground truth (correct source
 % label)
@@ -20,7 +20,7 @@ labels_cat = [labels_cat{:}];
 mixture_onOffSets_cat = cat(1, mixture_onOffSets{:});
 
 % === Initialize Interface to Jido Recording
-jido = JidoRecInterface(fpath_mixture_mat, 2205*4); % blocksize = 0.05s * 4 
+jido = JidoRecInterface(fpath_mixture_mat, 44100*blocklen); % blocksize = 0.05s * 4 
 if numel(session_onOffSet) > 0
     jido.seekTime(session_onOffSet(1));
     mixture_onOffSets_cat = mixture_onOffSets_cat - jido.curTime_s;
@@ -40,7 +40,11 @@ bbs.run();
 
 % === Evaluate scores
 %[idLabels, idMismatch] = 
-[idLabels, perf] = idScoresBAC(bbs, labels, mixture_onOffSets);
+if segmBb
+    [idLabels, perf] = idScoresBAC(bbs, labels, mixture_onOffSets);
+else
+    [idLabels, perf] = idScoresBAC(bbs, labels, mixture_onOffSets);
+end
 
 % finish
 

@@ -2,8 +2,8 @@ function [idLabels, perfs] = idScoresBAC(bbs, labels, onOffsets)
 
 fprintf( '\n\nEvaluate scores...\n\n' );
 idHyps = bbs.blackboard.getData( 'identityHypotheses' );
-idMismatch = getIdDecisions( idHyps );
-idLabels = sort( fieldnames( idMismatch ) );
+idDescisions = getIdDecisions( idHyps );
+idLabels = sort( fieldnames( idDescisions ) );
 
 % assume blockSize remains constant throughout
 % assume all hypotheses have the same concernsBlocksize_s
@@ -16,7 +16,7 @@ for il = 1 : numel( labels )
         types(il) = labels{il}(1);
         for idl = 1 : numel( idLabels )
             if strcmp(idLabels{idl}, types{il})
-                idMismatch.(idLabels{idl}).labelIdx = il;
+                idDescisions.(idLabels{idl}).labelIdx = il;
             end
         end % idLabels
     end
@@ -51,16 +51,18 @@ end % idHyps
 groundTruth(groundTruth == 0) = -1; % from [0, 1] to [-1, 1]
 
 for idl = 1 : numel( idLabels )
-    if isfield( idMismatch.(idLabels{idl}) , 'labelIdx' )
-        yTrue = groundTruth(:, idMismatch.(idLabels{idl}).labelIdx);
+    if isfield( idDescisions.(idLabels{idl}) , 'labelIdx' )
+        yTrue = groundTruth(:, idDescisions.(idLabels{idl}).labelIdx);
     else
         yTrue = zeros(numel(idHyps), 1) - 1;
     end
-    yPred = idMismatch.(idLabels{idl}).y(1:end-1)';
+    yPred = idDescisions.(idLabels{idl}).y(1:end-1)';
+    dpi.loc = idDescisions.(idLabels{idl}).loc(1:end-1)';
     % remove uncertain blocks
+    dpi.loc = dpi.loc(~isnan(yTrue));
     yPred = yPred(~isnan(yTrue));
     yTrue = yTrue(~isnan(yTrue));
-    perfmeasure = PerformanceMeasures.BAC( yTrue, yPred );
+    perfmeasure = PerformanceMeasures.BAC( yTrue, yPred, dpi );
     disp(idLabels{idl})
     disp(perfmeasure.performance)
     perfs(idl) = perfmeasure;

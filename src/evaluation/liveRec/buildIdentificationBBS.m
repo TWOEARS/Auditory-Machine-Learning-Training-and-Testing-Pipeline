@@ -11,14 +11,18 @@ if segmBb
         } );
     segmModelFileName = '3d5c7e6a0ec5ce057e927caab172df32.mat';
     mkdir( fullfile( db.tmp, 'learned_models', 'SegmentationKS' ) );
-    copyfile(  segmModelFileName, ...
+    copyfile(  cleanPathFromRelativeRefs( [pwd '/../../../../AMLTTP/test/' segmModelFileName] ), ...
                fullfile( db.tmp, 'learned_models', 'SegmentationKS', segmModelFileName ), ...
                'f' );
     dnnloc = bbs.createKS( 'DnnLocationKS' );
+    fprintf( '.' );
     nsrcs = bbs.createKS( 'NumberOfSourcesKS', {'nSrcs','learned_models/NumberOfSourcesKS/mc3_models_dataset_1',ppRemoveDc} );
-    segment = bbs.createKS( 'StreamSegregationKS', {'SegmentationTrainerParameters2.yaml'} );
+    fprintf( '.' );
+    segment = bbs.createKS( 'StreamSegregationKS', {cleanPathFromRelativeRefs( [pwd '/../../../../AMLTTP/test/SegmentationTrainerParameters2.yaml'] )} );
+    fprintf( '.' );
     for ii = 1 : numel( idModels )
         idKss{ii} = bbs.createKS('SegmentIdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
+        fprintf( '.' );
         idKss{ii}.setInvocationFrequency(10);
     end
 else

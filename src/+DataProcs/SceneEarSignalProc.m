@@ -370,7 +370,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             
             % Convert frame-based VAD decision to samples
             if numel( tFramesSec == 1 )
-                tFramesSec(2,1) = tFramesSec(1,1);
+                tFramesSec(2,1) = tFramesSec(1,1)*2;
                 frameVAD(2) = frameVAD(1);
             end
             vad = interp1(tFramesSec,double(frameVAD),tSec,'nearest','extrap');

@@ -109,7 +109,7 @@ classdef IdEvalFrame < handle
             eventClass = soundFileName(classPos1+1:classPos2-1);
         end
         
-        function onsetOffsets = readOnOffAnnotations( soundFileName, isAbsPath )
+        function [onsetOffsets,types] = readOnOffAnnotations( soundFileName, isAbsPath )
             if nargin < 2
                 isAbsPath = false;
             end
@@ -123,11 +123,17 @@ classdef IdEvalFrame < handle
                 warning( err.message );
             end
             if annotFid ~= -1
-                onsetOffsets = [];
+                onsetOffsets = zeros(0,2);
+                types = {};
                 while 1
                     annotLine = fgetl( annotFid );
                     if ~ischar( annotLine ), break, end
-                    onsetOffsets(end+1,:) = sscanf( annotLine, '%f' );
+                    onsetOffsets(end+1,:) = zeros(1,2);
+                    [on,b] = strtok( annotLine );
+                    onsetOffsets(end,1) = str2double( on );
+                    [off,t] = strtok( b );
+                    types{end+1} = strtrim( t );
+                    onsetOffsets(end,2) = str2double( off );
                 end
                 fclose( annotFid );
             else

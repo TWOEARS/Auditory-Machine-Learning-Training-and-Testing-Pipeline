@@ -237,7 +237,9 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 if strcmpi( eventType, 'general' )
                     onOffs = zeros(0,2);
                 else
-                    onOffs = IdEvalFrame.readOnOffAnnotations( wavFilepath ) + startOffset;
+                    [onOffs,etypes] = ...
+                                IdEvalFrame.readOnOffAnnotations( wavFilepath );
+                    onOffs = onOffs + startOffset;
                 end
             elseif isfloat( src ) && size( src, 2 ) == 1
                 signal{1} = src;
@@ -256,7 +258,11 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             for ii = 1 : size( onOffs, 1 )
                 obj.annotsOut.srcType.t.onset(end+1) = onOffs(ii,1);
                 obj.annotsOut.srcType.t.offset(end+1) = onOffs(ii,2);
-                obj.annotsOut.srcType.srcType(end+1,1) = {eventType};
+                if ~isempty( etypes{ii} )
+                    obj.annotsOut.srcType.srcType(end+1,1) = etypes(ii);
+                else
+                    obj.annotsOut.srcType.srcType(end+1,1) = {eventType};
+                end
             end
             if sceneConfig.sources(1).normalize
                 sigSorted = sort( abs( signal{1}(:) ) );

@@ -7,6 +7,7 @@ classdef Base < Core.IdProcInterface
         blockAnnotations;
         labelBlockSize_s;
         labelBlockSize_auto;
+        removeUnclearBlocks;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -22,8 +23,10 @@ classdef Base < Core.IdProcInterface
             obj = obj@Core.IdProcInterface();
             ip = inputParser;
             ip.addOptional( 'labelBlockSize_s', [] );
+            ip.addOptional( 'removeUnclearBlocks', true );
             ip.parse( varargin{:} );
             obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
+            obj.removeUnclearBlocks = ip.Results.removeUnclearBlocks;
             if isempty( obj.labelBlockSize_s )
                 obj.labelBlockSize_auto = true;
             else
@@ -100,15 +103,23 @@ classdef Base < Core.IdProcInterface
 
         function out = getOutput( obj, varargin )
             out.y = obj.y;
+            out.bIdxs = 1 : numel( out.y );
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
                 out.x = obj.x;
-                out.x(any(isnan(out.y),2),:) = [];
+                if obj.removeUnclearBlocks
+                    out.x(any(isnan(out.y),2),:) = [];
+                end
             end
             if nargin < 2  || any( strcmpi( 'a', varargin ) )
                 out.a = obj.blockAnnotations;
-                out.a(any(isnan(out.y),2)) = [];
+                if obj.removeUnclearBlocks
+                    out.a(any(isnan(out.y),2)) = [];
+                end
             end
-            out.y(any(isnan(out.y),2),:) = [];
+            if obj.removeUnclearBlocks
+                out.bIdxs(any(isnan(out.y),2)) = [];
+                out.y(any(isnan(out.y),2),:) = [];
+            end
         end
         %% -------------------------------------------------------------------------------
         

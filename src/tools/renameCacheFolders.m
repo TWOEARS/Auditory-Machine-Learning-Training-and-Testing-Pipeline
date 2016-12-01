@@ -12,6 +12,9 @@ for ii = 1 : numel( cDirs )
         cfg = cacheDirs{end,2}.cfg;
         cfgVars = cellfun( @eval, varargin, 'un', false );
         newCDname = sprintf( dstFormatString, cfgVars{:} );
+        if exist( [pwd filesep newCDname], 'dir' )
+            newCDname = [newCDname buildCurrentTimeString];
+        end
         movefile( cacheDirs{end,1}, [pwd filesep newCDname] );
     end
 end

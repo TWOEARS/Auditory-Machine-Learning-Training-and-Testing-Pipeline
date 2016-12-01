@@ -14,6 +14,7 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
         family;
         nLambda;        % number of lambdas on the regularization path
         cvFolds;        % no. of folds for cross validation
+        labelWeights;
     end
     
     %% --------------------------------------------------------------------
@@ -44,6 +45,9 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
             pds{6} = struct( 'name', 'cvFolds', ...
                               'default', 10, ...
                               'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
+            pds{7} = struct( 'name', 'labelWeights', ...
+                             'default', [], ...
+                             'valFun', @(x)(isempty(x) || isfloat(x)) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end
@@ -61,7 +65,8 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
                 'maxDataSize', obj.maxDataSize, ...
                 'alpha', obj.alpha, ...
                 'family', obj.family, ...
-                'nLambda', obj.nLambda );
+                'nLambda', obj.nLambda, ...
+                'labelWeights', obj.labelWeights );
             obj.coreTrainer.setData( obj.trainSet, obj.testSet );
             obj.coreTrainer.run();
             obj.fullSetModel = obj.coreTrainer.getModel();
@@ -84,8 +89,8 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
                 lPerfs(1:numel(thisFoldPerfs),ii) = thisFoldPerfs;
                 verboseFprintf( obj, '.' );
             end
-            obj.fullSetModel.lPerfsMean = mean( lPerfs, 2 );
-            obj.fullSetModel.lPerfsStd = std( lPerfs, [], 2 );
+            obj.fullSetModel.lPerfsMean = nanmean( lPerfs, 2 );
+            obj.fullSetModel.lPerfsStd = nanstd( lPerfs, [], 2 );
             verboseFprintf( obj, 'Done\n' );
             lambdasSortedByPerf = sortrows( [lambdas,obj.fullSetModel.lPerfsMean], 2 );
             obj.fullSetModel.setLambda( lambdasSortedByPerf(end,1) );

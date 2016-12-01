@@ -7,6 +7,7 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
         family;
         nLambda;
         lambda;
+        labelWeights;
     end
 
     %% --------------------------------------------------------------------
@@ -37,6 +38,9 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             pds{6} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+            pds{7} = struct( 'name', 'labelWeights', ...
+                             'default', [], ...
+                             'valFun', @(x)(isempty(x) || isfloat(x)) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end
@@ -81,9 +85,13 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             wp = ones( size(y) );
             for cc = 1 : size( y, 2 )
                 labels = unique( y(:,cc) );
+                lw = obj.labelWeights;
+                if numel( lw ) ~= numel( labels )
+                    lw = ones( size( labels ) );
+                end
                 for ii = 1 : numel( labels )
                     labelShare = sum( y(:,cc) == labels(ii) ) / size( y, 1 );
-                    labelWeight = 1 / labelShare;
+                    labelWeight = lw(ii) / labelShare;
                     wp(y(:,cc)==labels(ii),cc) = labelWeight;
                 end
             end

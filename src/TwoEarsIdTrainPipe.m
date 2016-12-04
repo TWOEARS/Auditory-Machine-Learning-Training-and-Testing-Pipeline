@@ -22,6 +22,7 @@ classdef TwoEarsIdTrainPipe < handle
         testset = [];           % file list with test examples
         data = [];              % list of files to split in train and test
         trainsetShare = 0.5;
+        checkFileExistence = true;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -149,14 +150,14 @@ classdef TwoEarsIdTrainPipe < handle
             end
             if ~isempty( obj.trainset ) || ~isempty( obj.testset )
                 trainSet = Core.IdentTrainPipeData();
-                trainSet.loadFileList( obj.trainset );
+                trainSet.loadFileList( obj.trainset, obj.checkFileExistence );
                 obj.pipeline.setTrainData( trainSet );
                 testSet = Core.IdentTrainPipeData();
-                testSet.loadFileList( obj.testset );
+                testSet.loadFileList( obj.testset, obj.checkFileExistence );
                 obj.pipeline.setTestData( testSet );
             else
                 data = Core.IdentTrainPipeData();
-                data.loadFileList( obj.data );
+                data.loadFileList( obj.data, obj.checkFileExistence );
                 obj.pipeline.connectData( data );
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
             end

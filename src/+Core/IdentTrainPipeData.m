@@ -308,7 +308,8 @@ classdef IdentTrainPipeData < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function loadFileList( obj, flistName )
+        function loadFileList( obj, flistName, checkFileExistence )
+            if nargin < 3, checkFileExistence = true; end
             if isempty( flistName ), return; end
             obj.data = Core.IdentTrainPipeDataElem.empty;
             try
@@ -320,17 +321,23 @@ classdef IdentTrainPipeData < handle
             fileList = textscan( fid, '%s' );
             for ff = 1 : length( fileList{1} )
                 fprintf( '.' );
-                try
-                    filepath = db.getFile( fileList{1}{ff}, 1 );
+                if checkFileExistence
+                    try
+                        filepath = db.getFile( fileList{1}{ff} );
+                        filepath = cleanPathFromRelativeRefs( filepath );
+                        fprintf( '%s\n', filepath );
+                    catch err
+                        warning( err.message );
+                        error( '%s, referenced in %s, not found!', fileList{1}{ff}, flistName );
+                    end
+                    p = fileparts( filepath );
+                    addPathsIfNotIncluded( p );
+                    filepath = which( filepath ); % ensure absolute path
+                else
+                    filepath = fileList{1}{ff};
                     filepath = cleanPathFromRelativeRefs( filepath );
                     fprintf( '%s\n', filepath );
-                catch err
-                    warning( err.message );
-                    error( '%s, referenced in %s, not found!', fileList{1}{ff}, flistName );
                 end
-                p = fileparts( filepath );
-                addPathsIfNotIncluded( p );
-                filepath = which( filepath ); % ensure absolute path
                 obj.data(end+1) = Core.IdentTrainPipeDataElem( filepath );
             end
             fclose( fid );

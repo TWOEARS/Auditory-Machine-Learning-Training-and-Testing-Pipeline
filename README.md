@@ -45,7 +45,13 @@ The complete functionality of the AMLTTP will be discussed in detail in the acco
 ## Credits
 
 The AMLTTP is developed by Ivo Trowitzsch and Youssef Kashef from Technische
-Universität Berlin.
+UniversitÃ¤t Berlin.
+
+If you use this software, please cite as
+
+Ivo Trowitzsch, Youssef Kashef, and Klaus Obermayer. (2016). Auditory Machine Learning Training and Testing Pipeline: AMLTTP v2.0-alpha [Software]. Zenodo. http://doi.org/10.5281/zenodo.192504
+
+[![DOI](https://zenodo.org/badge/41019651.svg)](https://zenodo.org/badge/latestdoi/41019651)
 
 
 ## License
@@ -55,7 +61,7 @@ The AFE is released under the [BSD 2-Clause license](https://opensource.org/lice
 
 ## Funding
 
-This project has received funding from the European Union’s Seventh Framework
+This project has received funding from the European Unionâ€™s Seventh Framework
 Programme for research, technological development and demonstration under grant
 agreement no 618075.
 

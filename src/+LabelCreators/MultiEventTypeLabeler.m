@@ -25,6 +25,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'minBlockToEventRatio', 0.75 );
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
             ip.addOptional( 'labelBlockSize_s', [] );
+            ip.addOptional( 'removeUnclearBlocks', true );
             ip.addOptional( 'types', {{'Type1'},{'Type2'}} );
             ip.addOptional( 'negOut', 'rest' ); % rest, none
             ip.addOptional( 'srcPrioMethod', 'order' ); % energy, order, time
@@ -33,7 +34,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             ip.addOptional( 'fileFilterOut', {} ); % blocks containing these files get filtered out
             ip.addOptional( 'sourcesMinEnergy', -20 ); 
             ip.parse( varargin{:} );
-            obj = obj@LabelCreators.Base( 'labelBlockSize_s', ip.Results.labelBlockSize_s );
+            obj = obj@LabelCreators.Base( ...
+                        'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
+                        'removeUnclearBlocks', ip.Results.removeUnclearBlocks );
             obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             obj.types = ip.Results.types;

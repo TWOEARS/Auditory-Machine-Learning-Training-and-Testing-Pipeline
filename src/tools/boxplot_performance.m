@@ -34,6 +34,6 @@ end
 fprintf( '\n' );
 disp( figTitle );
 for ii = 1 : numel( labels )
-    fprintf( '\t%s -- mean: %f\n', labels{ii}, mean(varargin{ii}) );
+    fprintf( '\t%s -- mean: %f\n', labels{ii}, nanMean(varargin{ii}) );
 end
 fprintf( '\n' );

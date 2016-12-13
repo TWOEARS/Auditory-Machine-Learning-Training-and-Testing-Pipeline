@@ -26,11 +26,17 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
             warning( 'off', 'BBS:badBlockTimeRequest' );
         end
         %% -------------------------------------------------------------------------------
-        
         function postproc( obj, afeData, blockAnnotations )
-            locHypos = obj.bbs.blackboard.getLastData( 'sourcesAzimuthsDistributionHypotheses' );
-            assert( numel( locHypos.data ) == 1 );
-            obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocData( afeData, locHypos.data );
+            locHypos = obj.bbs.blackboard.getLastData( 'locationHypothesis' );
+            if ~isempty( locHypos )
+                assert( numel( locHypos.data ) == 1 );
+                obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocDecisionData( afeData, locHypos.data );
+            else
+                % fall back on raw localisation data
+                locHypos = obj.bbs.blackboard.getLastData( 'sourcesAzimuthsDistributionHypotheses' );
+                assert( numel( locHypos.data ) == 1 );
+                obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocData( afeData, locHypos.data );
+            end
             if isempty(obj.out.blockAnnotations)
                 obj.out.blockAnnotations = blockAnnotations;
             else
@@ -59,12 +65,20 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function afeData = addLocData( afeData, locData )
+            % assumes location data is raw DnnLocationKS output
             locFakeAFEsignal = struct();
-%             locFakeAFEsignal.Data = locData.sourcesDistribution(:)';
-            locFakeAFEsignal.Data = locData.sourcesPosteriors(:)';
+            locFakeAFEsignal.Data = locData.sourcesDistribution(:)';
             locFakeAFEsignal.Name = 'DnnLocationDistribution';
-%             locFakeAFEsignal.azms = locData.azimuths(:)';
-            locFakeAFEsignal.azms = locData.sourceAzimuths(:)';
+            locFakeAFEsignal.azms = locData.azimuths(:)';
+            afeData(afeData.Count+1) = locFakeAFEsignal;
+        end
+        
+        function afeData = addLocDecisionData( afeData, locDecisionData )
+            % assumes location data has been refined by LocalisationDecisionKS
+            locFakeAFEsignal = struct();
+            locFakeAFEsignal.Data = locDecisionData.sourcesPosteriors(:)';
+            locFakeAFEsignal.Name = 'DnnLocationDistribution';
+            locFakeAFEsignal.azms = locDecisionData.sourceAzimuths(:)';
             afeData(afeData.Count+1) = locFakeAFEsignal;
         end
         %% -------------------------------------------------------------------------------

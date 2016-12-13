@@ -11,6 +11,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         segmentKs;
         dnnLocKs;
         nsrcsKs;
+        idKss;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -21,10 +22,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     methods
         
         function obj = SegmentKsWrapper( paramFilepath, varargin )
+            fprintf( 'Building SegmentKsWrapper...\n' );
             ip = inputParser();
             ip.addOptional( 'useDnnLocKs', false );
             ip.addOptional( 'useNsrcsKs', false );
-            ip.addOptional( 'nsrcsModelPath', './nsrcs.model.mat' );
+            ip.addOptional( 'nsrcsParams', {} );
             ip.parse( varargin{:} );
             segmentKs = StreamSegregationKS( paramFilepath );
             wrappedKss = {};
@@ -39,7 +41,26 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 nfHash = [];
             end
             if ip.Results.useDnnLocKs && ip.Results.useNsrcsKs
-                [mdir, mname] = fileparts( ip.Results.nsrcsModelPath );
+                ipns = inputParser();
+                ipns.addOptional( 'modelPath', './nsrcs.model.mat' );
+                ipns.addOptional( 'useIdModels', false );
+                ipns.addOptional( 'idModelpathes', {} );
+                ipns.parse( ip.Results.nsrcsParams{:} );
+                if ipns.Results.useIdModels
+                    idKss = {};
+                    mnames = {};
+                    for ii = 1 : numel( ipns.Results.idModelpathes )
+                        [mdir, mname] = fileparts( ipns.Results.idModelpathes{ii} );
+                        [~, mnames{ii}] = fileparts( mname );
+                        idKss{ii} = IdentityKS( mnames{ii}, mdir, false );
+                    end
+                    [~,idSort] = sort( mnames );
+                    idKss = idKss(idSort);
+                    wrappedKss = [wrappedKss idKss];
+                else
+                    idKss = [];
+                end
+                [mdir, mname] = fileparts( ipns.Results.modelPath );
                 [~, mname] = fileparts( mname );
                 nsrcsKs = NumberOfSourcesKS( mname, mdir, false );
                 wrappedKss{end+1} = nsrcsKs;
@@ -55,6 +76,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             obj.useNsrcsKs = ip.Results.useNsrcsKs;
             obj.segmentKs = segmentKs;
             obj.dnnLocKs = dnnLocKs;
+            obj.idKss = idKss;
             obj.nsrcsKs = nsrcsKs;
         end
         %% -------------------------------------------------------------------------------
@@ -115,9 +137,10 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 6;
+            outputDeps.v = 7;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
+            outputDeps.useIdModels = ~isempty( obj.idKss );
             outputDeps.params = obj.kss{end}.observationModel.trainingParameters;
             [~,outputDeps.afeHashs] = obj.getAfeRequests();
             outputDeps.varAzmPrior = obj.varAzmPrior;

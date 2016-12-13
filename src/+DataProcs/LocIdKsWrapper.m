@@ -53,10 +53,16 @@ classdef LocIdKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function postproc( obj, afeData, blockAnnotations )
-            locHypos = obj.bbs.blackboard.getLastData( 'sourcesAzimuthsDistributionHypotheses' );
-            assert( numel( locHypos.data ) == 1 );
-            obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocData( ...
-                                                       afeData, locHypos.data );
+            locHypos = obj.bbs.blackboard.getLastData( 'locationHypothesis' );
+            if ~isempty( locHypos )
+                assert( numel( locHypos.data ) == 1 );
+                obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocDecisionData( afeData, locHypos.data );
+            else
+                % fall back on raw localisation data
+                locHypos = obj.bbs.blackboard.getLastData( 'sourcesAzimuthsDistributionHypotheses' );
+                assert( numel( locHypos.data ) == 1 );
+                obj.out.afeBlocks{end+1,1} = DataProcs.DnnLocKsWrapper.addLocData( afeData, locHypos.data );
+            end
             idHypos = obj.bbs.blackboard.getLastData( 'identityHypotheses' );
             assert( numel( idHypos.data ) == numel( obj.idKss ) );
             idData.names = {};

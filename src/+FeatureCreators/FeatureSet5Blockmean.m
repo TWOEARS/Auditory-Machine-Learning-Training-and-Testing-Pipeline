@@ -14,7 +14,7 @@ classdef FeatureSet5Blockmean < FeatureCreators.Base
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = FeatureSet5RawRmAms2Ild( )
+        function obj = FeatureSet5Blockmean( )
             obj = obj@FeatureCreators.Base();
             obj.deltasLevels = 2;
         end

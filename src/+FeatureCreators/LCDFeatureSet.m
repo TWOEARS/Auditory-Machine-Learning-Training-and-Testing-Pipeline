@@ -101,7 +101,7 @@ classdef LCDFeatureSet < FeatureCreators.Base
             %   where made
             % 
             %   See getAFErequests
-            
+            assert( false );
             % afeIdx 9: gabor
 %             gbR = obj.makeBlockFromAfe( 9, 1, ...
 %                 @(a)(compressAndScale( a.Data, 0.33, @(x)(median( x(x>0.01) )), 0 )), ...

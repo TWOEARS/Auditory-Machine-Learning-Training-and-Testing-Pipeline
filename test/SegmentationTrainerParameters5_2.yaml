@@ -1,0 +1,44 @@
+# =========================================================================
+# Binaural Simulator settings
+# =========================================================================
+simulator:
+  fs: 16000                          # Sampling frequency used for
+                                     # auralization of acoustic scenes.
+  step_size: 2048                    # Step-size in samples.
+  azimuth_increment: 1               # Azimuth angle increment in degrees,
+                                     # corresponding to the circular 
+                                     # resolution used for training.
+
+  impulse_responses:                 # (Anechoic) IR's used for training.
+    - impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa
+    - impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_2m.sofa
+    - impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_1m.sofa
+    - impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_0_5m.sofa
+
+# =========================================================================
+# Feature extraction settings
+# =========================================================================
+features:
+  normalize_rms: true                # Apply RMS normalization before
+  timeSecRMS: 4                      # Time constant (s) for automatic gain control
+                                     # feature extraction?
+  win_size: 0.020                    # Window size in seconds.
+  hop_size: 0.01                     # Hop size in seconds.
+  filterbank: gammatone              # Type of filterbank to be used, 
+                                     # either 'gammatone' or 'drnl'.
+  rm_scaling: magnitude              # Ratemap scaling (''power'' or ''magnitude'')
+  fb_num_channels: 32                # Number of filterbank channels.
+  fb_low_freq: 80                    # Lowest center frequency in Hz.
+  fb_high_freq: 8000                 # Highest center frequency in Hz.
+  use_middle_ear_filter: true        # Apply middle ear filter?
+  middle_ear_model: jepsen           # Middle ear model type.
+  ihc_model: dau                     # Inner hair cell model type.
+  use_mct: true                      # Use multi-conditional training?
+  mct_levels: [Inf, 20, 10, 0]       # SNR-levels for MCT in dB.
+
+# =========================================================================
+# Settings for model training
+# =========================================================================
+models:
+  model_order: 15                    # Order of the regression function.
+  regularization_factor: 0           # Use regularization?

@@ -33,6 +33,7 @@ features:
   use_middle_ear_filter: true        # Apply middle ear filter?
   middle_ear_model: jepsen           # Middle ear model type.
   ihc_model: dau                     # Inner hair cell model type.
+  cc_maxDelaySec: 0.0011
   use_mct: true                      # Use multi-conditional training?
   mct_levels: [Inf, 20, 10, 0]       # SNR-levels for MCT in dB.
 

@@ -41,7 +41,7 @@ classdef LCDFeatureSet < FeatureCreators.Base
         %% ----------------------------------------------------------------
 
         function afeRequests = getAFErequests( obj )
-            commonParams = LCDFeatureSet.getCommonAFEParams();
+            commonParams = FeatureCreators.LCDFeatureSet.getCommonAFEParams();
             afeRequests{1}.name = 'amsFeatures';
             afeRequests{1}.params = genParStruct( ...
                 commonParams{:}, ...

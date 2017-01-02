@@ -22,7 +22,7 @@ classdef LCDFeatureSet < FeatureCreators.Base
                 'ild_hSizeSec', 10E-3, ...
                 'rm_wSizeSec', 20E-3, ... % DnnLoc uses 20E-3, identification uses 25E-3
                 'rm_hSizeSec', 10E-3, ... % DO NOT CHANGE -- important for gabor filters
-                'rm_scaling', 'magnitude', ... % DnnLoc uses power, identification uses magnitude
+                'rm_scaling', 'power', ... % DnnLoc uses power, identification uses magnitude
                 'rm_decaySec', 8E-3, ...
                 'cc_wSizeSec', 20E-3, ... % dnnLocKs uses 20E-3, stream segr. uses 25E-3
                 'cc_hSizeSec', 10E-3, ... % dnnLocKs uses 10E-3, stream segr. uses 10E-2

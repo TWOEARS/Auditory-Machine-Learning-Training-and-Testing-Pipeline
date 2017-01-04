@@ -22,13 +22,14 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     methods
         
         function obj = SegmentKsWrapper( paramFilepath, varargin )
-            fprintf( 'Building SegmentKsWrapper...\n' );
+            fprintf( 'Building SegmentKsWrapper...' );
             ip = inputParser();
             ip.addOptional( 'useDnnLocKs', false );
             ip.addOptional( 'useNsrcsKs', false );
             ip.addOptional( 'nsrcsParams', {} );
             ip.parse( varargin{:} );
-            segmentKs = StreamSegregationKS( paramFilepath );
+            segmentKs = StreamSegregationKS( paramFilepath ); 
+            fprintf( '.' );
             wrappedKss = {};
             if ip.Results.useDnnLocKs
                 dnnLocKs = DnnLocationKS();
@@ -40,6 +41,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 dnnHash = [];
                 nfHash = [];
             end
+            fprintf( '.' );
             if ip.Results.useDnnLocKs && ip.Results.useNsrcsKs
                 ipns = inputParser();
                 ipns.addOptional( 'modelPath', './nsrcs.model.mat' );
@@ -52,7 +54,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                     for ii = 1 : numel( ipns.Results.idModelpathes )
                         [mdir, mname] = fileparts( ipns.Results.idModelpathes{ii} );
                         [~, mnames{ii}] = fileparts( mname );
-                        idKss{ii} = IdentityKS( mnames{ii}, mdir, false );
+                        idKss{ii} = IdentityKS( mnames{ii}, mdir, false ); 
+                        fprintf( '.' );
                     end
                     [~,idSort] = sort( mnames );
                     idKss = idKss(idSort);
@@ -62,7 +65,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 end
                 [mdir, mname] = fileparts( ipns.Results.modelPath );
                 [~, mname] = fileparts( mname );
-                nsrcsKs = NumberOfSourcesKS( mname, mdir, false );
+                nsrcsKs = NumberOfSourcesKS( mname, mdir, false, 'useIdModels', ipns.Results.useIdModels );
+                fprintf( '.' );
                 wrappedKss{end+1} = nsrcsKs;
             else
                 nsrcsKs = [];
@@ -78,6 +82,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             obj.dnnLocKs = dnnLocKs;
             obj.idKss = idKss;
             obj.nsrcsKs = nsrcsKs;
+            fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
         
@@ -116,20 +121,28 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             segHypos = obj.bbs.blackboard.getLastData( 'segmentationHypotheses' );
             nMasks = numel( segHypos.data );
             nTrue = numel( obj.currentVarAzms );
-            hypCurAzmDists = zeros( nMasks, numel( obj.currentVarAzms ) );
+            hypCurAzmDists = zeros( nMasks, nTrue );
             for ii = 1 : nMasks
                 hypAzm = wrapTo180( segHypos.data(ii).refAzm );
                 hypCurAzmDists(ii,:) = ...
                                 abs( wrapTo180( obj.currentVarAzms - hypAzm ) );
             end
-            [~,minAzmDistComb] = min( hypCurAzmDists, [], 1 );
+            [~,estObjMinAzmDistIdx] = min( hypCurAzmDists, [], 1 );
+%             [~,trueObjMinAzmDistIdx] = min( hypCurAzmDists, [], 2 );
+%             trueObjMinAzmDistIdx = num2cell( trueObjMinAzmDistIdx );
+%             for ii = 1 : numel( estObjMinAzmDistIdx )
+%                 trueObjMinAzmDistIdx{estObjMinAzmDistIdx(ii)}(end+1) = ii;
+%             end
             for ii = 1 : nMasks
                 obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ii );
-                baIdx = find( minAzmDistComb == ii );
+%                 baIdxs = unique( trueObjMinAzmDistIdx{ii} );
+                baIdxs = find( estObjMinAzmDistIdx == ii );
+                maskedBlockAnnotations = obj.maskBA( blockAnnotations, baIdxs );
+                maskedBlockAnnotations.estAzm = segHypos.data(ii).refAzm;
                 if isempty(obj.out.blockAnnotations)
-                    obj.out.blockAnnotations = obj.maskBA( blockAnnotations, baIdx );
+                    obj.out.blockAnnotations = maskedBlockAnnotations;
                 else
-                    obj.out.blockAnnotations(end+1,1) = obj.maskBA( blockAnnotations, baIdx );
+                    obj.out.blockAnnotations(end+1,1) = maskedBlockAnnotations;
                 end
             end
             warning( 'on', 'BBS:badBlockTimeRequest' );

@@ -72,8 +72,8 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
                     obj.kss{ii}.lastBlockEnd = zeros( 1, numel( obj.kss{ii}.reqHashs ) );
                     obj.kss{ii}.timeStamp();
                 end
-                obj.bbs.blackboard.setSoundTimeIdx( ...
-                                     bas(aa).blockOffset - bas(aa).blockOnset );
+                currentBBtime = bas(aa).blockOffset - bas(aa).blockOnset;
+                obj.bbs.blackboard.setSoundTimeIdx( currentBBtime );
                 blockHeadOrientation = 0;
                 % TODO: read head orientation from block annotations
                 obj.bbs.blackboard.addData( 'headOrientation', blockHeadOrientation );
@@ -82,6 +82,7 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
                 if ~procBlock, continue; end
                 fprintf( '.' );
                 for ii = 1 : numel( obj.kss )
+                    obj.kss{ii}.setActiveArgument('n/a', currentBBtime, 'n/a' );
                     obj.kss{ii}.execute();
                     fprintf( '.' );
                 end

@@ -1,5 +1,5 @@
 classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
-    % Wrapping the SegmentationKS
+    % Wrapping the DnnLocationKS
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = public)
         dnnHash;
@@ -13,8 +13,16 @@ classdef DnnLocKsWrapper < DataProcs.BlackboardKsWrapper
     %% -----------------------------------------------------------------------------------
     methods
         
-        function obj = DnnLocKsWrapper()
-            dnnLocKs = DnnLocationKS();
+        function obj = DnnLocKsWrapper( useCaffe, gpuIdx )
+            if nargin < 1, useCaffe = false; end
+            if nargin < 2, gpuIdx = 0; end
+            wrappedKss = {};
+            if useCaffe
+                dnnLocKs = DnnLocationCaffeKS();
+                CaffeModel.setMode(1,gpuIdx);
+            else
+                dnnLocKs = DnnLocationKS();
+            end
             obj = obj@DataProcs.BlackboardKsWrapper( dnnLocKs );
             obj.dnnHash = calcDataHash( dnnLocKs.DNNs );
             obj.nfHash = calcDataHash( dnnLocKs.normFactors );

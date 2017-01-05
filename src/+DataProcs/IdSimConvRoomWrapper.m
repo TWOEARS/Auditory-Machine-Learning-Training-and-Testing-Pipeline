@@ -267,9 +267,11 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             if sceneConfig.sources(1).normalize
                 sigSorted = sort( abs( signal{1}(:) ) );
                 sigSorted(sigSorted<=0.1*mean(sigSorted)) = [];
-                nUpperSigSorted = round( numel( sigSorted ) * 0.01 );
-                sigUpperAbs = median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
-                signal{1} = signal{1} * sceneConfig.sources(1).normalizeLevel/sigUpperAbs;
+                if ~isempty(sigSorted)
+                    nUpperSigSorted = round( numel( sigSorted ) * 0.01 );
+                    sigUpperAbs = median( sigSorted(end-nUpperSigSorted:end) ); % ~0.995 percentile
+                    signal{1} = signal{1} * sceneConfig.sources(1).normalizeLevel/sigUpperAbs;
+                end
             end
             srcLen_s = size( signal{1}, 1 ) / obj.convRoomSim.SampleRate;
             obj.annotsOut.srcFile = struct( 't', struct( 'onset', {startOffset}, ...

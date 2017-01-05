@@ -122,9 +122,9 @@ classdef IdEvalFrame < handle
             catch err
                 warning( err.message );
             end
+            onsetOffsets = zeros(0,2);
+            types = {};
             if annotFid ~= -1
-                onsetOffsets = zeros(0,2);
-                types = {};
                 while 1
                     annotLine = fgetl( annotFid );
                     if ~ischar( annotLine ), break, end
@@ -138,7 +138,6 @@ classdef IdEvalFrame < handle
                 fclose( annotFid );
             else
                 warning( sprintf( 'label annotation file not found: %s.txt. Assuming no events.', soundFileName ) );
-                onsetOffsets = zeros(0,2);
             end
         end
         

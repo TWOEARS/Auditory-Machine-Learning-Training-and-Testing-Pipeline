@@ -219,7 +219,7 @@ classdef FeatureSet5NSrcDetection < FeatureCreators.Base
             classnames = strsplit( classInfo.Name, '.' );
             outputDeps.featureProc = classnames{end};
             % version
-            outputDeps.v = 35;
+            outputDeps.v = 36;
         end
         
     end
@@ -255,7 +255,7 @@ classdef FeatureSet5NSrcDetection < FeatureCreators.Base
             
             % build histgram block
             if integrate_time
-                data = mean(data,1);
+                data = squeeze( mean(data,1) );
                 nFrames = 1;
             end
             rval = { data };

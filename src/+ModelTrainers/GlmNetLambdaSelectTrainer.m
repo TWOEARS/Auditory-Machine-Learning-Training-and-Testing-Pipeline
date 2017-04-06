@@ -89,8 +89,8 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
                 lPerfs(1:numel(thisFoldPerfs),ii) = thisFoldPerfs;
                 verboseFprintf( obj, '.' );
             end
-            obj.fullSetModel.lPerfsMean = nanmean( lPerfs, 2 );
-            obj.fullSetModel.lPerfsStd = nanstd( lPerfs, [], 2 );
+            obj.fullSetModel.lPerfsMean = nanMean( lPerfs, 2 );
+            obj.fullSetModel.lPerfsStd = nanStd( lPerfs, 2 );
             verboseFprintf( obj, 'Done\n' );
             lambdasSortedByPerf = sortrows( [lambdas,obj.fullSetModel.lPerfsMean], 2 );
             obj.fullSetModel.setLambda( lambdasSortedByPerf(end,1) );

@@ -42,6 +42,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 nfHash = [];
             end
             fprintf( '.' );
+            idKss = [];
             if ip.Results.useDnnLocKs && ip.Results.useNsrcsKs
                 ipns = inputParser();
                 ipns.addOptional( 'modelPath', './nsrcs.model.mat' );
@@ -60,8 +61,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                     [~,idSort] = sort( mnames );
                     idKss = idKss(idSort);
                     wrappedKss = [wrappedKss idKss];
-                else
-                    idKss = [];
                 end
                 [mdir, mname] = fileparts( ipns.Results.modelPath );
                 [~, mname] = fileparts( mname );

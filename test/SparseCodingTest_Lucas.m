@@ -3,39 +3,47 @@ function SparseCodingTest_Lucas()
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
-pipe = TwoEarsIdTrainPipe(); %todo: anschauen; erzeugt wrapper
+pipe = TwoEarsIdTrainPipe();
 
+% -- feature creator
+pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean(); 
 
-pipe.featureCreator = FeatureCreators.FeatureSet1Blockmean(); 
+% -- label creator (ignore, since data unlabeled ?)
 babyFemaleVsRestLabeler = ... 
     LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, ...
                                           'negOut', 'rest' ); 
-pipe.labelCreator = babyFemaleVsRestLabeler;
+pipe.labelCreator = babyFemaleVsRestLabeler; 
 
+% -- model creator
 
+pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
+    'hpsSearchBudget', 2, ...   % number of hps grid search parameter values per dimension
+    'hpsCvFolds', 3 ...         % number of hps cv folds of training set
+ );
 
-pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
-    'beta', 0.5, ...
-    'num_bases', 100, ...
-    'batch_size', 500, ...
-    'num_iters', 30);
-pipe.modelCreator.verbose( 'off' ); %Ausführung wird kommentiert (-verbose)
+% pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
+%     'beta', 0.6, ...
+%     'num_bases', 200, ...
+%     'batch_size', 4000, ...
+%     'num_iters', 30);
 
+pipe.modelCreator.verbose( 'off' ); % no console output
 
-pipe.trainset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist';
-% no testset needed here
-pipe.testset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist';
-
-%pipe.trainset = 'C:\Users\Lucas\Documents\Masterarbeit\myGit\Code\FreesoundDownloader\data\mix_training\data.flist';
-%pipe.testset = 'C:\Users\Lucas\Documents\Masterarbeit\myGit\Code\FreesoundDownloader\data\mix_test\data.flist';
+% -- prepare training data
+% init FreesoundDownloader to fetch unlabeled data
+fs = FreesoundDownloader();
+% use files that are stored in specified directory without downloading new
+% ones, we only need training data here 
+pipe.trainset = fs.GetData('directory', '..\..\binaural-simulator\tmp\sound_databases\Unlabeled\', 'useLocalFiles', true);
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();
 sc.addSource( SceneConfig.PointSource( ...
-        'data', SceneConfig.FileListValGen( 'pipeInput' )  )  ); %anechoic (HRIR) per default
-pipe.init( sc, 'fs', 16000);
+        'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
 
-modelPath = pipe.pipeline.run( 'modelName', 'babyFemale_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
+% init and run pipeline
+pipe.init( sc, 'fs', 16000);
+modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingTest_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

@@ -32,7 +32,7 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
                              'default', 20, ...
                              'valFun', @(x)(isnumeric(x) && numel(x) == 1) );
             pds{4} = struct( 'name', 'batch_size', ...
-                             'default', 1000, ...
+                             'default', 5000, ...
                              'valFun', @(x)(isnumeric(x) && numel(x) == 1) );
             pds{5} = struct( 'name', 'Binit', ...
                              'default', [], ...
@@ -52,43 +52,46 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             clear x;
             
-            obj.batch_size = floor( size(xScaled, 1) / 2 );
-            % TODO how to save data from sparse coding script?
+            obj.batch_size = min( 5000, floor( size(xScaled, 1) / 2 ) );
             fname_save = sprintf('./sc_b%d_beta%g_%s', obj.num_bases, obj.beta, datestr(now, 30));	
             
             verboseFprintf( obj, 'Sparse Coding training\n' );
-            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(xScaled,1), size(xScaled,2) );
-            verboseFprintf( obj, '\tnumber of iterations = %d\n', obj.num_iters );
-             
+                         
             % the sparse coding script assumes the data columnwise, so
             % transpose input and output
             [B S stat] = sparse_coding(xScaled', obj.num_bases, obj.beta, 'L1', [], obj.num_iters, obj.batch_size, fname_save , obj.Binit);
             
-            verboseFprintf( obj, '\n==\tSparse Coding took %fms\n', sum(stat.elapsed_time) );
-            
+            % set model parameter
             obj.model.B = B';
-            obj.model.S = S';
-            obj.model.beta = obj.beta;
             
-            [~, tmpPerf] = obj.model.applyModel(xScaled);
-            fprintf('\n==\tPerformance on data: %f\n\n', tmpPerf)
+            % just for interest
+            [fobj, ~, ~] = getObjective2(B, S, xScaled', 'L1', 1, obj.beta, 1, []);
+            fprintf('\n==\tfobj on data: %f\n\n', fobj);
         end
         %% ----------------------------------------------------------------
-
+            
         function performance = getPerformance( obj, getDatapointInfo )
             if nargin < 2, getDatapointInfo = 'noInfo'; end
             verboseFprintf( obj, 'Applying model to test set...\n' );
             obj.model.verbose( obj.verbose );
-            % TODO how to define performance here?  
-            % actually fit coefficients to testset fo given base, then take 
-            % value of objective
-            xScaledTest = obj.model.scale2zeroMeanUnitVar( obj.testSet(:, 'x'), 'saveScalingFactors' );
+            
+            % get test data
+            xScaledTest = obj.model.scale2zeroMeanUnitVar( obj.testSet(:, 'x'));
+            
+            % fit activations of base to test data
             S = l1ls_featuresign(obj.model.B', xScaledTest', obj.beta);
+            
             % feature sign creates S columnwise instead of rowwise, so
             % transpose S for evaluation of objective value
-            objVal = Models.SparseCodingModel.eval(obj.model.B, S', xScaledTest, obj.beta);
-            % TODO make performanceMeasure fit into whole framework
-            performance = PerformanceMeasures.Unlabeled(objVal, [], [], getDatapointInfo);
+            [fobj, ~, ~] = getObjective2(obj.model.B', S, xScaledTest', 'L1', 1, obj.beta, 1, []);
+            
+            % calculate performance, normalize wrt to amount of data, also 
+            % reverse fobj as a small value yields good performance
+            perf = 1 /  (fobj / size(xScaledTest, 1));
+            
+            % set performance measure using fake meausure, as calculation 
+            % has already been done above
+            performance = PerformanceMeasures.Fake(perf, [], [], getDatapointInfo);
         end
         %% ----------------------------------------------------------------
         

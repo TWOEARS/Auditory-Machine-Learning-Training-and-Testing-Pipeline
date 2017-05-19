@@ -7,8 +7,8 @@ classdef Fake < PerformanceMeasures.Base
     %% --------------------------------------------------------------------
     methods
         
-        function obj = Fake(performance, yTrue, yPred, datapointInfo )
-            if ~exist('objVal', 'var')
+        function obj = Fake(perf, yTrue, yPred, datapointInfo )
+            if ~exist('perf', 'var')
                 error('This measure requires the parameter <performance>')
             end
             
@@ -24,7 +24,7 @@ classdef Fake < PerformanceMeasures.Base
             % call is required due to inheritance but does nothing
             obj = obj@PerformanceMeasures.Base( yTrue, yPred, dpiarg{:} );
             
-            obj.performance = performance;            
+            obj.performance = perf;            
         end
         % -----------------------------------------------------------------
     

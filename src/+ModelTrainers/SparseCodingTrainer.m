@@ -46,6 +46,8 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y )          
+            fprintf('\n==\tDATASIZE %d\n\n', size(x,1));
+            
             obj.model = Models.SparseCodingModel();
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
@@ -64,8 +66,8 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             % set model parameter
             obj.model.B = B';
             
-            % just for interest
-            [fobj, ~, ~] = getObjective2(B, S, xScaled', 'L1', 1, obj.beta, 1, []);
+            % normalized opt value of sparse coding objective
+            fobj = stat.fobj_total / size(xScaled, 1);
             fprintf('\n==\tfobj on data: %f\n\n', fobj);
         end
         %% ----------------------------------------------------------------

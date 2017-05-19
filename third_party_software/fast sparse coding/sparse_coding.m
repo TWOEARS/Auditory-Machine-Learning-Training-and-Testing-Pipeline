@@ -144,18 +144,11 @@ while t < pars.num_trials
     % Take a random permutation of the samples
     indperm = randperm(size(X,2));
     
-    % April 2017, Lucas Buerschaper: ceil upper limit to process all data
-    % points, but then use smaller batch_size for last chunk of data, see
-    % edit below
     for batch=1:(size(X,2)/pars.batch_size),
         % Show progress in epoch
         if 1, fprintf('.'); end
         if (mod(batch,20)==0) fprintf('\n'); end
         
-        % This is data to use for this step
-        % April 2017, Lucas Buerschaper: if batch_size is higher than 
-        % remaining data, we need smaller limit (amount of remaining data)  
-        limit = min( pars.batch_size, pars.num_patches - pars.batch_size*(batch-1) );
         batch_idx = indperm((1:pars.batch_size)+pars.batch_size*(batch-1));
         Xb = X(:,batch_idx);
         

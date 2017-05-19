@@ -17,14 +17,18 @@ pipe.labelCreator = babyFemaleVsRestLabeler;
 % -- model creator
 
 pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
+    'hpsBetaRange', [0.5 0.7], ... % beta range
+    'hpsNumBasesRange', [100 200], ... % number of bases range
+    'hpsMaxDataSize', 5000, ...  % max data set size to use in hps (number of samples)
+    'hpsRefineStages', 1, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 2, ...   % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 3 ...         % number of hps cv folds of training set
- );
+    'hpsCvFolds', 2,...         % number of hps cv folds of training set
+    'finalMaxDataSize',10000);
 
 % pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
 %     'beta', 0.6, ...
 %     'num_bases', 200, ...
-%     'batch_size', 4000, ...
+%     'batch_size', 5000, ...
 %     'num_iters', 30);
 
 pipe.modelCreator.verbose( 'off' ); % no console output
@@ -43,7 +47,7 @@ sc.addSource( SceneConfig.PointSource( ...
 
 % init and run pipeline
 pipe.init( sc, 'fs', 16000);
-modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingTest_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
+modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingSelectTest_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

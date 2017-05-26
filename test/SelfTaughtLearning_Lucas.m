@@ -9,8 +9,8 @@ m = load('.\SparseCodingTest_Lucas\SparseCodingTest_Lucas.model.mat');
 
 % -- feature creator
 wrappedFeatureCreator = FeatureCreators.FeatureSet5Blockmean(); 
-%pipe.featureCreator = FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, m.model, 0.6); 
-pipe.featureCreator = wrappedFeatureCreator;
+pipe.featureCreator = FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, m.model, 0.6); 
+%pipe.featureCreator = wrappedFeatureCreator;
 
 % -- label creator
 babyFemaleVsRestLabeler = ... 

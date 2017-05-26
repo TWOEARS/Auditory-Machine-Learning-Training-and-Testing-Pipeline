@@ -20,7 +20,7 @@ pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
     'hpsBetaRange', [0.5 0.7], ... % beta range
     'hpsNumBasesRange', [100 200], ... % number of bases range
     'hpsMaxDataSize', 5000, ...  % max data set size to use in hps (number of samples)
-    'hpsRefineStages', 1, ...   % number of iterative hps refinement stages
+    'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', 2, ...   % number of hps grid search parameter values per dimension
     'hpsCvFolds', 2,...         % number of hps cv folds of training set
     'finalMaxDataSize',10000);

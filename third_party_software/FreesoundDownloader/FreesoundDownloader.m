@@ -14,7 +14,7 @@
     %
     
      properties(Constant)
-        m_sKeyIniPath = '\key.ini';
+        m_sKeyIniPath = '/key.ini';
     end
     
     properties(Access = protected)
@@ -47,7 +47,7 @@
             p = inputParser;
             defaultOptions = FreesoundOptions();
             
-            addParameter(p, 'directory', strcat(pwd, '\data\'), @(x) ischar(x) && exist(x, 'dir'));
+            addParameter(p, 'directory', strcat(pwd, '/data/'), @(x) ischar(x) && exist(x, 'dir'));
             addParameter(p, 'useLocalFiles', false, @(x) islogical(x));
             addParameter(p,'options',defaultOptions,@(x) isa(x, 'FreesoundOptions'));
             parse(p, varargin{:});
@@ -79,10 +79,10 @@
         function out = CreateFileList(obj, directory)
             assert(ischar(directory) && exist(directory, 'dir'))
             
-            files = dir(strcat(directory,'\*.mp3'));
-            fnames = strcat(strcat(directory,'\'),{files(:).name});
+            files = dir(strcat(directory,'/*.mp3'));
+            fnames = strcat(strcat(directory,'/'),{files(:).name});
                         
-            flistname = strcat(directory, '\data.flist'); 
+            flistname = strcat(directory, '/data.flist'); 
             flist = fopen(flistname, 'w+');
             fprintf(flist, '%s\n', fnames{:});
             fclose(flist);

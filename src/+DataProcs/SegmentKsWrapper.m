@@ -14,6 +14,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         dnnLocKs;
         nsrcsKs;
         idKss;
+        energeticBaidxs;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -87,6 +88,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             obj.dnnLocKs = dnnLocKs;
             obj.idKss = idKss;
             obj.nsrcsKs = nsrcsKs;
+            obj.energeticBaidxs = [];
             fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
@@ -98,10 +100,20 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 error( 'AMLTTP:procBinding:singleValueBlockAnnotationsNeeded', ...
                     'SegmentKsWrapper can only handle one azm value per source per block.' );
             end
+            srcsHaveEnergy = cellfun( @(se)(any(se > -40)), blockAnnotations.srcEnergy );
+            obj.energeticBaidxs = 1 : numel( blockAnnotations.srcEnergy );
+            obj.azmsGroundTruth(~srcsHaveEnergy) = [];
+            obj.energeticBaidxs(~srcsHaveEnergy) = [];
+            obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
             obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
             if isempty( obj.azmsGroundTruth )
                 procBlock = false;
                 return;
+            end
+            if ~obj.useNsrcsKs
+                obj.segmentKs.setFixedNoSrcs( numel( obj.azmsGroundTruth ) );
+            else
+                obj.segmentKs.setFixedNoSrcs( [] );
             end
             if ~obj.useDnnLocKs
                 azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
@@ -111,11 +123,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 obj.currentVarAzms = wrapTo180( obj.azmsGroundTruth );
                 obj.segmentKs.setFixedAzimuths( [] );
                 warning( 'off', 'BBS:badBlockTimeRequest' );
-            end
-            if ~obj.useNsrcsKs
-                obj.segmentKs.setFixedNoSrcs( numel( obj.azmsGroundTruth ) );
-            else
-                obj.segmentKs.setFixedNoSrcs( [] );
             end
             obj.segmentKs.setBlocksize( blockAnnotations.blockOffset ...
                                                 - blockAnnotations.blockOnset );
@@ -129,22 +136,17 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             hypAzms = repmat( wrapTo180( [segHypos.data.refAzm]' ), 1, nTrue );
             gtAzms = repmat( wrapTo180( obj.azmsGroundTruth ), nSegments, 1 );
             hypAzmGtDists = abs( wrapTo180( gtAzms - hypAzms ) );
-%             for ii = 1 : nSegments
-%                 hypAzm = wrapTo180( segHypos.data(ii).refAzm );
-%                 hypAzmGtDists(ii,:) = ...
-%                                abs( wrapTo180( obj.azmsGroundTruth - hypAzm ) );
-%             end
             switch obj.segSrcAssignmentMethod
                 case 'minPermutedDistance'
                     segIdxs = [];
                     while numel( segIdxs ) < nTrue
-                        segIdxs = [segIdxs 1:nSegments];
+                        segIdxs = [segIdxs 1:nSegments]; %#ok<AGROW>
                     end
                     distCombinations = nchoosek( segIdxs, nTrue );
                     distPermutations = [];
                     for ii = 1 : size( distCombinations, 1 )
                         distPermutations = [distPermutations; ...
-                                            perms( distCombinations(ii,:) )];
+                                            perms( distCombinations(ii,:) )]; %#ok<AGROW>
                     end
                     distPermutations = unique( distPermutations, 'rows' );
                     distances = zeros( size( distPermutations ) );
@@ -163,7 +165,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             for ss = 1 : nSegments
                 obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ss );
                 srcIdxs = find( segSrcAssignment == ss );
-                maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); %#ok<FNDSB>
+                srcIdxs = obj.energeticBaidxs(srcIdxs); %#ok<FNDSB>
+                maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); 
                 maskedBlockAnnotations.estAzm = segHypos.data(ss).refAzm;
                 if isempty(obj.out.blockAnnotations)
                     obj.out.blockAnnotations = maskedBlockAnnotations;
@@ -176,7 +179,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 8;
+            outputDeps.v = 9;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );

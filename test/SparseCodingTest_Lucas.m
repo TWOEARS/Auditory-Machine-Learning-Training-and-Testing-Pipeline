@@ -38,7 +38,7 @@ pipe.modelCreator.verbose( 'off' ); % no console output
 fs = FreesoundDownloader();
 % use files that are stored in specified directory without downloading new
 % ones, we only need training data here 
-pipe.trainset = fs.GetData('directory', '..\..\binaural-simulator\tmp\sound_databases\Unlabeled\', 'useLocalFiles', true);
+pipe.trainset = fs.GetData('directory', '../../binaural-simulator/tmp/sound_databases/Unlabeled/', 'useLocalFiles', true);
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

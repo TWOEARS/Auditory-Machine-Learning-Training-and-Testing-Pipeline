@@ -2,8 +2,10 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     % Wrapping the SegmentationKS
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = public)
-        varAzmPrior;
+        varAzmSigma;
         currentVarAzms;
+        azmsGroundTruth;
+        segSrcAssignmentMethod;
         dnnHash;
         nfHash;
         useDnnLocKs = false;
@@ -27,6 +29,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             ip.addOptional( 'useDnnLocKs', false );
             ip.addOptional( 'useNsrcsKs', false );
             ip.addOptional( 'nsrcsParams', {} );
+            ip.addOptional( 'segSrcAssignmentMethod', 'minDistance' );
+            ip.addOptional( 'varAzmSigma', 0 );
             ip.parse( varargin{:} );
             segmentKs = StreamSegregationKS( paramFilepath ); 
             fprintf( '.' );
@@ -72,7 +76,9 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end
             wrappedKss{end+1} = segmentKs;
             obj = obj@DataProcs.BlackboardKsWrapper( wrappedKss );
-            obj.varAzmPrior = 0;
+            obj.varAzmSigma = ip.Results.varAzmSigma;
+            obj.azmsGroundTruth = [];
+            obj.segSrcAssignmentMethod = ip.Results.segSrcAssignmentMethod;
             obj.dnnHash = dnnHash;
             obj.nfHash = nfHash;
             obj.useDnnLocKs = ip.Results.useDnnLocKs;
@@ -87,27 +93,27 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         function procBlock = preproc( obj, blockAnnotations )
             procBlock = true;
-            absAzms = blockAnnotations.srcAzms;
-            if isstruct( absAzms ) || size( absAzms, 1 ) > 1
+            obj.azmsGroundTruth = blockAnnotations.srcAzms;
+            if isstruct( obj.azmsGroundTruth ) || size( obj.azmsGroundTruth, 1 ) > 1
                 error( 'AMLTTP:procBinding:singleValueBlockAnnotationsNeeded', ...
                     'SegmentKsWrapper can only handle one azm value per source per block.' );
             end
-            absAzms(isnan(absAzms)) = [];
-            if isempty( absAzms )
+            obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
+            if isempty( obj.azmsGroundTruth )
                 procBlock = false;
                 return;
             end
             if ~obj.useDnnLocKs
-                azmVar = obj.varAzmPrior * (2*rand( size( absAzms ) ) - 1);
-                obj.currentVarAzms = wrapTo180( absAzms + azmVar );
+                azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
+                obj.currentVarAzms = wrapTo180( obj.azmsGroundTruth + azmVar );
                 obj.segmentKs.setFixedAzimuths( obj.currentVarAzms );
             else
-                obj.currentVarAzms = wrapTo180( absAzms );
+                obj.currentVarAzms = wrapTo180( obj.azmsGroundTruth );
                 obj.segmentKs.setFixedAzimuths( [] );
                 warning( 'off', 'BBS:badBlockTimeRequest' );
             end
             if ~obj.useNsrcsKs
-                obj.segmentKs.setFixedNoSrcs( numel( absAzms ) );
+                obj.segmentKs.setFixedNoSrcs( numel( obj.azmsGroundTruth ) );
             else
                 obj.segmentKs.setFixedNoSrcs( [] );
             end
@@ -118,26 +124,47 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         function postproc( obj, afeData, blockAnnotations )
             segHypos = obj.bbs.blackboard.getLastData( 'segmentationHypotheses' );
-            nMasks = numel( segHypos.data );
-            nTrue = numel( obj.currentVarAzms );
-            hypCurAzmDists = zeros( nMasks, nTrue );
-            for ii = 1 : nMasks
-                hypAzm = wrapTo180( segHypos.data(ii).refAzm );
-                hypCurAzmDists(ii,:) = ...
-                                abs( wrapTo180( obj.currentVarAzms - hypAzm ) );
-            end
-            [~,estObjMinAzmDistIdx] = min( hypCurAzmDists, [], 1 );
-%             [~,trueObjMinAzmDistIdx] = min( hypCurAzmDists, [], 2 );
-%             trueObjMinAzmDistIdx = num2cell( trueObjMinAzmDistIdx );
-%             for ii = 1 : numel( estObjMinAzmDistIdx )
-%                 trueObjMinAzmDistIdx{estObjMinAzmDistIdx(ii)}(end+1) = ii;
+            nSegments = numel( segHypos.data );
+            nTrue = numel( obj.azmsGroundTruth );
+            hypAzms = repmat( wrapTo180( [segHypos.data.refAzm]' ), 1, nTrue );
+            gtAzms = repmat( wrapTo180( obj.azmsGroundTruth ), nSegments, 1 );
+            hypAzmGtDists = abs( wrapTo180( gtAzms - hypAzms ) );
+%             for ii = 1 : nSegments
+%                 hypAzm = wrapTo180( segHypos.data(ii).refAzm );
+%                 hypAzmGtDists(ii,:) = ...
+%                                abs( wrapTo180( obj.azmsGroundTruth - hypAzm ) );
 %             end
-            for ii = 1 : nMasks
-                obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ii );
-%                 baIdxs = unique( trueObjMinAzmDistIdx{ii} );
-                baIdxs = find( estObjMinAzmDistIdx == ii );
-                maskedBlockAnnotations = obj.maskBA( blockAnnotations, baIdxs );
-                maskedBlockAnnotations.estAzm = segHypos.data(ii).refAzm;
+            switch obj.segSrcAssignmentMethod
+                case 'minPermutedDistance'
+                    segIdxs = [];
+                    while numel( segIdxs ) < nTrue
+                        segIdxs = [segIdxs 1:nSegments];
+                    end
+                    distCombinations = nchoosek( segIdxs, nTrue );
+                    distPermutations = [];
+                    for ii = 1 : size( distCombinations, 1 )
+                        distPermutations = [distPermutations; ...
+                                            perms( distCombinations(ii,:) )];
+                    end
+                    distPermutations = unique( distPermutations, 'rows' );
+                    distances = zeros( size( distPermutations ) );
+                    permutedDistances = zeros( size( distPermutations, 1 ), 1 );
+                    for ss = 1 : size( distPermutations, 1 )
+                        for tt = 1 : size( distPermutations, 2 )
+                            distances(ss,tt) = hypAzmGtDists(distPermutations(ss,tt),tt);
+                        end
+                        permutedDistances(ss) = sum( distances(ss,:) );
+                    end
+                    [~,minPermutedDistanceIdx] = min( permutedDistances );
+                    segSrcAssignment = distPermutations(minPermutedDistanceIdx,:);
+                case 'minDistance'
+                    [~,segSrcAssignment] = min( hypAzmGtDists, [], 1 );
+            end                   
+            for ss = 1 : nSegments
+                obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ss );
+                srcIdxs = find( segSrcAssignment == ss );
+                maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); %#ok<FNDSB>
+                maskedBlockAnnotations.estAzm = segHypos.data(ss).refAzm;
                 if isempty(obj.out.blockAnnotations)
                     obj.out.blockAnnotations = maskedBlockAnnotations;
                 else
@@ -149,13 +176,14 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 7;
+            outputDeps.v = 8;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );
             outputDeps.params = obj.kss{end}.observationModel.trainingParameters;
             [~,outputDeps.afeHashs] = obj.getAfeRequests();
-            outputDeps.varAzmPrior = obj.varAzmPrior;
+            outputDeps.varAzmSigma = obj.varAzmSigma;
+            outputDeps.segSrcAssignmentMethod = obj.segSrcAssignmentMethod;
         end
         %% -------------------------------------------------------------------------------
 
@@ -166,7 +194,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         %% -------------------------------------------------------------------------------
         
-        function afeBlock = softmaskAFE( obj, afeBlock, segHypos, idx_mask )
+        function afeBlock = softmaskAFE( ~, afeBlock, segHypos, idx_mask )
             afeBlock = SegmentIdentityKS.maskAFEData( afeBlock, ...
                                                       segHypos.data(idx_mask).softMask, ...
                                                       segHypos.data(idx_mask).cfHz, ...
@@ -174,7 +202,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         end
         %% -------------------------------------------------------------------------------
         
-        function blockAnnotations = maskBA( obj, blockAnnotations, srcIdxs )
+        function blockAnnotations = maskBA( ~, blockAnnotations, srcIdxs )
             rSrcIdxs = 1:max( srcIdxs );
             rSrcIdxs(srcIdxs) = 1:numel(srcIdxs);
             baFields = fieldnames( blockAnnotations );

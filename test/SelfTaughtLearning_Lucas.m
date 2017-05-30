@@ -5,7 +5,7 @@ startAMLTTP();
 
 pipe = TwoEarsIdTrainPipe();
 
-m = load('.\SparseCodingTest_Lucas\SparseCodingTest_Lucas.model.mat');
+m = load('./SparseCodingTest_Lucas/SparseCodingTest_Lucas.model.mat');
 
 % -- feature creator
 wrappedFeatureCreator = FeatureCreators.FeatureSet5Blockmean(); 
@@ -27,9 +27,10 @@ pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
 pipe.modelCreator.verbose( 'on' );
 
 % -- prepare data
-pipe.trainset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist';
-pipe.testset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist';
+pipe.trainset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TrainSet_1.flist';
+pipe.testset = 'learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TestSet_1.flist';
 
+%learned_models\IdentityKS\trainTestSets\NIGENS160807_75pTrain_TestSet_1.flist
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

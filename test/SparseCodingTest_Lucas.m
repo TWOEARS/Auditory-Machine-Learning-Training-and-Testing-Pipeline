@@ -16,20 +16,20 @@ pipe.labelCreator = babyFemaleVsRestLabeler;
 
 % -- model creator
 
-pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
-    'hpsBetaRange', [0.5 0.7], ... % beta range
-    'hpsNumBasesRange', [100 200], ... % number of bases range
-    'hpsMaxDataSize', 5000, ...  % max data set size to use in hps (number of samples)
-    'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
-    'hpsSearchBudget', 2, ...   % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 2,...         % number of hps cv folds of training set
-    'finalMaxDataSize',10000);
+% pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
+%     'hpsBetaRange', [0.5 0.7], ... % beta range
+%     'hpsNumBasesRange', [100 200], ... % number of bases range
+%     'hpsMaxDataSize', 5000, ...  % max data set size to use in hps (number of samples)
+%     'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
+%     'hpsSearchBudget', 2, ...   % number of hps grid search parameter values per dimension
+%     'hpsCvFolds', 2,...         % number of hps cv folds of training set
+%     'finalMaxDataSize',10000);
 
-% pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
-%     'beta', 0.6, ...
-%     'num_bases', 200, ...
-%     'batch_size', 5000, ...
-%     'num_iters', 30);
+pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
+    'beta', 0.6, ...
+    'num_bases', 200, ...
+    'batch_size', 5000, ...
+    'num_iters', 25);
 
 pipe.modelCreator.verbose( 'off' ); % no console output
 

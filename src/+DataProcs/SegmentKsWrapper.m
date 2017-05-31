@@ -102,8 +102,14 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end
             srcsHaveEnergy = cellfun( @(se)(any(se > -40)), blockAnnotations.srcEnergy );
             obj.energeticBaidxs = 1 : numel( blockAnnotations.srcEnergy );
-            obj.azmsGroundTruth(~srcsHaveEnergy) = [];
-            obj.energeticBaidxs(~srcsHaveEnergy) = [];
+            if any( srcsHaveEnergy )
+                obj.azmsGroundTruth(~srcsHaveEnergy) = [];
+                obj.energeticBaidxs(~srcsHaveEnergy) = [];
+            % else
+                % do nothing, because if no src is assumed, we still want
+                % to analyze the full stream. Never segregate into "zero"
+                % streams.
+            end
             obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
             obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
             if isempty( obj.azmsGroundTruth )
@@ -114,6 +120,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 obj.segmentKs.setFixedNoSrcs( numel( obj.azmsGroundTruth ) );
             else
                 obj.segmentKs.setFixedNoSrcs( [] );
+            end
+            if obj.useNsrcsKs && ~obj.useDnnLocKs
+                error( 'AMLTTP:usage:unsupportedOptionSetting', ...
+                       ['nSrcs model employment only supported if also using ' ...
+                        'location model.'] );
             end
             if ~obj.useDnnLocKs
                 azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
@@ -179,7 +190,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 9;
+            outputDeps.v = 10;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );

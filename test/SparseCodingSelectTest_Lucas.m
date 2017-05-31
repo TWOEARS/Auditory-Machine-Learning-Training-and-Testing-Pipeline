@@ -1,4 +1,12 @@
-function SparseCodingTest_Lucas()
+function SparseCodingSelectTest_Lucas(varargin)
+
+p = inputParser;
+
+addParameter(p,'hpsMaxDataSize', 5000 ,@(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'finalMaxDataSize', 10000 ,@(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsSearchBudget', 7 ,@(x) mod(x,1) == 0 && x > 0 );
+
+parse(p, varargin{:});
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
@@ -15,11 +23,15 @@ babyFemaleVsRestLabeler = ...
 pipe.labelCreator = babyFemaleVsRestLabeler; 
 
 % -- model creator
-pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
-    'beta', 0.6, ...
-    'num_bases', 200, ...
-    'batch_size', 5000, ...
-    'num_iters', 25);
+
+pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
+    'hpsBetaRange', [0.4 1.0], ... % beta range
+    'hpsNumBasesRange', [100 1000], ... % number of bases range
+    'hpsMaxDataSize', p.Results.hpsMaxDataSize, ...  % max data set size to use in hps (number of samples)
+    'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
+    'hpsSearchBudget', p.Results.hpsSearchBudget, ...   % number of hps grid search parameter values per dimension
+    'hpsCvFolds', 3,...         % number of hps cv folds of training set
+    'finalMaxDataSize', p.Results.finalMaxDataSize);
 
 pipe.modelCreator.verbose( 'off' ); % no console output
 
@@ -37,7 +49,8 @@ sc.addSource( SceneConfig.PointSource( ...
 
 % init and run pipeline
 pipe.init( sc, 'fs', 16000);
-modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingSelectTest_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
+modelName = sprintf('SparseCodingSelectTest_datasize%d_%s', p.Results.hpsMaxDataSize, datestr(now,'yymmddHHMMSS'));
+modelPath = pipe.pipeline.run( 'modelName', modelName , 'modelPath', 'SparseCodingSelectTest_Lucas', 'debug', true);
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

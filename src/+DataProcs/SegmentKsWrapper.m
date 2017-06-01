@@ -150,7 +150,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                         currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];
                     end
                 end
-                obj.segmentKs.setFixedAzimuths( currentVarAzms );
+                obj.segmentKs.setFixedAzimuths( wrapTo180( currentVarAzms ) );
             else
                 obj.segmentKs.setFixedAzimuths( [] );
                 warning( 'off', 'BBS:badBlockTimeRequest' );
@@ -210,7 +210,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 11;
+            outputDeps.v = 12;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );

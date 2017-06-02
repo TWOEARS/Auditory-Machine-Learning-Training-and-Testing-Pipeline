@@ -46,6 +46,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.nrgSrcsFilter = ip.Results.nrgSrcsFilter;
             obj.sourcesMinEnergy = ip.Results.sourcesMinEnergy;
             obj.fileFilterOut = sort( ip.Results.fileFilterOut );
+            obj.procName = [obj.procName '(' strcat( obj.types{1}{:} ) ')'];
         end
         %% -------------------------------------------------------------------------------
 

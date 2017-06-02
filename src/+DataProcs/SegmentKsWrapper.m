@@ -15,6 +15,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         idKss;
         energeticBaidxs;
         nsrcsBias;
+        nsrcsRndPlusMinusBias;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -33,6 +34,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             ip.addOptional( 'segSrcAssignmentMethod', 'minDistance' );
             ip.addOptional( 'varAzmSigma', 0 );
             ip.addOptional( 'nsrcsBias', 0 );
+            ip.addOptional( 'nsrcsRndPlusMinusBias', 0 );
             ip.parse( varargin{:} );
             segmentKs = StreamSegregationKS( paramFilepath ); 
             fprintf( '.' );
@@ -101,6 +103,12 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                        ['nSrcs bias only supported if using ' ...
                         'nSrcs ground truth.'] );
             end
+            obj.nsrcsRndPlusMinusBias = ip.Results.nsrcsRndPlusMinusBias;
+            if obj.useNsrcsKs && (obj.nsrcsRndPlusMinusBias ~= 0)
+                error( 'AMLTTP:usage:unsupportedOptionSetting', ...
+                       ['nSrcs random bias only supported if using ' ...
+                        'nSrcs ground truth.'] );
+            end
             fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
@@ -129,7 +137,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 return;
             end
             if ~obj.useNsrcsKs
-                setNsrcs = max( 1, sum( srcsHaveEnergy ) + obj.nsrcsBias );
+                rndNbias = randi( obj.nsrcsRndPlusMinusBias*2 + 1 ) ...
+                                           * (obj.nsrcsRndPlusMinusBias > 0 )...
+                                                - obj.nsrcsRndPlusMinusBias - 1;
+                setNsrcs = max( 1, sum( srcsHaveEnergy ) ...
+                                   + obj.nsrcsBias + rndNbias );
                 obj.segmentKs.setFixedNoSrcs( setNsrcs );
             else
                 obj.segmentKs.setFixedNoSrcs( [] );
@@ -219,6 +231,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.varAzmSigma = obj.varAzmSigma;
             outputDeps.segSrcAssignmentMethod = obj.segSrcAssignmentMethod;
             outputDeps.nsrcsBias = obj.nsrcsBias;
+            outputDeps.nsrcsRndPlusMinusBias = obj.nsrcsRndPlusMinusBias;
         end
         %% -------------------------------------------------------------------------------
 

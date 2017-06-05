@@ -4,7 +4,7 @@ classdef SceneConfiguration < matlab.mixin.Copyable
     properties (SetAccess = protected)
         sources; 
         SNRs;
-        snrRefs;
+        snrRefs; % TODO: there should only be one scene-wide SNRref.
         loopSrcs; % 'no','self','randomSeq'
         room;
         brirHeadOrientIdx;

@@ -122,6 +122,9 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end
             srcsHaveEnergy = cellfun( @(se)(any(se > -40)), blockAnnotations.srcEnergy );
             obj.energeticBaidxs = 1 : numel( blockAnnotations.srcEnergy );
+            obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
+            srcsHaveEnergy(isnan(obj.azmsGroundTruth)) = [];
+            obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
             if any( srcsHaveEnergy )
                 obj.azmsGroundTruth(~srcsHaveEnergy) = [];
                 obj.energeticBaidxs(~srcsHaveEnergy) = [];
@@ -129,12 +132,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 % do nothing, because if no src is assumed, we still want
                 % to analyze the full stream. Never segregate into "zero"
                 % streams.
-            end
-            obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
-            obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
-            if isempty( obj.azmsGroundTruth )
-                procBlock = false;
-                return;
             end
             if ~obj.useNsrcsKs
                 rndNbias = randi( obj.nsrcsRndPlusMinusBias*2 + 1 ) ...
@@ -211,6 +208,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 srcIdxs = obj.energeticBaidxs(srcIdxs); %#ok<FNDSB>
                 maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); 
                 maskedBlockAnnotations.estAzm = segHypos.data(ss).refAzm;
+                maskedBlockAnnotations.nSrcs_estimationError = nSegments - nTrue;
                 if isempty(obj.out.blockAnnotations)
                     obj.out.blockAnnotations = maskedBlockAnnotations;
                 else
@@ -222,7 +220,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 12;
+            outputDeps.v = 13;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );

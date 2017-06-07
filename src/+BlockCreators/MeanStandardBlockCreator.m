@@ -20,7 +20,7 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
         function outputDeps = getBlockCreatorInternOutputDependencies( obj )
             outputDeps.sbc = getBlockCreatorInternOutputDependencies@...
                                                 BlockCreators.StandardBlockCreator( obj );
-            outputDeps.v = 1;
+            outputDeps.v = 2;
         end
         %% ------------------------------------------------------------------------------- 
 
@@ -54,9 +54,27 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                         error( 'unexpected annotations sequence structure' );
                     end
                 end
+                if ii == 1
+                    [blockAnnots(:).nSrcs_sceneConfig] = deal([]);
+                    [blockAnnots(:).nSrcs_active] = deal([]);
+                end
+                blockAnnots(ii) = obj.extendMeanAnnotations( blockAnnots(ii) );
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        % TODO: this is the wrong place for the annotation computation; it
+        % should be done in SceneEarSignalProc -- and is now here, for the
+        % moment, to avoid recomputation with SceneEarSignalProc.
+        
+        function avgdBlockAnnots = extendMeanAnnotations( obj, avgdBlockAnnots )
+            srcsEnergy = cellfun( @mean, avgdBlockAnnots.srcEnergy );
+            isAmbientSource = isnan( avgdBlockAnnots.srcAzms );
+            srcsEnergy(isAmbientSource) = [];
+            avgdBlockAnnots.nSrcs_sceneConfig = single( numel( srcsEnergy ) );
+            avgdBlockAnnots.nSrcs_active = single( sum( srcsEnergy >= -40 ) );
+        end
+        %% ------------------------------------------------------------------------------- 
         
     end
     %% ----------------------------------------------------------------------------------- 

@@ -2,9 +2,9 @@ function SparseCodingSelectTest_Lucas(varargin)
 
 p = inputParser;
 
-addParameter(p,'hpsMaxDataSize', 5000 ,@(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsMaxDataSize', 10000 ,@(x) mod(x,1) == 0 && x > 0 );
 addParameter(p,'finalMaxDataSize', 10000 ,@(x) mod(x,1) == 0 && x > 0 );
-addParameter(p,'hpsSearchBudget', 7 ,@(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsSearchBudget', 4 ,@(x) mod(x,1) == 0 && x > 0 );
 
 parse(p, varargin{:});
 
@@ -25,12 +25,12 @@ pipe.labelCreator = babyFemaleVsRestLabeler;
 % -- model creator
 
 pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
-    'hpsBetaRange', [0.4 1.0], ... % beta range
-    'hpsNumBasesRange', [100 1000], ... % number of bases range
+    'hpsBetaRange', [0.2 0.8], ... % beta range
+    'hpsNumBasesRange', [100 10000], ... % number of bases range
     'hpsMaxDataSize', p.Results.hpsMaxDataSize, ...  % max data set size to use in hps (number of samples)
     'hpsRefineStages', 0, ...   % number of iterative hps refinement stages
     'hpsSearchBudget', p.Results.hpsSearchBudget, ...   % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 3,...         % number of hps cv folds of training set
+    'hpsCvFolds', 2,...         % number of hps cv folds of training set
     'finalMaxDataSize', p.Results.finalMaxDataSize);
 
 pipe.modelCreator.verbose( 'off' ); % no console output

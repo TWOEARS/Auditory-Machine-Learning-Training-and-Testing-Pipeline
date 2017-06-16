@@ -148,6 +148,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 if sum( srcsHaveEnergy ) == 0
                     rndidxs = randperm( numel( currentVarAzms ) );
                     currentVarAzms = currentVarAzms(rndidxs(1:setNsrcs));
+                    obj.azmsGroundTruth = obj.azmsGroundTruth(rndidxs(1:setNsrcs));
                 else
                     setNsrcsDiff = setNsrcs - numel( currentVarAzms );
                     if setNsrcsDiff > 0
@@ -219,7 +220,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 14;
+            outputDeps.v = 15;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );

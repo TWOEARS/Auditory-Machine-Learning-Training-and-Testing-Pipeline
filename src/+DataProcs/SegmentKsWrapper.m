@@ -135,7 +135,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end
             if ~obj.useNsrcsKs
                 rndNbias = randi( obj.nsrcsRndPlusMinusBias*2 + 1 ) ...
-                                           * (obj.nsrcsRndPlusMinusBias > 0 )...
                                                 - obj.nsrcsRndPlusMinusBias - 1;
                 setNsrcs = max( 1, sum( srcsHaveEnergy ) ...
                                    + obj.nsrcsBias + rndNbias );
@@ -220,7 +219,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 13;
+            outputDeps.v = 14;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );

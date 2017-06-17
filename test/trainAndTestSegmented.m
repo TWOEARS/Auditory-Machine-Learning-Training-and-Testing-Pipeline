@@ -1,5 +1,9 @@
-function trainAndTestSegmented()
+function trainAndTestSegmented( modelPath )
 
+%% train
+
+if nargin < 1 || isempty( modelPath )
+    
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 addPathsIfNotIncluded( {...
@@ -19,9 +23,9 @@ pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
     'useDnnLocKs', false, ...
     'useNsrcsKs', false, ...
     'segSrcAssignmentMethod', 'minPermutedDistance', ...
-    'varAzmSigma', 15, ...
+    'varAzmSigma', 0, ...
     'nsrcsBias', 0, ...
-    'nsrcsRndPlusMinusBias', 2 );
+    'nsrcsRndPlusMinusBias', 0 );
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
@@ -72,6 +76,8 @@ modelPath = pipe.pipeline.run( 'modelName', 'segmModel', 'modelPath', 'test_segm
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
+end
+
 %% test
 
 pipe = TwoEarsIdTrainPipe();
@@ -80,9 +86,9 @@ pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
     'useDnnLocKs', false, ...
     'useNsrcsKs', false, ...
     'segSrcAssignmentMethod', 'minPermutedDistance', ...
-    'varAzmSigma', 15, ...
+    'varAzmSigma', 0, ...
     'nsrcsBias', 0, ...
-    'nsrcsRndPlusMinusBias', 2 );
+    'nsrcsRndPlusMinusBias', 0 );
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
@@ -125,6 +131,84 @@ sc(2).addSource( SceneConfig.PointSource( ...
     'loop', 'randomSeq' );
 pipe.init( sc, 'fs', 16000 );
 
-modelPath = pipe.pipeline.run( 'modelName', 'segmModel', 'modelPath', 'test_segmented' );
+[modelPath,~,testPerfresults] = ...
+             pipe.pipeline.run( 'modelName', 'segmModel', 'modelPath', 'test_segmented' );
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
+
+%% analysis
+
+resc = int16( zeros(0,0,0,0,0,0,0,0,0,0) );
+fprintf( 'analyzing' );
+for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
+    dpiIdxs = find( testPerfresults.datapointInfo.fileIdxs == ii );
+    for jj = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles{ii} )
+        dpiIdxs_ = find( testPerfresults.datapointInfo.bacfIdxs(dpiIdxs) == jj );
+        dpiIdxs_ = dpiIdxs(dpiIdxs_);
+        dpiIdxs__ = testPerfresults.datapointInfo.bIdxs(dpiIdxs_);
+        blockAnnotations = load( testPerfresults.datapointInfo.blockAnnotsCacheFiles{ii}{jj}, 'blockAnnotations');
+        blockAnnotations = blockAnnotations.blockAnnotations;
+        blockAnnotations = blockAnnotations(dpiIdxs__);
+        estAzms = [blockAnnotations.estAzm];
+        gtAzms = cellfun( @(x)([x inf]), {blockAnnotations.srcAzms}, 'UniformOutput', false );
+        azmErr = round( abs( wrapTo180( cellfun( @(x)(x(1)), gtAzms ) - estAzms ) )/3 ) + 2;
+        azmErr(isnan(azmErr)) = 1;
+        azmErr(isinf(azmErr)) = 1;
+        nEstErr = [blockAnnotations.nSrcs_estimationError] + 4;
+        nAct = [blockAnnotations.nSrcs_active] + 1;
+        curSnr = cellfun( @(x)([x{:} inf]), {blockAnnotations.srcSNR}, 'UniformOutput', false );
+        curSnr = round( max( cellfun( @(x)(single( x(1) )), curSnr ), -40 )/4 ) + 12;
+        curSnr(isinf(curSnr)) = 1;
+        curSnr_avgSelf = cellfun( @(x)([x{:} inf]), {blockAnnotations.srcSNR_avgSelf}, 'UniformOutput', false );
+        curSnr_avgSelf = round( max( cellfun( @(x)(single( x(1) )), curSnr_avgSelf ), -40 )/4 ) + 12;
+        curSnr_avgSelf(isinf(curSnr_avgSelf)) = 1;
+        yp = testPerfresults.datapointInfo.yPred(dpiIdxs_);
+        yt = testPerfresults.datapointInfo.yTrue(dpiIdxs_);
+        tp = (yp == yt) & (yp == 1);
+        tn = (yp == yt) & (yp == -1);
+        fp = (yp ~= yt) & (yp == 1);
+        fn = (yp ~= yt) & (yp == -1);
+        if any( size( resc ) < [1,1,1,1,max(nAct(~isinf(nAct))),max(curSnr(~isinf(curSnr))),max(curSnr_avgSelf(~isinf(curSnr_avgSelf))),max(azmErr(~isinf(azmErr))),max(nEstErr(~isinf(nEstErr))),4] )
+            resc(1,1,1,1,max(nAct(~isinf(nAct))),max(curSnr(~isinf(curSnr))),max(curSnr_avgSelf(~isinf(curSnr_avgSelf))),max(azmErr(~isinf(azmErr))),max(nEstErr(~isinf(nEstErr))),4) = 0;
+        end
+        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;tp']', 'rows' );
+        mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
+        oneIdxs = ones(size(C(:,1)));
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs);
+        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
+        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;tn']', 'rows' );
+        mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
+        oneIdxs = ones(size(C(:,1)));
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs*2);
+        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
+        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;fp']', 'rows' );
+        mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
+        oneIdxs = ones(size(C(:,1)));
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs*3);
+        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
+        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;fn']', 'rows' );
+        mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
+        oneIdxs = ones(size(C(:,1)));
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs*4);
+        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
+        fprintf( '.' );
+    end
+end
+fprintf( '\n' );
+
+nActVsSnrAvgCounts = getCountsOverVariables( resc, [5,7] );
+nActVsSnrAvgBAC = 0.5*nActVsSnrAvgCounts(:,:,1)./(nActVsSnrAvgCounts(:,:,1)+nActVsSnrAvgCounts(:,:,4)) + 0.5*nActVsSnrAvgCounts(:,:,2)./(nActVsSnrAvgCounts(:,:,2)+nActVsSnrAvgCounts(:,:,3));
+
+end
+
+function cnts = getCountsOverVariables( resc, variables )
+    dims = 1 : ndims( resc );
+    dims([variables,10]) = [];
+    dims = flip( dims );
+    cnts = resc;
+    for dd = dims
+        cnts = sum( cnts, dd );
+    end
+    cnts = squeeze( cnts );
+end
+

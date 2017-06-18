@@ -196,19 +196,8 @@ for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
 end
 fprintf( '\n' );
 
-nActVsSnrAvgCounts = getCountsOverVariables( resc, [5,7] );
+nActVsSnrAvgCounts = summarizeDown( resc, [5,7] );
 nActVsSnrAvgBAC = 0.5*nActVsSnrAvgCounts(:,:,1)./(nActVsSnrAvgCounts(:,:,1)+nActVsSnrAvgCounts(:,:,4)) + 0.5*nActVsSnrAvgCounts(:,:,2)./(nActVsSnrAvgCounts(:,:,2)+nActVsSnrAvgCounts(:,:,3));
 
-end
-
-function cnts = getCountsOverVariables( resc, variables )
-    dims = 1 : ndims( resc );
-    dims([variables,10]) = [];
-    dims = flip( dims );
-    cnts = resc;
-    for dd = dims
-        cnts = sum( cnts, dd );
-    end
-    cnts = squeeze( cnts );
 end
 

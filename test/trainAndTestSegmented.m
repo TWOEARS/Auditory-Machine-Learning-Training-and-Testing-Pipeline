@@ -196,7 +196,7 @@ for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
 end
 fprintf( '\n' );
 
-nActVsSnrAvgCounts = summarizeDown( resc, [5,7] );
+nActVsSnrAvgCounts = summarizeDown( resc, [5,7,10] );
 nActVsSnrAvgBAC = 0.5*nActVsSnrAvgCounts(:,:,1)./(nActVsSnrAvgCounts(:,:,1)+nActVsSnrAvgCounts(:,:,4)) + 0.5*nActVsSnrAvgCounts(:,:,2)./(nActVsSnrAvgCounts(:,:,2)+nActVsSnrAvgCounts(:,:,3));
 
 end

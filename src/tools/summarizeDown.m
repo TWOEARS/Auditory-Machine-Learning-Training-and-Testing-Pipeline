@@ -1,6 +1,6 @@
 function xsummed = summarizeDown( x, leaveVariables )
     dims = 1 : ndims( x );
-    dims([leaveVariables,10]) = [];
+    dims(leaveVariables) = [];
     dims = flip( dims );
     xsummed = x;
     for dd = dims

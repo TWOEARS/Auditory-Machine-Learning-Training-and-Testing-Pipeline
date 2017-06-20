@@ -1,9 +1,5 @@
 function trainAndTestSegmented( modelPath )
 
-%% train
-
-if nargin < 1 || isempty( modelPath )
-    
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 addPathsIfNotIncluded( {...
@@ -17,6 +13,10 @@ copyfile( ['./' segmModelFileName], ...
           fullfile( db.tmp, 'learned_models', 'SegmentationKS', segmModelFileName ), ...
           'f' );
 
+%% train
+
+if nargin < 1 || isempty( modelPath )
+    
 pipe = TwoEarsIdTrainPipe();
 pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
     'SegmentationTrainerParameters5.yaml', ...
@@ -88,7 +88,7 @@ pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
     'segSrcAssignmentMethod', 'minPermutedDistance', ...
     'varAzmSigma', 0, ...
     'nsrcsBias', 0, ...
-    'nsrcsRndPlusMinusBias', 0 );
+    'nsrcsRndPlusMinusBias', 2 );
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean();
 babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = babyLabeler;
@@ -138,7 +138,7 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
 %% analysis
 
-resc = int16( zeros(0,0,0,0,0,0,0,0,0,0) );
+resc = int32( zeros(0,0,0,0,0,0,0,0,0,0,0) );
 fprintf( 'analyzing' );
 for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
     dpiIdxs = find( testPerfresults.datapointInfo.fileIdxs == ii );
@@ -156,6 +156,8 @@ for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
         azmErr(isinf(azmErr)) = 1;
         nEstErr = [blockAnnotations.nSrcs_estimationError] + 4;
         nAct = [blockAnnotations.nSrcs_active] + 1;
+        curNrj = cellfun( @(x)(max([x{:} single(-inf)])), {blockAnnotations.srcEnergy}, 'UniformOutput', false );
+        targetHasEnergy = cellfun( @(x)(x > -40), curNrj, 'UniformOutput', true ) + 1;
         curSnr = cellfun( @(x)([x{:} inf]), {blockAnnotations.srcSNR}, 'UniformOutput', false );
         curSnr = round( max( cellfun( @(x)(single( x(1) )), curSnr ), -40 )/4 ) + 12;
         curSnr(isinf(curSnr)) = 1;
@@ -168,36 +170,36 @@ for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
         tn = (yp == yt) & (yp == -1);
         fp = (yp ~= yt) & (yp == 1);
         fn = (yp ~= yt) & (yp == -1);
-        if any( size( resc ) < [1,1,1,1,max(nAct(~isinf(nAct))),max(curSnr(~isinf(curSnr))),max(curSnr_avgSelf(~isinf(curSnr_avgSelf))),max(azmErr(~isinf(azmErr))),max(nEstErr(~isinf(nEstErr))),4] )
-            resc(1,1,1,1,max(nAct(~isinf(nAct))),max(curSnr(~isinf(curSnr))),max(curSnr_avgSelf(~isinf(curSnr_avgSelf))),max(azmErr(~isinf(azmErr))),max(nEstErr(~isinf(nEstErr))),4) = 0;
+        if any( size( resc ) < [1,1,1,1,max(targetHasEnergy),max(nAct(~isinf(nAct))),max(curSnr(~isinf(curSnr))),max(curSnr_avgSelf(~isinf(curSnr_avgSelf))),max(azmErr(~isinf(azmErr))),max(nEstErr(~isinf(nEstErr))),4] )
+            resc(1,1,1,1,max(targetHasEnergy),max(nAct(~isinf(nAct))),max(curSnr(~isinf(curSnr))),max(curSnr_avgSelf(~isinf(curSnr_avgSelf))),max(azmErr(~isinf(azmErr))),max(nEstErr(~isinf(nEstErr))),4) = 0;
         end
-        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;tp']', 'rows' );
+        [C,~,ic] = unique( [targetHasEnergy;nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;tp']', 'rows' );
         mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
         oneIdxs = ones(size(C(:,1)));
-        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs);
-        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
-        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;tn']', 'rows' );
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),C(:,6),oneIdxs);
+        resc(linIdxs) = resc(linIdxs) + int32( C(:,7).*mult' );
+        [C,~,ic] = unique( [targetHasEnergy;nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;tn']', 'rows' );
         mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
         oneIdxs = ones(size(C(:,1)));
-        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs*2);
-        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
-        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;fp']', 'rows' );
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),C(:,6),oneIdxs*2);
+        resc(linIdxs) = resc(linIdxs) + int32( C(:,7).*mult' );
+        [C,~,ic] = unique( [targetHasEnergy;nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;fp']', 'rows' );
         mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
         oneIdxs = ones(size(C(:,1)));
-        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs*3);
-        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
-        [C,~,ic] = unique( [nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;fn']', 'rows' );
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),C(:,6),oneIdxs*3);
+        resc(linIdxs) = resc(linIdxs) + int32( C(:,7).*mult' );
+        [C,~,ic] = unique( [targetHasEnergy;nAct;curSnr;curSnr_avgSelf;azmErr;nEstErr;fn']', 'rows' );
         mult = arrayfun(@(x)(sum(x==ic)), 1:size(C,1));
         oneIdxs = ones(size(C(:,1)));
-        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),oneIdxs*4);
-        resc(linIdxs) = resc(linIdxs) + int16( C(:,6).*mult' );
+        linIdxs = sub2ind(size(resc),oneIdxs,oneIdxs,oneIdxs,oneIdxs,C(:,1),C(:,2),C(:,3),C(:,4),C(:,5),C(:,6),oneIdxs*4);
+        resc(linIdxs) = resc(linIdxs) + int32( C(:,7).*mult' );
         fprintf( '.' );
     end
 end
 fprintf( '\n' );
 
-nActVsSnrAvgCounts = summarizeDown( resc, [5,7,10] );
-nActVsSnrAvgBAC = 0.5*nActVsSnrAvgCounts(:,:,1)./(nActVsSnrAvgCounts(:,:,1)+nActVsSnrAvgCounts(:,:,4)) + 0.5*nActVsSnrAvgCounts(:,:,2)./(nActVsSnrAvgCounts(:,:,2)+nActVsSnrAvgCounts(:,:,3));
+nActVsSnrAvgCounts2 = summarizeDown( resc(:,:,:,:,2,:,:,:,:,:,:), [6,8,11] );
+nActVsSnrAvgBAC2 = 0.5*nActVsSnrAvgCounts2(:,:,1)./(nActVsSnrAvgCounts2(:,:,1)+nActVsSnrAvgCounts2(:,:,4)) + 0.5*nActVsSnrAvgCounts2(:,:,2)./(nActVsSnrAvgCounts2(:,:,2)+nActVsSnrAvgCounts2(:,:,3));
 
 end
 

@@ -30,9 +30,9 @@ curSnr_avgSelfTnFp(cellfun( @(x)(isnan(x(1))), curSnr_avgSelf )) = single( nan )
 curSnr_avgSelf = ([counts.yt] > 0) .* curSnr_avgSelfTpFn + ([counts.yt] < 0) .* curSnr_avgSelfTnFp;
 
 if aggrCounts.tp
-    idx = find( ([counts.yp] > 0) & ([counts.yt] > 0) );
+    idx = find( ([counts.yt] > 0) );
 elseif aggrCounts.tn
-    idx = find( ([counts.yp] < 0) & ([counts.yt] < 0) );
+    idx = 1 : numel( counts );
 elseif aggrCounts.fp
     idx = find( ([counts.yp] > 0) & ([counts.yt] < 0) );
 elseif aggrCounts.fn

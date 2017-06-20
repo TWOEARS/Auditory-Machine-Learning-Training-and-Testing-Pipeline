@@ -146,18 +146,17 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
                 currentVarAzms = wrapTo180( obj.azmsGroundTruth + azmVar );
                 if sum( srcsHaveEnergy ) == 0
+                    rndIdx = randi( numel( currentVarAzms ) );
+                    obj.azmsGroundTruth = obj.azmsGroundTruth(rndIdx);
+                    obj.energeticBaidxs = obj.energeticBaidxs(rndIdx);
+                end
+                setNsrcsDiff = setNsrcs - numel( currentVarAzms );
+                if setNsrcsDiff > 0
+                    currentVarAzms = [currentVarAzms ...
+                        360 * rand( 1, setNsrcsDiff )];
+                elseif setNsrcsDiff < 0
                     rndidxs = randperm( numel( currentVarAzms ) );
-                    currentVarAzms = currentVarAzms(rndidxs(1:setNsrcs));
-                    obj.azmsGroundTruth = obj.azmsGroundTruth(rndidxs(1:setNsrcs));
-                else
-                    setNsrcsDiff = setNsrcs - numel( currentVarAzms );
-                    if setNsrcsDiff > 0
-                        currentVarAzms = [currentVarAzms ...
-                                          360 * rand( 1, setNsrcsDiff )];
-                    elseif setNsrcsDiff < 0
-                        rndidxs = randperm( numel( currentVarAzms ) );
-                        currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];
-                    end
+                    currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];
                 end
                 obj.segmentKs.setFixedAzimuths( wrapTo180( currentVarAzms ) );
             else

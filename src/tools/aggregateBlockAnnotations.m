@@ -46,7 +46,7 @@ aggrBA.targetHasEnergy = max( targetHasEnergy(idx) );
 aggrBA.curSnr = nanMean( curSnr(idx) );
 aggrBA.curSnr_avgSelf = nanMean( curSnr_avgSelf(idx) );
 
-aggrBA.azmErr = round( aggrBA.azmErr/3 ) + 2;
+aggrBA.azmErr = round( aggrBA.azmErr/5 ) + 2;
 aggrBA.azmErr(isnan(aggrBA.azmErr)) = 1;
 aggrBA.azmErr(isinf(aggrBA.azmErr)) = 1;
 

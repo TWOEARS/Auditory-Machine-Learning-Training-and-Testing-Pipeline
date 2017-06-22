@@ -1,4 +1,4 @@
-function xsummed = summarizeDown( x, leaveVariables )
+function xsummed = summarizeDown( x, leaveVariables, doNotSqueeze )
     dims = 1 : ndims( x );
     dims(leaveVariables) = [];
     dims = flip( dims );
@@ -6,6 +6,8 @@ function xsummed = summarizeDown( x, leaveVariables )
     for dd = dims
         xsummed = sum( xsummed, dd );
     end
-    xsummed = squeeze( xsummed );
+    if nargin < 3 || ~doNotSqueeze
+        xsummed = squeeze( xsummed );
+    end
 end
 

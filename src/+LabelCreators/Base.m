@@ -3,6 +3,7 @@ classdef Base < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = protected)
         y;
+        ysi;
         x;
         blockAnnotations;
         labelBlockSize_s;
@@ -13,7 +14,7 @@ classdef Base < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Abstract, Access = protected)
         outputDeps = getLabelInternOutputDependencies( obj )
-        y = label( obj, annotations )
+        [y, ysi] = label( obj, annotations )
     end
 
     %% -----------------------------------------------------------------------------------
@@ -39,12 +40,13 @@ classdef Base < Core.IdProcInterface
             obj.inputProc.sceneId = obj.sceneId;
             in = obj.loadInputData( wavFilepath, 'blockAnnotations' );
             obj.y = [];
+            obj.ysi = {};
             for blockAnnotation = in.blockAnnotations'
                 if obj.labelBlockSize_auto
                     obj.labelBlockSize_s = ...
                                  blockAnnotation.blockOffset - blockAnnotation.blockOnset;
                 end
-                obj.y(end+1,:) = obj.label( blockAnnotation );
+                [obj.y(end+1,:), obj.ysi{end+1}] = obj.label( blockAnnotation );
                 if obj.labelBlockSize_auto
                     obj.labelBlockSize_s = [];
                 end
@@ -56,8 +58,9 @@ classdef Base < Core.IdProcInterface
         % override of DataProcs.IdProcInterface's method
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             [tmpOut, outFilepath] = loadProcessedData@Core.IdProcInterface( ...
-                                                                  obj, wavFilepath, 'y' );
+                                                           obj, wavFilepath, 'y', 'ysi' );
             obj.y = tmpOut.y;
+            obj.ysi = tmpOut.ysi;
             obj.inputProc.sceneId = obj.sceneId;
             if nargin < 3  || (any( strcmpi( 'x', varargin ) ) && any( strcmpi( 'a', varargin ) ))
                 inData = obj.loadInputData( wavFilepath, 'x', 'blockAnnotations' );
@@ -76,7 +79,7 @@ classdef Base < Core.IdProcInterface
         
         % override of Core.IdProcInterface's method
         function out = saveOutput( obj, wavFilepath )
-            out = obj.getOutput( 'y' );
+            out = obj.getOutput( 'y', 'ysi' );
             obj.save( wavFilepath, out );
         end
         %% -------------------------------------------------------------------------------
@@ -84,6 +87,7 @@ classdef Base < Core.IdProcInterface
         % override of DataProcs.IdProcInterface's method
         function save( obj, wavFilepath, ~ )
             out.y = obj.y;
+            out.ysi = obj.ysi;
             save@Core.IdProcInterface( obj, wavFilepath, out ); 
         end
         %% -------------------------------------------------------------------------------
@@ -94,7 +98,7 @@ classdef Base < Core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.v = 1;
+            outputDeps.v = 2;
             outputDeps.labelBlockSize = obj.labelBlockSize_s;
             outputDeps.labelBlockSize_auto = obj.labelBlockSize_auto;
             outputDeps.labelProc = obj.getLabelInternOutputDependencies();
@@ -103,7 +107,7 @@ classdef Base < Core.IdProcInterface
 
         function out = getOutput( obj, varargin )
             out.y = obj.y;
-            out.bIdxs = 1 : numel( out.y );
+            out.bIdxs = 1 : size( out.y, 1 );
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
                 out.x = obj.x;
                 if obj.removeUnclearBlocks
@@ -114,6 +118,12 @@ classdef Base < Core.IdProcInterface
                 out.a = obj.blockAnnotations;
                 if obj.removeUnclearBlocks
                     out.a(any(isnan(out.y),2)) = [];
+                end
+            end
+            if nargin < 2  || any( strcmpi( 'ysi', varargin ) )
+                out.ysi = obj.ysi;
+                if obj.removeUnclearBlocks
+                    out.ysi(any(isnan(out.y),2)) = [];
                 end
             end
             if obj.removeUnclearBlocks

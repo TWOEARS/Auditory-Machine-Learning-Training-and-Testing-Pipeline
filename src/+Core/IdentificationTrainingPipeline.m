@@ -113,7 +113,7 @@ classdef IdentificationTrainingPipeline < handle
         %   nGenAssessFolds: number of folds of generalization assessment through
         %                    cross validation (default: 0 - no folds)
         %
-        function modelPath = run( obj, varargin )
+        function [modelPath, model, testPerfresults] = run( obj, varargin )
             ip = inputParser;
             ip.addOptional( 'nGenAssessFolds', 0 );
             ip.addOptional( 'modelPath', ['amlttpRun' buildCurrentTimeString()] );

@@ -6,8 +6,9 @@ classdef STLBaseSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
     %   the optimal base given a specified classfier (trainer).
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
-        hpsBases; % bases for STL 
-        hpsBetaRange; % range of sparsity factors for feature extraction
+        hpsBases;       % bases for STL 
+        hpsBetaRange;   % range of sparsity factors for feature extraction
+        scalingModel;   % for scaling the training and test data
     end
     
     %% --------------------------------------------------------------------
@@ -15,14 +16,17 @@ classdef STLBaseSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
 
         function obj = STLBaseSelectTrainer( varargin )
             pds{1} = struct( 'name', 'hpsBases', ...
-                             'default', {}, ...
-                             'valFun', @(x)(iscell(x) && ~isempty(x) && all(cellfun(@ismatrix, x))) );
+                             'default', [], ...
+                             'valFun', @(x)( iscell(x) && ~isempty(x) && all(cellfun(@ismatrix, x))) );
             
             pds{2} = struct( 'name', 'hpsBetaRange', ...
                              'default', [0.4 1], ...
-                             'valFun', @(x)(isfloat(x) && length(x)==2 && x(1) < x(2)) );
+                             'valFun', @(x)( isfloat(x) && length(x)==2 && x(1) < x(2)) );
+            
+            pds{3} = struct( 'name', 'scalingModel', ...
+                             'default', -1, ...
+                             'valFun', @(x)( isa(x, @Models.SparseCodingModel)) ); 
                          
-                                   
             obj = obj@Parameterized( pds );
             obj = obj@ModelTrainers.HpsTrainer( varargin{:} );
             

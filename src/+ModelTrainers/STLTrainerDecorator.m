@@ -11,7 +11,7 @@ classdef STLTrainerDecorator < ModelTrainers.Base & Parameterized
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
         trainer;
-        model;
+        scalingModel;
         beta;
         base;       
     end
@@ -23,17 +23,28 @@ classdef STLTrainerDecorator < ModelTrainers.Base & Parameterized
             pds{1} = struct( 'name', 'trainer', ...
                              'default', @ModelTrainers.GlmNetLambdaSelect, ...
                              'valFun', @(x)(isa(x, @ModelTrainers.Base)) );
-            pds{2} = struct( 'name', 'beta', ...
+            pds{2} = struct( 'name', 'scalingModel', ...
+                             'default', -1, ...
+                             'valFun', @(x)(isa(x, @Models.SparseCodingModel)) );
+            pds{3} = struct( 'name', 'beta', ...
                              'default', 0.6, ...
                              'valFun', @(x)(isnumeric(x) && numel(x) == 1) );
-            pds{3} = struct( 'name', 'base', ...
-                             'default', [], ...
+            pds{4} = struct( 'name', 'base', ...
+                             'default', -1, ...
                              'valFun', @(x)(ismatrix(x)) );
-            pds{4} = struct( 'name', 'maxDataSize', ...
+            pds{5} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
+            
+            % check for necessary parts 
+            if obj.scalingModel == -1
+                error('You have to pass a scalingModel to STLTrainerDecorator.');
+            end
+            if obj.base == -1
+                error('You have to pass a base to STLTrainerDecorator.');
+            end
             
             % TODO call constructors of trainer to pass on arguments
             obj.trainer( varargin{:} );
@@ -51,8 +62,8 @@ classdef STLTrainerDecorator < ModelTrainers.Base & Parameterized
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
             
-            % TODO actually we have to take the scale from the original base
-            xScaled = obj.trainer.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
+            % we have to take the scale from the original base
+            xScaled = obj.scalingModel.scale2zeroMeanUnitVar( x);
             clear x;
             
             % feature extraction

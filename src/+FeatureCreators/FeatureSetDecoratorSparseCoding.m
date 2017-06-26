@@ -84,32 +84,6 @@ classdef FeatureSetDecoratorSparseCoding < FeatureCreators.Base
         end
         %% ----------------------------------------------------------------
         
-        
-%         function setAfeData( obj, afeData )
-%             obj.afeData = afeData;
-%         end
-%         %% -------------------------------------------------------------------------------
-%         
-%         % override from Base to call for wrapped feature creator as well
-%         function process( obj, wavFilepath )
-%             process@FeatureCreators.Base(obj, wavFilepath);
-%         end
-%         %% -------------------------------------------------------------------------------
-%         
-%         %% -------------------------------------------------------------------------------
-% 
-%         % override from Base to call for wrapped feature creator as well
-%         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
-%           	[out, outFilepath] = loadProcessedData@FeatureCreators.Base(obj, wavFilepath, varargin); 
-%         end
-%         %% -------------------------------------------------------------------------------
-% 
-%         % override from Base to call for wrapped feature creator as well
-%         function save( obj, wavFilepath, ~ )
-%             save@FeatureCreators.Base(obj, wavFilepath);
-%         end
-        %% -------------------------------------------------------------------------------
-        
     end
     
     %% --------------------------------------------------------------------

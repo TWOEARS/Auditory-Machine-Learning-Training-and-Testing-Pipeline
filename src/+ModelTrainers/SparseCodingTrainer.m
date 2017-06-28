@@ -16,6 +16,8 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
         % size(xScaled,1)
         batch_size; 
         
+        saveModelDir; % model is saved at specified dir after building
+        
     end
 
     %% --------------------------------------------------------------------
@@ -40,14 +42,16 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             pds{6} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+            pds{7} = struct( 'name', 'saveModelDir', ...
+                             'default', '', ...
+                             'valFun', @(x)(ischar(x)) );
+                         
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end
         %% ----------------------------------------------------------------
 
-        function buildModel( obj, x, y )          
-            fprintf('\n==\tDATASIZE %d\n\n', size(x,1));
-            
+        function buildModel( obj, x, y )                 
             obj.model = Models.SparseCodingModel();
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
@@ -69,6 +73,11 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             % normalized opt value of sparse coding objective
             fobj = stat.fobj_total / size(xScaled, 1);
             fprintf('\n==\tfobj on data: %f\n\n', fobj);
+            % save model if path is not empty
+            if ~isempty(obj.saveModelDir)
+                modelFile = sprintf('scModel_b%d_beta%g_%s.mat', obj.num_bases, obj.beta, datestr(now, 30));
+                save( fullfile(obj.saveModelDir, modelFile), obj.model );
+            end
         end
         %% ----------------------------------------------------------------
             

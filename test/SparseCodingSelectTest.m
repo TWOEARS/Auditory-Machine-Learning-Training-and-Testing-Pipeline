@@ -2,12 +2,12 @@ function SparseCodingSelectTest(varargin)
 
 p = inputParser;
 
-addParameter(p,'hpsMaxDataSize', 1000, @(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
 addParameter(p,'finalMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
-addParameter(p,'hpsSearchBudget', 2 , @(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsSearchBudget', 4 , @(x) mod(x,1) == 0 && x > 0 );
 addParameter(p,'hpsBetas', [1], @(x)(isfloat(x) && isvector(x)) );
-addParameter(p,'hpsNumBasesRange', [100 200], @(x) ( all(mod(x,1) == 0) && length(x)==2 && x(1) < x(2) ) );
-addParameter(p,'hpsCvFolds', 2, @(x) ( length(x) == 1 && x > 1 && mod(x,1) == 0 ) );
+addParameter(p,'hpsNumBasesRange', [100 5000], @(x) ( all(mod(x,1) == 0) && length(x)==2 && x(1) < x(2) ) );
+addParameter(p,'hpsCvFolds', 3, @(x) ( length(x) == 1 && x > 1 && mod(x,1) == 0 ) );
 
 parse(p, varargin{:});
 

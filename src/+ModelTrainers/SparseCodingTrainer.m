@@ -75,8 +75,12 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             fprintf('\n==\tfobj on data: %f\n\n', fobj);
             % save model if path is not empty
             if ~isempty(obj.saveModelDir)
+                if ~exist(obj.saveModelDir, 'dir') 
+                    mkdir(obj.saveModelDir); 
+                end
                 modelFile = sprintf('scModel_b%d_beta%g_%s.mat', obj.num_bases, obj.beta, datestr(now, 30));
-                save( fullfile(obj.saveModelDir, modelFile), obj.model );
+                scModel = obj.model; 
+                save( fullfile(obj.saveModelDir, modelFile), 'scModel' );
             end
         end
         %% ----------------------------------------------------------------

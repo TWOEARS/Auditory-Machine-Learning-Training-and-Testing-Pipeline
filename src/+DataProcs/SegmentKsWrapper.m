@@ -128,10 +128,10 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             if any( srcsHaveEnergy )
                 obj.azmsGroundTruth(~srcsHaveEnergy) = [];
                 obj.energeticBaidxs(~srcsHaveEnergy) = [];
-            % else
-                % do nothing, because if no src is assumed, we still want
-                % to analyze the full stream. Never segregate into "zero"
-                % streams.
+            else
+                rndIdx = randi( numel( obj.azmsGroundTruth ) );
+                obj.azmsGroundTruth = obj.azmsGroundTruth(rndIdx);
+                obj.energeticBaidxs = obj.energeticBaidxs(rndIdx);
             end
             if ~obj.useNsrcsKs
                 rndNbias = randi( obj.nsrcsRndPlusMinusBias*2 + 1 ) ...
@@ -145,15 +145,9 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             if ~obj.useDnnLocKs
                 azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
                 currentVarAzms = wrapTo180( obj.azmsGroundTruth + azmVar );
-                if sum( srcsHaveEnergy ) == 0
-                    rndIdx = randi( numel( currentVarAzms ) );
-                    obj.azmsGroundTruth = obj.azmsGroundTruth(rndIdx);
-                    obj.energeticBaidxs = obj.energeticBaidxs(rndIdx);
-                end
                 setNsrcsDiff = setNsrcs - numel( currentVarAzms );
                 if setNsrcsDiff > 0
-                    currentVarAzms = [currentVarAzms ...
-                        360 * rand( 1, setNsrcsDiff )];
+                    currentVarAzms = [currentVarAzms 360*rand( 1, setNsrcsDiff )];
                 elseif setNsrcsDiff < 0
                     rndidxs = randperm( numel( currentVarAzms ) );
                     currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];

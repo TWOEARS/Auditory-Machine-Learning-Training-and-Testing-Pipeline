@@ -6,6 +6,7 @@ countsSummarizedDown = permute( countsSummarizedDown, dimidxs );
 
 dimidxs = size( countsSummarizedDown );
 dimidxs(1) = [];
+if numel( dimidxs ) == 1, dimidxs(end+1) = 1; end
 tp = reshape( squeeze( countsSummarizedDown(1,:) ), dimidxs );
 tn = reshape( squeeze( countsSummarizedDown(2,:) ), dimidxs );
 fp = reshape( squeeze( countsSummarizedDown(3,:) ), dimidxs );

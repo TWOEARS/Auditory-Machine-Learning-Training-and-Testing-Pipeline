@@ -115,23 +115,14 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
 resc = int32( zeros(0) );
 resct = int32( zeros(0) );
-dpi = testPerfresults.datapointInfo;
     
 fprintf( 'analyzing' );
-for ii = 1 : numel( dpi.blockAnnotsCacheFiles )
-    currentFileDpiIdxs = find( dpi.fileIdxs == ii );
-    for jj = 1 : numel( dpi.blockAnnotsCacheFiles{ii} )
-        currentFileBacfSubIdxs = dpi.bacfIdxs(currentFileDpiIdxs);
-        currentBacfDpiIdxs = currentFileDpiIdxs(currentFileBacfSubIdxs == jj);
-        currentBacfUsedIdxs = dpi.bIdxs(currentBacfDpiIdxs);
-        bacfile = load( dpi.blockAnnotsCacheFiles{ii}{jj}, 'blockAnnotations');
-        blockAnnotations = bacfile.blockAnnotations(currentBacfUsedIdxs);
-        yp = dpi.yPred(currentBacfDpiIdxs);
-        yt = dpi.yTrue(currentBacfDpiIdxs);
+for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
+    for jj = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles{ii} )
+        [blockAnnotations, yp, yt] = testPerfresults.getBacfDpi( ii, jj );
         [bap, asgn] = extractBAparams( blockAnnotations, yp, yt );
         bapi = arrayfun( @baParams2bapIdxs, bap );
-        oneIdxs = ones( size( asgn{1} ) );
-        resc = addDpiToResc( resc, asgn, 2*oneIdxs, [bapi.targetHasEnergy], [bapi.nAct], [bapi.curSnr], [bapi.curSnr_avgSelf], [bapi.azmErr], [bapi.nEstErr] );
+        resc = addDpiToResc( resc, asgn, 2*ones( size( asgn{1} ) ), [bapi.targetHasEnergy], [bapi.nAct], [bapi.curSnr], [bapi.curSnr_avgSelf], [bapi.azmErr], [bapi.nEstErr] );
         fprintf( '.' );
         
         [~,~,sidxs] = unique( [blockAnnotations.blockOffset] );
@@ -145,8 +136,7 @@ for ii = 1 : numel( dpi.blockAnnotsCacheFiles )
                 asgn = arrayfun( @(ii)([asgn{ii},aCs{ii}]), 1:4, 'UniformOutput', false );
             end
         end
-        oneIdxs = ones( size( asgn{1} ) );
-        resct = addDpiToResc( resct, asgn, 2*oneIdxs, [aggrBAs.targetHasEnergy], [aggrBAs.nAct], [aggrBAs.curSnr], [aggrBAs.curSnr_avgSelf], [aggrBAs.azmErr], [aggrBAs.nEstErr] );
+        resct = addDpiToResc( resct, asgn, 2*ones( size( asgn{1} ) ), [aggrBAs.targetHasEnergy], [aggrBAs.nAct], [aggrBAs.curSnr], [aggrBAs.curSnr_avgSelf], [aggrBAs.azmErr], [aggrBAs.nEstErr] );
         clear aggrBAs;
     end
 end

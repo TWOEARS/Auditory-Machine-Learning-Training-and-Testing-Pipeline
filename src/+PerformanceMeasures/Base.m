@@ -77,6 +77,19 @@ classdef (Abstract) Base
         end
         % -----------------------------------------------------------------
 
+        function [blockAnnotations, yp, yt] = getBacfDpi( obj, bacfIdx, bacfSubidx )
+            allDpi = obj.datapointInfo;
+            currentFileDpiIdxs = find( allDpi.fileIdxs == bacfIdx );
+            currentFileBacfSubIdxs = allDpi.bacfIdxs(currentFileDpiIdxs);
+            currentBacfDpiIdxs = currentFileDpiIdxs(currentFileBacfSubIdxs == bacfSubidx);
+            currentBacfUsedIdxs = allDpi.bIdxs(currentBacfDpiIdxs);
+            bacfile = load( allDpi.blockAnnotsCacheFiles{bacfIdx}{bacfSubidx}, 'blockAnnotations');
+            blockAnnotations = bacfile.blockAnnotations(currentBacfUsedIdxs);
+            yp = allDpi.yPred(currentBacfDpiIdxs);
+            yt = allDpi.yTrue(currentBacfDpiIdxs);
+        end
+        % -----------------------------------------------------------------
+
     end
 
     %% --------------------------------------------------------------------

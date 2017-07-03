@@ -1,6 +1,4 @@
-function [agBAparamIdxs, asgn] = aggregateBlockAnnotations( blockAnnotations, yp, yt )
-
-[bap, ~] = extractBAparams( blockAnnotations, yp, yt );
+function [agBAparamIdxs, asgn] = aggregateBlockAnnotations( bap, yp, yt )
 
 asgn{1} = any( yp > 0 ) && any( yt > 0 );
 asgn{2} = all( yp < 0 ) && all( yt < 0 );
@@ -17,12 +15,12 @@ elseif asgn{4}
     idx = find( (yp < 0) & (yt > 0) );
 end
 
-ag.azmErr = nanMean( bap.azmErr(idx) );
-ag.nEstErr = nanMean( bap.nEstErr(idx) );
-ag.nAct = nanMean( bap.nAct(idx) );
-ag.targetHasEnergy = max( bap.targetHasEnergy(idx) );
-ag.curSnr = nanMean( bap.curSnr(idx) );
-ag.curSnr_avgSelf = nanMean( bap.curSnr_avgSelf(idx) );
+ag.azmErr = nanMean( [bap(idx).azmErr] );
+ag.nEstErr = nanMean( [bap(idx).nEstErr] );
+ag.nAct = nanMean( [bap(idx).nAct] );
+ag.targetHasEnergy = max( [bap(idx).targetHasEnergy] );
+ag.curSnr = nanMean( [bap(idx).curSnr] );
+ag.curSnr_avgSelf = nanMean( [bap(idx).curSnr_avgSelf] );
 
 agBAparamIdxs = baParams2bapIdxs( ag );
 

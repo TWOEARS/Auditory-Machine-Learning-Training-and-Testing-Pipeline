@@ -129,32 +129,36 @@ for ii = 1 : numel( dpi.blockAnnotsCacheFiles )
         yp = dpi.yPred(currentBacfDpiIdxs);
         yt = dpi.yTrue(currentBacfDpiIdxs);
         [bap, asgn] = extractBAparams( blockAnnotations, yp, yt );
-        bapi = baParams2bapIdxs( bap );
+        bapi = arrayfun( @baParams2bapIdxs, bap );
         oneIdxs = ones( size( asgn{1} ) );
-        resc = addDpiToResc( resc, asgn, 2*oneIdxs, bapi.targetHasEnergy, bapi.nAct, bapi.curSnr, bapi.curSnr_avgSelf, bapi.azmErr, bapi.nEstErr );
+        resc = addDpiToResc( resc, asgn, 2*oneIdxs, [bapi.targetHasEnergy], [bapi.nAct], [bapi.curSnr], [bapi.curSnr_avgSelf], [bapi.azmErr], [bapi.nEstErr] );
         fprintf( '.' );
         
         [~,~,sidxs] = unique( [blockAnnotations.blockOffset] );
         for bb = 1 : max( sidxs )
-            [aBAs, aCs] = aggregateBlockAnnotations( blockAnnotations(sidxs == bb), yp(sidxs == bb), yt(sidxs == bb) );
+            [aBAs, aCs] = aggregateBlockAnnotations( bap(sidxs == bb), yp(sidxs == bb), yt(sidxs == bb) );
             if ~exist( 'aggrBAs', 'var' )
                 aggrBAs(1) = aBAs;
-                aggrCounts(1) = aCs;
+                asgn = aCs;
             else
-                aggrBAs(end+1) = aBAs;
-                aggrCounts(end+1) = aCs;
+                aggrBAs(end+1) = aBAs; %#ok<AGROW>
+                asgn = arrayfun( @(ii)([asgn{ii},aCs{ii}]), 1:4, 'UniformOutput', false );
             end
         end
-        asgn{1} = [aggrCounts{1}];
-        asgn{2} = [aggrCounts{2}];
-        asgn{3} = [aggrCounts{3}];
-        asgn{4} = [aggrCounts{3}];
         oneIdxs = ones( size( asgn{1} ) );
         resct = addDpiToResc( resct, asgn, 2*oneIdxs, [aggrBAs.targetHasEnergy], [aggrBAs.nAct], [aggrBAs.curSnr], [aggrBAs.curSnr_avgSelf], [aggrBAs.azmErr], [aggrBAs.nEstErr] );
         clear aggrBAs;
-        clear aggrCounts;
     end
 end
 fprintf( '\n' );
+
+tmp = summarizeDown( resct, [7,8] );
+sens = tmp(:,1) ./ (tmp(:,1)+tmp(:,4))
+spec = tmp(:,2) ./ (tmp(:,2)+tmp(:,3))
+
+tmp = summarizeDown( resc, [7,8] );
+sens = tmp(:,1) ./ (tmp(:,1)+tmp(:,4))
+spec = tmp(:,2) ./ (tmp(:,2)+tmp(:,3))
+
 
 end

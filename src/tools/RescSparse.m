@@ -102,27 +102,36 @@ classdef RescSparse
         function obj = addData( obj, idxs, data )
             idxs = obj.dataIdxsConvert( idxs );
             data = obj.dataConvert( data );
-            if numel( idxs ) < size( obj.dataIdxs, 2 )
+            if size( idxs, 2 ) < size( obj.dataIdxs, 2 )
                 error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
             end
-            if numel( idxs ) > size( obj.dataIdxs, 2 )
+            if size( idxs, 2 ) > size( obj.dataIdxs, 2 )
                 if isempty( obj.dataIdxs )
-                    obj.dataIdxs = obj.dataIdxsConvert( zeros( 0, numel( idxs ) ) );
+                    obj.dataIdxs = obj.dataIdxsConvert( zeros( 0, size( idxs, 2 ) ) );
                 else
-                    obj.dataIdxs(:,size( obj.dataIdxs, 2 )+1:numel( idxs )) = obj.dataIdxsConvert( 1 );
+                    obj.dataIdxs(:,size( obj.dataIdxs, 2 )+1:size( idxs, 2 )) = obj.dataIdxsConvert( 1 );
                 end
             end
-            [rowIdxEq,~,rowIdxGt] = obj.rowSearch( idxs );
-            if rowIdxEq ~= 0
-                obj.data(rowIdxEq,:) = obj.dataAdd( obj.data(rowIdxEq,:), data );
-            else
-                if rowIdxGt <= size( obj.dataIdxs, 1 )
-                    obj.dataIdxs(rowIdxGt+1:end+1,:) = obj.dataIdxs(rowIdxGt:end,:);
-                    obj.data(rowIdxGt+1:end+1,:) = obj.data(rowIdxGt:end,:);
+            rowIdxEq = zeros( size( idxs, 1 ), 1 );
+            rowIdxGt = zeros( size( idxs, 1 ), 1 );
+            for ii = 1 : size( idxs, 1 )
+                [rowIdxEq(ii),~,rowIdxGt(ii)] = obj.rowSearch( idxs(ii,:) );
+                if rowIdxEq(ii) ~= 0
+                    obj.data(rowIdxEq(ii),:) = obj.dataAdd( obj.data(rowIdxEq(ii),:), data(ii,:) );
                 end
-                obj.dataIdxs(rowIdxGt,:) = idxs;
-                obj.data(rowIdxGt,:) = obj.dataAdd( obj.dataInitialize, data );
             end
+            rowIdxGt(rowIdxEq ~= 0) = [];
+            idxs(rowIdxEq ~= 0,:) = [];
+            data(rowIdxEq ~= 0,:) = [];
+            [rigtidxs,order] = sortrows( [rowIdxGt,double( idxs )] );
+            incidxs = sort( [rigtidxs(:,1); (1:size( obj.dataIdxs, 1 ))'] );
+            obj.dataIdxs(end+1,:) = obj.dataIdxsConvert( 0 );
+            obj.data(end+1,:) = obj.dataConvert( 0 );
+            obj.dataIdxs = obj.dataIdxs(incidxs,:);
+            obj.data = obj.data(incidxs,:);
+            rigtidxs(:,1) = rigtidxs(:,1) + (0:size( rigtidxs, 1 )-1)';
+            obj.dataIdxs(rigtidxs(:,1),:) = rigtidxs(:,2:end);
+            obj.data(rigtidxs(:,1),:) = data(order,:);
         end
         %% -------------------------------------------------------------------------------
     end
@@ -130,17 +139,31 @@ classdef RescSparse
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
 
-        function [rowIdxEq,rowIdxLt,rowIdxGt] = rowSearch( obj, idxs )
+        function [rowIdxEq,rowIdxLt,rowIdxGt] = rowSearch( obj, idxs, preRowIdxGt )
+%             if numel( idxs ) ~= size( obj.dataIdxs, 2 )
+%                 error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
+%             end
             rowIdxEq = 0; 
             rowIdxLt = 0;
-            rowIdxGt = size( obj.dataIdxs, 1 ) + 1;
-            if numel( idxs ) ~= size( obj.dataIdxs, 2 )
-                error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
+            if nargin < 3 || isempty( preRowIdxGt )
+                preRowIdxGt = size( obj.dataIdxs, 1 );
             end
+            rowIdxGt = preRowIdxGt + 1;
+            ni = numel( idxs );
             while rowIdxGt - rowIdxLt > 1
                 mRowIdx = floor( 0.5*rowIdxLt + 0.5*rowIdxGt );
-                mIdxs = obj.dataIdxs(mRowIdx,:);
-                [idxAreEq,idxAisltB,idxAisgtB] = RescSparse.idxsCmp( idxs, mIdxs );
+                idxAreEq = 1; idxAisltB = 0; idxAisgtB = 0;
+                for ii = 1 : ni
+                    if idxs(ii) < obj.dataIdxs(mRowIdx,ii)
+                        idxAisltB = 1;
+                        idxAreEq = 0;
+                        break;
+                    elseif idxs(ii) > obj.dataIdxs(mRowIdx,ii)
+                        idxAisgtB = 1;
+                        idxAreEq = 0;
+                        break;
+                    end
+                end
                 if idxAreEq
                     rowIdxEq = mRowIdx;
                     rowIdxLt = mRowIdx - 1;
@@ -162,9 +185,9 @@ classdef RescSparse
         
         function [idxAreEq,idxAisltB,idxAisgtB] = idxsCmp( idxsA, idxsB )
             idxAreEq = 0; idxAisltB = 0; idxAisgtB = 0;
-            if numel( idxsA ) ~= numel( idxsB )
-                error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
-            end
+%             if numel( idxsA ) ~= numel( idxsB )
+%                 error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
+%             end
             for ii = 1 : numel( idxsA )
                 if idxsA(ii) < idxsB(ii)
                     idxAisltB = 1;
@@ -177,6 +200,7 @@ classdef RescSparse
             idxAreEq = 1;
         end
         %% -------------------------------------------------------------------------------
-    end
+
+end
     
 end

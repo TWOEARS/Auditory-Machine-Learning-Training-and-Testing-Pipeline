@@ -100,6 +100,31 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
+        function [data,dataIdxs] = getRowIndexed( obj, rowIdxs )
+            if max( rowIdxs ) > size( obj.dataIdxs, 1 )
+                error( 'AMLTTP:usage:unexpected', 'max rowIdxs too big.' );
+            end
+            data = obj.data(rowIdxs,:);
+            if nargout > 1
+                dataIdxs = obj.dataIdxs(rowIdxs,:);
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function rowIdxs = getRowIdxs( obj, idxsMask )
+            if size( idxsMask, 2 ) ~= size( obj.dataIdxs, 2 )
+                error( 'AMLTTP:usage:unexpected', 'idxsMask dimensions wrong.' );
+            end
+            dataIdxsMask = true( size( obj.dataIdxs ) );
+            for ii = 1 : size( obj.dataIdxs, 2 )
+                if ischar( idxsMask{ii} ) && idxsMask{ii} == ':', continue; end
+                dataIdxsMask(:,ii) = idxsMask{ii}( obj.dataIdxs(:,ii) );
+            end
+            rowIdxsMask = all( dataIdxsMask, 2 );
+            rowIdxs = find( rowIdxsMask );
+        end
+        %% -------------------------------------------------------------------------------
+        
         function obj = addData( obj, idxs, data )
             idxs = obj.dataIdxsConvert( idxs );
             data = obj.dataConvert( data );
@@ -135,10 +160,6 @@ classdef RescSparse
             obj.data(rigtidxs(:,1),:) = data(order,:);
         end
         %% -------------------------------------------------------------------------------
-    end
-
-    %% -----------------------------------------------------------------------------------
-    methods (Access = public)
 
         function [rowIdxEq,rowIdxLt,rowIdxGt] = rowSearch( obj, idxs, preRowIdxGt )
 %             if numel( idxs ) ~= size( obj.dataIdxs, 2 )

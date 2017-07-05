@@ -118,10 +118,23 @@ classdef RescSparse
             dataIdxsMask = true( size( obj.dataIdxs ) );
             for ii = 1 : size( obj.dataIdxs, 2 )
                 if ischar( idxsMask{ii} ) && idxsMask{ii} == ':', continue; end
-                dataIdxsMask(:,ii) = idxsMask{ii}( obj.dataIdxs(:,ii) );
+                if ii == 1
+                    dataIdxsMask(:,ii) = idxsMask{ii}( obj.dataIdxs(:,ii) );
+                else
+                    dataIdxsMask(dataIdxsMask(:,ii-1),ii) = idxsMask{ii}( obj.dataIdxs(dataIdxsMask(:,ii-1),ii) );
+                end
             end
             rowIdxsMask = all( dataIdxsMask, 2 );
             rowIdxs = find( rowIdxsMask );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function obj = deleteData( obj, rowIdxs )
+            if max( rowIdxs ) > size( obj.dataIdxs, 1 )
+                error( 'AMLTTP:usage:unexpected', 'max rowIdxs too big.' );
+            end
+            obj.data(rowIdxs,:) = [];
+            obj.dataIdxs(rowIdxs,:) = [];
         end
         %% -------------------------------------------------------------------------------
         

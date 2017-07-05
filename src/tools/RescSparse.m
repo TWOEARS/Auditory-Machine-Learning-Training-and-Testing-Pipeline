@@ -6,7 +6,6 @@ classdef RescSparse
         dataIdxsConvert;
         data;
         dataIdxs;
-        dataSize;
         dataInitialize;
         dataAdd;
     end
@@ -83,19 +82,21 @@ classdef RescSparse
             obj.dataAdd = dataAdd;
             obj.data = obj.dataConvert( zeros( 0 ) );
             obj.dataIdxs = obj.dataIdxsConvert( zeros( 0 ) );
-            obj.dataSize = 0;
         end
         %% -------------------------------------------------------------------------------
         
-        function value = get( obj, varargin )
+        function value = get( obj, idxs )
             value = 0;
-            if numel( varargin ) > size( obj.dataIdxs, 2 )
-                return;
+            if size( idxs, 2 ) < size( obj.dataIdxs, 2 )
+                error( 'AMLTTP:usage:unexpected', 'idxs dimensions too small.' );
             end
-            if any( [varargin{:}] > obj.dataSize )
-                return;
+            if size( idxs, 2 ) > size( obj.dataIdxs, 2 )
+                error( 'AMLTTP:usage:unexpected', 'idxs dimensions too big.' );
             end
-            
+            rowIdxEq = obj.rowSearch( idxs );
+            if rowIdxEq ~= 0
+                value = obj.data(rowIdxEq,:);
+            end
         end
         %% -------------------------------------------------------------------------------
         
@@ -103,7 +104,7 @@ classdef RescSparse
             idxs = obj.dataIdxsConvert( idxs );
             data = obj.dataConvert( data );
             if size( idxs, 2 ) < size( obj.dataIdxs, 2 )
-                error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
+                error( 'AMLTTP:usage:unexpected', 'idxs dimensions too small.' );
             end
             if size( idxs, 2 ) > size( obj.dataIdxs, 2 )
                 if isempty( obj.dataIdxs )
@@ -149,7 +150,7 @@ classdef RescSparse
                 preRowIdxGt = size( obj.dataIdxs, 1 );
             end
             rowIdxGt = preRowIdxGt + 1;
-            ni = numel( idxs );
+            ni = size( idxs, 2 );
             while rowIdxGt - rowIdxLt > 1
                 mRowIdx = floor( 0.5*rowIdxLt + 0.5*rowIdxGt );
                 idxAreEq = 1; idxAisltB = 0; idxAisgtB = 0;
@@ -188,7 +189,7 @@ classdef RescSparse
 %             if numel( idxsA ) ~= numel( idxsB )
 %                 error( 'AMLTTP:implementation:unexpected', 'This should not have happened.' );
 %             end
-            for ii = 1 : numel( idxsA )
+            for ii = 1 : size( idxsA, 2 )
                 if idxsA(ii) < idxsB(ii)
                     idxAisltB = 1;
                     return;

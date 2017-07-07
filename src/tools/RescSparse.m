@@ -85,6 +85,15 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
+        function ecpy = emptyCopy( obj )
+            ecpy = RescSparse();
+            ecpy.dataConvert = obj.dataConvert;
+            ecpy.dataIdxsConvert = obj.dataIdxsConvert;
+            ecpy.dataAdd = obj.dataAdd;
+            ecpy.dataInitialize = obj.dataInitialize;
+        end
+        %% -------------------------------------------------------------------------------
+        
         function value = get( obj, idxs )
             value = 0;
             if size( idxs, 2 ) < size( obj.dataIdxs, 2 )
@@ -209,6 +218,48 @@ classdef RescSparse
                 elseif idxAisgtB
                     rowIdxLt = mRowIdx;
                 end
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function obj = partJoin( obj, otherObj, keepMask, overrideMask )
+            obj = obj.deleteData( obj.getRowIdxs( overrideMask ) );
+            otherObj = otherObj.deleteData( otherObj.getRowIdxs( keepMask ) );
+            obj = obj.addData( otherObj.dataIdxs, otherObj.data );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function summedResc = summarizeDown( obj, keepDims, rowIdxs )
+            if nargin < 3 || isempty( rowIdxs )
+                rowIdxs = 1 : size( obj.dataIdxs, 1 );
+            end
+            [keepDimsUniqueIdxs,~,ic] = unique( obj.dataIdxs(rowIdxs,keepDims), 'rows' );
+            summedData = obj.dataConvert( zeros( size( keepDimsUniqueIdxs, 1 ), size( obj.data, 2 ) ) );
+            for ii = 1 : size( keepDimsUniqueIdxs, 1 )
+                summedData(ii,:) = sum( obj.data(rowIdxs(ic==ii),:) );
+            end
+            summedResc = emptyCopy( obj );
+            summedResc.dataIdxs = keepDimsUniqueIdxs;
+            summedResc.data = summedData;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function mat = resc2mat( obj, ridx2midx, rowIdxs )
+            if nargin < 2 || isempty( ridx2midx )
+                ridx2midx = repmat( {@(idx)(idx)}, 1, size( obj.dataIdxs, 2 ) );
+            end
+            if nargin < 3 || isempty( rowIdxs )
+                rowIdxs = 1 : size( obj.dataIdxs, 1 );
+            end
+            midxs = obj.dataIdxs(rowIdxs,:);
+            for ii = 1 : size( obj.dataIdxs, 2 )
+                midxs(:,ii) = ridx2midx{ii}( midxs(:,ii) );
+            end
+            maxMidxs = num2cell( max( midxs, [], 1 ) );
+            mat(maxMidxs{:}) = 0;
+            midxs = num2cell( midxs );
+            for ii = 1 : size( midxs, 1 )
+                mat(midxs{ii,:}) = obj.data(rowIdxs(ii),:);
             end
         end
         %% -------------------------------------------------------------------------------

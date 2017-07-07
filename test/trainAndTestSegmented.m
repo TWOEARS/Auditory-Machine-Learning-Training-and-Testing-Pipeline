@@ -113,40 +113,46 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
 %% analysis
 
-resc = int32( zeros(0) );
-resct = int32( zeros(0) );
+resc = RescSparse( 'uint32', 'int8' );
+resct = RescSparse( 'uint32', 'int8' );
     
-fprintf( 'analyzing' );
-for ii = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles )
-    for jj = 1 : numel( testPerfresults.datapointInfo.blockAnnotsCacheFiles{ii} )
-        [blockAnnotations, yp, yt] = testPerfresults.getBacfDpi( ii, jj );
-        [bap, asgn] = extractBAparams( blockAnnotations, yp, yt );
-        bapi = arrayfun( @baParams2bapIdxs, bap );
-        resc = addDpiToResc( resc, asgn, 2*ones( size( asgn{1} ) ), [bapi.targetHasEnergy], [bapi.nAct], [bapi.curSnr], [bapi.curSnr_avgSelf], [bapi.azmErr], [bapi.nEstErr] );
-        fprintf( '.' );
-        
-        [~,~,sidxs] = unique( [blockAnnotations.blockOffset] );
-        for bb = 1 : max( sidxs )
-            [aBAs, aCs] = aggregateBlockAnnotations( bap(sidxs == bb), yp(sidxs == bb), yt(sidxs == bb) );
-            if ~exist( 'aggrBAs', 'var' )
-                aggrBAs(1) = aBAs;
-                asgn = aCs;
-            else
-                aggrBAs(end+1) = aBAs; %#ok<AGROW>
-                asgn = arrayfun( @(ii)([asgn{ii},aCs{ii}]), 1:4, 'UniformOutput', false );
-            end
-        end
-        resct = addDpiToResc( resct, asgn, 2*ones( size( asgn{1} ) ), [aggrBAs.targetHasEnergy], [aggrBAs.nAct], [aggrBAs.curSnr], [aggrBAs.curSnr_avgSelf], [aggrBAs.azmErr], [aggrBAs.nEstErr] );
-        clear aggrBAs;
-    end
-end
-fprintf( '\n' );
+% profile on
 
-tmp = summarizeDown( resct, [7,8] );
+% filesema = setfilesemaphore( 'test.mat' );
+% if exist( 'test.mat', 'file' )
+%     load( 'test.mat' );
+% end
+% removefilesemaphore( filesema );
+
+[resc,resct] = analyzeBlockbased( resc, resct, testPerfresults );
+
+% filesema = setfilesemaphore( 'test.mat' );
+% if exist( 'test.mat', 'file' )
+%     fileupdate = load( 'test.mat' );
+%     [data,dataIdxs] = fileupdate.resc.getRowIndexed( 1:size( fileupdate.resc.dataIdxs, 1 ) );
+%     dataIdxs(:,1) = dataIdxs(:,1)+1;
+%     fileupdate.resc = fileupdate.resc.addData( dataIdxs, data );
+%     fprintf( ':' );
+%     resc = syncResults2( resc, fileupdate.resc, 2, 1 );
+%     fprintf( ':' );
+%     resct = syncResults2( resct, fileupdate.resct, 2, 1 );
+%     fprintf( ':' );
+% end
+% save( 'test.mat', ...
+%       'resc','resct', ...
+%       '-v7.3' );
+% fprintf( ';\n' );
+% removefilesemaphore( filesema );
+
+% profile viewer
+
+tmp = resct.summarizeDown( [7,8] );
+tmp = tmp.resc2mat( {@(idx)(idx+3),@(idx)(idx)} );
 sens = tmp(:,1) ./ (tmp(:,1)+tmp(:,4))
 spec = tmp(:,2) ./ (tmp(:,2)+tmp(:,3))
 
-tmp = summarizeDown( resc, [7,8] );
+tmp = resc.summarizeDown( [7,8] );
+tmp = tmp.resc2mat( {@(idx)(idx+3),@(idx)(idx)} );
 sens = tmp(:,1) ./ (tmp(:,1)+tmp(:,4))
 spec = tmp(:,2) ./ (tmp(:,2)+tmp(:,3))
 

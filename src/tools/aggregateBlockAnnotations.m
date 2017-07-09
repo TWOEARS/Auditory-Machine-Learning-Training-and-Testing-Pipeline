@@ -1,26 +1,37 @@
 function [agBAparamIdxs, asgn] = aggregateBlockAnnotations( bap, yp, yt )
 
-asgn{1} = any( yp > 0 ) && any( yt > 0 );
-asgn{2} = all( yp < 0 ) && all( yt < 0 );
-asgn{3} = any( yp > 0 ) && all( yt < 0 );
-asgn{4} = all( yp < 0 ) && any( yt > 0 );
+ytIdx = find( yt > 0 );
+assert( numel( ytIdx ) <= 1 ); % because I defined it in my test scripts: target sounds only on src1
+isyt = ~isempty( ytIdx );
+isyp = any( yp > 0 );
 
-if asgn{1}
-    idx = find( (yt > 0) );
-elseif asgn{2}
-    idx = 1 : numel( yt );
-elseif asgn{3}
-    idx = find( (yp > 0) & (yt < 0) );
-elseif asgn{4}
-    idx = find( (yp < 0) & (yt > 0) );
+asgn{1} = isyp && isyt;
+asgn{2} = ~isyp && ~isyt;
+asgn{3} = isyp && ~isyt;
+asgn{4} = ~isyp && isyt;
+
+ag.classIdx = bap(1).classIdx;
+ag.nAct = bap(1).nAct;
+ag.nEstErr = bap(1).nEstErr;
+ag.scpId = bap(1).scpId;
+ag.whiteNoise = bap(1).whiteNoise;
+ag.headPosIdx = bap(1).headPosIdx;
+ag.nAct_segStream = nan;
+ag.distToClosestSrc = nanMean( [bap.distToClosestSrc] );
+ag.multiSrcsAttributability = nanMean( [bap.multiSrcsAttributability] );
+if isyt
+    ag.curSnr = bap(ytIdx).curSnr;
+    ag.curNrj = bap(ytIdx).curNrj;
+    ag.curNrjOthers = bap(ytIdx).curNrjOthers;
+    ag.azmErr = bap(ytIdx).azmErr;
+else
+    curSnr = [bap.curSnr];
+    [~,maxCurSnrIdx] = max( curSnr );
+    ag.curSnr = curSnr(maxCurSnrIdx);
+    ag.curNrj = bap(maxCurSnrIdx).curNrj;
+    ag.curNrjOthers = bap(maxCurSnrIdx).curNrjOthers;
+    ag.azmErr = nan;
 end
-
-ag.azmErr = nanMean( [bap(idx).azmErr] );
-ag.nEstErr = nanMean( [bap(idx).nEstErr] );
-ag.nAct = nanMean( [bap(idx).nAct] );
-ag.targetHasEnergy = max( [bap(idx).targetHasEnergy] );
-ag.curSnr = nanMean( [bap(idx).curSnr] );
-ag.curSnr_avgSelf = nanMean( [bap(idx).curSnr_avgSelf] );
 
 agBAparamIdxs = baParams2bapIdxs( ag );
 

@@ -141,7 +141,7 @@ resct = RescSparse( 'uint32', 'uint8' );
 
 scp = struct('nSources',{3},'headPosIdx',{0},'ambientWhtNoise',{1},'whtNoiseSnr',{8});
 scp.id = 1;
-[resc,resct] = analyzeBlockbased( resc, resct, testPerfresults, scp, 2 );
+[resc,resct] = analyzeBlockbased( resc, resct, testPerfresults, scp, true, 'classIdx', 2, 'dd', 2 );
 
 % filesema = setfilesemaphore( 'test.mat' );
 % if exist( 'test.mat', 'file' )

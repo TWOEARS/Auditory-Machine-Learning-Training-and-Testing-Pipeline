@@ -1,14 +1,14 @@
-function [agBAparamIdxs, asgn] = aggregateBlockAnnotations( bap, yp, yt, extraFields )
+function [ag, asgn] = aggregateBlockAnnotations( bap, yp, yt, extraFields )
 
 ytIdx = find( yt > 0 );
 assert( numel( ytIdx ) <= 1 ); % because I defined it in my test scripts: target sounds only on src1
 isyt = ~isempty( ytIdx );
 isyp = any( yp > 0 );
 
-asgn{1} = isyp && isyt;
-asgn{2} = ~isyp && ~isyt;
-asgn{3} = isyp && ~isyt;
-asgn{4} = ~isyp && isyt;
+asgn(1,1) = isyp && isyt;
+asgn(1,2) = ~isyp && ~isyt;
+asgn(1,3) = isyp && ~isyt;
+asgn(1,4) = ~isyp && isyt;
 
 for ii = 1 : numel( extraFields )
     ag.(extraFields{ii}) = bap(1).(extraFields{ii});
@@ -34,7 +34,5 @@ else
     ag.curNrjOthers = bap(maxCurSnrIdx).curNrjOthers;
     ag.azmErr = nan;
 end
-
-agBAparamIdxs = baParams2bapIdxs( ag, extraFields );
 
 end

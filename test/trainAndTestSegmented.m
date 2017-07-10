@@ -146,9 +146,9 @@ scp.id = 1;
 % filesema = setfilesemaphore( 'test.mat' );
 % if exist( 'test.mat', 'file' )
 %     fileupdate = load( 'test.mat' );
-%     [data,dataIdxs] = fileupdate.resc.getRowIndexed( 1:size( fileupdate.resc.dataIdxs, 1 ) );
-%     dataIdxs(:,1) = dataIdxs(:,1)+1;
-%     fileupdate.resc = fileupdate.resc.addData( dataIdxs, data );
+% %     [data,dataIdxs] = fileupdate.resc.getRowIndexed( 1:size( fileupdate.resc.dataIdxs, 1 ) );
+% %     dataIdxs(:,1) = dataIdxs(:,1)+1;
+% %     fileupdate.resc = fileupdate.resc.addData( dataIdxs, data );
 %     fprintf( ':' );
 %     resc = syncResults2( resc, fileupdate.resc, 2, 1 );
 %     fprintf( ':' );

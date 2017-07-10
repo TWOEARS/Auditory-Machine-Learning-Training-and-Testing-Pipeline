@@ -1,38 +1,46 @@
-function [ag, asgn] = aggregateBlockAnnotations( bap, yp, yt, extraFields )
+function [ag, asgn] = aggregateBlockAnnotations( bap, yp, yt )
 
-ytIdx = find( yt > 0 );
-assert( numel( ytIdx ) <= 1 ); % because I defined it in my test scripts: target sounds only on src1
-isyt = ~isempty( ytIdx );
-isyp = any( yp > 0 );
+[ytIdxR,ytIdxC] = find( yt > 0 );
+assert( numel( unique( ytIdxR ) ) == numel( ytIdxR ) ); % because I defined it in my test scripts: target sounds only on src1
+isyt = false( size( bap, 1 ), 1 );
+isyt(ytIdxR) = true;
+isyp = any( yp > 0, 2 );
 
-asgn(1,1) = isyp && isyt;
-asgn(1,2) = ~isyp && ~isyt;
-asgn(1,3) = isyp && ~isyt;
-asgn(1,4) = ~isyp && isyt;
+asgn(:,1) = isyp & isyt;
+asgn(:,2) = ~isyp & ~isyt;
+asgn(:,3) = isyp & ~isyt;
+asgn(:,4) = ~isyp & isyt;
 
-for ii = 1 : numel( extraFields )
-    ag.(extraFields{ii}) = bap(1).(extraFields{ii});
+ag = bap(:,1);
+[ag.nAct_segStream] = deal( nan );
+
+tmp = reshape( [bap.distToClosestSrc], size( bap ) );
+tmp = num2cell( nanMean( tmp, 2 ) );
+[ag.distToClosestSrc] = tmp{:};
+
+tmp = reshape( [bap.multiSrcsAttributability], size( bap ) );
+tmp = num2cell( nanMean( tmp, 2 ) );
+[ag.multiSrcsAttributability] = tmp{:};
+
+ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
+[ag(isyt).curSnr] = bap(ytIdxs).curSnr;
+[ag(isyt).curNrj] = bap(ytIdxs).curNrj;
+[ag(isyt).curNrjOthers] = bap(ytIdxs).curNrjOthers;
+[ag(isyt).azmErr] = bap(ytIdxs).azmErr;
+
+tmp = reshape( double( [bap(~isyt,:).curSnr] ), size( bap(~isyt,:) ) );
+[~,maxCurSnrIdx] = max( tmp, [], 2 );
+
+nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
+[ag(~isyt).curSnr] = bap(nIdxs).curSnr;
+[ag(~isyt).curNrj] = bap(nIdxs).curNrj;
+[ag(~isyt).curNrjOthers] = bap(nIdxs).curNrjOthers;
+[ag(~isyt).azmErr] = deal( nan );
+
 end
-ag.nAct = bap(1).nAct;
-ag.nEstErr = bap(1).nEstErr;
-ag.scpId = bap(1).scpId;
-ag.whiteNoise = bap(1).whiteNoise;
-ag.headPosIdx = bap(1).headPosIdx;
-ag.nAct_segStream = nan;
-ag.distToClosestSrc = nanMean( [bap.distToClosestSrc] );
-ag.multiSrcsAttributability = nanMean( [bap.multiSrcsAttributability] );
-if isyt
-    ag.curSnr = bap(ytIdx).curSnr;
-    ag.curNrj = bap(ytIdx).curNrj;
-    ag.curNrjOthers = bap(ytIdx).curNrjOthers;
-    ag.azmErr = bap(ytIdx).azmErr;
-else
-    curSnr = [bap.curSnr];
-    [~,maxCurSnrIdx] = max( curSnr );
-    ag.curSnr = curSnr(maxCurSnrIdx);
-    ag.curNrj = bap(maxCurSnrIdx).curNrj;
-    ag.curNrjOthers = bap(maxCurSnrIdx).curNrjOthers;
-    ag.azmErr = nan;
-end
 
+function v = nanIfEmpty( v )
+if isempty( v )
+    v = nan;
+end
 end

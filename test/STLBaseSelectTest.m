@@ -1,57 +1,57 @@
-function STLBaseSelectTest()
+function STLBaseSelectTest(varargin)
 
-addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startAMLTTP();
+% parse input
+p = inputParser;
+addParameter(p,'scModelDir', '', @(x) ( ischar(x) && exist(x, 'dir') ) );
 
-pipe = TwoEarsIdTrainPipe();
+addParameter(p,'hpsMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsBetas', [1], @(x)(isfloat(x) && isvector(x)) );
 
-% -- feature creator
-pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean(); 
+parse(p, varargin{:});
 
-% -- label creator 
-babyFemaleVsRestLabeler = ... 
-    LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, ...
-                                          'negOut', 'rest' ); 
-pipe.labelCreator = babyFemaleVsRestLabeler; 
+% set parameters
+scModelDir      = p.Results.scModelDir;
+hpsMaxDataSize  = p.Results.hpsMaxDataSize;
+hpsBetas        = p.Results.hpsBetas;
 
-% extract bases
-path = './Results CV Sparse Coding/1st attempt/';
-files = dir(sprintf('%ssc_*.mat', path));
-bases = cell(length(files), 1);
-for i=1:length(files)
-   file = files(i);
-   data = load(sprintf('%s%s',path,file.name));
-   % transpose B, because base vectors are stored columnwise
-   bases{i} = data.B';
+if isempty(scModelDir)
+    error('You have to pass a valid directory <scModelDir> to STLBaseSelectTest')
 end
 
-% get model for scalingFactors (otherwise bases may scale badly and the effect is gone)
-data = load('./Results CV Sparse Coding/1st attempt/SparseCodingSelectTest_datasize5000_170531102828.model.mat');
-scalingModel = data.model.model; 
+% extract bases
+files = dir( fullfile(scModelDir,'scModel_*.mat') );
+scModels = cell(length(files), 1);
+for i=1:length(files)
+   file = files(i);
+   data = load( fullfile(scModelDir,file.name) );
+   scModels{i} = data.scModel;
+end
 
-% -- model creator
-pipe.modelCreator = ModelTrainers.STLBaseSelectTrainer( ...
-    'hpsBases', bases, ...    % sparse bases for STL
-    'hpsBetaRange', [0.4 1], ... % beta range
-    'scalingModel', scalingModel, ... % is needed for scalings of training and test data
-    'hpsRefineStages', 0, ...    % number of iterative hps refinement stages
-    'hpsSearchBudget', 4, ...    % number of hps grid search parameter values per dimension
-    'hpsCvFolds', 2);            % number of hps cv folds of training set
+% create hps grid
+betaGrid = repmat(hpsBetas, length(scModels), 1);
+betaGrid = num2cell(betaGrid(:));
+modelGrid = repmat(scModels, length(hpsBetas), 1);
+hpsSets = [modelGrid(:), betaGrid(:)];
+hpsSets = cell2struct( hpsSets, {'scModel', 'scBeta'}, 2 );
 
-pipe.modelCreator.verbose( 'off' ); % no console output
+save('HPS.mat', 'hpsSets', 'files');
 
-% define train and test set
-pipe.trainset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist';
-pipe.testset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist';
-pipe.setupData();
+% define training and test set for cross validation
+trainSet = {'learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TrainSet_1.flist','learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TrainSet_2.flist'};
+testSet = {'learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TestSet_1.flist','learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TestSet_2.flist'};
 
-sc = SceneConfig.SceneConfiguration();
-sc.addSource( SceneConfig.PointSource( ...
-        'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
-
-% init and run pipeline
-pipe.init( sc, 'fs', 16000);
-modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingSelectTest_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
-
-fprintf( ' -- Model is saved at %s -- \n', modelPath );
+% hps over hpsSets
+for hpsIndex=1:size(hpsSets,1)
+    
+    assert(length(trainSet) == length(testSet), ...
+        'Lists of training and test sets must have same length');
+    % cross validation over different training/test sets
+    for cvIndex=1:length(trainSet)
+        
+        STLTest('scModel', hpsSets(hpsIndex).scModel, ...
+                'scBeta', hpsSets(hpsIndex).scBeta, ...
+                'trainSet', trainSet{cvIndex}, ...
+                'testSet', testSet{cvIndex})
+    end
+end
 

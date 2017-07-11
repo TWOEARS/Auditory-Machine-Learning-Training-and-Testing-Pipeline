@@ -47,7 +47,6 @@ classdef FeatureSetDecoratorSparseCoding < FeatureCreators.Base
         %% ----------------------------------------------------------------      
         
         function afeRequests = getAFErequests( obj )
-            % TODO enough to call AFE requests?
             afeRequests = obj.featureCreator.getAFErequests();
         end
         %% ----------------------------------------------------------------
@@ -58,7 +57,7 @@ classdef FeatureSetDecoratorSparseCoding < FeatureCreators.Base
             % calculate feature vector from given feature creator
             feature        = obj.featureCreator.constructVector();
             
-            % TODO wrapped feature creator has to agree with the one used in the model   
+            % wrapped feature creator has to use same scalings as in the model   
             featureScaled  = obj.sparseCodingModel.scale2zeroMeanUnitVar(feature{1});
              
             % optimize activation of base wrt feature vector 

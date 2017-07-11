@@ -1,4 +1,4 @@
-function SparseCodingTest_Lucas()
+function SparseCodingTest()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
@@ -16,10 +16,11 @@ pipe.labelCreator = babyFemaleVsRestLabeler;
 
 % -- model creator
 pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
-    'beta', 0.6, ...
-    'num_bases', 200, ...
-    'batch_size', 5000, ...
-    'num_iters', 25);
+    'beta', 1, ...
+    'num_bases', 50, ...
+    'num_iters', 20, ...
+    'maxDataSize', 20000, ...
+    'saveModelDir', './scSelect');
 
 pipe.modelCreator.verbose( 'off' ); % no console output
 
@@ -37,7 +38,7 @@ sc.addSource( SceneConfig.PointSource( ...
 
 % init and run pipeline
 pipe.init( sc, 'fs', 16000);
-modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingSelectTest_Lucas', 'modelPath', 'SparseCodingTest_Lucas', 'debug', true);
+modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingTest', 'modelPath', 'SparseCodingSelectTest_Lucas', 'debug', true);
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

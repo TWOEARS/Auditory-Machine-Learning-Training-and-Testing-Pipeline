@@ -19,8 +19,6 @@ pipe.modelCreator.verbose( 'on' ); %Ausführung wird kommentiert (-verbose)
 pipe.trainset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist';
 pipe.testset = 'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist';
 
-%pipe.trainset = 'C:\Users\Lucas\Documents\Masterarbeit\myGit\Code\FreesoundDownloader\data\mix_training\data.flist';
-%pipe.testset = 'C:\Users\Lucas\Documents\Masterarbeit\myGit\Code\FreesoundDownloader\data\mix_test\data.flist';
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

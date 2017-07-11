@@ -5,7 +5,6 @@ classdef IdentTrainPipeDataElem < handle
         fileName;
         x;
         y;
-        ysi; % assignment of label to source index
         bIdxs;
         bacfIdxs;
         blockAnnotsCacheFile;

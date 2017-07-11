@@ -24,9 +24,8 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
         end
         %% -------------------------------------------------------------------------------
 
-        function [y,ysi] = labelEnergeticBlock( obj, blockAnnotations )
+        function y = labelEnergeticBlock( obj, blockAnnotations )
             y = blockAnnotations.srcAzms(obj.sourceIds);
-            ysi = {obj.sourceIds};
         end
         %% -------------------------------------------------------------------------------
 
@@ -36,7 +35,7 @@ classdef AzmLabeler < LabelCreators.EnergyDependentLabeler
     methods (Access = protected)
         
         function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps.v = 2;
+            outputDeps.v = 1;
         end
         %% -------------------------------------------------------------------------------
                 

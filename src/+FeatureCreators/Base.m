@@ -70,8 +70,8 @@ classdef Base < Core.IdProcInterface
             if ~obj.descriptionBuilt 
                 if exist( fdescFilepath, 'file' )
                     fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
-                    ld = load( fdescFilepath, 'description' );
-                    obj.description = ld.description;
+                    load( fdescFilepath, 'description' );
+                    obj.description = description;
                     removefilesemaphore( fdescFileSema );
                     obj.descriptionBuilt = true;
                 else
@@ -89,7 +89,7 @@ classdef Base < Core.IdProcInterface
             save@Core.IdProcInterface( obj, wavFilepath, out ); 
             fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
             if obj.descriptionBuilt && ~exist( fdescFilepath, 'file' )
-                description = obj.description; %#ok<NASGU,PROPLC>
+                description = obj.description;
                 fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
                 save( fdescFilepath, 'description' );
                 removefilesemaphore( fdescFileSema );

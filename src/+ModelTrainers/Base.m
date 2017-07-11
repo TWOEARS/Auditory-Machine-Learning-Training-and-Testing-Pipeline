@@ -77,10 +77,7 @@ classdef (Abstract) Base < handle
                 x(nanXidxs | infXidxs,:) = [];
                 y(nanXidxs | infXidxs,:) = [];
             end
-            if size( y, 1 ) > obj.maxDataSize
-                verboseFprintf( obj, ['Out of a pool of %d samples, ' ...
-                                      'randomly select %d...\n'], ...
-                                      size( y, 1 ), obj.maxDataSize );
+            if numel( y ) > obj.maxDataSize
                 if ModelTrainers.Base.balMaxData
                     throwoutIdxs = ModelTrainers.Base.getBalThrowoutIdxs( y, obj.maxDataSize );
                     x(throwoutIdxs,:) = [];
@@ -112,7 +109,7 @@ classdef (Abstract) Base < handle
                 x = x(:,fmask);
             end
             % permute data
-            permutationIdxs = randperm( size( y, 1 ) );
+            permutationIdxs = randperm( length( y ) );
             x = x(permutationIdxs,:);
             y = y(permutationIdxs,:);
         end

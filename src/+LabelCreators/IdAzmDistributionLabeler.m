@@ -39,7 +39,7 @@ classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        function [y,ysi] = label( obj, blockAnnotations )
+        function y = label( obj, blockAnnotations )
             [activeTypes, ~, activeSrcIdxs] = getActiveTypes( obj, blockAnnotations );
             if ~isempty(obj.nrgSrcsFilter)
                 srcAzms = blockAnnotations.srcAzms(obj.nrgSrcsFilter, :);
@@ -61,7 +61,6 @@ classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
                 end
             end
             y = reshape(y, 1, numel(obj.types) * (obj.nAzimuthBins + 1));
-            ysi = {};
         end
         
         %% -----------------------------------------------------------------------------------
@@ -69,7 +68,7 @@ classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
             outputDeps = getLabelInternOutputDependencies@LabelCreators.MultiEventTypeLabeler(obj);
             outputDeps.nAzimuthBins = obj.nAzimuthBins;
             outputDeps.angularResolution = obj.angularResolution;
-            outputDeps.v = 3;
+            outputDeps.v = 2;
         end
     end
     %% -----------------------------------------------------------------------------------

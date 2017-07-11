@@ -27,7 +27,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
 
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
+            xy = obj.loadInputData( wavFilepath, 'x', 'y' );
             obj.inputProc.inputProc.sceneId = obj.sceneId;
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
@@ -42,7 +42,6 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             end
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
             dataFile.y = [dataFile.y; xy.y(useIdxs,:)];
-            dataFile.ysi = [dataFile.ysi; xy.ysi(useIdxs)'];
             dataFile.bIdxs = [dataFile.bIdxs; xy.bIdxs(useIdxs)'];
             dataFile.bacfIdxs = [dataFile.bacfIdxs; ...
                   repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, numel(useIdxs), 1 )];

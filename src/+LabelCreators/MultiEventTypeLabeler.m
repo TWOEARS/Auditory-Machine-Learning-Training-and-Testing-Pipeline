@@ -46,7 +46,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.nrgSrcsFilter = ip.Results.nrgSrcsFilter;
             obj.sourcesMinEnergy = ip.Results.sourcesMinEnergy;
             obj.fileFilterOut = sort( ip.Results.fileFilterOut );
-            obj.procName = [obj.procName '(' strcat( obj.types{1}{:} ) ')'];
         end
         %% -------------------------------------------------------------------------------
 
@@ -65,7 +64,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             outputDeps.sourcesMinEnergy = obj.sourcesMinEnergy;
             outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
             outputDeps.fileFilterOut = obj.fileFilterOut;
-            outputDeps.v = 8;
+            outputDeps.v = 7;
         end
         %% -------------------------------------------------------------------------------
         
@@ -74,10 +73,9 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
         end
         %% -------------------------------------------------------------------------------
         
-        function [y, ysi] = label( obj, blockAnnotations )
+        function y = label( obj, blockAnnotations )
             [activeTypes, relBlockEventOverlap, srcIdxs] = obj.getActiveTypes( blockAnnotations );
             [maxPosRelOverlap,maxTimeTypeIdx] = max( relBlockEventOverlap );
-            ysi = {};
             if any( activeTypes )
                 switch obj.srcPrioMethod
                     case 'energy'
@@ -99,7 +97,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                                      'Use ''energy'' or ''order''.'], obj.srcPrioMethod );
                 end
                 y = labelTypeIdx;
-                ysi = srcIdxs(y);
             elseif strcmp( obj.negOut, 'rest' ) && ...
                     (maxPosRelOverlap <= obj.maxNegBlockToEventRatio) 
                 y = -1;

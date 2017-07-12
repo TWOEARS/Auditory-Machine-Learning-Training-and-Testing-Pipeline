@@ -142,6 +142,10 @@ resct = RescSparse( 'uint32', 'uint8' );
 scp = struct('nSources',{3},'headPosIdx',{0},'ambientWhtNoise',{1},'whtNoiseSnr',{8});
 scp.id = 1;
 [resc,resct] = analyzeBlockbased( resc, resct, testPerfresults, scp, true, 'classIdx', 2, 'dd', 2 );
+% 1:counts, 2:classIdx, 3: dd, 
+% 4:nAct, 5:curSnr, 6:distToClosestSrc, 7:multiSrcsAttributability, 8:azmErr, 
+% 9:nEstErr, 10:nAct_segStream, 11:curNrj, 12:curNrjOthers, 
+% 13:scpId, 14:whiteNoise, 15:headPosIdx
 
 % filesema = setfilesemaphore( 'test.mat' );
 % if exist( 'test.mat', 'file' )

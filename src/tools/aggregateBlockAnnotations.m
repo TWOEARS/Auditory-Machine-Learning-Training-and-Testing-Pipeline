@@ -22,12 +22,15 @@ tmp = reshape( [bap.multiSrcsAttributability], size( bap ) );
 tmp = num2cell( nanMean( tmp, 2 ) );
 [ag.multiSrcsAttributability] = tmp{:};
 
+if sum( isyt ) > 0
 ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
 [ag(isyt).curSnr] = bap(ytIdxs).curSnr;
 [ag(isyt).curNrj] = bap(ytIdxs).curNrj;
 [ag(isyt).curNrjOthers] = bap(ytIdxs).curNrjOthers;
 [ag(isyt).azmErr] = bap(ytIdxs).azmErr;
+end
 
+if sum( ~isyt ) > 0
 tmp = reshape( double( [bap(~isyt,:).curSnr] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
 
@@ -36,6 +39,7 @@ nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
 [ag(~isyt).curNrj] = bap(nIdxs).curNrj;
 [ag(~isyt).curNrjOthers] = bap(nIdxs).curNrjOthers;
 [ag(~isyt).azmErr] = deal( nan );
+end
 
 end
 

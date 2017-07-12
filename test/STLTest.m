@@ -1,4 +1,4 @@
-function STLTest(varargin)
+function savedModel = STLTest(varargin)
 
 % parse input
 p = inputParser;
@@ -42,7 +42,7 @@ startAMLTTP();
 pipe = TwoEarsIdTrainPipe();
 
 % -- feature creator
-pipe.featureCreator = wrappedFeatureCreator; %FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scBeta); 
+pipe.featureCreator = FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scBeta); 
 
 % -- label creator
 pipe.labelCreator = labelCreator; 
@@ -67,5 +67,7 @@ pipe.init( sc, 'fs', 16000);
 modelName = sprintf('STLTest_b%d_beta%g_%s', size(scModel.B,1), scBeta, datestr(now, 30));
 modelPath = pipe.pipeline.run( 'modelName', modelName, 'modelPath', 'STLTest', 'debug', true);
 
+savedModel = fullfile(modelPath, [modelName '.model.mat']);
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
+
 

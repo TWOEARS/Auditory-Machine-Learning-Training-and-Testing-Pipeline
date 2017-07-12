@@ -244,6 +244,61 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
+        function obj = combineFun( obj, fun, cdim, argIdxs, cidx )
+            nargs = numel( argIdxs );
+            diDim = size( obj.dataIdxs, 2 );
+            rowIdxs = cell( 1, nargs );
+            for ii = 1 : nargs
+                idxsMask = repmat( {':'}, 1, diDim );
+                idxsMask{cdim} = @(x)(x == argIdxs(ii));
+                rowIdxs{ii} = obj.getRowIdxs( idxsMask );
+            end
+            nri = cellfun( @numel, rowIdxs );
+            newDataIdxs = zeros( sum( nri ), diDim );
+            newData = zeros( sum( nri ), 1 );
+            ndiIdx = 1;
+            riIdx = ones( size( nri ) );
+            curDataIdxs = zeros( nargs, diDim );
+            iis = 1 : nargs;
+            args = cell( 1, nargs );
+            oldProgress = 0;
+            while any( riIdx <= nri )
+                progress = int8( 100 * sum( riIdx ) / sum( nri ) );
+                if progress > oldProgress
+                    fprintf( '.' );
+                    oldProgress = progress;
+                end
+                for ii = iis
+                    if riIdx(ii) > nri(ii)
+                        curDataIdxs(ii,:) = inf( 1, diDim );
+                    else
+                        curDataIdxs(ii,:) = obj.dataIdxs(rowIdxs{ii}(riIdx(ii)),:);
+                        curDataIdxs(ii,cdim) = cidx;
+                    end
+                end
+                [~,ia,ic] = unique( curDataIdxs, 'rows' );
+                newDataIdxs(ndiIdx,:) = curDataIdxs(ia(1),:);
+                iis = [];
+                for ii = 1 : nargs
+                    if ic(ii) == 1
+                        args{ii} = obj.data(rowIdxs{ii}(riIdx(ii)));
+                        riIdx(ii) = riIdx(ii) + 1;
+                        iis(end+1) = ii;
+                    else
+                        args{ii} = obj.dataConvert( 0 );
+                    end
+                end
+                newData(ndiIdx) = fun(args{:});
+                ndiIdx = ndiIdx + 1;
+            end
+            newDataIdxs(ndiIdx:end,:) = [];
+            newData(ndiIdx:end) = [];
+            obj = obj.deleteData( unique( cat( 1, rowIdxs{:} ) ) );
+            obj = obj.addData( newDataIdxs, newData );
+            fprintf( '\n' );
+        end
+        %% -------------------------------------------------------------------------------
+
         function mat = resc2mat( obj, ridx2midx, rowIdxs )
             if nargin < 2 || isempty( ridx2midx )
                 ridx2midx = repmat( {@(idx)(idx)}, 1, size( obj.dataIdxs, 2 ) );

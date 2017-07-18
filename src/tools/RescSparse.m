@@ -17,32 +17,7 @@ classdef RescSparse
             if nargin < 1 || isempty( datatype )
                 datatype = 'double';
             end
-            switch datatype
-                case 'double'
-                    obj.dataConvert = @double;
-                case 'single'
-                    obj.dataConvert = @single;
-                case 'int64'
-                    obj.dataConvert = @int64;
-                case 'int32'
-                    obj.dataConvert = @int32;
-                case 'int16'
-                    obj.dataConvert = @int16;
-                case 'int8'
-                    obj.dataConvert = @int8;
-                case 'uint64'
-                    obj.dataConvert = @uint64;
-                case 'uint32'
-                    obj.dataConvert = @uint32;
-                case 'uint16'
-                    obj.dataConvert = @uint16;
-                case 'uint8'
-                    obj.dataConvert = @uint8;
-                case 'logical'
-                    obj.dataConvert = @logical;
-                otherwise
-                    obj.dataConvert = @double;
-            end
+            obj = obj.setDataType( datatype );
             if nargin < 2 || isempty( dataidxstype )
                 dataidxstype = 'double';
             end
@@ -82,6 +57,35 @@ classdef RescSparse
             obj.dataAdd = dataAdd;
             obj.data = obj.dataConvert( zeros( 0 ) );
             obj.dataIdxs = obj.dataIdxsConvert( zeros( 0 ) );
+        end
+        %% -------------------------------------------------------------------------------
+        function obj = setDataType( obj, newDataType )
+            switch newDataType
+                case 'double'
+                    obj.dataConvert = @double;
+                case 'single'
+                    obj.dataConvert = @single;
+                case 'int64'
+                    obj.dataConvert = @int64;
+                case 'int32'
+                    obj.dataConvert = @int32;
+                case 'int16'
+                    obj.dataConvert = @int16;
+                case 'int8'
+                    obj.dataConvert = @int8;
+                case 'uint64'
+                    obj.dataConvert = @uint64;
+                case 'uint32'
+                    obj.dataConvert = @uint32;
+                case 'uint16'
+                    obj.dataConvert = @uint16;
+                case 'uint8'
+                    obj.dataConvert = @uint8;
+                case 'logical'
+                    obj.dataConvert = @logical;
+                otherwise
+                    obj.dataConvert = @double;
+            end
         end
         %% -------------------------------------------------------------------------------
         
@@ -147,7 +151,7 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
-        function obj = addData( obj, idxs, data )
+        function [obj,incidxs,insidxs] = addData( obj, idxs, data )
             idxs = obj.dataIdxsConvert( idxs );
             data = obj.dataConvert( data );
             if size( idxs, 2 ) < size( obj.dataIdxs, 2 )
@@ -172,14 +176,15 @@ classdef RescSparse
             idxs(rowIdxEq ~= 0,:) = [];
             data(rowIdxEq ~= 0,:) = [];
             [rigtidxs,order] = sortrows( [rowIdxGt,double( idxs )] );
-            incidxs = sort( [rigtidxs(:,1); (1:size( obj.dataIdxs, 1 ))'] );
+            insidxs = rigtidxs(:,1);
+            incidxs = sort( [insidxs; (1:size( obj.dataIdxs, 1 ))'] );
             obj.dataIdxs(end+1,:) = obj.dataIdxsConvert( 0 );
             obj.data(end+1,:) = obj.dataConvert( 0 );
             obj.dataIdxs = obj.dataIdxs(incidxs,:);
             obj.data = obj.data(incidxs,:);
-            rigtidxs(:,1) = rigtidxs(:,1) + (0:size( rigtidxs, 1 )-1)';
-            obj.dataIdxs(rigtidxs(:,1),:) = rigtidxs(:,2:end);
-            obj.data(rigtidxs(:,1),:) = data(order,:);
+            insidxs = insidxs + (0:numel( insidxs )-1)';
+            obj.dataIdxs(insidxs,:) = rigtidxs(:,2:end);
+            obj.data(insidxs,:) = data(order,:);
         end
         %% -------------------------------------------------------------------------------
 
@@ -229,22 +234,69 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
-        function summedResc = summarizeDown( obj, keepDims, rowIdxs )
+        function [summedResc,summedDataOrigin] = summarizeDown( obj, keepDims, rowIdxs, idxReplaceMask, fun, sdoPrior )
+            summedResc = obj;
+            if nargin < 2
+                return;
+            end
+            if isempty( keepDims ) && (nargin < 4 || isempty( idxReplaceMask ))
+                return;
+            end
             if nargin < 3 || isempty( rowIdxs )
-                rowIdxs = 1 : size( obj.dataIdxs, 1 );
+                rowIdxs = 1 : size( summedResc.dataIdxs, 1 );
             end
-            [keepDimsUniqueIdxs,~,ic] = unique( obj.dataIdxs(rowIdxs,keepDims), 'rows' );
-            summedData = obj.dataConvert( zeros( size( keepDimsUniqueIdxs, 1 ), size( obj.data, 2 ) ) );
-            for ii = 1 : size( keepDimsUniqueIdxs, 1 )
-                summedData(ii,:) = sum( obj.data(rowIdxs(ic==ii),:) );
+            if nargin >= 4 && ~isempty( idxReplaceMask )
+                keepDims = ':';
+                if size( idxReplaceMask, 2 ) ~= size( summedResc.dataIdxs, 2 )
+                    error( 'AMLTTP:usage:unexpected', 'idxsMask dimensions wrong.' );
+                end
+                for ii = 1 : size( summedResc.dataIdxs, 2 )
+                    if isempty( idxReplaceMask{ii} ), continue; end
+                    summedResc.dataIdxs(:,ii) = idxReplaceMask{ii}( summedResc.dataIdxs(:,ii) );
+                end
             end
-            summedResc = emptyCopy( obj );
+            if nargin < 5
+                fun = [];
+            end
+            if nargin < 6 && nargout > 1
+                sdoPrior = mat2cell( summedResc.dataIdxs(rowIdxs,:), ones( size( summedResc.dataIdxs(rowIdxs,:), 1 ), 1 ) );
+            end
+            [keepDimsUniqueIdxs,~,ic] = unique( summedResc.dataIdxs(rowIdxs,keepDims), 'rows' );
+            summedData = accumarray( ic, summedResc.data(rowIdxs,:), [], fun );
+            if nargout > 1
+                summedDataOrigin = splitapply( @(x)({cat( 1, x{:} )}), sdoPrior, ic );
+            end
             summedResc.dataIdxs = keepDimsUniqueIdxs;
             summedResc.data = summedData;
         end
         %% -------------------------------------------------------------------------------
+
+        function dist = idxDistribution( obj, depIdx, defIdx )
+            sobj = obj.summarizeDown( [defIdx, depIdx] );
+            defIdx = 1 : numel( defIdx );
+            depIdx = defIdx(end) + 1;
+            maxDepIdx = max( sobj.dataIdxs(:,depIdx) );
+            maxDefIdxs = cell( 1, numel( defIdx ) );
+            for ii = 1 : numel( defIdx )
+                maxDefIdxs{ii} = max( sobj.dataIdxs(:,defIdx(ii)) );
+            end
+            dist = nan( maxDefIdxs{:}, maxDepIdx );
+            [defUniqueIdxs,~,ic] = unique( sobj.dataIdxs(:,defIdx), 'rows' );
+            for ii = 1 : size( defUniqueIdxs, 1 )
+                dui_ii = (ic == ii);
+                depIdxs_dui = sobj.dataIdxs(dui_ii,depIdx);
+                depData_dui = sobj.data(dui_ii,:);
+                dui = num2cell( defUniqueIdxs(ii,:) );
+                dist(dui{:},depIdxs_dui) = depData_dui;
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
         
-        function obj = combineFun( obj, fun, cdim, argIdxs, cidx )
+        function [obj, sdo] = combineFun( obj, fun, cdim, argIdxs, cidx, newDataType, sdo )
+            if nargin > 5 && ~isempty( newDataType )
+                obj = obj.setDataType( newDataType );
+            end
             nargs = numel( argIdxs );
             diDim = size( obj.dataIdxs, 2 );
             rowIdxs = cell( 1, nargs );
@@ -256,6 +308,7 @@ classdef RescSparse
             nri = cellfun( @numel, rowIdxs );
             newDataIdxs = zeros( sum( nri ), diDim );
             newData = zeros( sum( nri ), 1 );
+            newSdo = cell( size( newData ) );
             ndiIdx = 1;
             riIdx = ones( size( nri ) );
             curDataIdxs = zeros( nargs, diDim );
@@ -276,11 +329,21 @@ classdef RescSparse
                         curDataIdxs(ii,cdim) = cidx;
                     end
                 end
-                [~,ia,ic] = unique( curDataIdxs, 'rows' );
+                me = 1 : nargs;
+                for cc = 1 : diDim
+                    [m, ia] = min( curDataIdxs(me,cc), [], 1 );
+                    ia = me(ia);
+                    men = find( curDataIdxs(me,cc) == m );
+                    me = me(men);
+                    if numel( me ) == 1, break; end;
+                end
                 newDataIdxs(ndiIdx,:) = curDataIdxs(ia(1),:);
                 iis = [];
                 for ii = 1 : nargs
-                    if ic(ii) == 1
+                    if any( ii == me )
+                        if nargout > 1
+                            newSdo{ndiIdx} = cat( 1, newSdo{ndiIdx}, sdo{rowIdxs{ii}(riIdx(ii))} );
+                        end
                         args{ii} = obj.data(rowIdxs{ii}(riIdx(ii)));
                         riIdx(ii) = riIdx(ii) + 1;
                         iis(end+1) = ii;
@@ -293,13 +356,21 @@ classdef RescSparse
             end
             newDataIdxs(ndiIdx:end,:) = [];
             newData(ndiIdx:end) = [];
-            obj = obj.deleteData( unique( cat( 1, rowIdxs{:} ) ) );
-            obj = obj.addData( newDataIdxs, newData );
+            newSdo(ndiIdx:end) = [];
+            delIdxs = unique( cat( 1, rowIdxs{:} ) );
+            obj = obj.deleteData( delIdxs );
+            [obj,incidxs,insidxs] = obj.addData( newDataIdxs, newData );
+            if nargout > 1
+                sdo(delIdxs) = [];
+                sdo{end+1} = [];
+                sdo = sdo(incidxs);
+                sdo(insidxs) = newSdo;
+            end
             fprintf( '\n' );
         end
         %% -------------------------------------------------------------------------------
 
-        function mat = resc2mat( obj, ridx2midx, rowIdxs )
+        function [mat, sdomat] = resc2mat( obj, ridx2midx, rowIdxs, sdo )
             if nargin < 2 || isempty( ridx2midx )
                 ridx2midx = repmat( {@(idx)(idx)}, 1, size( obj.dataIdxs, 2 ) );
             end
@@ -312,9 +383,15 @@ classdef RescSparse
             end
             maxMidxs = num2cell( max( midxs, [], 1 ) );
             mat(maxMidxs{:}) = 0;
+            if nargout > 1
+                sdomat{maxMidxs{:}} = {};
+            end
             midxs = num2cell( midxs );
             for ii = 1 : size( midxs, 1 )
                 mat(midxs{ii,:}) = obj.data(rowIdxs(ii),:);
+                if nargout > 1
+                    sdomat{midxs{ii,:}} = sdo{rowIdxs(ii)};
+                end
             end
         end
         %% -------------------------------------------------------------------------------

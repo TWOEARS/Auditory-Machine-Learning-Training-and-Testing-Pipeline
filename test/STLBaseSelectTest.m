@@ -5,7 +5,7 @@ p = inputParser;
 addParameter(p,'scModelDir', './Results_A/scSelect/', @(x) ( ischar(x) && exist(x, 'dir') ) );
 
 addParameter(p,'hpsMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
-addParameter(p,'hpsBetas', [1], @(x)(isfloat(x) && isvector(x)) );
+addParameter(p,'hpsBetas', [0.4 0.6], @(x)(isfloat(x) && isvector(x)) );
 
 parse(p, varargin{:});
 
@@ -45,8 +45,15 @@ hpsSets =  {m(:), betaGrid(:), i(:)};
 hpsSets = cell2struct( hpsSets, {'scModel', 'scBeta', 'scModelInfo'}, 2 );
 
 % define training and test set for cross validation
-trainSet = {'learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TrainSet_1.flist','learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TrainSet_2.flist'};
-testSet = {'learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TestSet_1.flist','learned_models/IdentityKS/trainTestSets/IEEE_AASP_75pTrain_TestSet_2.flist'};
+trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'};
+        
+testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_1.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_2.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_3.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_4.flist'};
 
 % hps over hpsSets
 for hpsIndex=1:size(hpsSets.scModel,1)

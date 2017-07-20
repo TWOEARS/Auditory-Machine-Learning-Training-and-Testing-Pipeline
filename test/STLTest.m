@@ -4,6 +4,8 @@ function savedModel = STLTest(varargin)
 p = inputParser;
 addParameter(p,'scModel', [] ,@(x) ( isa(x, 'Models.SparseCodingModel') ) );
 
+addParameter(p,'scModelBeta', -1 ,@(x) (  length(x) == 1 && x > 0 && isfloat(x) ) );
+
 addParameter(p,'scBeta', 0.6, @(x)( length(x) == 1 && x > 0 && isfloat(x)));
 
 addParameter(p,'trainSet', '', @(x) ( ischar(x) ) );
@@ -17,13 +19,19 @@ addParameter(p,'labelCreator', ...
 addParameter(p,'featureCreator', FeatureCreators.FeatureSet5Blockmean() , ...
     @(x) ( isa(x, @FeatureCreators.Base) ) );
 
-addParameter(p,'modelTrainer', ModelTrainers.GlmNetLambdaSelectTrainer() , ...
+addParameter(p,...
+    'modelTrainer', ...
+    ModelTrainers.GlmNetLambdaSelectTrainer( ...
+    'performanceMeasure', @PerformanceMeasures.BAC2, ...
+    'cvFolds', 4, ...
+    'alpha', 0.99 ), ...
     @(x) ( isa(x, @ModelTrainers.Base) ) );
 
 parse(p, varargin{:});
 
 % set parameter
 scModel                 = p.Results.scModel;
+scModelBeta             = p.Results.scModelBeta;
 scBeta                  = p.Results.scBeta;
 trainSet                = p.Results.trainSet;
 testSet                 = p.Results.testSet;
@@ -42,7 +50,7 @@ startAMLTTP();
 pipe = TwoEarsIdTrainPipe();
 
 % -- feature creator
-pipe.featureCreator = FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scBeta); 
+pipe.featureCreator = wrappedFeatureCreator; %FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scBeta); 
 
 % -- label creator
 pipe.labelCreator = labelCreator; 
@@ -64,7 +72,10 @@ sc.addSource( SceneConfig.PointSource( ...
 
 % init and run pipeline
 pipe.init( sc, 'fs', 16000);
-modelName = sprintf('STLTest_b%d_beta%g_%s', size(scModel.B,1), scBeta, datestr(now, 30));
+
+
+modelName = sprintf('STLTest_b%d_beta%g_new%g_%s', size(scModel.B,1), scModelBeta ,scBeta, datestr(now, 30));
+
 modelPath = pipe.pipeline.run( 'modelName', modelName, 'modelPath', 'STLTest', 'debug', true);
 
 savedModel = fullfile(modelPath, [modelName '.model.mat']);

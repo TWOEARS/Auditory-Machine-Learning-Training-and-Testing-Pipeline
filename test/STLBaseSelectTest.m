@@ -45,6 +45,10 @@ hpsSets =  {m(:), betaGrid(:), i(:)};
 hpsSets = cell2struct( hpsSets, {'scModel', 'scBeta', 'scModelInfo'}, 2 );
 
 % define training and test set for cross validation
+
+%trainSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist'};
+%testSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist'};
+        
 trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
@@ -55,20 +59,21 @@ testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSe
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_3.flist', ...
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_4.flist'};
 
+
+assert(length(trainSet) == length(testSet), ...
+        'Lists of training and test sets must have same length');
+    
 % hps over hpsSets
 for hpsIndex=1:size(hpsSets.scModel,1)
-    assert(length(trainSet) == length(testSet), ...
-        'Lists of training and test sets must have same length');
     % cross validation over different training/test sets
-    for cvIndex=1:length(trainSet)
-        
+    for cvIndex=1:length(trainSet) 
         savedModel = STLTest('scModel', hpsSets.scModel(hpsIndex), ...
+                    'scModelBeta', hpsSets.scModelInfo(hpsIndex).beta, ...
                     'scBeta', hpsSets.scBeta(hpsIndex), ...
                     'trainSet', trainSet{cvIndex}, ...
                     'testSet', testSet{cvIndex});
         data = load(savedModel);
         hpsSets.performance(hpsIndex, cvIndex) = data.testPerfresults.performance;
-        save('STLTest/HPS_temp.mat', 'hpsSets');
     end
 end
 

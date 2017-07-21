@@ -50,7 +50,7 @@ startAMLTTP();
 pipe = TwoEarsIdTrainPipe();
 
 % -- feature creator
-pipe.featureCreator = wrappedFeatureCreator; %FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scBeta); 
+pipe.featureCreator = FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scBeta); 
 
 % -- label creator
 pipe.labelCreator = labelCreator; 

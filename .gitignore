@@ -5,9 +5,7 @@ test/test_cleanBabyFemale_Lucas/
 test/SparseCodingTest_Lucas/
 test/SelftTaughtTest_Lucas/
 test/SparseCodingSelectTest_Lucas/
-test/Results CV Sparse Coding/amlttp.run.log
 test/Results CV Sparse Coding/
-test/Results_A/sc_b100_beta0.6_20170702T115546.mat
 test/Results_A/
 test/HPS.mat
 test/STLTest/

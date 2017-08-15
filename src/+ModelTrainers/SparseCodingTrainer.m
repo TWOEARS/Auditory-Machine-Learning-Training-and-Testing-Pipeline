@@ -101,8 +101,10 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             [fobj, ~, ~] = getObjective2(obj.model.B', S, xScaledTest', 'L1', 1, obj.beta, 1, []);
             
             % calculate performance, normalize wrt to amount of data, also 
-            % reverse fobj as a small value yields good performance
-            perf = 1 /  (fobj / size(xScaledTest, 1));
+            % reverse fobj as a small objective value yields a high 
+            % performance and project value between 0 and 1
+            score = fobj  / size(xScaledTest, 1);
+            perf = 1 / ( (score <= 1)*1 + (score > 1 )*score );
             
             % set performance measure using fake meausure, as calculation 
             % has already been done above

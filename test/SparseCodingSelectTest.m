@@ -4,10 +4,10 @@ p = inputParser;
 
 addParameter(p,'hpsMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
 addParameter(p,'finalMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
-addParameter(p,'hpsSearchBudget', 4 , @(x) mod(x,1) == 0 && x > 0 );
-addParameter(p,'hpsBetas', [1], @(x)(isfloat(x) && isvector(x)) );
-addParameter(p,'hpsNumBasesRange', [100 5000], @(x) ( all(mod(x,1) == 0) && length(x)==2 && x(1) < x(2) ) );
-addParameter(p,'hpsCvFolds', 3, @(x) ( length(x) == 1 && x > 1 && mod(x,1) == 0 ) );
+addParameter(p,'hpsSearchBudget', 3 , @(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsBetas', [0.4 0.6 0.8 1], @(x)(isfloat(x) && isvector(x)) );
+addParameter(p,'hpsNumBasesRange', [100 1357], @(x) ( all(mod(x,1) == 0) && length(x)==2 && x(1) < x(2) ) );
+addParameter(p,'hpsCvFolds', 1, @(x) ( length(x) == 1 && x > 1 && mod(x,1) == 0 ) );
 
 parse(p, varargin{:});
 
@@ -19,14 +19,11 @@ pipe = TwoEarsIdTrainPipe();
 % -- feature creator
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean(); 
 
-% -- label creator (ignore, since data unlabeled ?)
-babyFemaleVsRestLabeler = ... 
-    LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, ...
-                                          'negOut', 'rest' ); 
-pipe.labelCreator = babyFemaleVsRestLabeler; 
+% -- label creator  
+pipe.labelCreator = LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, ...
+                                          'negOut', 'rest' );
 
 % -- model creator
-
 pipe.modelCreator = ModelTrainers.SparseCodingSelectTrainer( ...
     'hpsBetas', p.Results.hpsBetas, ... % betas
     'hpsNumBasesRange', p.Results.hpsNumBasesRange, ... % number of bases range

@@ -11,3 +11,6 @@ test/HPS.mat
 test/STLTest/
 !test/STLTest/EvaluateModels.m
 !test/STLTest/plotResults.m
+test/GlmNetLambdaSelectTest/
+test/Results_B/docs/res_baby.pdf
+test/Results_B/models/baby_results.mat

@@ -1,4 +1,4 @@
-function STLBaseSelectTest(varargin)
+function STLBaseSelect(varargin)
 
 % parse input
 p = inputParser;
@@ -7,7 +7,7 @@ addParameter(p,'scModelDir', './Results_A/selectedModels/', @(x) ( ischar(x) && 
 addParameter(p,'hpsMaxDataSize', Inf, @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
 addParameter(p,'hpsGammas', [0.4 0.6], @(x)(isfloat(x) && isvector(x)) );
 
-addParameter(p,'label', 'speech', @(x)ischar(x) );
+addParameter(p,'label', 'alarm', @(x)ischar(x) );
 
 parse(p, varargin{:});
 
@@ -49,18 +49,18 @@ hpsSets = cell2struct( hpsSets, {'scModel', 'scGamma', 'scModelInfo'}, 2 );
 
 % define training and test set for cross validation
 
-trainSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist'};
-testSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist'};
+% trainSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist'};
+% testSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist'};
         
-% trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
-%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
-%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
-%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'};
-%         
-% testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_1.flist', ...
-%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_2.flist', ...
-%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_3.flist', ...
-%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_4.flist'};
+trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'};
+        
+testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_1.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_2.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_3.flist', ...
+            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_4.flist'};
 
 
 assert(length(trainSet) == length(testSet), ...

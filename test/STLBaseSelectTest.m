@@ -4,8 +4,10 @@ function STLBaseSelectTest(varargin)
 p = inputParser;
 addParameter(p,'scModelDir', './Results_A/scSelect/', @(x) ( ischar(x) && exist(x, 'dir') ) );
 
-addParameter(p,'hpsMaxDataSize', 20000, @(x) mod(x,1) == 0 && x > 0 );
+addParameter(p,'hpsMaxDataSize', Inf, @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
 addParameter(p,'hpsBetas', [0.4 0.6], @(x)(isfloat(x) && isvector(x)) );
+
+addParameter(p,'label', 'alarm', @(x)ischar(x) );
 
 parse(p, varargin{:});
 
@@ -13,6 +15,7 @@ parse(p, varargin{:});
 scModelDir      = p.Results.scModelDir;
 hpsMaxDataSize  = p.Results.hpsMaxDataSize;
 hpsBetas        = p.Results.hpsBetas;
+label           = p.Results.label;
 
 if isempty(scModelDir)
     error('You have to pass a valid directory <scModelDir> to STLBaseSelectTest')
@@ -62,7 +65,15 @@ testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSe
 
 assert(length(trainSet) == length(testSet), ...
         'Lists of training and test sets must have same length');
-    
+
+labelCreator = LabelCreators.MultiEventTypeLabeler( 'types', {label}, 'negOut', 'rest' );
+
+modelTrainer = ModelTrainers.GlmNetLambdaSelectTrainer( ...
+    'performanceMeasure', @PerformanceMeasures.BAC2, ...
+    'cvFolds', 4, ...
+    'alpha', 0.99, ...
+    'maxDataSize', hpsMaxDataSize);
+
 % hps over hpsSets
 for hpsIndex=1:size(hpsSets.scModel,1)
     % cross validation over different training/test sets
@@ -71,7 +82,9 @@ for hpsIndex=1:size(hpsSets.scModel,1)
                     'scModelBeta', hpsSets.scModelInfo(hpsIndex).beta, ...
                     'scBeta', hpsSets.scBeta(hpsIndex), ...
                     'trainSet', trainSet{cvIndex}, ...
-                    'testSet', testSet{cvIndex});
+                    'testSet', testSet{cvIndex}, ...
+                    'labelCreator', labelCreator, ...
+                    'modelTrainer', modelTrainer);
     end
 end
 

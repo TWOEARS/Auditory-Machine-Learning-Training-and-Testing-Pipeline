@@ -3,6 +3,10 @@ function SparseCodingTest()
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
+beta = 0.4;
+num_bases = 100;
+maxDataSize = 50000;
+
 pipe = TwoEarsIdTrainPipe();
 
 % -- feature creator
@@ -16,11 +20,10 @@ pipe.labelCreator = babyFemaleVsRestLabeler;
 
 % -- model creator
 pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
-    'beta', 1, ...
-    'num_bases', 50, ...
-    'num_iters', 20, ...
-    'maxDataSize', 20000, ...
-    'saveModelDir', './scSelect');
+    'beta', beta, ...
+    'num_bases', num_bases, ...
+    'maxDataSize', maxDataSize, ...
+    'saveModelDir', './sc_100_0.4_50000');
 
 pipe.modelCreator.verbose( 'off' ); % no console output
 
@@ -38,7 +41,8 @@ sc.addSource( SceneConfig.PointSource( ...
 
 % init and run pipeline
 pipe.init( sc, 'fs', 16000);
-modelPath = pipe.pipeline.run( 'modelName', 'SparseCodingTest', 'modelPath', 'SparseCodingSelectTest_Lucas', 'debug', true);
+modelName = sprintf('scModel_b%d_beta%g_size%d', num_bases, beta, maxDataSize);
+modelPath = pipe.pipeline.run( 'modelName', modelName, 'modelPath', 'SparseCoding', 'debug', true);
 
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

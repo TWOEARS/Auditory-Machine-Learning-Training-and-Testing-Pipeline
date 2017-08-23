@@ -2,19 +2,19 @@ function STLBaseSelectTest(varargin)
 
 % parse input
 p = inputParser;
-addParameter(p,'scModelDir', './Results_A/scSelect/', @(x) ( ischar(x) && exist(x, 'dir') ) );
+addParameter(p,'scModelDir', './Results_A/selectedModels/', @(x) ( ischar(x) && exist(x, 'dir') ) );
 
 addParameter(p,'hpsMaxDataSize', Inf, @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
-addParameter(p,'hpsBetas', [0.4 0.6], @(x)(isfloat(x) && isvector(x)) );
+addParameter(p,'hpsGammas', [0.4 0.6], @(x)(isfloat(x) && isvector(x)) );
 
-addParameter(p,'label', 'alarm', @(x)ischar(x) );
+addParameter(p,'label', 'speech', @(x)ischar(x) );
 
 parse(p, varargin{:});
 
 % set parameters
 scModelDir      = p.Results.scModelDir;
 hpsMaxDataSize  = p.Results.hpsMaxDataSize;
-hpsBetas        = p.Results.hpsBetas;
+hpsGammas        = p.Results.hpsGammas;
 label           = p.Results.label;
 
 if isempty(scModelDir)
@@ -37,30 +37,30 @@ for i=1:length(files)
 end
 
 % create hps grid
-betaGrid = repmat(hpsBetas, length(scModels), 1);
+gammaGrid = repmat(hpsGammas, length(scModels), 1);
 
-modelGrid = repmat(scModels, length(hpsBetas), 1);
+modelGrid = repmat(scModels, length(hpsGammas), 1);
 m = [modelGrid{:}];
 
-infoGrid = repmat(scModelInfo, length(hpsBetas), 1);
+infoGrid = repmat(scModelInfo, length(hpsGammas), 1);
 i = [infoGrid{:}];
-hpsSets =  {m(:), betaGrid(:), i(:)};
-hpsSets = cell2struct( hpsSets, {'scModel', 'scBeta', 'scModelInfo'}, 2 );
+hpsSets =  {m(:), gammaGrid(:), i(:)};
+hpsSets = cell2struct( hpsSets, {'scModel', 'scGamma', 'scModelInfo'}, 2 );
 
 % define training and test set for cross validation
 
-%trainSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist'};
-%testSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist'};
+trainSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist'};
+testSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist'};
         
-trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
-            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
-            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
-            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'};
-        
-testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_1.flist', ...
-            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_2.flist', ...
-            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_3.flist', ...
-            'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_4.flist'};
+% trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
+%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
+%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
+%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'};
+%         
+% testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_1.flist', ...
+%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_2.flist', ...
+%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_3.flist', ...
+%             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSet_4.flist'};
 
 
 assert(length(trainSet) == length(testSet), ...
@@ -77,10 +77,17 @@ modelTrainer = ModelTrainers.GlmNetLambdaSelectTrainer( ...
 % hps over hpsSets
 for hpsIndex=1:size(hpsSets.scModel,1)
     % cross validation over different training/test sets
-    for cvIndex=1:length(trainSet) 
+    for cvIndex=1:length(trainSet)
+        
+        modelName = sprintf('scModel_b%d_beta%g_gamma%g_%s', ...
+            hpsSets.scModelInfo(hpsIndex).base,...
+            hpsSets.scModelInfo(hpsIndex).beta,...
+            hpsSets.scGamma(hpsIndex),...
+            datestr(now, 30) );
+        
         STLTest('scModel', hpsSets.scModel(hpsIndex), ...
-                    'scModelBeta', hpsSets.scModelInfo(hpsIndex).beta, ...
-                    'scBeta', hpsSets.scBeta(hpsIndex), ...
+                    'modelName', modelName, ...
+                    'scGamma', hpsSets.scGamma(hpsIndex), ...
                     'trainSet', trainSet{cvIndex}, ...
                     'testSet', testSet{cvIndex}, ...
                     'labelCreator', labelCreator, ...

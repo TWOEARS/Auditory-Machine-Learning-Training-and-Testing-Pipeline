@@ -171,14 +171,14 @@ save(resultsFile, 'results');
 overallMeanSTL = arrayfun( @(x) mean([res([res.portion] == x).meanSTL]), 0.1:0.1:1);
 overallMeanGlmNet = arrayfun( @(x) mean([res([res.portion] == x).meanGlmNet]), 0.1:0.1:1);
 
-overall.MeanSTL = overallMeanSTL;
-overall.MeanGlmNet = overallMeanGlmNet;
+overall.meanSTL = overallMeanSTL;
+overall.meanGlmNet = overallMeanGlmNet;
 
 overallVarSTL = arrayfun( @(x) var([res([res.portion] == x).meanSTL]), 0.1:0.1:1);
 overallVarGlmNet = arrayfun( @(x) var([res([res.portion] == x).meanGlmNet]), 0.1:0.1:1);
 
-overall.VarSTL = overallVarSTL;
-overall.VarGlmNet = overallVarGlmNet;
+overall.varSTL = overallVarSTL;
+overall.varGlmNet = overallVarGlmNet;
 
 splitted = strsplit(resultsFile, '_');
 overallFile = strcat(splitted{1:end - 1}, {'_overall.mat'});

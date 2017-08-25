@@ -5,7 +5,7 @@ startAMLTTP();
 
 % parse input
 p = inputParser;
-addParameter(p,'scModelFile', './Results_B/SCModel_b100_beta0.4.model.mat', ... 
+addParameter(p,'scModelFile', './Results_B/SCModel_b100_beta0.4.mat', ... 
     @(x)( ischar(x) && exist(x, 'file') ) );
 
 addParameter(p,'gamma', 0.4, @(x)(isfloat(x) && isvector(x)) );

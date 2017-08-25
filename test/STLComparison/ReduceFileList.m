@@ -30,9 +30,8 @@ function reducedFile = ReduceFileList(originalFile, portion)
             'greater than 0 and less or equal than 1']);
     end    
     
-    splitted = strsplit(originalFile, '.');
-    reducedFile = strcat(strjoin(splitted(1:end-1), '.'), {['_reduced_'... 
-        num2str(portion) '.flist']});
+    reducedFile = strcat(originalFile(1:end-6), ['_reduced_'... 
+        num2str(portion) '.flist']);
            
     data = strrep(textread(originalFile, '%s'), '\', '/');
     splitted = regexp(data, '/', 'split');

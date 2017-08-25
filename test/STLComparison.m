@@ -5,7 +5,7 @@ startAMLTTP();
 
 % parse input
 p = inputParser;
-addParameter(p,'scModelFile', './Results_B/SCModel_b100_beta0.4.mat', ... 
+addParameter(p,'scModelFile', './Results_B/SCModel_b100_beta0.4.model.mat', ... 
     @(x)( ischar(x) && exist(x, 'file') ) );
 
 addParameter(p,'gamma', 0.4, @(x)(isfloat(x) && isvector(x)) );
@@ -146,3 +146,40 @@ for labelIndex=1:length(labels)
         end
     end
 end
+
+%add means
+meanSTL =  mean(reshape([results.STLPerformance]', 4, []), 1);
+meanSTL = num2cell(meanSTL);
+[results(:).meanSTL] = meanSTL{:};
+
+meanGlmNet = mean(reshape([results.GlmNetPerformance]', 4, []), 1);
+meanGlmNet = num2cell(meanGlmNet);
+[results(:).meanGlmNet] = meanGlmNet{:};
+
+%add vars
+varSTL =  var(reshape([res.STLPerformance]', 4, []), 1);
+varSTL = num2cell(varSTL);
+[res(:).varSTL] = varSTL{:};
+
+varGlmNet = var(reshape([res.GlmNetPerformance]', 4, []), 1);
+varGlmNet = num2cell(varGlmNet);
+[res(:).varGlmNet] = varGlmNet{:};
+
+save(resultsFile, 'results');
+
+% compute overall results 
+overallMeanSTL = arrayfun( @(x) mean([res([res.portion] == x).meanSTL]), 0.1:0.1:1);
+overallMeanGlmNet = arrayfun( @(x) mean([res([res.portion] == x).meanGlmNet]), 0.1:0.1:1);
+
+overall.MeanSTL = overallMeanSTL;
+overall.MeanGlmNet = overallMeanGlmNet;
+
+overallVarSTL = arrayfun( @(x) var([res([res.portion] == x).meanSTL]), 0.1:0.1:1);
+overallVarGlmNet = arrayfun( @(x) var([res([res.portion] == x).meanGlmNet]), 0.1:0.1:1);
+
+overall.VarSTL = overallVarSTL;
+overall.VarGlmNet = overallVarGlmNet;
+
+splitted = strsplit(resultsFile, '_');
+overallFile = strcat(splitted{1:end - 1}, {'_overall.mat'});
+save(overallFile, 'overall');

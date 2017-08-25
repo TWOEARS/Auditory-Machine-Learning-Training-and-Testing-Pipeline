@@ -38,7 +38,7 @@ if isempty(scModelFile)
 end
 
 data = load(scModelFile);
-if ~isa(data.scModel, 'Models.SparseCodingModel')
+if ~isa(data.model, 'Models.SparseCodingModel')
      error(['You have to pass a file <scModelFile> with a valid' ...
         ' model Models.SparseCodingModel to STLComparison']);
 end    

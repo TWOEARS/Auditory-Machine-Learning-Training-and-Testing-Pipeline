@@ -79,8 +79,12 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
                     mkdir(obj.saveModelDir); 
                 end
                 modelFile = sprintf('scModel_b%d_beta%g_%s.mat', obj.num_bases, obj.beta, datestr(now, 30));
-                scModel = obj.model; 
-                save( fullfile(obj.saveModelDir, modelFile), 'scModel' );
+                model = obj.model; 
+                
+                if ~exist(obj.saveModelDir, 'dir')
+                    mkdir(obj.saveModelDir);
+                end
+                save( fullfile(obj.saveModelDir, modelFile), 'model' );
             end
         end
         %% ----------------------------------------------------------------

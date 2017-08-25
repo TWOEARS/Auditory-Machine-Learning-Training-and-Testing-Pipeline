@@ -56,7 +56,7 @@ testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSe
 assert(length(trainSet) == length(testSet), ...
         'Lists of training and test sets must have same length');
 
-scModel = data.scModel;
+scModel = data.model;
 addpath('./STLComparison/')
 
 % try to load file with already computed configurations to skip computation 

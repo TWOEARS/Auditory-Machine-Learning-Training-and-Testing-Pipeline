@@ -42,7 +42,13 @@ function reducedFile = ReduceFileList(originalFile, portion)
     for i=1:length(classes)
         idx = find(ismember(totalClasses, classes{i})); 
         limit = floor( length(idx)*portion );
-            fprintf(flist, '%s\n', data{idx(1:limit)} );
+        if (limit) < 3
+            warning(['There are only ' limit ' files of class ' ...
+                classes{i} ' after reduction. This could lead to ' ...
+                'crashes in the pipeline run, as there is not ' ...
+                'enough data for this class.'])
+        end
+        fprintf(flist, '%s\n', data{idx(1:limit)} );
     end
     fclose(flist);
     

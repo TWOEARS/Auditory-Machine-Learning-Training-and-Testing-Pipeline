@@ -14,20 +14,25 @@ addParameter(p,'beta', 0.4, @(x)(isfloat(x) && isvector(x)) );
 addParameter(p,'num_bases', 100, ...
     @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0) );
 
-addParameter(p,'maxDataSize', 100000, ...
+addParameter(p,'maxDataSize', 20000, ...
     @(x)(isinf(x) || (length(x) == 1 && rem(x,1) == 0 && x > 0) ) );
+
+addParameter(p,'trainingSetPortion', 1, ...
+    @(x)(isfloat(x) && length(x) == 1 && x > 0 && x <= 1) );
 
 parse(p, varargin{:});
 
 % set input parameters
-modelName = p.Results.modelName;
-modelPath = p.Results.modelPath;
-beta = p.Results.beta;
-num_bases = p.Results.num_bases;
-maxDataSize = p.Results.maxDataSize;
+modelName           = p.Results.modelName;
+modelPath           = p.Results.modelPath;
+beta                = p.Results.beta;
+num_bases           = p.Results.num_bases;
+maxDataSize         = p.Results.maxDataSize;
+trainingSetPortion  = p.Results.trainingSetPortion;
 
 if isempty(modelName)
-    modelName = sprintf('scModel_b%d_beta%g_size%d', num_bases, beta, maxDataSize);
+    modelName = sprintf('scModel_b%d_beta%g_size%d_portion%g', ...
+        num_bases, beta, maxDataSize, trainingSetPortion);
 end
 
 % prepare pipe run
@@ -56,7 +61,13 @@ pipe.modelCreator.verbose( 'off' ); % no console output
 fs = FreesoundDownloader();
 % use files that are stored in specified directory without downloading new
 % ones, we only need training data here 
-pipe.trainset = fs.GetData('directory', '../../binaural-simulator/tmp/sound_databases/Unlabeled/', 'useLocalFiles', true);
+file = fs.GetData('directory', '../../binaural-simulator/tmp/sound_databases/Unlabeled/', 'useLocalFiles', true);
+if trainingSetPortion < 1
+    pipe.trainset = ReduceFileList(file, trainingSetPortion);
+else 
+    pipe.trainset = file;
+end
+
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();

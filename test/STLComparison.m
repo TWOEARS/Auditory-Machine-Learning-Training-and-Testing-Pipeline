@@ -157,25 +157,25 @@ meanGlmNet = num2cell(meanGlmNet);
 [results(:).meanGlmNet] = meanGlmNet{:};
 
 %add vars
-varSTL =  var(reshape([res.STLPerformance]', 4, []), 1);
+varSTL =  var(reshape([results.STLPerformance]', 4, []), 1);
 varSTL = num2cell(varSTL);
-[res(:).varSTL] = varSTL{:};
+[results(:).varSTL] = varSTL{:};
 
-varGlmNet = var(reshape([res.GlmNetPerformance]', 4, []), 1);
+varGlmNet = var(reshape([results.GlmNetPerformance]', 4, []), 1);
 varGlmNet = num2cell(varGlmNet);
-[res(:).varGlmNet] = varGlmNet{:};
+[results(:).varGlmNet] = varGlmNet{:};
 
 save(resultsFile, 'results');
 
 % compute overall results 
-overallMeanSTL = arrayfun( @(x) mean([res([res.portion] == x).meanSTL]), 0.1:0.1:1);
-overallMeanGlmNet = arrayfun( @(x) mean([res([res.portion] == x).meanGlmNet]), 0.1:0.1:1);
+overallMeanSTL = arrayfun( @(x) mean([results([results.portion] == x).meanSTL]), 0.1:0.1:1);
+overallMeanGlmNet = arrayfun( @(x) mean([results([results.portion] == x).meanGlmNet]), 0.1:0.1:1);
 
 overall.meanSTL = overallMeanSTL;
 overall.meanGlmNet = overallMeanGlmNet;
 
-overallVarSTL = arrayfun( @(x) var([res([res.portion] == x).meanSTL]), 0.1:0.1:1);
-overallVarGlmNet = arrayfun( @(x) var([res([res.portion] == x).meanGlmNet]), 0.1:0.1:1);
+overallVarSTL = arrayfun( @(x) var([results([results.portion] == x).meanSTL]), 0.1:0.1:1);
+overallVarGlmNet = arrayfun( @(x) var([results([results.portion] == x).meanGlmNet]), 0.1:0.1:1);
 
 overall.varSTL = overallVarSTL;
 overall.varGlmNet = overallVarGlmNet;

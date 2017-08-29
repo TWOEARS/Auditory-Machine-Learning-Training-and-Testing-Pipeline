@@ -181,5 +181,5 @@ overall.varSTL = overallVarSTL;
 overall.varGlmNet = overallVarGlmNet;
 
 splitted = strsplit(resultsFile, '_');
-overallFile = strcat(splitted{1:end - 1}, {'_overall.mat'});
+overallFile = strcat(splitted{1:end - 1}, '_overall.mat');
 save(overallFile, 'overall');

@@ -1,4 +1,4 @@
-function savedModel = GlmNetLambdaSelectTest(varargin)
+function savedModel = STLPureMethodWrapper(varargin)
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
@@ -7,7 +7,7 @@ startAMLTTP();
 p = inputParser;
 addParameter(p,'modelName', '' ,@(x) ischar(x) );
 
-addParameter(p, 'modelPath', 'GlmNetLambdaSelectTest', @(x) ischar(x));
+addParameter(p, 'modelPath', 'STLPureMethodWrapper', @(x) ischar(x));
 
 addParameter(p,'trainSet', '', @(x) ischar(x) );
 
@@ -26,7 +26,7 @@ addParameter(p,...
     'performanceMeasure', @PerformanceMeasures.BAC2, ...
     'cvFolds', 4, ...
     'alpha', 0.99 ), ...
-    @(x) ( isa(x, @ModelTrainers.GlmNetLambdaSelectTrainer) ) );
+    @(x) ( isa(x, 'ModelTrainers.Base') ) );
 
 parse(p, varargin{:});
 
@@ -41,11 +41,11 @@ modelTrainer            = p.Results.modelTrainer;
 
 if isempty(trainSet)
    error(['You have to pass a valid flist <trainingSet> to '...
-       'GlmNetLambdaSelectTest']); 
+       'STLPureMethodWrapper']); 
 end
 
 if isempty(modelName)
-    modelName = sprintf('GlmNetLambdaSelectModel_%s', datestr(now, 30));
+    modelName = sprintf('STLPureMethodWrapperModel_%s', datestr(now, 30));
 end
 
 if ~exist(modelPath, 'dir') && ~mkdir(modelPath)

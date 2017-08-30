@@ -1,5 +1,4 @@
 function STLComparison(varargin)
-
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
@@ -13,15 +12,15 @@ addParameter(p,'gamma', 0.4, @(x)(isfloat(x) && isvector(x)) );
 addParameter(p,'trainingSetPortions', 0.1:0.1:1, ... 
     @(x)(isfloat(x) && isvector(x) && all(x>0) && all(x<=1)) );
 
-% addParameter(p,'labels', {'speech'}, ...
-%     @(x)(iscell(x) && ~isempty(x)));
- 
 addParameter(p,'labels', {'alarm', 'baby', 'femaleSpeech', 'fire'}, ...
    @(x)(iscell(x) && ~isempty(x)));
 
 addParameter(p, 'resultsFile', ...
     './STLComparison/STLComparison_results.mat', ...
     @(x) ischar(x) && exist(x, 'file'))
+
+addParameter(p, 'maxDataSize', 20000,...
+    @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
 
 parse(p, varargin{:});
 
@@ -31,6 +30,7 @@ gamma               = p.Results.gamma;
 trainingSetPortions = p.Results.trainingSetPortions;
 labels              = p.Results.labels;
 resultsFile         = p.Results.resultsFile;
+maxDataSize         = p.Results.maxDataSize;
         
 if isempty(scModelFile)
     error(['You have to pass a valid directory <scModelDir> to ' ...
@@ -42,6 +42,13 @@ if ~isa(data.model, 'Models.SparseCodingModel')
      error(['You have to pass a file <scModelFile> with a valid' ...
         ' model Models.SparseCodingModel to STLComparison']);
 end    
+
+
+%  trainSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist', ...
+%      'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_2.flist'};
+%  
+%  testSet = {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_1.flist', ...
+%      'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TestSet_2.flist'};
 
 trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
@@ -57,6 +64,13 @@ assert(length(trainSet) == length(testSet), ...
         'Lists of training and test sets must have same length');
 
 scModel = data.model;
+
+modelTrainer = ModelTrainers.GlmNetLambdaSelectTrainer( ...
+    'performanceMeasure', @PerformanceMeasures.BAC2, ...
+    'cvFolds', 4, ...
+    'alpha', 0.99, ...
+    'maxDataSize', maxDataSize);
+
 addpath('./STLComparison/')
 
 % try to load file with already computed configurations to skip computation 
@@ -66,7 +80,7 @@ if exist(resultsFile, 'file')
     results = filedata.results;
 else
     results = struct('label', {}, 'portion', 0, 'STLPerformance', [], ...
-        'GlmNetPerformance', []);
+        'PurePerformance', []);
 end
 
 for labelIndex=1:length(labels)
@@ -94,7 +108,7 @@ for labelIndex=1:length(labels)
                 results(entryIdx).portion = ...
                     trainingSetPortions(portionIndex);
                 results(entryIdx).STLPerformance = [];
-                results(entryIdx).GlmNetPerformance = [];
+                results(entryIdx).PurePerformance = [];
             end
 
             % *** STLTEST ***
@@ -113,7 +127,8 @@ for labelIndex=1:length(labels)
                         'scGamma', gamma, ...
                         'trainSet', trainList, ...
                         'testSet', testSet{cvIndex}, ...
-                        'labelCreator', labelCreator);
+                        'labelCreator', labelCreator, ...
+                        'modelTrainer', modelTrainer);
 
                 savedData = load(savedModel);
                 results(entryIdx).STLPerformance(cvIndex) = ...
@@ -122,23 +137,24 @@ for labelIndex=1:length(labels)
                 save(resultsFile, 'results');
             end
             
-            % *** GlmNetLambdaSelectTest ***
+            % *** STLPureMethodWrapper ***
             % skip computation if entry and corresponding
             % performance already exists
-            if length(results(entryIdx).GlmNetPerformance) < cvIndex
-                modelPath = 'GlmNetLambdaSelectTest';
-                modelName = sprintf(['GlmNetLambdaSelectModel_%s_'...
+            if length(results(entryIdx).PurePerformance) < cvIndex
+                modelPath = 'STLPureMethodWrapper';
+                modelName = sprintf(['STLPureMethodWrapperModel_%s_'...
                     'portion%g_%d'], labels{labelIndex}, ...
                     trainingSetPortions(portionIndex), cvIndex);       
 
-                savedModel = GlmNetLambdaSelectTest('modelName', modelName, ...
+                savedModel = STLPureMethodWrapper('modelName', modelName, ...
                         'modelPath', modelPath, ...
                         'trainSet', trainList, ...
                         'testSet', testSet{cvIndex}, ...
-                        'labelCreator', labelCreator);
+                        'labelCreator', labelCreator, ...
+                        'modelTrainer', modelTrainer);
 
                 savedData = load(savedModel);
-                results(entryIdx).GlmNetPerformance(cvIndex) = ...
+                results(entryIdx).PurePerformance(cvIndex) = ...
                     savedData.testPerfresults.performance;
 
                 save(resultsFile, 'results');
@@ -147,38 +163,39 @@ for labelIndex=1:length(labels)
     end
 end
 
+cvFold = length(trainSet);
 %add means
-meanSTL =  mean(reshape([results.STLPerformance]', 4, []), 1);
+meanSTL =  mean(reshape([results.STLPerformance]', cvFold, []), 1);
 meanSTL = num2cell(meanSTL);
 [results(:).meanSTL] = meanSTL{:};
 
-meanGlmNet = mean(reshape([results.GlmNetPerformance]', 4, []), 1);
-meanGlmNet = num2cell(meanGlmNet);
-[results(:).meanGlmNet] = meanGlmNet{:};
+meanPure = mean(reshape([results.PurePerformance]', cvFold, []), 1);
+meanPure = num2cell(meanPure);
+[results(:).meanPure] = meanPure{:};
 
 %add vars
-varSTL =  var(reshape([results.STLPerformance]', 4, []), 1);
+varSTL =  var(reshape([results.STLPerformance]', cvFold, []), 1);
 varSTL = num2cell(varSTL);
 [results(:).varSTL] = varSTL{:};
 
-varGlmNet = var(reshape([results.GlmNetPerformance]', 4, []), 1);
-varGlmNet = num2cell(varGlmNet);
-[results(:).varGlmNet] = varGlmNet{:};
+varPure = var(reshape([results.PurePerformance]', cvFold, []), 1);
+varPure = num2cell(varPure);
+[results(:).varPure] = varPure{:};
 
 save(resultsFile, 'results');
 
 % compute overall results 
-overallMeanSTL = arrayfun( @(x) mean([results([results.portion] == x).meanSTL]), 0.1:0.1:1);
-overallMeanGlmNet = arrayfun( @(x) mean([results([results.portion] == x).meanGlmNet]), 0.1:0.1:1);
+overallMeanSTL  = arrayfun( @(x) mean([results([results.portion] == x).meanSTL]), trainingSetPortions);
+overallMeanPure = arrayfun( @(x) mean([results([results.portion] == x).meanPure]), trainingSetPortions);
 
-overall.meanSTL = overallMeanSTL;
-overall.meanGlmNet = overallMeanGlmNet;
+overall.meanSTL  = overallMeanSTL;
+overall.meanPure = overallMeanPure;
 
-overallVarSTL = arrayfun( @(x) var([results([results.portion] == x).meanSTL]), 0.1:0.1:1);
-overallVarGlmNet = arrayfun( @(x) var([results([results.portion] == x).meanGlmNet]), 0.1:0.1:1);
+overallVarSTL  = arrayfun( @(x) var([results([results.portion] == x).meanSTL]), trainingSetPortions);
+overallVarPure = arrayfun( @(x) var([results([results.portion] == x).meanPure]), trainingSetPortions);
 
-overall.varSTL = overallVarSTL;
-overall.varGlmNet = overallVarGlmNet;
+overall.varSTL  = overallVarSTL;
+overall.varPure = overallVarPure;
 
 splitted = strsplit(resultsFile, '_');
 overallFile = strcat(splitted{1:end - 1}, '_overall.mat');

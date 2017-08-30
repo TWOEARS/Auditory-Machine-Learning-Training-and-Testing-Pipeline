@@ -14,3 +14,10 @@ test/STLTest/
 test/GlmNetLambdaSelectTest/
 test/Results_B/docs/*
 test/Results_B/models/*
+test/STLComparison/Results b100_0.4_0.4_maxData100000/
+test/STLComparison/Results b100_0.4_0.4_maxData20000/
+test/STLComparison/Results b100_0.4_0.4_maxData50000/
+test/STLDiversity/diversity_0.1/
+test/STLDiversity/diversity_0.3/
+test/STLDiversity/Results b100_0.4_0.4_maxData20000/
+test/STLComparison/profile/

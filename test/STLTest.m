@@ -11,14 +11,14 @@ addParameter(p,'modelName', '' ,@(x) ischar(x) );
 
 addParameter(p, 'modelPath', 'STLTest', @(x) ischar(x));
 
-addParameter(p,'scGamma', 0.6, @(x)( length(x) == 1 && x > 0 && isfloat(x)));
+addParameter(p,'scGamma', 0.4, @(x)( length(x) == 1 && x > 0 && isfloat(x)));
 
 addParameter(p,'trainSet', '', @(x) ischar(x) );
 
 addParameter(p,'testSet', '', @(x) ischar(x) );
 
 addParameter(p,'labelCreator', ...
-    LabelCreators.MultiEventTypeLabeler( 'types', {{'alarm'}}, 'negOut', 'rest' ) , ... 
+    LabelCreators.MultiEventTypeLabeler( 'types', {{'alert'}}, 'negOut', 'rest' ) , ... 
     @(x) ( isa(x, 'LabelCreators.MultiEventTypeLabeler') ) );
 
 addParameter(p,'featureCreator', FeatureCreators.FeatureSet5Blockmean() , ...

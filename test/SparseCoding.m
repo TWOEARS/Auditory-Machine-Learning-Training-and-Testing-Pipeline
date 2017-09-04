@@ -80,7 +80,7 @@ fs = FreesoundDownloader();
 % use files that are stored in specified directory without downloading new
 % ones, we only need training data here 
 
-unlabeledList = fs.GetData('directory', '../../reposX/twoears-data/sound_databases/Unlabeled/', 'useLocalFiles', true);
+unlabeledList = fs.GetData('directory', '../../../reposX/twoears-data/sound_databases/Unlabeled/', 'useLocalFiles', true);
 
 % add files if specified
 unlabeledFile = fopen(unlabeledList, 'a+');

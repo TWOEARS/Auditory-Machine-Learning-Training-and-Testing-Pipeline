@@ -88,9 +88,9 @@ end
 fclose(unlabeledFile); 
 
 if trainingSetPortion < 1
-    pipe.trainset = ReduceFileList(unlabeledFile, trainingSetPortion);
+    pipe.trainset = ReduceFileList(unlabeledList, trainingSetPortion);
 else 
-    pipe.trainset = unlabeledFile;
+    pipe.trainset = unlabeledList;
 end
 
 pipe.setupData();

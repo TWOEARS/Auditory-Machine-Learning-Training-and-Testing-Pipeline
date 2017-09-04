@@ -79,18 +79,20 @@ fs = FreesoundDownloader();
 unlabeledList = 'learned_models/IdentityKS/trainTestSets/unlabeled.flist';
 
 % add files if specified
-unlabeledFile = fopen(unlabeledList, 'a+');
-for idx=1:length(addFileLists)
-	fin=fopen(db.getFile(addFileLists{idx}));
-    tmp = fread(fin,'uint8');
-    fprintf(unlabeledFile,'\n');
-    fwrite(unlabeledFile, tmp,'uint8');
-	fclose(fin);
+if ~isempty(addFileLists)
+    unlabeledFile = fopen(db.getFile(unlabeledList), 'a+');
+    for idx=1:length(addFileLists)
+        fin=fopen(db.getFile(addFileLists{idx}));
+        tmp = fread(fin,'uint8');
+        fprintf(unlabeledFile,'\n');
+        fwrite(unlabeledFile, tmp,'uint8');
+        fclose(fin);
+    end
+    fclose(unlabeledFile); 
 end
-fclose(unlabeledFile); 
 
 if trainingSetPortion < 1
-    pipe.trainset = ReduceFileList(unlabeledList, trainingSetPortion);
+    pipe.trainset = ReduceFileList(db.getFile(unlabeledList), trainingSetPortion);
 else 
     pipe.trainset = unlabeledList;
 end

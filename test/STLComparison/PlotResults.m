@@ -3,7 +3,7 @@ clear;
 path = 'profile/';
 %Results b100_0.4_0.4_maxData20000/
 data = load([path 'STLComparison_results.mat']);
-labels = {'alert', 'laughter', 'phone', 'speech'};
+labels = {'alarm', 'baby', 'femaleSpeech', 'fire'};
 res = data.results;
 
 for labelIdx=1:length(labels)

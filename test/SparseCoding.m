@@ -26,7 +26,12 @@ addParameter(p, 'addFileLists', ...
     'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
     'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'}, ...
     @(x) (iscell(x) && all(cellfun(@(y) ischar(y), x))));
-            
+   
+% addParameter(p, 'addFileLists', ...
+%     {'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_1.flist', ...
+%     'learned_models\IdentityKS\trainTestSets\IEEE_AASP_75pTrain_TrainSet_2.flist'}, ...
+%     @(x) (iscell(x) && all(cellfun(@(y) ischar(y), x))));
+
 
 parse(p, varargin{:});
 
@@ -74,7 +79,8 @@ pipe.modelCreator.verbose( 'off' ); % no console output
 fs = FreesoundDownloader();
 % use files that are stored in specified directory without downloading new
 % ones, we only need training data here 
-unlabeledList = fs.GetData('directory', '../../binaural-simulator/tmp/sound_databases/Unlabeled/', 'useLocalFiles', true);
+
+unlabeledList = fs.GetData('directory', '../../reposX/twoears-data/sound_databases/Unlabeled/', 'useLocalFiles', true);
 
 % add files if specified
 unlabeledFile = fopen(unlabeledList, 'a+');

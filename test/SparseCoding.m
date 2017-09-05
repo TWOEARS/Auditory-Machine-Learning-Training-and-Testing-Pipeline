@@ -14,19 +14,16 @@ addParameter(p,'beta', 0.4, @(x)(isfloat(x) && isvector(x)) );
 addParameter(p,'num_bases', 100, ...
     @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0) );
 
-addParameter(p,'maxDataSize', 20000, ...
+addParameter(p,'maxDataSize', inf, ...
     @(x)(isinf(x) || (length(x) == 1 && rem(x,1) == 0 && x > 0) ) );
 
 addParameter(p,'trainingSetPortion', 1, ...
     @(x)(isfloat(x) && length(x) == 1 && x > 0 && x <= 1) );
 
-addParameter(p, 'addFileLists', {}, ...
-    @(x) (iscell(x) && all(cellfun(@(y) ischar(y), x))));
-% 
-% {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
-%     'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
-%     'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
-%     'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_4.flist'}
+addParameter(p, 'trainSet', ...
+    ['learned_models/IdentityKS/trainTestSets/' ...
+    'unlabeled_freesound.flist'], ...
+    @(x) ~isempty(x) && ischar(x) && exist(db.getFile(x), 'file') );
 
 parse(p, varargin{:});
 
@@ -37,11 +34,7 @@ beta                = p.Results.beta;
 num_bases           = p.Results.num_bases;
 maxDataSize         = p.Results.maxDataSize;
 trainingSetPortion  = p.Results.trainingSetPortion;
-addFileLists        = p.Results.addFileLists;
-
-if ~all(cellfun(@(y) ischar(y) && exist(db.getFile(y), 'file'), addFileLists))
-   error('One or more of the entries in <addFileLists> are no valid flist files'); 
-end
+trainSet            = p.Results.trainSet;
 
 if isempty(modelName)
     modelName = sprintf('scModel_b%d_beta%g_size%d_portion%g', ...
@@ -69,36 +62,16 @@ pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ...
 
 pipe.modelCreator.verbose( 'off' ); % no console output
 
-% -- prepare training data
-% init FreesoundDownloader to fetch unlabeled data
-fs = FreesoundDownloader();
-% use files that are stored in specified directory without downloading new
-% ones, we only need training data here 
-% unlabeledList = fs.GetData('directory', '../../../reposX/twoears-data/sound_databases/Unlabeled/', 'useLocalFiles', true);
-
-unlabeledList = 'learned_models/IdentityKS/trainTestSets/unlabeled.flist';
-
-% add files if specified
-if ~isempty(addFileLists)
-    unlabeledFile = fopen(db.getFile(unlabeledList), 'a+');
-    for idx=1:length(addFileLists)
-        fin=fopen(db.getFile(addFileLists{idx}));
-        tmp = fread(fin,'uint8');
-        fprintf(unlabeledFile,'\n');
-        fwrite(unlabeledFile, tmp,'uint8');
-        fclose(fin);
-    end
-    fclose(unlabeledFile); 
-end
-
+% -- set training data (no test data required)
 if trainingSetPortion < 1
-    pipe.trainset = ReduceFileList(db.getFile(unlabeledList), trainingSetPortion);
+    pipe.trainset = ReduceFileList(db.getFile(trainSet), trainingSetPortion);
 else 
-    pipe.trainset = unlabeledList;
+    pipe.trainset = trainSet;
 end
 
 pipe.setupData();
 
+% -- scene config (clean sounds)
 sc = SceneConfig.SceneConfiguration();
 sc.addSource( SceneConfig.PointSource( ...
         'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );

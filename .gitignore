@@ -21,3 +21,5 @@ test/STLDiversity/diversity_0.1/
 test/STLDiversity/diversity_0.3/
 test/STLDiversity/Results b100_0.4_0.4_maxData20000/
 test/STLComparison/profile/
+test/STLPureMethodWrapper/
+test/STLComparison/diverse/

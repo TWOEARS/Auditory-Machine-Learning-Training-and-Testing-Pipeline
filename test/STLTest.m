@@ -3,7 +3,7 @@ function savedModel = STLTest(varargin)
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
-% parse input
+%% parse input
 p = inputParser;
 addParameter(p,'scModel', [] ,@(x) ( isa(x, 'Models.SparseCodingModel') ) );
 
@@ -13,9 +13,9 @@ addParameter(p, 'modelPath', 'STLTest', @(x) ischar(x));
 
 addParameter(p,'scGamma', 0.4, @(x)( length(x) == 1 && x > 0 && isfloat(x)));
 
-addParameter(p,'trainSet', '', @(x) ischar(x) );
+addParameter(p,'trainSet', [], @(x) ischar(x) );
 
-addParameter(p,'testSet', '', @(x) ischar(x) );
+addParameter(p,'testSet', [], @(x) ischar(x) );
 
 addParameter(p,'labelCreator', ...
     LabelCreators.MultiEventTypeLabeler( 'types', {{'alert'}}, 'negOut', 'rest' ) , ... 
@@ -32,9 +32,13 @@ addParameter(p,...
     'alpha', 0.99 ), ...
     @(x) ( isa(x, 'ModelTrainers.Base') ) );
 
+addParameter(p, 'mixedSoundsTraining', false, @(x) islogical(x));
+
+addParameter(p, 'mixedSoundsTesting', false, @(x) islogical(x));
+
 parse(p, varargin{:});
 
-% set parameters
+%% set parameters
 scModel                 = p.Results.scModel;
 modelName               = p.Results.modelName;
 modelPath               = p.Results.modelPath;
@@ -44,9 +48,24 @@ testSet                 = p.Results.testSet;
 labelCreator            = p.Results.labelCreator;
 wrappedFeatureCreator   = p.Results.featureCreator;
 modelTrainer            = p.Results.modelTrainer;
+mixedSoundsTraining     = p.Results.mixedSoundsTraining;
+mixedSoundsTesting      = p.Results.mixedSoundsTesting;
 
-if isempty(scModel) || isempty(trainSet)
-   error('You have to pass a valid <scModel> and a valid flist <trainingSet> to STLTest') 
+%% warnings
+if isempty(scModel)
+   error('You have to pass a valid <scModel> to STLTest') 
+end
+
+if isempty(trainSet) && isempty(testSet)
+    error('You have to pass at least one valid flist <trainSet> or <testSet> to STLTest') 
+end
+
+if isempty(trainSet) && mixedSoundsTraining
+    error('You have to pass a valid flist <trainSet> to STLTest for mixed sound training') 
+end
+
+if isempty(testSet) && mixedSoundsTesting
+    error('You have to pass a valid flist <testSet> to STLTest for mixed sound testing') 
 end
 
 if isempty(modelName)
@@ -57,37 +76,54 @@ if ~exist(modelPath, 'dir') && ~mkdir(modelPath)
     error(['The directory <modelPath> = < ' modelPath ' > does not '...
     'exist and can as well not be created, please specify another one.']); 
 end
-    
-    
-% prepare pipeline run
-addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startAMLTTP();
 
+%% prepare pipeline run
 pipe = TwoEarsIdTrainPipe();
-
-% -- feature creator
 pipe.featureCreator = FeatureCreators.FeatureSetDecoratorSparseCoding(wrappedFeatureCreator, scModel, scGamma); 
-
-% -- label creator
 pipe.labelCreator = labelCreator; 
-
-% -- model creator
 pipe.modelCreator = modelTrainer;
-
-pipe.modelCreator.verbose( 'on' );
-
-% -- prepare data
-pipe.trainset = trainSet;
-pipe.testset  = testSet;
-
+if ~isempty(trainSet) 
+    pipe.trainset = trainSet; 
+end
+if ~isempty(testSet) 
+    pipe.testset  = testSet; 
+end
 pipe.setupData();
 
-sc = SceneConfig.SceneConfiguration();
-sc.addSource( SceneConfig.PointSource( ...
-        'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
-
-% init and run pipeline
-pipe.init( sc, 'fs', 16000);
+%% scene configuration (mixed or clean sounds)
+if mixedSoundsTraining
+    % mixed sounds in training
+    sc = SceneConfig.SceneConfiguration();
+    sc.addSource( SceneConfig.PointSource( ...
+            'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
+    sc.addSource( SceneConfig.PointSource( ...
+            'data', SceneConfig.FileListValGen( ...
+                   pipe.pipeline.trainSet('fileLabel',{{'type',{'general'}}},'fileName') ) ),...
+            'snr', SceneConfig.ValGen( 'manual', 0 ),...
+            'loop', 'randomSeq' );
+    sc.setLengthRef( 'source', 1, 'min', 30 ); 
+else
+    if mixedSoundsTesting
+        % mixed sounds in testing
+        sc = SceneConfig.SceneConfiguration();
+        sc.addSource( SceneConfig.PointSource( ...
+                'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
+        sc.addSource( SceneConfig.PointSource( ...
+                'data', SceneConfig.FileListValGen( ...
+                       pipe.pipeline.testSet('fileLabel',{{'type',{'general'}}},'fileName') ),...
+                'offset', SceneConfig.ValGen( 'manual', 0 ) ),...
+                'snr', SceneConfig.ValGen( 'manual', 0 ),...
+                'loop', 'randomSeq' );
+        sc.setLengthRef( 'source', 1, 'min', 30 );
+    else
+        % clean sound
+        sc = SceneConfig.SceneConfiguration();
+        sc.addSource( SceneConfig.PointSource( ...
+                'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
+    end
+end
+%% init and run pipeline
+pipe.init( sc);
 
 modelPath = pipe.pipeline.run( 'modelName', modelName, 'modelPath', modelPath, 'debug', true);
 

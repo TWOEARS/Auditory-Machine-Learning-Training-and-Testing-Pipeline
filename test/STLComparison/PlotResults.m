@@ -1,6 +1,6 @@
 clear;
 
-path = 'profile/';
+path = '';
 %Results b100_0.4_0.4_maxData20000/
 data = load([path 'STLComparison_results.mat']);
 labels = {'alarm', 'baby', 'femaleSpeech', 'fire'};
@@ -11,9 +11,9 @@ for labelIdx=1:length(labels)
     idx = find( cellfun(@(x) strcmp(x,labels{labelIdx}), {res.label}) );
     portions    = [res(idx).portion].*100;
     meanSTL     = [res(idx).meanSTL];
-    meanGlmNet  = [res(idx).meanGlmNet];
+    meanPure  = [res(idx).meanPure];
     
-    plot(portions,meanSTL,'-*', portions, meanGlmNet, '--o');   
+    plot(portions,meanSTL,'-*', portions, meanPure, '--o');   
 
     % description
     xlabel('portion of sound files for training in %');
@@ -26,11 +26,10 @@ data = load([path 'STLComparison_overall.mat']);
 overall = data.overall;
 
 figure;
-portions    = 0.3:0.1:1;
 meanSTL     = overall.meanSTL;
-meanGlmNet  = overall.meanGlmNet;
+meanPure  = overall.meanPure;
     
-plot(portions,meanSTL,'-*', portions, meanGlmNet, '--o');   
+plot(portions,meanSTL,'-*', portions, meanPure, '--o');   
 % description
 xlabel('portion of sound files for training in %');
 ylabel('classification performance');

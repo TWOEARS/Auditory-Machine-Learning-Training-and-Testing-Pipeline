@@ -14,6 +14,8 @@ addParameter(p,'beta', 0.4, @(x)(isfloat(x) && isvector(x)) );
 addParameter(p,'num_bases', 100, ...
     @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0) );
 
+addParameter(p,'num_iters', 100, @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0));
+
 addParameter(p,'maxDataSize', inf, ...
     @(x)(isinf(x) || (length(x) == 1 && rem(x,1) == 0 && x > 0) ) );
 
@@ -32,6 +34,7 @@ modelName           = p.Results.modelName;
 modelPath           = p.Results.modelPath;
 beta                = p.Results.beta;
 num_bases           = p.Results.num_bases;
+num_iters           = p.Results.num_iters;
 maxDataSize         = p.Results.maxDataSize;
 trainingSetPortion  = p.Results.trainingSetPortion;
 trainSet            = p.Results.trainSet;
@@ -57,6 +60,7 @@ pipe.labelCreator = babyFemaleVsRestLabeler;
 pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
     'beta', beta, ...
     'num_bases', num_bases, ...
+    'num_iters', num_iters, ...
     'maxDataSize', maxDataSize, ...
     'saveModelDir', modelPath);
 

@@ -54,6 +54,11 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         
         function setBRIRheadOrientation( obj, brirHeadOrientIdx )
             obj.brirHeadOrientIdx = brirHeadOrientIdx;
+            for ii = 1:numel( obj.sources )
+                if isa( obj.sources(ii), 'SceneConfig.BRIRsource' )
+                    obj.sources(ii).calcAzimuth( brirHeadOrientIdx );
+                end
+            end
         end
         %% -------------------------------------------------------------------------------
         

@@ -16,7 +16,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
     
     %% -----------------------------------------------------------------------------------
     properties (Access = public)
-        srcIdAzmProxy; % e.g. [45 nan 135]: src 1 is @ 45° azm, src 3 @ 135° azm
     end
     
     %% -----------------------------------------------------------------------------------
@@ -120,7 +119,10 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                 for ii = 1 : size( obj.segIdTargetSrcFilter, 1 )
                     srcf = obj.segIdTargetSrcFilter(ii,1);
                     typef = obj.segIdTargetSrcFilter(ii,2);
-                    srcfAzm = obj.lastConfig{obj.sceneId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth.val;
+                    srcfAzm = obj.lastConfig{obj.sceneId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
+                    if isa( srcfAzm, 'SceneConfig.ValGen' )
+                        srcfAzm = srcfAzm.val;
+                    end
                     if activeTypes(typef) && any( blockAnnotations.srcAzms(srcIdxs{typef}) ~= srcfAzm )
                         y = NaN;
                         return;

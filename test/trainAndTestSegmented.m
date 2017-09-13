@@ -27,7 +27,9 @@ pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
     'nsrcsBias', 0, ...
     'nsrcsRndPlusMinusBias', 2 );
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean();
-babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
+babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest', ...
+                           'removeUnclearBlocks', 'time-wise',...
+                           'segIdTargetSrcFilter', [1,1] ); % target sounds only on source 1 );
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @PerformanceMeasures.BAC2, ...
@@ -76,7 +78,9 @@ pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
     'nsrcsBias', 0, ...
     'nsrcsRndPlusMinusBias', 2 );
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean();
-babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
+babyLabeler = LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest', ...
+                           'removeUnclearBlocks', 'time-wise',...
+                           'segIdTargetSrcFilter', [1,1] ); % target sounds only on source 1 );
 pipe.labelCreator = babyLabeler;
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep 'test_segmented/segmModel.model.mat'], ...
@@ -130,6 +134,7 @@ fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
 resc = RescSparse( 'uint32', 'uint8' );
 resct = RescSparse( 'uint32', 'uint8' );
+resct2 = RescSparse( 'uint32', 'uint8' );
     
 % profile on
 
@@ -141,7 +146,7 @@ resct = RescSparse( 'uint32', 'uint8' );
 
 scp = struct('nSources',{3},'headPosIdx',{0},'ambientWhtNoise',{1},'whtNoiseSnr',{8});
 scp.id = 1;
-[resc,resct] = analyzeBlockbased( resc, resct, testPerfresults, scp, true, 'classIdx', 2, 'dd', 2 );
+[resc,resct,resct2] = analyzeBlockbased( resc, resct, resct2, testPerfresults, scp, true, 'classIdx', 2, 'dd', 2 );
 % 1:counts, 2:classIdx, 3: dd, 
 % 4:nAct, 5:curSnr, 6:distToClosestSrc, 7:multiSrcsAttributability, 8:azmErr, 
 % 9:nEstErr, 10:nAct_segStream, 11:curNrj, 12:curNrjOthers, 
@@ -167,15 +172,8 @@ scp.id = 1;
 
 % profile viewer
 
-tmp = resct.summarizeDown( [7,8] );
-tmp = tmp.resc2mat( {@(idx)(idx+3),@(idx)(idx)} );
-sens = tmp(:,1) ./ (tmp(:,1)+tmp(:,4))
-spec = tmp(:,2) ./ (tmp(:,2)+tmp(:,3))
-
-tmp = resc.summarizeDown( [7,8] );
-tmp = tmp.resc2mat( {@(idx)(idx+3),@(idx)(idx)} );
-sens = tmp(:,1) ./ (tmp(:,1)+tmp(:,4))
-spec = tmp(:,2) ./ (tmp(:,2)+tmp(:,3))
-
+[sens,spec] = getPerformanceDecorr( resc, [], [] );
+[senst,spect] = getPerformanceDecorr( resct, [], [] );
+[senst2,spect2] = getPerformanceDecorr( resct2, [], [] );
 
 end

@@ -24,10 +24,13 @@ classdef Base < Core.IdProcInterface
             obj = obj@Core.IdProcInterface();
             ip = inputParser;
             ip.addOptional( 'labelBlockSize_s', [] );
-            ip.addOptional( 'removeUnclearBlocks', true );
+            ip.addOptional( 'removeUnclearBlocks', 'block-wise' ); % 'false','block-wise','time-wise'
             ip.parse( varargin{:} );
             obj.labelBlockSize_s = ip.Results.labelBlockSize_s;
             obj.removeUnclearBlocks = ip.Results.removeUnclearBlocks;
+            if ~any( strcmpi( obj.removeUnclearBlocks, {'false','block-wise','time-wise'} ) )
+                error( 'AMLTTP:usage:unsupportedOptionSetting', 'use one of ''false'',''block-wise'',''time-wise''.' );
+            end
             if isempty( obj.labelBlockSize_s )
                 obj.labelBlockSize_auto = true;
             else
@@ -62,11 +65,11 @@ classdef Base < Core.IdProcInterface
             obj.y = tmpOut.y;
             obj.ysi = tmpOut.ysi;
             obj.inputProc.sceneId = obj.sceneId;
-            if nargin < 3  || (any( strcmpi( 'x', varargin ) ) && any( strcmpi( 'a', varargin ) ))
+            if nargin < 3  || (any( strcmpi( 'x', varargin ) ) && (any( strcmpi( 'a', varargin ) )  || strcmpi( obj.removeUnclearBlocks, 'time-wise' )))
                 inData = obj.loadInputData( wavFilepath, 'x', 'blockAnnotations' );
                 obj.x = inData.x;
                 obj.blockAnnotations = inData.blockAnnotations;
-            elseif any( strcmpi( 'a', varargin ) )
+            elseif any( strcmpi( 'a', varargin ) ) || strcmpi( obj.removeUnclearBlocks, 'time-wise' )
                 inData = obj.loadInputData( wavFilepath, 'blockAnnotations' );
                 obj.blockAnnotations = inData.blockAnnotations;
             elseif any( strcmpi( 'x', varargin ) )
@@ -108,28 +111,31 @@ classdef Base < Core.IdProcInterface
         function out = getOutput( obj, varargin )
             out.y = obj.y;
             out.bIdxs = 1 : size( out.y, 1 );
+            removeNanBlocks = strcmpi( obj.removeUnclearBlocks, {'block-wise','time-wise'} );
+            if ~any( removeNanBlocks )
+                removeNanBlocks_lidx = [];
+            else
+                removeNanBlocks_lidx = any(isnan(out.y),2);
+                if removeNanBlocks(2)
+                    [~,~,sameTimeIdxs] = unique( [obj.blockAnnotations.blockOffset] );
+                    nanTimeIdxs = sameTimeIdxs(removeNanBlocks_lidx);
+                    removeNanBlocks_lidx = ismember( sameTimeIdxs, nanTimeIdxs );
+                end
+            end
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
                 out.x = obj.x;
-                if obj.removeUnclearBlocks
-                    out.x(any(isnan(out.y),2),:) = [];
-                end
+                out.x(removeNanBlocks_lidx,:) = [];
             end
             if nargin < 2  || any( strcmpi( 'a', varargin ) )
                 out.a = obj.blockAnnotations;
-                if obj.removeUnclearBlocks
-                    out.a(any(isnan(out.y),2)) = [];
-                end
+                out.a(removeNanBlocks_lidx) = [];
             end
             if nargin < 2  || any( strcmpi( 'ysi', varargin ) )
                 out.ysi = obj.ysi;
-                if obj.removeUnclearBlocks
-                    out.ysi(any(isnan(out.y),2)) = [];
-                end
+                out.ysi(removeNanBlocks_lidx) = [];
             end
-            if obj.removeUnclearBlocks
-                out.bIdxs(any(isnan(out.y),2)) = [];
-                out.y(any(isnan(out.y),2),:) = [];
-            end
+            out.bIdxs(removeNanBlocks_lidx) = [];
+            out.y(removeNanBlocks_lidx,:) = [];
         end
         %% -------------------------------------------------------------------------------
         

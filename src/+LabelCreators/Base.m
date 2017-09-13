@@ -82,7 +82,7 @@ classdef Base < Core.IdProcInterface
         
         % override of Core.IdProcInterface's method
         function out = saveOutput( obj, wavFilepath )
-            out = obj.getOutput( 'y', 'ysi' );
+            out = obj.getOutput( 'y', 'ysi', 'noRemoveNanBlocks' );
             obj.save( wavFilepath, out );
         end
         %% -------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ classdef Base < Core.IdProcInterface
             out.y = obj.y;
             out.bIdxs = 1 : size( out.y, 1 );
             removeNanBlocks = strcmpi( obj.removeUnclearBlocks, {'block-wise','time-wise'} );
-            if ~any( removeNanBlocks )
+            if ~any( removeNanBlocks ) || any( strcmpi( 'noRemoveNanBlocks', varargin ) )
                 removeNanBlocks_lidx = [];
             else
                 removeNanBlocks_lidx = any(isnan(out.y),2);

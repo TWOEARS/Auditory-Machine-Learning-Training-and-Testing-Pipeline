@@ -123,7 +123,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                     if isa( srcfAzm, 'SceneConfig.ValGen' )
                         srcfAzm = srcfAzm.val;
                     end
-                    if activeTypes(typef) && any( blockAnnotations.srcAzms(srcIdxs{typef}) ~= srcfAzm )
+                    if activeTypes(typef) && any( abs( blockAnnotations.srcAzms(srcIdxs{typef}) - srcfAzm ) >= 0.1 )
                         y = NaN;
                         return;
                     end

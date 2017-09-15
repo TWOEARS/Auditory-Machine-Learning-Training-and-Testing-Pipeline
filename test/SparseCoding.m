@@ -14,7 +14,7 @@ addParameter(p,'beta', 0.4, @(x)(isfloat(x) && isvector(x)) );
 addParameter(p,'num_bases', 100, ...
     @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0) );
 
-addParameter(p,'num_iters', 100, @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0));
+addParameter(p,'num_iters', 20, @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0));
 
 addParameter(p,'maxDataSize', inf, ...
     @(x)(isinf(x) || (length(x) == 1 && rem(x,1) == 0 && x > 0) ) );
@@ -27,6 +27,8 @@ addParameter(p, 'trainSet', ...
     'unlabeled_freesound.flist'], ...
     @(x) ~isempty(x) && ischar(x) && exist(db.getFile(x), 'file') );
 
+addParameter(p, 'mixedSoundsTraining', false, @(x) length(x) == 1 && islogical(x));
+
 parse(p, varargin{:});
 
 % set input parameters
@@ -38,10 +40,14 @@ num_iters           = p.Results.num_iters;
 maxDataSize         = p.Results.maxDataSize;
 trainingSetPortion  = p.Results.trainingSetPortion;
 trainSet            = p.Results.trainSet;
+mixedSoundsTraining = p.Results.mixedSoundsTraining;
 
 if isempty(modelName)
     modelName = sprintf('scModel_b%d_beta%g_size%d_portion%g', ...
         num_bases, beta, maxDataSize, trainingSetPortion);
+    if mixedSoundsTraining
+        modelName = sprintf('%s_mixed', modelName);
+    end
 end
 
 % prepare pipe run
@@ -75,10 +81,24 @@ end
 
 pipe.setupData();
 
-% -- scene config (clean sounds)
-sc = SceneConfig.SceneConfiguration();
-sc.addSource( SceneConfig.PointSource( ...
-        'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
+% -- scene config (mixed or clean sounds)
+if mixedSoundsTraining
+    % mixed sounds in training
+    sc = SceneConfig.SceneConfiguration();
+    sc.addSource( SceneConfig.PointSource( ...
+            'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
+    sc.addSource( SceneConfig.PointSource( ...
+            'data', SceneConfig.FileListValGen( ...
+                   pipe.pipeline.trainSet(:,'fileName') ) ),...
+            'snr', SceneConfig.ValGen( 'manual', 0 ),...
+            'loop', 'randomSeq' );
+    sc.setLengthRef( 'source', 1, 'min', 30 ); 
+else
+    % clean sounds in training
+    sc = SceneConfig.SceneConfiguration();
+    sc.addSource( SceneConfig.PointSource( ...
+            'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
+end
 
 % init and run pipeline
 pipe.init( sc, 'fs', 16000);

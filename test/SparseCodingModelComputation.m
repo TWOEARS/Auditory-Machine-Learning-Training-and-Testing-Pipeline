@@ -1,4 +1,4 @@
-function SparseCodingSelectTest(varargin)
+function SparseCodingModelComputation(varargin)
 
 p = inputParser;
 

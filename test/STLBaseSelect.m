@@ -1,21 +1,27 @@
 function STLBaseSelect(varargin)
+addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
+startAMLTTP();
 
-% parse input
+%% parse input
 p = inputParser;
 addParameter(p,'scModelDir', './Results_A/selectedModels/', @(x) ( ischar(x) && exist(x, 'dir') ) );
 
+addParameter(p,'savePath', './STLBaseSelect', @(x) ( ischar(x) && exist(x, 'dir') ) );
+
 addParameter(p,'hpsMaxDataSize', Inf, @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+
 addParameter(p,'hpsGammas', [0.4 0.6], @(x)(isfloat(x) && isvector(x)) );
 
 addParameter(p,'label', 'alarm', @(x)ischar(x) );
 
 parse(p, varargin{:});
 
-% set parameters
+%% set parameters
 scModelDir      = p.Results.scModelDir;
 hpsMaxDataSize  = p.Results.hpsMaxDataSize;
-hpsGammas        = p.Results.hpsGammas;
+hpsGammas       = p.Results.hpsGammas;
 label           = p.Results.label;
+savePath        = p.Results.savePath; 
 
 if isempty(scModelDir)
     error('You have to pass a valid directory <scModelDir> to STLBaseSelectTest')
@@ -74,7 +80,7 @@ modelTrainer = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'alpha', 0.99, ...
     'maxDataSize', hpsMaxDataSize);
 
-% hps over hpsSets
+%% hps over hpsSets
 for hpsIndex=1:size(hpsSets.scModel,1)
     % cross validation over different training/test sets
     for cvIndex=1:length(trainSet)
@@ -85,8 +91,9 @@ for hpsIndex=1:size(hpsSets.scModel,1)
             hpsSets.scGamma(hpsIndex),...
             datestr(now, 30) );
         
-        STLTest('scModel', hpsSets.scModel(hpsIndex), ...
+        STL('scModel', hpsSets.scModel(hpsIndex), ...
                     'modelName', modelName, ...
+                    'modelPath', savePath, ...
                     'scGamma', hpsSets.scGamma(hpsIndex), ...
                     'trainSet', trainSet{cvIndex}, ...
                     'testSet', testSet{cvIndex}, ...

@@ -2,7 +2,7 @@ function STLComparisonMixedSounds(varargin)
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
-% parse input
+%% parse input
 p = inputParser;
 addParameter(p,'scModelFile', './Results_B/SCModel_b100_beta0.4.mat', ... 
     @(x)( ischar(x) && exist(x, 'file') ) );
@@ -17,21 +17,22 @@ addParameter(p,'labels', {'alarm', 'baby', 'femaleSpeech', 'fire'}, ...
 
 addParameter(p, 'resultsFile', ...
     'STLComparisonMixedSounds/STLComparisonMixedSounds_results.mat', ...
-    @(x) ischar(x) && exist(x, 'file'))
+    @(x) ischar(x))
 
 addParameter(p, 'maxDataSize', 120000,...
     @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
 
 parse(p, varargin{:});
 
-% set parameters
+%% set parameters
 scModelFile         = p.Results.scModelFile;
 gamma               = p.Results.gamma;
 trainingSetPortions = p.Results.trainingSetPortions;
 labels              = p.Results.labels;
 resultsFile         = p.Results.resultsFile;
 maxDataSize         = p.Results.maxDataSize;
-        
+
+%% warnings
 if isempty(scModelFile)
     error(['You have to pass a valid directory <scModelDir> to ' ...
         ' STLComparisonMixedSounds']);
@@ -41,8 +42,10 @@ data = load(scModelFile);
 if ~isa(data.model, 'Models.SparseCodingModel')
      error(['You have to pass a file <scModelFile> with a valid' ...
         ' model Models.SparseCodingModel to STLComparisonMixedSounds']);
-end    
+end
+scModel = data.model;
 
+%% training and test set
 trainSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_1.flist', ...
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_2.flist', ...
             'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TrainSet_3.flist', ...
@@ -56,8 +59,7 @@ testSet = {'learned_models/IdentityKS/trainTestSets/NIGENS160807_75pTrain_TestSe
 assert(length(trainSet) == length(testSet), ...
         'Lists of training and test sets must have same length');
 
-scModel = data.model;
-
+%% init results
 % try to load file with already computed configurations to skip computation 
 % of those configurations, else initialise a new variable for the results
 if exist(resultsFile, 'file')
@@ -68,6 +70,7 @@ else
         'PurePerformance', []);
 end
 
+%% run pipeline for all combinations of labels, portions and cross-validations
 for labelIndex=1:length(labels)
     
     labelCreator = LabelCreators.MultiEventTypeLabeler( ...
@@ -96,11 +99,11 @@ for labelIndex=1:length(labels)
                 results(entryIdx).PurePerformance = [];
             end
 
-            % *** STLTEST ***
+            % *** STL ***
             % skip computation if entry and corresponding
             % performance already exists
             if length(results(entryIdx).STLPerformance) < cvIndex
-                modelPath = 'STLTest';
+                modelPath = 'STL';
                 modelName = ...
                     sprintf('STLModel_b%d_gamma%g_%s_portion%g_%d', ...
                     size(scModel.B,1), gamma, labels{labelIndex}, ...
@@ -112,7 +115,7 @@ for labelIndex=1:length(labels)
                     'maxDataSize', maxDataSize);
 
                 % training for mixed sounds
-                savedModel = STLTest('scModel', scModel, ...
+                savedModel = STL('scModel', scModel, ...
                         'modelName', modelName, ...
                         'modelPath', modelPath, ...
                         'scGamma', gamma, ...
@@ -127,7 +130,7 @@ for labelIndex=1:length(labels)
                     'performanceMeasure', @PerformanceMeasures.BAC2,...
                     'maxDataSize', maxDataSize );
                 
-                savedModel = STLTest('scModel', scModel, ...
+                savedModel = STL('scModel', scModel, ...
                     'modelName', modelName, ...
                     'modelPath', modelPath, ...
                     'scGamma', gamma, ...
@@ -191,6 +194,7 @@ for labelIndex=1:length(labels)
     end
 end
 
+% computations for statistics in resultFile
 cvFold = length(trainSet);
 %add means
 meanSTL =  mean(reshape([results.STLPerformance]', cvFold, []), 1);
@@ -213,18 +217,12 @@ varPure = num2cell(varPure);
 save(resultsFile, 'results');
 
 % compute overall results 
-overallMeanSTL  = arrayfun( @(x) mean([results([results.portion] == x).meanSTL]), trainingSetPortions);
-overallMeanPure = arrayfun( @(x) mean([results([results.portion] == x).meanPure]), trainingSetPortions);
+overall.meanSTL  = arrayfun( @(x) mean([results([results.portion] == x).meanSTL]), trainingSetPortions);
+overall.meanPure = arrayfun( @(x) mean([results([results.portion] == x).meanPure]), trainingSetPortions);
 
-overall.meanSTL  = overallMeanSTL;
-overall.meanPure = overallMeanPure;
+overall.varSTL  = arrayfun( @(x) var([results([results.portion] == x).meanSTL]), trainingSetPortions);
+overall.varPure = arrayfun( @(x) var([results([results.portion] == x).meanPure]), trainingSetPortions);
 
-overallVarSTL  = arrayfun( @(x) var([results([results.portion] == x).meanSTL]), trainingSetPortions);
-overallVarPure = arrayfun( @(x) var([results([results.portion] == x).meanPure]), trainingSetPortions);
-
-overall.varSTL  = overallVarSTL;
-overall.varPure = overallVarPure;
-
-splitted = strsplit(resultsFile, '_');
-overallFile = strcat(splitted{1:end - 1}, '_overall.mat');
+prefix = strsplit(resultsFile, '_');
+overallFile = strcat(prefix{1:end - 1}, '_overall.mat');
 save(overallFile, 'overall');

@@ -1,4 +1,4 @@
-function savedModel = STLTest(varargin)
+function savedModel = STL(varargin)
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
@@ -9,7 +9,7 @@ addParameter(p,'scModel', [] ,@(x) ( isa(x, 'Models.SparseCodingModel') ) );
 
 addParameter(p,'modelName', '' ,@(x) ischar(x) );
 
-addParameter(p, 'modelPath', 'STLTest', @(x) ischar(x));
+addParameter(p, 'modelPath', 'STL', @(x) ischar(x));
 
 addParameter(p,'scGamma', 0.4, @(x)( length(x) == 1 && x > 0 && isfloat(x)));
 
@@ -53,19 +53,19 @@ mixedSoundsTesting      = p.Results.mixedSoundsTesting;
 
 %% warnings
 if isempty(scModel)
-   error('You have to pass a valid <scModel> to STLTest') 
+   error('You have to pass a valid <scModel> to STL') 
 end
 
 if isempty(trainSet) && isempty(testSet)
-    error('You have to pass at least one valid flist <trainSet> or <testSet> to STLTest') 
+    error('You have to pass at least one valid flist <trainSet> or <testSet> to STL') 
 end
 
 if isempty(trainSet) && mixedSoundsTraining
-    error('You have to pass a valid flist <trainSet> to STLTest for mixed sound training') 
+    error('You have to pass a valid flist <trainSet> to STL for mixed sound training') 
 end
 
 if isempty(testSet) && mixedSoundsTesting
-    error('You have to pass a valid flist <testSet> to STLTest for mixed sound testing') 
+    error('You have to pass a valid flist <testSet> to STL for mixed sound testing') 
 end
 
 if isempty(modelName)
@@ -124,10 +124,8 @@ else
 end
 %% init and run pipeline
 pipe.init( sc);
-
 modelPath = pipe.pipeline.run( 'modelName', modelName, 'modelPath', modelPath, 'debug', true);
-
-savedModel = fullfile(modelPath, [modelName '.model.mat']);
+savedModel = fullfile(modelPath, [modelName '.model.mat']); % for output
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 
 

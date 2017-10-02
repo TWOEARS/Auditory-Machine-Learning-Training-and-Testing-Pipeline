@@ -3,7 +3,7 @@ function SparseCoding(varargin)
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
-% parse input
+%% parse input
 p = inputParser;
 addParameter(p,'modelName', '' ,@(x) ischar(x) );
 
@@ -31,7 +31,7 @@ addParameter(p, 'mixedSoundsTraining', false, @(x) length(x) == 1 && islogical(x
 
 parse(p, varargin{:});
 
-% set input parameters
+%% set parameters
 modelName           = p.Results.modelName;
 modelPath           = p.Results.modelPath;
 beta                = p.Results.beta;
@@ -42,6 +42,7 @@ trainingSetPortion  = p.Results.trainingSetPortion;
 trainSet            = p.Results.trainSet;
 mixedSoundsTraining = p.Results.mixedSoundsTraining;
 
+%% warnings
 if isempty(modelName)
     modelName = sprintf('scModel_b%d_beta%g_size%d_portion%g', ...
         num_bases, beta, maxDataSize, trainingSetPortion);
@@ -50,19 +51,16 @@ if isempty(modelName)
     end
 end
 
-% prepare pipe run
+%% prepare pipeline run
 pipe = TwoEarsIdTrainPipe();
 
-% -- feature creator
 pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean(); 
 
-% -- label creator (any class, since data unlabeled)
-babyFemaleVsRestLabeler = ... 
+% set label creator to target any class, since data is unlabeled
+pipe.labelCreator = ... 
     LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, ...
                                           'negOut', 'rest' ); 
-pipe.labelCreator = babyFemaleVsRestLabeler; 
 
-% -- model creator
 pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ... 
     'beta', beta, ...
     'num_bases', num_bases, ...
@@ -70,9 +68,7 @@ pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ...
     'maxDataSize', maxDataSize, ...
     'saveModelDir', modelPath);
 
-pipe.modelCreator.verbose( 'off' ); % no console output
-
-% -- set training data (no test data required)
+% set training data, no test data required due to Sparse Coding
 if trainingSetPortion < 1
     pipe.trainset = ReduceFileList(db.getFile(trainSet), trainingSetPortion);
 else 
@@ -81,7 +77,7 @@ end
 
 pipe.setupData();
 
-% -- scene config (mixed or clean sounds)
+%% scene config (mixed or clean sounds)
 if mixedSoundsTraining
     % mixed sounds in training
     sc = SceneConfig.SceneConfiguration();
@@ -100,10 +96,8 @@ else
             'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
 end
 
-% init and run pipeline
+%% init and run pipeline
 pipe.init( sc, 'fs', 16000);
-
 modelPath = pipe.pipeline.run( 'modelName', modelName, 'modelPath', modelPath, 'debug', true);
-
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
 

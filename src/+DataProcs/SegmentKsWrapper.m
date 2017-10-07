@@ -17,6 +17,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         nsrcsBias;
         nsrcsRndPlusMinusBias;
         isNsrcsFixed;
+        isAzmFixedUniform;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -99,6 +100,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             obj.nsrcsKs = nsrcsKs;
             obj.energeticBaidxs = [];
             obj.isNsrcsFixed = false;
+            obj.isAzmFixedUniform = false;
             obj.nsrcsBias = ip.Results.nsrcsBias;
             if obj.useNsrcsKs && (obj.nsrcsBias ~= 0)
                 error( 'AMLTTP:usage:unsupportedOptionSetting', ...
@@ -119,6 +121,14 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 error( 'AMLTTP:usage:unsupportedOptionSetting', ...
                        ['nSrcs random bias only supported if using ' ...
                         'nSrcs ground truth.'] );
+            end
+            if ischar( obj.varAzmSigma ) 
+                if strfind( obj.varAzmSigma, 'fixedUniform' ) == 1
+                    obj.isAzmFixedUniform = true;
+                else
+                    error( 'AMLTTP:usage:unsupportedOptionSetting', ...
+                          ['unrecognized azm bias flag.'] );
+                end
             end
             fprintf( '.\n' );
         end
@@ -157,14 +167,19 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 obj.segmentKs.setFixedNoSrcs( [] );
             end
             if ~obj.useDnnLocKs
-                azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
-                currentVarAzms = wrapTo180( obj.azmsGroundTruth + azmVar );
-                setNsrcsDiff = setNsrcs - numel( currentVarAzms );
-                if setNsrcsDiff > 0
-                    currentVarAzms = [currentVarAzms 360*rand( 1, setNsrcsDiff )];
-                elseif setNsrcsDiff < 0
-                    rndidxs = randperm( numel( currentVarAzms ) );
-                    currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];
+                if obj.isAzmFixedUniform
+                    azmStep = round( 360 / setNsrcs );
+                    currentVarAzms = round( azmStep/2 ) : azmStep : 360;
+                else
+                    azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
+                    currentVarAzms = wrapTo180( obj.azmsGroundTruth + azmVar );
+                    setNsrcsDiff = setNsrcs - numel( currentVarAzms );
+                    if setNsrcsDiff > 0
+                        currentVarAzms = [currentVarAzms 360*rand( 1, setNsrcsDiff )];
+                    elseif setNsrcsDiff < 0
+                        rndidxs = randperm( numel( currentVarAzms ) );
+                        currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];
+                    end
                 end
                 obj.segmentKs.setFixedAzimuths( wrapTo180( currentVarAzms ) );
             else

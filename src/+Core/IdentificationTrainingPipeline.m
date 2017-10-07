@@ -121,7 +121,7 @@ classdef IdentificationTrainingPipeline < handle
             ip.addOptional( 'runOption', [] );
             ip.addOptional( 'debug', false );
             ip.parse( varargin{:} );
-
+            
             cleaner = onCleanup( @() obj.finish() );
             modelPath = obj.createFilesDir( ip.Results.modelPath );
             
@@ -173,6 +173,12 @@ classdef IdentificationTrainingPipeline < handle
                 featureNames = obj.featureCreator.description;
                 save( 'dataStoreUni.mat', ...
                       'x', 'y', 'featureNames', '-v7.3' );
+                return; 
+            elseif strcmp( ip.Results.runOption, 'dataStoreGT' )
+                bIdxs = obj.data(:,'bIdxs');
+                y = obj.data(:,'y');
+                save( 'dataStoreGT.mat', ...
+                      'bIdxs', 'y', '-v7.3' );
                 return; 
             end;
             

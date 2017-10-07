@@ -16,6 +16,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         energeticBaidxs;
         nsrcsBias;
         nsrcsRndPlusMinusBias;
+        isNsrcsFixed;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -97,11 +98,21 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             obj.idKss = idKss;
             obj.nsrcsKs = nsrcsKs;
             obj.energeticBaidxs = [];
+            obj.isNsrcsFixed = false;
             obj.nsrcsBias = ip.Results.nsrcsBias;
             if obj.useNsrcsKs && (obj.nsrcsBias ~= 0)
                 error( 'AMLTTP:usage:unsupportedOptionSetting', ...
                        ['nSrcs bias only supported if using ' ...
                         'nSrcs ground truth.'] );
+            end
+            if ischar( obj.nsrcsBias ) 
+                if strfind( obj.nsrcsBias, 'fixed' ) == 1
+                    obj.isNsrcsFixed = true;
+                    obj.nsrcsBias = str2double( obj.nsrcsBias(6:end) );
+                else
+                    error( 'AMLTTP:usage:unsupportedOptionSetting', ...
+                          ['unrecognized nSrcs bias flag.'] );
+                end
             end
             obj.nsrcsRndPlusMinusBias = ip.Results.nsrcsRndPlusMinusBias;
             if obj.useNsrcsKs && (obj.nsrcsRndPlusMinusBias ~= 0)
@@ -136,8 +147,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             if ~obj.useNsrcsKs
                 rndNbias = randi( obj.nsrcsRndPlusMinusBias*2 + 1 ) ...
                                                 - obj.nsrcsRndPlusMinusBias - 1;
-                setNsrcs = max( 1, sum( srcsHaveEnergy ) ...
-                                   + obj.nsrcsBias + rndNbias );
+                if obj.isNsrcsFixed
+                    setNsrcs = max( 1, obj.nsrcsBias + rndNbias );
+                else
+                    setNsrcs = max( 1, sum( srcsHaveEnergy ) + obj.nsrcsBias + rndNbias );
+                end
                 obj.segmentKs.setFixedNoSrcs( setNsrcs );
             else
                 obj.segmentKs.setFixedNoSrcs( [] );
@@ -183,13 +197,10 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                     end
                     distPermutations = unique( distPermutations, 'rows' );
                     distances = zeros( size( distPermutations ) );
-                    permutedDistances = zeros( size( distPermutations, 1 ), 1 );
-                    for ss = 1 : size( distPermutations, 1 )
-                        for tt = 1 : size( distPermutations, 2 )
-                            distances(ss,tt) = hypAzmGtDists(distPermutations(ss,tt),tt);
-                        end
-                        permutedDistances(ss) = sum( distances(ss,:) );
+                    for tt = 1 : size( distPermutations, 2 )
+                        distances(:,tt) = hypAzmGtDists(distPermutations(:,tt),tt);
                     end
+                    permutedDistances = sum( distances, 2 );
                     [~,minPermutedDistanceIdx] = min( permutedDistances );
                     segSrcAssignment = distPermutations(minPermutedDistanceIdx,:);
                 case 'minDistance'

@@ -1,24 +1,44 @@
 function STLComparison(varargin)
+%STLComparison Compares classification performances of pure LASSO and LASSO
+%enhanced by STL
+    %
+    %    This function will train and test two classifiers: LASSO and LASSO 
+    %    enhanced by STL for different target classes or portions of the 
+    %    training set. The results are stored in a file 
+    %    <resultsFile> for further evaluation. If the script crashes,
+    %    another call will try to continue at the point of interruption
+    %    using the entries of <resultsFile>. Training and testing is done
+    %    on clean sounds.
+
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
 %% parse input
 p = inputParser;
+
+% Sparse Coding model that is required for STL LASSO classification
 addParameter(p,'scModelFile', './Results_B/SCModel_b100_beta0.4.mat', ... 
     @(x)( ischar(x) && exist(x, 'file') ) );
 
+% sparsity factor for STL high-level feature extraction
 addParameter(p,'gamma', 0.4, @(x)(isfloat(x) && isvector(x)) );
 
+% set of portions the training data is reduced to for different pipeline
+% runs
 addParameter(p,'trainingSetPortions', 0.1:0.1:1, ... 
     @(x)(isfloat(x) && isvector(x) && all(x>0) && all(x<=1)) );
 
+% set containing each target class for which classification performances
+% should be computed
 addParameter(p,'labels', {'alarm', 'baby', 'femaleSpeech', 'fire'}, ...
    @(x)(iscell(x) && ~isempty(x)));
 
+% resultsFile where performances are stored for caching or later evalutations 
 addParameter(p, 'resultsFile', ...
     './STLComparison/STLComparison_results.mat', ...
     @(x) ischar(x) && exist(x, 'file'))
 
+% maximum amount of samples that are used for training the classifier
 addParameter(p, 'maxDataSize', 100000, ...
     @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
 

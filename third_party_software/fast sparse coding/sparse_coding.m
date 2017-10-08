@@ -57,7 +57,7 @@ pars.noise_var = 1;
 pars.sigma = 1;
 pars.VAR_basis = 1;
 
-if ~isfield(pars,'display_images')	pars.display_images = false; end; %true;	
+if ~isfield(pars,'display_images')	pars.display_images = false; end;	
 if ~isfield(pars,'display_every')	pars.display_every = 0;	end;
 if ~isfield(pars,'save_every')	pars.save_every = 0;	end;
 if ~isfield(pars,'save_basis_timestamps')	pars.save_basis_timestamps = false;	end;
@@ -199,7 +199,7 @@ while t < pars.num_trials
     stat.elapsed_time(t)  = cputime - start_time;
     
     % display
-    if (pars.display_images && mod(t, pars.display_every)==0) || mod(t,pars.save_every)==0 || t==pars.num_trials
+    if (pars.display_images && mod(t, pars.display_every)==0) || mod(t,pars.save_every)==0
         display_figures(pars, stat, B, S, t);
     end
     
@@ -208,7 +208,7 @@ while t < pars.num_trials
             stat.fsparsity_avg(t), stat.elapsed_time(t));
     
     % save results
-    if mod(t,pars.save_every)==0 || t==pars.num_trials
+    if mod(t,pars.save_every)==0
         fprintf('saving results ...\n');
         experiment = [];
         experiment.matfname = sprintf('%s.mat', pars.filename);

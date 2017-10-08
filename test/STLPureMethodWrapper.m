@@ -1,25 +1,29 @@
 function savedModel = STLPureMethodWrapper(varargin)
+%STLPureMethodWrapper Wrapper for any model trainer. Executes a pipeline 
+%run performing a classification with a specified classifier. Having such a
+%wrapper makes it easier to compare an STL classifier to different ones.
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
 %% parse input
 p = inputParser;
+% file name of the computed model
 addParameter(p,'modelName', '' ,@(x) ischar(x) );
-
+% directory, where the computed model is saved
 addParameter(p, 'modelPath', 'STLPureMethodWrapper', @(x) ischar(x));
-
+% set of file lists for training (each entry will one fold in cross-validation)
 addParameter(p,'trainSet', [], @(x) ischar(x) );
-
+% set of file lists for testing (each entry will one fold in cross-validation)
 addParameter(p,'testSet', [], @(x) ischar(x) );
-
+% label creator that is used in pipeline
 addParameter(p,'labelCreator', ...
     LabelCreators.MultiEventTypeLabeler( 'types', {{'alert'}}, 'negOut', 'rest' ) , ... 
     @(x) ( isa(x, 'LabelCreators.MultiEventTypeLabeler') ) );
-
+% feature creator that is used in pipeline
 addParameter(p,'featureCreator', FeatureCreators.FeatureSet5Blockmean() , ...
     @(x) ( isa(x, 'FeatureCreators.Base') ) );
-
+% wrapped model trainer that is used in pipeline
 addParameter(p,...
     'modelTrainer', ...
     ModelTrainers.GlmNetLambdaSelectTrainer( ...
@@ -27,9 +31,9 @@ addParameter(p,...
     'cvFolds', 4, ...
     'alpha', 0.99 ), ...
     @(x) ( isa(x, 'ModelTrainers.Base') ) );
-
+% training is done on mixed sounds if this flag is true
 addParameter(p, 'mixedSoundsTraining', false, @(x) islogical(x));
-
+% testing is done on mixed sounds if this flag is true
 addParameter(p, 'mixedSoundsTesting', false, @(x) islogical(x));
 
 parse(p, varargin{:});

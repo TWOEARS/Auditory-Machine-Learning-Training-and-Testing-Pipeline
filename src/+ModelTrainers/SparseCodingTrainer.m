@@ -1,8 +1,8 @@
 classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
-    % SparseCodingSelectTrainer trainer for a SparseCodingModel
-    %   Will do sparse coding for given input to fit a base with sparse
-    %   coefficients.
-    %% --------------------------------------------------------------------
+% SparseCodingSelectTrainer trainer for a SparseCodingModel
+%   Will do sparse coding for given input to fit a base with sparse
+%   coefficients.
+
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
         model;
@@ -42,9 +42,6 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             pds{6} = struct( 'name', 'maxDataSize', ...
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
-            pds{7} = struct( 'name', 'saveModelDir', ...
-                             'default', '', ...
-                             'valFun', @(x)(ischar(x)) );
                          
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
@@ -72,20 +69,7 @@ classdef SparseCodingTrainer < ModelTrainers.Base & Parameterized
             
             % normalized opt value of sparse coding objective
             fobj = stat.fobj_total / size(xScaled, 1);
-            fprintf('\n==\tfobj on data: %f\n\n', fobj);
-            % save model if path is not empty
-            if ~isempty(obj.saveModelDir)
-                if ~exist(obj.saveModelDir, 'dir') 
-                    mkdir(obj.saveModelDir); 
-                end
-                modelFile = sprintf('scModel_b%d_beta%g_%s.mat', obj.num_bases, obj.beta, datestr(now, 30));
-                model = obj.model; 
-                
-                if ~exist(obj.saveModelDir, 'dir')
-                    mkdir(obj.saveModelDir);
-                end
-                save( fullfile(obj.saveModelDir, modelFile), 'model' );
-            end
+            fprintf('\n==\tfobj on data: %f\n\n', fobj);               
         end
         %% ----------------------------------------------------------------
             

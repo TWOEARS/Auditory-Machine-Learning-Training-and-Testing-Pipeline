@@ -1,32 +1,37 @@
 function SparseCoding(varargin)
+% SparseCoding Executes a pipeline run to compute a Sparse Coding model for
+% a given hyperparameter configuration.
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
 
 %% parse input
 p = inputParser;
+
+% file name of the computed model
 addParameter(p,'modelName', '' ,@(x) ischar(x) );
-
+% directory where computed model should be saved to
 addParameter(p, 'modelPath', 'SparseCoding', @(x) ischar(x));
-
+% sparsity factor beta for computing Sparse Coding model
 addParameter(p,'beta', 0.4, @(x)(isfloat(x) && isvector(x)) );
-
+% base dimension of Sparse Coding model
 addParameter(p,'num_bases', 100, ...
     @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0) );
-
+% amount of iterations of the Sparse Coding algorithm
 addParameter(p,'num_iters', 20, @(x)(length(x) == 1 && rem(x,1) == 0 && x > 0));
-
+% maximum amount of training samples for Sparse Coding
 addParameter(p,'maxDataSize', inf, ...
     @(x)(isinf(x) || (length(x) == 1 && rem(x,1) == 0 && x > 0) ) );
-
-addParameter(p,'trainingSetPortion', 1, ...
-    @(x)(isfloat(x) && length(x) == 1 && x > 0 && x <= 1) );
-
+% training set (unlabeled data)
 addParameter(p, 'trainSet', ...
     ['learned_models/IdentityKS/trainTestSets/' ...
     'unlabeled_freesound.flist'], ...
     @(x) ~isempty(x) && ischar(x) && exist(db.getFile(x), 'file') );
-
+% defines which portion of the training sound files should be used for
+% training
+addParameter(p, 'trainingSetPortion', 1, ...
+    @(x) ( isfloat(x) && length(x) == 1 && x <= 1 && x > 0 ) );
+% trains on mixed sounds if flag is set to true
 addParameter(p, 'mixedSoundsTraining', false, @(x) length(x) == 1 && islogical(x));
 
 parse(p, varargin{:});
@@ -51,6 +56,11 @@ if isempty(modelName)
     end
 end
 
+if ~exist(modelPath, 'dir') && ~mkdir(modelPath)
+    error(['The directory <modelPath> = < ' modelPath ' > does not '...
+    'exist and can as well not be created, please specify another one.']); 
+end
+
 %% prepare pipeline run
 pipe = TwoEarsIdTrainPipe();
 
@@ -65,8 +75,7 @@ pipe.modelCreator = ModelTrainers.SparseCodingTrainer( ...
     'beta', beta, ...
     'num_bases', num_bases, ...
     'num_iters', num_iters, ...
-    'maxDataSize', maxDataSize, ...
-    'saveModelDir', modelPath);
+    'maxDataSize', maxDataSize);
 
 % set training data, no test data required due to Sparse Coding
 if trainingSetPortion < 1

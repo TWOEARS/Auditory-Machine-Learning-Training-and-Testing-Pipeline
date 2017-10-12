@@ -234,7 +234,7 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
-        function [summedResc,summedDataOrigin] = summarizeDown( obj, keepDims, rowIdxs, idxReplaceMask, fun, sdoPrior )
+        function [summedResc,summedDataOrigin] = summarizeDown( obj, keepDims, rowIdxs, idxReplaceMask, fun, sdoPrior, intraGroupNorm )
             summedResc = obj;
             if nargin < 2
                 return;
@@ -258,13 +258,20 @@ classdef RescSparse
             if nargin < 5
                 fun = [];
             end
-            if nargin < 6 && nargout > 1
-                sdoPrior = mat2cell( summedResc.dataIdxs(rowIdxs,:), ones( size( summedResc.dataIdxs(rowIdxs,:), 1 ), 1 ) );
+            if (nargin < 6 || isempty( sdoPrior )) && nargout > 1
+                clear sdoPrior;
+                sdoPrior(:,1) = mat2cell( summedResc.dataIdxs(rowIdxs,:), ones( size( summedResc.dataIdxs(rowIdxs,:), 1 ), 1 ) );
+                sdoPrior(:,2) = mat2cell( summedResc.data(rowIdxs,:), ones( size( summedResc.data(rowIdxs,:), 1 ), 1 ) );
             end
             [keepDimsUniqueIdxs,~,ic] = unique( summedResc.dataIdxs(rowIdxs,keepDims), 'rows' );
             summedData = accumarray( ic, summedResc.data(rowIdxs,:), [], fun );
             if nargout > 1
-                summedDataOrigin = splitapply( @(x)({cat( 1, x{:} )}), sdoPrior, ic );
+                if nargin >= 7 && intraGroupNorm
+                    ignFactor = arrayfun( @(a,b)(sum( cellfun( @sum, sdoPrior(ic==b,2) ) ) / (sum( a{:} ) * numel( sdoPrior(ic==b,2) ))), sdoPrior(:,2), ic );
+                else
+                    ignFactor = ones( size( ic ) );
+                end
+                [summedDataOrigin(:,1), summedDataOrigin(:,2)] = splitapply( @(x,a)(deal({cell2mat( x(:,1) )},{cell2mat( arrayfun( @(c,b)(c{:}*b), x(:,2), a, 'UniformOutput', false ) )})), sdoPrior, ignFactor, ic );
             end
             summedResc.dataIdxs = keepDimsUniqueIdxs;
             summedResc.data = summedData;
@@ -308,7 +315,7 @@ classdef RescSparse
             nri = cellfun( @numel, rowIdxs );
             newDataIdxs = zeros( sum( nri ), diDim );
             newData = zeros( sum( nri ), 1 );
-            newSdo = cell( size( newData ) );
+            newSdo = cell( size( newData, 1 ), 2 );
             ndiIdx = 1;
             riIdx = ones( size( nri ) );
             curDataIdxs = zeros( nargs, diDim );
@@ -342,7 +349,8 @@ classdef RescSparse
                 for ii = 1 : nargs
                     if any( ii == me )
                         if nargout > 1
-                            newSdo{ndiIdx} = cat( 1, newSdo{ndiIdx}, sdo{rowIdxs{ii}(riIdx(ii))} );
+                            newSdo{ndiIdx,1} = cat( 1, newSdo{ndiIdx,1}, sdo{rowIdxs{ii}(riIdx(ii)),1} );
+                            newSdo{ndiIdx,2} = cat( 1, newSdo{ndiIdx,2}, sdo{rowIdxs{ii}(riIdx(ii)),2} );
                         end
                         args{ii} = obj.data(rowIdxs{ii}(riIdx(ii)));
                         riIdx(ii) = riIdx(ii) + 1;
@@ -356,15 +364,15 @@ classdef RescSparse
             end
             newDataIdxs(ndiIdx:end,:) = [];
             newData(ndiIdx:end) = [];
-            newSdo(ndiIdx:end) = [];
+            newSdo(ndiIdx:end,:) = [];
             delIdxs = unique( cat( 1, rowIdxs{:} ) );
             obj = obj.deleteData( delIdxs );
             [obj,incidxs,insidxs] = obj.addData( newDataIdxs, newData );
             if nargout > 1
-                sdo(delIdxs) = [];
-                sdo{end+1} = [];
-                sdo = sdo(incidxs);
-                sdo(insidxs) = newSdo;
+                sdo(delIdxs,:) = [];
+                sdo(end+1,:) = {[],[]};
+                sdo = sdo(incidxs,:);
+                sdo(insidxs,:) = newSdo;
             end
             fprintf( '\n' );
         end
@@ -384,13 +392,13 @@ classdef RescSparse
             maxMidxs = num2cell( max( midxs, [], 1 ) );
             mat(maxMidxs{:}) = 0;
             if nargout > 1
-                sdomat{maxMidxs{:}} = {};
+                sdomat{maxMidxs{:},2} = {};
             end
             midxs = num2cell( midxs );
             for ii = 1 : size( midxs, 1 )
                 mat(midxs{ii,:}) = obj.data(rowIdxs(ii),:);
                 if nargout > 1
-                    sdomat{midxs{ii,:}} = sdo{rowIdxs(ii)};
+                    sdomat(midxs{ii,:},:) = sdo(rowIdxs(ii),:);
                 end
             end
         end

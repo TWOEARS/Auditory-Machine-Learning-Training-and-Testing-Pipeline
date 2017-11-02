@@ -36,16 +36,10 @@ tmp = reshape( double( [bap(~isyt,:).curSnr] ), size( bap(~isyt,:) ) );
 
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
 
-if any( ([bap(nIdxs).curSnr] < -10) & ([bap(nIdxs).nAct] > 1) & ([bap(nIdxs).nAct] == size( bap, 2 )) & ~([bap(nIdxs).whiteNoise] < 40) )
-    error( 'not supposed to happen' );
-end
-
 [ag(~isyt).curSnr] = bap(nIdxs).curSnr;
 [ag(~isyt).curNrj] = bap(nIdxs).curNrj;
 [ag(~isyt).curNrjOthers] = bap(nIdxs).curNrjOthers;
 [ag(~isyt).azmErr] = deal( nan );
-
-
 end
 
 end

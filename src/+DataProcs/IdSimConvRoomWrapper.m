@@ -27,7 +27,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...
-                'SampleRate', 44100, ...
+                'SampleRate', 44100, ... % default sample rate
                 'MaximumDelay', 0.05 ... % for distances up to ~15m
                 );
             if ~isempty( hrirFile )
@@ -180,8 +180,11 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.convRoomSim.Sources{1}.Azimuth = obj.srcAzimuth;
             elseif isa( sceneConfig.sources(1), 'SceneConfig.BRIRsource' ) 
                 obj.convRoomSim.Sources{1} = simulator.source.Point();
+                
+                % load SOFA meta + some IR data to get the sample rate
                 brirSofa = SOFAload( ...
-                            db.getFile( sceneConfig.sources(1).brirFName ), 'nodata' );
+                            db.getFile( sceneConfig.sources(1).brirFName ), [1 2], 'N' );
+               
                 headOrientIdx = ceil( sceneConfig.brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
                 
                 % convert cartesian coordinates
@@ -215,6 +218,12 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
                 obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
                 obj.srcAzimuth = sceneConfig.sources(1).azimuth;
+                
+                % set true sample rate
+                set(obj.convRoomSim, ...
+                    'SampleRate', brirSofa.Data.SamplingRate ...
+                );
+            
             else % ~is diffuse
                 obj.convRoomSim.Sources{1} = simulator.source.Binaural();
                 channelMapping = [1 2];

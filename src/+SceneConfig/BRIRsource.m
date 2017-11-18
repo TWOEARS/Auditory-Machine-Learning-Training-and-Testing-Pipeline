@@ -9,7 +9,7 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
     %% -----------------------------------------------------------------------------------
     
     properties (SetAccess = protected)
-        azimuth;
+        azimuth; % src-to-head
     end
 %% -----------------------------------------------------------------------------------
 
@@ -36,22 +36,53 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
 
         function calcAzimuth( obj, brirHeadOrientIdx )
             brirSofa = SOFAload( db.getFile( obj.brirFName ), 'nodata' );
-            headOrientIdx = ceil( 1 + brirHeadOrientIdx * (size( brirSofa.ListenerView, 1 ) - 1));
+            if isempty( obj.speakerId )
+                sid = 1;
+            else
+                sid = obj.speakerId;
+            end
+            if size( brirSofa.SourcePosition, 1 ) < sid
+                assert( size( brirSofa.EmitterPosition, 1 ) >= sid );
+                srcPos = brirSofa.EmitterPosition(sid,:);
+            elseif size( brirSofa.EmitterPosition, 1 ) < sid
+                assert( size( brirSofa.SourcePosition, 1 ) >= sid );
+                srcPos = brirSofa.SourcePosition(sid,:);
+            else
+                if any( brirSofa.SourcePosition(sid,:) ~= brirSofa.EmitterPosition(sid,:) )
+                    % SourcePosition and EmitterPosition are different...
+                    if all( brirSofa.SourcePosition(sid,:) == 0 )
+                        % SourcePosition is unset
+                        srcPos = brirSofa.EmitterPosition(sid,:);
+                    elseif all( brirSofa.EmitterPosition(sid,:) == 0 )
+                        % EmitterPosition is unset
+                        srcPos = brirSofa.SourcePosition(sid,:);
+                    else
+                        error( 'Now I don''t know how to decide any more. This should not happen.' );
+                    end
+                else
+                    srcPos = brirSofa.SourcePosition(sid,:);
+                end
+            end
+            brirSrcOrientation = SOFAconvertCoordinates( srcPos - brirSofa.ListenerPosition, ...
+                                                                'cartesian','spherical' );
+            headOrientation = SceneConfig.BRIRsource.getBrirHeadOrientation( ...
+                                                            brirSofa, brirHeadOrientIdx );
+            obj.azimuth = wrapTo180( brirSrcOrientation(1) - headOrientation(1) );
+        end
+        %% -------------------------------------------------------------------------------
+    end
+    %% -----------------------------------------------------------------------------------
+    
+    methods (Static)
+        
+        function headOrientation = getBrirHeadOrientation( brirSofa, brirHeadOrientIdx )
+            headOrientIdx = round( 1 + brirHeadOrientIdx * (size( brirSofa.ListenerView, 1 ) - 1));
             if (strcmpi(brirSofa.ListenerView_Type, 'cartesian'))
                 headOrientation = SOFAconvertCoordinates( ...
                     brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
             else
                 headOrientation = brirSofa.ListenerView(headOrientIdx,1);
             end
-            if isempty( obj.speakerId )
-                sid = 1;
-            else
-                sid = obj.speakerId;
-            end
-            brirSrcPos = SOFAconvertCoordinates( ...
-                        brirSofa.SourcePosition(sid,:) - brirSofa.ListenerPosition, ...
-                                                                'cartesian','spherical' );
-            obj.azimuth = brirSrcPos(1) - headOrientation(1);
         end
         %% -------------------------------------------------------------------------------
     end

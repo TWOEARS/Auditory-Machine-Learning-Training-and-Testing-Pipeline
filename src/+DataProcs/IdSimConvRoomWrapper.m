@@ -181,20 +181,6 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             elseif isa( sceneConfig.sources(1), 'SceneConfig.BRIRsource' ) 
                 obj.convRoomSim.Sources{1} = simulator.source.Point();
                 
-                % load SOFA meta + some IR data to get the sample rate
-                brirSofa = SOFAload( ...
-                            db.getFile( sceneConfig.sources(1).brirFName ), [1 2], 'N' );
-               
-                headOrientIdx = ceil( sceneConfig.brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
-                
-                % convert cartesian coordinates
-                if (strcmpi(brirSofa.ListenerView_Type, 'cartesian'))     
-                    headOrientation = SOFAconvertCoordinates( ...
-                        brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
-                else
-                    headOrientation = brirSofa.ListenerView(headOrientIdx,1);
-                end
-                
                 if isempty( obj.IRDataset ) ...
                    || ~strcmp( obj.IRDataset.fname, sceneConfig.sources(1).brirFName ) ...
                    || (isfield( obj.IRDataset, 'speakerId' ) ~= ~isempty( sceneConfig.sources(1).speakerId ) ) ...
@@ -216,13 +202,17 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                     obj.IRDataset.fname = sceneConfig.sources(1).brirFName;
                 end
                 obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
-                obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
                 obj.srcAzimuth = sceneConfig.sources(1).azimuth;
+                [crp(1),crp(2)] = obj.convRoomSim.getCurrentRobotPosition();
+                [~,~,brirTorsoDefault] = obj.convRoomSim.Sources{1}.getHeadLimits();
+                obj.convRoomSim.moveRobot( crp(1), crp(2), brirTorsoDefault, 'absolute' );
+                obj.convRoomSim.rotateHead( -obj.srcAzimuth, 'absolute' );
                 
-                % set true sample rate
-                set(obj.convRoomSim, ...
-                    'SampleRate', brirSofa.Data.SamplingRate ...
-                );
+                % load SOFA meta + some IR data to get the sample rate
+                brirSofa = SOFAload( ...
+                             db.getFile( sceneConfig.sources(1).brirFName ), [1 2], 'N' );
+                % set processing sample rate
+                set( obj.convRoomSim, 'SampleRate', brirSofa.Data.SamplingRate );
             
             else % ~is diffuse
                 obj.convRoomSim.Sources{1} = simulator.source.Binaural();

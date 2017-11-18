@@ -36,16 +36,20 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
 
         function calcAzimuth( obj, brirHeadOrientIdx )
             brirSofa = SOFAload( db.getFile( obj.brirFName ), 'nodata' );
-            headOrientIdx = ceil( brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
-            headOrientation = SOFAconvertCoordinates( ...
-                brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
+            headOrientIdx = ceil( 1 + brirHeadOrientIdx * (size( brirSofa.ListenerView, 1 ) - 1));
+            if (strcmpi(brirSofa.ListenerView_Type, 'cartesian'))
+                headOrientation = SOFAconvertCoordinates( ...
+                    brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
+            else
+                headOrientation = brirSofa.ListenerView(headOrientIdx,1);
+            end
             if isempty( obj.speakerId )
                 sid = 1;
             else
                 sid = obj.speakerId;
             end
             brirSrcPos = SOFAconvertCoordinates( ...
-                        brirSofa.EmitterPosition(sid,:) - brirSofa.ListenerPosition, ...
+                        brirSofa.SourcePosition(sid,:) - brirSofa.ListenerPosition, ...
                                                                 'cartesian','spherical' );
             obj.azimuth = brirSrcPos(1) - headOrientation(1);
         end

@@ -35,38 +35,18 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
         %% -------------------------------------------------------------------------------
 
         function calcAzimuth( obj, brirHeadOrientIdx )
-            brirSofa = SOFAload( db.getFile( obj.brirFName ), 'nodata' );
             if isempty( obj.speakerId )
                 sid = 1;
             else
                 sid = obj.speakerId;
             end
-            if size( brirSofa.SourcePosition, 1 ) < sid
-                assert( size( brirSofa.EmitterPosition, 1 ) >= sid );
-                srcPos = brirSofa.EmitterPosition(sid,:);
-            elseif size( brirSofa.EmitterPosition, 1 ) < sid
-                assert( size( brirSofa.SourcePosition, 1 ) >= sid );
-                srcPos = brirSofa.SourcePosition(sid,:);
-            else
-                if any( brirSofa.SourcePosition(sid,:) ~= brirSofa.EmitterPosition(sid,:) )
-                    % SourcePosition and EmitterPosition are different...
-                    if all( brirSofa.SourcePosition(sid,:) == 0 )
-                        % SourcePosition is unset
-                        srcPos = brirSofa.EmitterPosition(sid,:);
-                    elseif all( brirSofa.EmitterPosition(sid,:) == 0 )
-                        % EmitterPosition is unset
-                        srcPos = brirSofa.SourcePosition(sid,:);
-                    else
-                        error( 'Now I don''t know how to decide any more. This should not happen.' );
-                    end
-                else
-                    srcPos = brirSofa.SourcePosition(sid,:);
-                end
-            end
-            brirSrcOrientation = SOFAconvertCoordinates( srcPos - brirSofa.ListenerPosition, ...
-                                                                'cartesian','spherical' );
+            brirFile = db.getFile( obj.brirFName );
+            srcPosition = sofa.getLoudspeakerPositions(brirFile, sid, 'cartesian');
+            listenerPosition = sofa.getListenerPositions(brirFile, 1, 'cartesian');
+            brirSrcOrientation = SOFAconvertCoordinates(...
+                                srcPosition - listenerPosition, 'cartesian', 'spherical');
             headOrientation = SceneConfig.BRIRsource.getBrirHeadOrientation( ...
-                                                            brirSofa, brirHeadOrientIdx );
+                                                            brirFile, brirHeadOrientIdx );
             obj.azimuth = wrapTo180( brirSrcOrientation(1) - headOrientation(1) );
         end
         %% -------------------------------------------------------------------------------
@@ -75,14 +55,15 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
     
     methods (Static)
         
-        function headOrientation = getBrirHeadOrientation( brirSofa, brirHeadOrientIdx )
-            headOrientIdx = round( 1 + brirHeadOrientIdx * (size( brirSofa.ListenerView, 1 ) - 1));
-            if (strcmpi(brirSofa.ListenerView_Type, 'cartesian'))
-                headOrientation = SOFAconvertCoordinates( ...
-                    brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
-            else
-                headOrientation = brirSofa.ListenerView(headOrientIdx,1);
-            end
+        function headOrientation = getBrirHeadOrientation( brirFile, brirHeadOrientIdx )
+            [~, listenerIdxs] = sofa.getListenerPositions(brirFile, 1, 'cartesian');
+            [availableAzimuths, availableElevations] = ...
+                                         sofa.getHeadOrientations(brirFile, listenerIdxs);
+            % only consider entries with approx. zero elevation angle
+            availableAzimuths = availableAzimuths( abs( availableElevations ) < 0.01 );
+            availableAzimuths = wrapTo360( availableAzimuths );
+            headOrientIdx = round( 1 + brirHeadOrientIdx * (size( availableAzimuths, 1 ) - 1));
+            headOrientation = availableAzimuths(headOrientIdx,1);
         end
         %% -------------------------------------------------------------------------------
     end

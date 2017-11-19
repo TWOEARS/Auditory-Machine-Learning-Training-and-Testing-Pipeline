@@ -214,7 +214,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 [~,~,brirTorsoDefault] = obj.convRoomSim.Sources{1}.getHeadLimits();
                 obj.convRoomSim.moveRobot( crp(1), crp(2), brirTorsoDefault, 'absolute' );
                 % 'absolute' mode means: relative wrt torso...
-                headToTorsoAzm = mod( headOrientation(1), 360 ) - brirTorsoDefault;
+                headToTorsoAzm = mod( headOrientation(1), 360 ) - mod( brirTorsoDefault, 360 );
                 obj.convRoomSim.rotateHead( headToTorsoAzm, 'absolute' );
                 
                 % set processing sample rate

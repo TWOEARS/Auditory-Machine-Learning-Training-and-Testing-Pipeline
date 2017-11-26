@@ -128,13 +128,16 @@ classdef RescSparse
             if size( idxsMask, 2 ) ~= size( obj.dataIdxs, 2 )
                 error( 'AMLTTP:usage:unexpected', 'idxsMask dimensions wrong.' );
             end
-            dataIdxsMask = true( size( obj.dataIdxs ) );
+            dataIdxsMask = true( size( obj.dataIdxs, 1 ), sum( cellfun( @(c)(~ischar( c ) ), idxsMask ) ) );
+            jj = 0;
             for ii = 1 : size( obj.dataIdxs, 2 )
                 if ischar( idxsMask{ii} ) && idxsMask{ii} == ':', continue; end
-                if ii == 1
-                    dataIdxsMask(:,ii) = idxsMask{ii}( obj.dataIdxs(:,ii) );
+                jj = jj + 1;
+                if jj == 1
+                    dataIdxsMask(:,jj) = idxsMask{ii}( obj.dataIdxs(:,ii) );
                 else
-                    dataIdxsMask(dataIdxsMask(:,ii-1),ii) = idxsMask{ii}( obj.dataIdxs(dataIdxsMask(:,ii-1),ii) );
+                    tmp = dataIdxsMask(:,jj-1);
+                    dataIdxsMask(tmp,jj) = idxsMask{ii}( obj.dataIdxs(tmp,ii) );
                 end
             end
             rowIdxsMask = all( dataIdxsMask, 2 );
@@ -242,7 +245,7 @@ classdef RescSparse
             if isempty( keepDims ) && (nargin < 4 || isempty( idxReplaceMask ))
                 return;
             end
-            if nargin < 3 || isempty( rowIdxs )
+            if nargin < 3 || (ischar( rowIdxs ) && (rowIdxs == ':')) %isempty( rowIdxs )
                 rowIdxs = 1 : size( summedResc.dataIdxs, 1 );
             end
             if nargin >= 4 && ~isempty( idxReplaceMask )
@@ -275,6 +278,24 @@ classdef RescSparse
             end
             summedResc.dataIdxs = keepDimsUniqueIdxs;
             summedResc.data = summedData;
+        end
+        %% -------------------------------------------------------------------------------
+
+        function robj = resample( obj, depIdx, rIdx, resample_weights, conditions )
+            if nargin >= 5 && ~isempty( conditions )
+                useIdxs = obj.getRowIdxs( conditions );
+            else
+                useIdxs = ':';
+            end
+            drIdxs = obj.dataIdxs( useIdxs,[depIdx,rIdx] );
+            drIdxs = mat2cell( drIdxs, size( drIdxs, 1 ), ones( 1, size( drIdxs, 2 ) ) );
+            drIdxs = sub2ind( size( resample_weights ), drIdxs{:} );
+            w = resample_weights( drIdxs );
+            w(isnan(w)) = 1;
+            robj = obj;
+            robj.data(useIdxs,:) = robj.data(useIdxs,:) .* w;
+            robj.dataIdxs(robj.data==0,:) = [];
+            robj.data(robj.data==0,:) = [];
         end
         %% -------------------------------------------------------------------------------
 

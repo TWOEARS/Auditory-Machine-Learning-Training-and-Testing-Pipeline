@@ -43,12 +43,14 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                 for jj = 1 : numel( sequenceAfields )
                     seqAname = sequenceAfields{jj};
                     annot = blockAnnots(ii).(seqAname);
-                    if length( annot.t ) == size( annot.(seqAname), 1 )
-                        if iscell( annot.(seqAname) )
+                    annotSeq = annot.(seqAname);
+                    if length( annot.t ) == size( annotSeq, 1 )
+                        if iscell( annotSeq )
+                            as_szs = cellfun( @(c)( size( c, 2 ) ), annotSeq(1,:) );
                             blockAnnots(ii).(seqAname) = ...
-                                       cellSqueezeFun( @mean, annot.(seqAname), 1, true );
+                                   mat2cell( mean( cell2mat( annotSeq ), 1 ), 1, as_szs );
                         else
-                            blockAnnots(ii).(seqAname) = mean( annot.(seqAname), 1 );
+                            blockAnnots(ii).(seqAname) = mean( annotSeq, 1 );
                         end
                     else
                         error( 'unexpected annotations sequence structure' );

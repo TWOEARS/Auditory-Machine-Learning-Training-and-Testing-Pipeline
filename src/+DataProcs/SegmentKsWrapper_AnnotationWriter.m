@@ -141,8 +141,8 @@ classdef SegmentKsWrapper_AnnotationWriter < DataProcs.BlackboardKsWrapper_Annot
                 if isempty( obj.out.blockAnnotations(ii).srcAzms ), continue; end
                 bon = obj.out.blockAnnotations(ii).blockOnset;
                 bof = obj.out.blockAnnotations(ii).blockOffset;
-                newBAidx = find( abs( [blockAnnotations.blockOnset] - bon ) <= 0.001 & ...
-                                 abs( [blockAnnotations.blockOffset] - bof ) <= 0.001 );
+                newBAidx = find( abs( [blockAnnotations.blockOnset] - bon ) <= 0.05 & ...
+                                 abs( [blockAnnotations.blockOffset] - bof ) <= 0.05 );
                 if numel( newBAidx ) ~= 1
                     error( ['newBAidx == ' num2str( newBAidx ) ', bon == ' num2str( bon ) ...
                             ', bof == ' num2str( bof )] );

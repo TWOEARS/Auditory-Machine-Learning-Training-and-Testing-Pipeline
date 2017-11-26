@@ -178,6 +178,7 @@ classdef IdentificationTrainingPipeline < handle
             end
             
             if strcmp(ip.Results.runOption, 'onlyGenCache'), return; end;
+            if rwcMode, return; end;
             
             featureCreator = obj.featureCreator;
             lastDataProcParams = ...

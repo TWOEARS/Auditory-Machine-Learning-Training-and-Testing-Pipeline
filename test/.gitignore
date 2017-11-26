@@ -20,3 +20,4 @@ amlttpRun.*.*.*
 /test_buildMultiPointSrcsAzmDistrData
 /numSrc
 /test_dnnlocNoSrcs
+/test_rwc

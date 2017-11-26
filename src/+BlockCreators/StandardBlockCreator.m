@@ -95,6 +95,12 @@ classdef StandardBlockCreator < BlockCreators.Base
             annotations.nrj.nrj = cell( size( annotations.srcEnergy.srcEnergy ) );
             annotations.nrjOthers.t = annotations.srcEnergy.t;
             annotations.nrjOthers.nrjOthers = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.srcSNR_db.t = annotations.srcEnergy.t;
+            annotations.srcSNR_db.srcSNR_db = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.nrj_db.t = annotations.srcEnergy.t;
+            annotations.nrj_db.nrj_db = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.nrjOthers_db.t = annotations.srcEnergy.t;
+            annotations.nrjOthers_db.nrjOthers_db = cell( size( annotations.srcEnergy.srcEnergy ) );
             annotations.oneVsAllAvgSnrs.t = annotations.srcEnergy.t;
             avgBilateralSNRs = nan( numel( sceneConfig.sources ) );
             if std( sceneConfig.snrRefs ) ~= 0
@@ -143,12 +149,17 @@ classdef StandardBlockCreator < BlockCreators.Base
                 for ii = 1 : size( srcsCurrentSrcMeanRefEnergy, 1 )
                     sumOtherSrcsEnergy = sum( ...
                                     10.^(srcsCurrentSrcMeanRefEnergy(ii,otherIdxs)./10) );
-                    annotations.nrjOthers.nrjOthers{ii,ss} = single( ...
+                    annotations.nrjOthers.nrjOthers{ii,ss} = single( sumOtherSrcsEnergy );
+                    annotations.nrjOthers_db.nrjOthers_db{ii,ss} = single( ...
                                                        10 * log10( sumOtherSrcsEnergy ) );
                     annotations.nrj.nrj{ii,ss} = single( ...
+                                           10.^(srcsCurrentSrcMeanRefEnergy(ii,ss)./10) );
+                    annotations.nrj_db.nrj_db{ii,ss} = single( ...
                                                      srcsCurrentSrcMeanRefEnergy(ii,ss) );
                     annotations.srcSNR.srcSNR{ii,ss} = single( ...
-                        srcsCurrentSrcMeanRefEnergy(ii,ss) - annotations.nrjOthers.nrjOthers{ii,ss} );
+                        annotations.nrj.nrj{ii,ss} / annotations.nrjOthers.nrjOthers{ii,ss} );
+                    annotations.srcSNR_db.srcSNR_db{ii,ss} = single( ...
+                        srcsCurrentSrcMeanRefEnergy(ii,ss) - annotations.nrjOthers_db.nrjOthers_db{ii,ss} );
                 end
             end
         end

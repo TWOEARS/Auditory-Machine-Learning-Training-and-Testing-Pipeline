@@ -119,6 +119,7 @@ classdef IdentificationTrainingPipeline < handle
             ip.addOptional( 'modelPath', ['amlttpRun' buildCurrentTimeString()] );
             ip.addOptional( 'modelName', 'amlttp' );
             ip.addOptional( 'runOption', [] );
+            ip.addOptional( 'startWithProc', 1 );
             ip.addOptional( 'debug', false );
             ip.parse( varargin{:} );
             
@@ -130,13 +131,21 @@ classdef IdentificationTrainingPipeline < handle
             
             successiveProcFileFilter = [];
             gcpMode = strcmpi( ip.Results.runOption, 'getCachePathes' );
+            rwcMode = strcmpi( ip.Results.runOption, 'rewriteCache' );
+            if rwcMode
+                Core.IdProcInterface.forceCacheRewrite( true );
+            else
+                Core.IdProcInterface.forceCacheRewrite( false );
+            end
             cacheDirs = cell( numel( obj.dataPipeProcs ), 1 );
-            for ii = numel( obj.dataPipeProcs ) : -1 : 1
+            for ii = numel( obj.dataPipeProcs ) : -1 : ip.Results.startWithProc
                 if ~gcpMode
                     obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
-                    successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
                 else
                     cacheDirs{ii} = obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
+                end
+                if ~gcpMode && ~rwcMode
+                    successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
                 end
             end
             if gcpMode
@@ -145,7 +154,7 @@ classdef IdentificationTrainingPipeline < handle
                 return;
             end
             errs = {};
-            for ii = 1 : length( obj.dataPipeProcs )
+            for ii = ip.Results.startWithProc : numel( obj.dataPipeProcs )
                 if ~ip.Results.debug
                     try
                         obj.dataPipeProcs{ii}.run();

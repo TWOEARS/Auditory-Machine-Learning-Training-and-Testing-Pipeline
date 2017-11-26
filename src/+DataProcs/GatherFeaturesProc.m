@@ -65,8 +65,9 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method
-        function fileProcessed = hasFileAlreadyBeenProcessed( ~, ~ )
+        function [fileProcessed,cacheDir] = hasFileAlreadyBeenProcessed( ~, ~ )
             fileProcessed = false;
+            cacheDir = [];
         end
         %% -------------------------------------------------------------------------------
        

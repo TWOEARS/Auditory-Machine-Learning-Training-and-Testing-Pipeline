@@ -85,6 +85,10 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
             [tmpOut, outFilepath] = ...
                  loadProcessedData@Core.IdProcInterface( obj, wavFilepath, 'indivFiles' );
             obj.indivFiles = tmpOut.indivFiles;
+            if nargin == 3 && strcmpi( varargin{1}, 'indivFiles' )
+                out = tmpOut;
+                return;
+            end
             try
                 out = obj.getOutput;
             catch err
@@ -94,6 +98,17 @@ classdef ParallelRequestsAFEmodule < DataProcs.IdProcWrapper
                 else
                     rethrow( err );
                 end
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override of Core.IdProcInterface's method
+        function [fileProcessed,cacheDirs] = hasFileAlreadyBeenProcessed( obj, wavFilepath )
+            fileProcessed = ...
+                     hasFileAlreadyBeenProcessed@Core.IdProcInterface( obj, wavFilepath );
+            if nargout > 1
+                obj.loadProcessedData( wavFilepath, 'indivFiles' );
+                cacheDirs = cellfun( @fileparts, obj.indivFiles, 'UniformOutput', false );
             end
         end
         %% -------------------------------------------------------------------------------

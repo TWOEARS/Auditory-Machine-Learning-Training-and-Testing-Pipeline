@@ -124,11 +124,25 @@ classdef IdentificationTrainingPipeline < handle
             
             cleaner = onCleanup( @() obj.finish() );
             modelPath = obj.createFilesDir( ip.Results.modelPath );
+            modelFilename = [ip.Results.modelName '.model.mat'];
+            testPerfresults = [];
+            model = [];
             
             successiveProcFileFilter = [];
-            for ii = length( obj.dataPipeProcs ) : -1 : 1
-                obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
-                successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
+            gcpMode = strcmpi( ip.Results.runOption, 'getCachePathes' );
+            cacheDirs = cell( numel( obj.dataPipeProcs ), 1 );
+            for ii = numel( obj.dataPipeProcs ) : -1 : 1
+                if ~gcpMode
+                    obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
+                    successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
+                else
+                    cacheDirs{ii} = obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
+                end
+            end
+            if gcpMode
+                save( modelFilename, ...
+                      'cacheDirs' );
+                return;
             end
             errs = {};
             for ii = 1 : length( obj.dataPipeProcs )
@@ -200,7 +214,6 @@ classdef IdentificationTrainingPipeline < handle
             obj.trainer.run();
             trainTime = toc;
             testTime = nan;
-            testPerfresults = [];
             if ~isempty( obj.testSet )
                 fprintf( '\n==  Testing model on testSet... \n\n' );
                 tic;
@@ -219,7 +232,6 @@ classdef IdentificationTrainingPipeline < handle
                 end
             end
             model = obj.trainer.getModel();
-            modelFilename = [ip.Results.modelName '.model.mat'];
             save( modelFilename, ...
                 'model', 'featureCreator', 'blockCreator', ...
                 'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );

@@ -68,8 +68,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
 
         function process( obj, wavFilepath )
             sceneConfigInst = obj.sceneConfig.instantiate();
-            signal = obj.loadSound( sceneConfigInst, wavFilepath );
             obj.setupSceneConfig( sceneConfigInst );
+            signal = obj.loadSound( sceneConfigInst, wavFilepath );
             if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
                 obj.earSout = signal{1};
                 t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );

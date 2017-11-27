@@ -14,31 +14,39 @@ asgn(:,4) = ~isyp & isyt;
 ag = bap(:,1);
 [ag.nAct_segStream] = deal( nan );
 
-tmp = reshape( [bap.distToClosestSrc], size( bap ) );
-tmp = num2cell( nanMean( tmp, 2 ) );
-[ag.distToClosestSrc] = tmp{:};
-
-tmp = reshape( [bap.multiSrcsAttributability], size( bap ) );
-tmp = num2cell( nanMean( tmp, 2 ) );
-[ag.multiSrcsAttributability] = tmp{:};
+% tmp = reshape( [bap.multiSrcsAttributability], size( bap ) );
+% tmp = num2cell( nanMean( tmp, 2 ) );
+% [ag.multiSrcsAttributability] = tmp{:};
 
 if sum( isyt ) > 0
 ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
 [ag(isyt).curSnr] = bap(ytIdxs).curSnr;
 [ag(isyt).curNrj] = bap(ytIdxs).curNrj;
 [ag(isyt).curNrjOthers] = bap(ytIdxs).curNrjOthers;
+[ag(isyt).curSnr_db] = bap(ytIdxs).curSnr_db;
+[ag(isyt).curNrj_db] = bap(ytIdxs).curNrj_db;
+[ag(isyt).curNrjOthers_db] = bap(ytIdxs).curNrjOthers_db;
+[ag(isyt).curSnr2] = bap(ytIdxs).curSnr2;
 [ag(isyt).azmErr] = bap(ytIdxs).azmErr;
 end
 
 if sum( ~isyt ) > 0
 tmp = reshape( double( [bap(~isyt,:).curSnr] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
-
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
-
 [ag(~isyt).curSnr] = bap(nIdxs).curSnr;
 [ag(~isyt).curNrj] = bap(nIdxs).curNrj;
 [ag(~isyt).curNrjOthers] = bap(nIdxs).curNrjOthers;
+tmp = reshape( double( [bap(~isyt,:).curSnr_db] ), size( bap(~isyt,:) ) );
+[~,maxCurSnrIdx] = max( tmp, [], 2 );
+nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
+[ag(~isyt).curSnr_db] = bap(nIdxs).curSnr_db;
+[ag(~isyt).curNrj_db] = bap(nIdxs).curNrj_db;
+[ag(~isyt).curNrjOthers_db] = bap(nIdxs).curNrjOthers_db;
+tmp = reshape( double( [bap(~isyt,:).curSnr2] ), size( bap(~isyt,:) ) );
+[~,maxCurSnrIdx] = max( tmp, [], 2 );
+nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
+[ag(~isyt).curSnr2] = bap(nIdxs).curSnr2;
 [ag(~isyt).azmErr] = deal( nan );
 end
 

@@ -28,6 +28,10 @@ ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
 [ag(isyt).curNrjOthers_db] = bap(ytIdxs).curNrjOthers_db;
 [ag(isyt).curSnr2] = bap(ytIdxs).curSnr2;
 [ag(isyt).azmErr] = bap(ytIdxs).azmErr;
+[ag(isyt).dist2bisector] = bap(ytIdxs).dist2bisector;
+[ag(isyt).blockClass] = bap(ytIdxs).blockClass;
+[ag(isyt).gtAzm] = bap(ytIdxs).gtAzm;
+[ag(isyt).estAzm] = bap(ytIdxs).estAzm;
 end
 
 if sum( ~isyt ) > 0
@@ -47,6 +51,10 @@ tmp = reshape( double( [bap(~isyt,:).curSnr2] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
 [ag(~isyt).curSnr2] = bap(nIdxs).curSnr2;
+[ag(~isyt).dist2bisector] = bap(nIdxs).dist2bisector;
+[ag(~isyt).blockClass] = bap(nIdxs).blockClass;
+[ag(~isyt).gtAzm] = bap(nIdxs).gtAzm;
+[ag(~isyt).estAzm] = bap(nIdxs).estAzm;
 [ag(~isyt).azmErr] = deal( nan );
 end
 

@@ -125,6 +125,9 @@ classdef RescSparse
         %% -------------------------------------------------------------------------------
         
         function rowIdxs = getRowIdxs( obj, idxsMask )
+            if isempty( obj.dataIdxs )
+                rowIdxs = [];
+            end
             if size( idxsMask, 2 ) ~= size( obj.dataIdxs, 2 )
                 error( 'AMLTTP:usage:unexpected', 'idxsMask dimensions wrong.' );
             end

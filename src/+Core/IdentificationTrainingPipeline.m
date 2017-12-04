@@ -120,6 +120,7 @@ classdef IdentificationTrainingPipeline < handle
             ip.addOptional( 'modelName', 'amlttp' );
             ip.addOptional( 'runOption', [] );
             ip.addOptional( 'startWithProc', 1 );
+            ip.addOptional( 'filterPipeInput', [] );
             ip.addOptional( 'debug', false );
             ip.parse( varargin{:} );
             
@@ -129,7 +130,7 @@ classdef IdentificationTrainingPipeline < handle
             testPerfresults = [];
             model = [];
             
-            successiveProcFileFilter = [];
+            successiveProcFileFilter = ip.Results.filterPipeInput;
             gcpMode = strcmpi( ip.Results.runOption, 'getCachePathes' );
             rwcMode = strcmpi( ip.Results.runOption, 'rewriteCache' );
             if rwcMode

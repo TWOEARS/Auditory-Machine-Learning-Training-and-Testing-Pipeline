@@ -6,6 +6,7 @@ classdef RescSparse
         dataIdxsConvert;
         data;
         dataIdxs;
+        id;
         dataInitialize;
         dataAdd;
     end
@@ -57,6 +58,7 @@ classdef RescSparse
             obj.dataAdd = dataAdd;
             obj.data = obj.dataConvert( zeros( 0 ) );
             obj.dataIdxs = obj.dataIdxsConvert( zeros( 0 ) );
+            obj.id = [];
         end
         %% -------------------------------------------------------------------------------
         function obj = setDataType( obj, newDataType )
@@ -158,6 +160,12 @@ classdef RescSparse
         end
         %% -------------------------------------------------------------------------------
         
+        function obj = filter( obj, varargin )
+            obj = obj.deleteData( obj.getRowIdxs( ...
+                                   getIdxMask( size( obj.dataIdxs, 2 ), varargin{:} ) ) );
+        end
+        %% -------------------------------------------------------------------------------
+        
         function [obj,incidxs,insidxs] = addData( obj, idxs, data )
             idxs = obj.dataIdxsConvert( idxs );
             data = obj.dataConvert( data );
@@ -253,7 +261,7 @@ classdef RescSparse
                 rowIdxs = 1 : size( summedResc.dataIdxs, 1 );
             end
             if nargin >= 4 && ~isempty( idxReplaceMask )
-                keepDims = ':';
+                keepDims = 1:size( obj.dataIdxs, 2 );
                 if size( idxReplaceMask, 2 ) ~= size( summedResc.dataIdxs, 2 )
                     error( 'AMLTTP:usage:unexpected', 'idxsMask dimensions wrong.' );
                 end
@@ -282,6 +290,12 @@ classdef RescSparse
             end
             summedResc.dataIdxs = keepDimsUniqueIdxs;
             summedResc.data = summedData;
+            if ~isempty( obj.id )
+                idxDescr = fieldnames( obj.id );
+                idxDescr = idxDescr(keepDims);
+                summedResc.id = ...
+                    cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
+            end
         end
         %% -------------------------------------------------------------------------------
 

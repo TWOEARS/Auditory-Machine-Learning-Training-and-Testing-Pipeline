@@ -438,6 +438,9 @@ classdef RescSparse
                 argData{ii} = obj.data(argRowIdxs{ii},:);
                 argGroups{ii} = repmat( ii, size( argRowIdxs{ii}, 1 ), 1 );
             end
+            if all( cellfun( @isempty, argRowIdxs ) )
+                return;
+            end
             obj.dataIdxs(cat( 1, argRowIdxs{:} ),:) = [];
             obj.data(cat( 1, argRowIdxs{:} ),:) = [];
             funnedDataIdxs = cat( 1, argDataIdxs{:} );

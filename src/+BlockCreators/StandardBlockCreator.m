@@ -91,8 +91,16 @@ classdef StandardBlockCreator < BlockCreators.Base
             sceneConfig = currentDependencies.preceding.preceding.sceneCfg;
             annotations.srcSNR.t = annotations.srcEnergy.t;
             annotations.srcSNR.srcSNR = cell( size( annotations.srcEnergy.srcEnergy ) );
-            annotations.srcSNR_avgSelf.t = annotations.srcEnergy.t;
-            annotations.srcSNR_avgSelf.srcSNR_avgSelf = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.nrj.t = annotations.srcEnergy.t;
+            annotations.nrj.nrj = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.nrjOthers.t = annotations.srcEnergy.t;
+            annotations.nrjOthers.nrjOthers = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.srcSNR_db.t = annotations.srcEnergy.t;
+            annotations.srcSNR_db.srcSNR_db = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.nrj_db.t = annotations.srcEnergy.t;
+            annotations.nrj_db.nrj_db = cell( size( annotations.srcEnergy.srcEnergy ) );
+            annotations.nrjOthers_db.t = annotations.srcEnergy.t;
+            annotations.nrjOthers_db.nrjOthers_db = cell( size( annotations.srcEnergy.srcEnergy ) );
             annotations.oneVsAllAvgSnrs.t = annotations.srcEnergy.t;
             avgBilateralSNRs = nan( numel( sceneConfig.sources ) );
             if std( sceneConfig.snrRefs ) ~= 0
@@ -114,31 +122,44 @@ classdef StandardBlockCreator < BlockCreators.Base
                         end
                     end
                 end
-                idxs = 1 : size( avgBilateralSNRs, 1 );
-                idxs(ss) = [];
-                oneVsAllSNRs(ss) = addSnrs( avgBilateralSNRs(idxs,ss) );
+                otherIdxs = 1 : size( avgBilateralSNRs, 1 );
+                otherIdxs(ss) = [];
+                oneVsAllSNRs(ss) = addSnrs( avgBilateralSNRs(otherIdxs,ss) );
             end
             annotations.oneVsAllAvgSnrs.oneVsAllAvgSnrs = ...
                                       repmat( num2cell( single( oneVsAllSNRs )' ), ...
                                               numel( annotations.oneVsAllAvgSnrs.t ), 1 );
-            srcsRelEnergy = cellfun( @mean, annotations.srcEnergy.srcEnergy );
-            meanSrcsRelEnergy = nan( 1, size( srcsRelEnergy, 2 ) );
-            for ss = 1 : size( srcsRelEnergy, 2 )
-                meanSrcsRelEnergy(ss) = mean( srcsRelEnergy(srcsRelEnergy(:,ss) >= -40,ss) );
+            srcsMaxSelfRefEnergy = cellfun( @(c)(10 * log10( sum( 10.^(c./10) ) )), ...
+                                                        annotations.srcEnergy.srcEnergy );
+            meanSrcsMaxSelfRefEnergy = nan( 1, size( srcsMaxSelfRefEnergy, 2 ) );
+            for ss = 1 : size( srcsMaxSelfRefEnergy, 2 )
+                srcActiveEnergy = srcsMaxSelfRefEnergy(srcsMaxSelfRefEnergy(:,ss) >= -40,ss);
+                meanSrcsMaxSelfRefEnergy(ss) = mean( 10.^(srcActiveEnergy./10) );
             end
-            srcsEnergy = srcsRelEnergy - repmat( meanSrcsRelEnergy, ...
-                                                 numel( annotations.srcEnergy.t ), 1 );
+            meanSrcsMaxSelfRefEnergy = 10 * log10( meanSrcsMaxSelfRefEnergy );
+            srcsMeanSelfRefEnergy = ...
+                     srcsMaxSelfRefEnergy - repmat( meanSrcsMaxSelfRefEnergy, ...
+                                                    numel( annotations.srcEnergy.t ), 1 );
             for ss = 1 : numel( sceneConfig.sources )
                 srcBilateralSnrs = repmat( avgBilateralSNRs(ss,:), ...
                                            numel( annotations.srcEnergy.t ), 1 );
-                idxs = 1 : size( avgBilateralSNRs, 1 );
-                idxs(ss) = [];
-                tmpSE = srcsEnergy + srcBilateralSnrs;
-                for ii = 1 : size( tmpSE, 1 )
-                    annotations.srcSNR_avgSelf.srcSNR_avgSelf{ii,ss} = single( ...
-                                                             addSnrs( -tmpSE(ii,idxs) ) );
+                otherIdxs = 1 : size( avgBilateralSNRs, 1 );
+                otherIdxs(ss) = [];
+                srcsCurrentSrcMeanRefEnergy = srcsMeanSelfRefEnergy + srcBilateralSnrs;
+                for ii = 1 : size( srcsCurrentSrcMeanRefEnergy, 1 )
+                    sumOtherSrcsEnergy = sum( ...
+                                    10.^(srcsCurrentSrcMeanRefEnergy(ii,otherIdxs)./10) );
+                    annotations.nrjOthers.nrjOthers{ii,ss} = single( sumOtherSrcsEnergy );
+                    annotations.nrjOthers_db.nrjOthers_db{ii,ss} = single( ...
+                                                       10 * log10( sumOtherSrcsEnergy ) );
+                    annotations.nrj.nrj{ii,ss} = single( ...
+                                           10.^(srcsCurrentSrcMeanRefEnergy(ii,ss)./10) );
+                    annotations.nrj_db.nrj_db{ii,ss} = single( ...
+                                                     srcsCurrentSrcMeanRefEnergy(ii,ss) );
                     annotations.srcSNR.srcSNR{ii,ss} = single( ...
-                        annotations.srcSNR_avgSelf.srcSNR_avgSelf{ii,ss} + tmpSE(ii,ss) );
+                        annotations.nrj.nrj{ii,ss} / annotations.nrjOthers.nrjOthers{ii,ss} );
+                    annotations.srcSNR_db.srcSNR_db{ii,ss} = single( ...
+                        srcsCurrentSrcMeanRefEnergy(ii,ss) - annotations.nrjOthers_db.nrjOthers_db{ii,ss} );
                 end
             end
         end

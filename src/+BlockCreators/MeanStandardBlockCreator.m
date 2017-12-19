@@ -59,6 +59,7 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                 if ii == 1
                     [blockAnnots(:).nSrcs_sceneConfig] = deal([]);
                     [blockAnnots(:).nSrcs_active] = deal([]);
+                    [blockAnnots(:).srcSNR2] = deal([]);
                 end
                 blockAnnots(ii) = obj.extendMeanAnnotations( blockAnnots(ii) );
             end
@@ -70,11 +71,16 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
         % moment, to avoid recomputation with SceneEarSignalProc.
         
         function avgdBlockAnnots = extendMeanAnnotations( obj, avgdBlockAnnots )
-            srcsEnergy = cellfun( @mean, avgdBlockAnnots.srcEnergy );
+            srcsEnergy = cellfun( @(se)(any(se > -40)), avgdBlockAnnots.srcEnergy );
             isAmbientSource = isnan( avgdBlockAnnots.srcAzms );
             srcsEnergy(isAmbientSource) = [];
-            avgdBlockAnnots.nSrcs_sceneConfig = single( numel( srcsEnergy ) );
-            avgdBlockAnnots.nSrcs_active = single( sum( srcsEnergy >= -40 ) );
+            avgdBlockAnnots.nSrcs_sceneConfig = single( numel( avgdBlockAnnots.srcEnergy ) );
+            avgdBlockAnnots.nSrcs_active = single( sum( srcsEnergy ) );
+            avgdBlockAnnots.srcSNR = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.srcSNR ) ) );
+            avgdBlockAnnots.srcSNR2 = num2cell( 10 * log10( ...
+                cell2mat( avgdBlockAnnots.nrj ) ./ cell2mat( avgdBlockAnnots.nrjOthers ) ) );
+            avgdBlockAnnots.nrj = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.nrj ) ) );
+            avgdBlockAnnots.nrjOthers = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.nrjOthers ) ) );
         end
         %% ------------------------------------------------------------------------------- 
         

@@ -1,10 +1,10 @@
-function res = applyIfNempty( x, fun )
+function varargout = applyIfNempty( x, fun )
 
 if isempty( x )
-    res = [];
+    varargout(1:nargout) = cell( 1, nargout );
     return;
 end
 
-res = fun( x );
+[varargout{1:nargout}] = fun( x );
 
 end

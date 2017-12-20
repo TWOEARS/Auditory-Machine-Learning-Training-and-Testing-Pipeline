@@ -26,7 +26,7 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
         end
         %% ----------------------------------------------------------------
 
-        function buildModel( ~, ~, ~ )
+        function buildModel( ~, ~, ~, ~ )
             % noop
         end
         %% ----------------------------------------------------------------

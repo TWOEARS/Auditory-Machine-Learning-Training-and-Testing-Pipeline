@@ -1,4 +1,4 @@
-classdef (Abstract) Base < handle
+classdef (Abstract) Base < handle & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -9,13 +9,36 @@ classdef (Abstract) Base < handle
     properties (SetAccess = {?ModelTrainers.Base, ?Parameterized})
         performanceMeasure;
         maxDataSize;
+        dataSelector;
+        importanceWeighter;
     end
     
     %% --------------------------------------------------------------------
     methods
         
+        function obj = Base( varargin )
+            pds{1} = struct( 'name', 'performanceMeasure', ...
+                             'default', @PerformanceMeasures.BAC2, ...
+                             'valFun', @(x)(isa( x, 'function_handle' )), ...
+                             'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
+            pds{2} = struct( 'name', 'maxDataSize', ...
+                             'default', inf, ...
+                             'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
+            pds{3} = struct( 'name', 'dataSelector', ...
+                             'default', DataSelectors.IgnorantSelector(), ...
+                             'valFun', @(x)(isa( x, 'DataSelectors.Base') ) );
+            pds{4} = struct( 'name', 'importanceWeighter', ...
+                             'default', ImportanceWeighters.IgnorantWeighter(), ...
+                             'valFun', @(x)(isa( x, 'ImportanceWeighters.Base') ) );
+            obj = obj@Parameterized( pds );
+            obj.setParameters( true, varargin{:} );
+        end
+        %% ----------------------------------------------------------------
+        
         function setData( obj, trainSet, testSet )
             obj.trainSet = trainSet;
+            obj.dataSelector.connectData( obj.trainSet );
+            obj.importanceWeighter.connectData( obj.trainSet );
             if ~exist( 'testSet', 'var' ), testSet = []; end
             obj.testSet = testSet;
         end
@@ -69,32 +92,28 @@ classdef (Abstract) Base < handle
         %% ----------------------------------------------------------------
 
         function run( obj )
-            [x,y] = obj.getPermutedTrainingData();
+            [x,y,sampleIds] = obj.getPermutedTrainingData();
             nanXidxs = any( isnan( x ), 2 );
             infXidxs = any( isinf( x ), 2 );
             if any( nanXidxs ) || any( infXidxs ) 
                 warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
                 x(nanXidxs | infXidxs,:) = [];
                 y(nanXidxs | infXidxs,:) = [];
+                sampleIds(nanXidxs | infXidxs) = [];
             end
             if size( y, 1 ) > obj.maxDataSize
-                verboseFprintf( obj, ['Out of a pool of %d samples, ' ...
-                                      'randomly select %d...\n'], ...
-                                      size( y, 1 ), obj.maxDataSize );
-                if ModelTrainers.Base.balMaxData
-                    throwoutIdxs = ModelTrainers.Base.getBalThrowoutIdxs( y, obj.maxDataSize );
-                    x(throwoutIdxs,:) = [];
-                    y(throwoutIdxs,:) = [];
-                else
-                    x(obj.maxDataSize+1:end,:) = [];
-                    y(obj.maxDataSize+1:end,:) = [];
-                end
+                selectFilter = obj.dataSelector.getDataSelection( sampleIds, obj.maxDataSize );
+                verboseFprintf( obj, obj.dataSelector.verboseOutput );
+                x = x(selectFilter,:);
+                y = y(selectFilter,:);
+                sampleIds = sampleIds(selectFilter);
             end
-            obj.buildModel( x, y );
+            iw = obj.importanceWeighter.getImportanceWeights( sampleIds );
+            obj.buildModel( x, y, iw );
         end
         %% ----------------------------------------------------------------
 
-        function [x,y] = getPermutedTrainingData( obj )
+        function [x,y,permutationIdxs] = getPermutedTrainingData( obj )
             x = obj.trainSet(:,'x');
             if isempty( x )
                 warning( 'There is no data to train the model.' ); 
@@ -103,7 +122,7 @@ classdef (Abstract) Base < handle
             else
                 y = obj.trainSet(:,'y');
             end
-            % apply the mask
+            % apply feature mask, if set
             fmask = ModelTrainers.Base.featureMask;
             if ~isempty( fmask )
                 p_feat = size( x, 2 );
@@ -112,7 +131,7 @@ classdef (Abstract) Base < handle
                 x = x(:,fmask);
             end
             % permute data
-            permutationIdxs = randperm( size( y, 1 ) );
+            permutationIdxs = randperm( size( y, 1 ) )';
             x = x(permutationIdxs,:);
             y = y(permutationIdxs,:);
         end
@@ -123,7 +142,7 @@ classdef (Abstract) Base < handle
 
     %% --------------------------------------------------------------------
     methods (Abstract)
-        buildModel( obj, x, y )
+        buildModel( obj, x, y, iw )
     end
 
     %% --------------------------------------------------------------------
@@ -133,35 +152,7 @@ classdef (Abstract) Base < handle
     
     %% --------------------------------------------------------------------
     methods (Static)
-
-        function throwoutIdxs = getBalThrowoutIdxs( y, maxDataSize )
-            labels = unique( y );
-            nPerLabel = arrayfun( @(l)(sum( l == y )), labels );
-            [~, labelOrder] = sort( nPerLabel );
-            nLabels = numel( labels );
-            nRemaining = maxDataSize;
-            throwoutIdxs = [];
-            for ii = labelOrder'
-                nKeep = min( int32( nRemaining/nLabels ), nPerLabel(ii) );
-                nRemaining = nRemaining - nKeep;
-                nLabels = nLabels - 1;
-                lIdxs = find( y == labels(ii) );
-                lIdxs = lIdxs(randperm(nPerLabel(ii)));
-                throwoutIdxs = [throwoutIdxs; lIdxs(nKeep+1:end)];
-            end
-        end
     
-        function b = balMaxData( setNewValue, newValue )
-            persistent balMaxD;
-            if isempty( balMaxD )
-                balMaxD = false;
-            end
-            if nargin > 0  &&  setNewValue
-                balMaxD = newValue;
-            end
-            b = balMaxD;
-        end
-        
         function fm = featureMask( setNewMask, newmask )
             % Set/Reset the featureMask and return it.
             %   featureMask() reset the featurMask

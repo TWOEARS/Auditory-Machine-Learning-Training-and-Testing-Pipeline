@@ -39,7 +39,7 @@ classdef CVtrainer < ModelTrainers.Base
         end
         %% ----------------------------------------------------------------
         
-        function buildModel( obj, ~, ~ )
+        function buildModel( obj, ~, ~, ~ )
             obj.trainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.createFolds();
             obj.foldsPerformance = ones( obj.nFolds, 1 );

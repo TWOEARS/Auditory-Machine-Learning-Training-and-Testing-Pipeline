@@ -98,17 +98,8 @@ classdef IdentTrainPipeData < handle
                                 bIdxs = obj.data(bb).bIdxs(bacfIdxs==mm);
                                 bacf = load( bacfs{mm}, 'blockAnnotations' );
                                 bas_ = bacf.blockAnnotations(bIdxs);
-                                bons = cat( 1, bas_.blockOnset );
-                                bofs = cat( 1, bas_.blockOffset );
-                                y = obj.data(bb).y(bacfIdxs==mm);
-                                pos_bons = bons(y == +1);
-                                pos_bofs = bofs(y == +1);
-                                ba_pp = zeros( size( bas_ ) );
-                                for ii = 1 : sum( y == +1 )
-                                    ba_pp(bons == pos_bons(ii) & bofs == pos_bofs(ii)) = 1;
-                                end
-                                ba_pp = num2cell( ba_pp );
-                                [bas_(:).posPresent] = deal( ba_pp{:} );
+                                bas_ = Core.IdentTrainPipeDataElem.addPPtoBas( ...
+                                                     bas_, obj.data(bb).y(bacfIdxs==mm) );
                                 if isempty( bas_bb )
                                     bas_bb = bas_;
                                 else

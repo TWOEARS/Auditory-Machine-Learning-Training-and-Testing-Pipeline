@@ -88,6 +88,34 @@ classdef IdentTrainPipeData < handle
                                     vertcat( obj.data(fIdx).(dSubScript)(xyIdx,:,:,:,:) );
                     elseif any( strcmp( dSubScript, {'fileName','blockAnnotsCacheFile'} ) )
                         varargout{1:nargout} = { obj.data(fIdx).(dSubScript) }';
+                    elseif any( strcmp( dSubScript, {'blockAnnotations'} ) )
+                        bacfs = {obj.data(fIdx).blockAnnotsCacheFile};
+                        bas = [];
+                        for bb = 1 : numel( bacfs )
+                            bacfIdxs = obj.data(bb).bacfIdxs;
+                            for mm = 1 : numel( bacfs{bb} )
+                                bIdxs = obj.data(bb).bIdxs(bacfIdxs==mm);
+                                bacf = load( bacfs{bb}{mm}, 'blockAnnotations' );
+                                bas_ = bacf.blockAnnotations(bIdxs);
+                                bons = cat( 1, bas_.blockOnset );
+                                bofs = cat( 1, bas_.blockOffset );
+                                y = obj.data(bb).y(bacfIdxs==mm);
+                                pos_bons = bons(y == +1);
+                                pos_bofs = bofs(y == +1);
+                                ba_pp = zeros( size( bas_ ) );
+                                for ii = 1 : sum( y == +1 )
+                                    ba_pp(bons == pos_bons(ii) & bofs == pos_bofs(ii)) = 1;
+                                end
+                                ba_pp = num2cell( ba_pp );
+                                [bas_(:).posPresent] = deal( ba_pp{:} );
+                                if isempty( bas )
+                                    bas = bas_;
+                                else
+                                    bas = vertcat( bas, bas_ );
+                                end
+                            end
+                        end
+                        varargout{1:nargout} = bas;
                     elseif strcmp( dSubScript, 'pointwiseFileIdxs' )
                         out = [];
                         for ff = fIdx

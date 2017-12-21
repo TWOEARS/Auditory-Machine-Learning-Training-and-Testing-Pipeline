@@ -3,6 +3,8 @@ classdef GatherFeaturesProc < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private, Transient)
         sceneCfgDataUseRatio = 1;
+        dataSelector;
+        loadBlockAnnotations = false;
         prioClass = [];
     end
     
@@ -13,8 +15,11 @@ classdef GatherFeaturesProc < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = GatherFeaturesProc()
+        function obj = GatherFeaturesProc( loadBlockAnnotations )
             obj = obj@Core.IdProcInterface();
+            if nargin >= 1
+                obj.loadBlockAnnotations = loadBlockAnnotations;
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -27,7 +32,11 @@ classdef GatherFeaturesProc < Core.IdProcInterface
 
         function process( obj, wavFilepath )
             obj.inputProc.sceneId = obj.sceneId;
-            xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
+            if obj.loadBlockAnnotations
+                xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi', 'a' );
+            else
+                xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
+            end
             obj.inputProc.inputProc.sceneId = obj.sceneId;
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
@@ -47,6 +56,10 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             dataFile.bacfIdxs = [dataFile.bacfIdxs; ...
                   repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, numel(useIdxs), 1 )];
             dataFile.blockAnnotsCacheFile = [dataFile.blockAnnotsCacheFile; {inDataFilepath}];
+            if obj.loadBlockAnnotations
+                basPP = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a(useIdxs), xy.y(useIdxs,:) );
+                dataFile.blockAnnotations = [dataFile.blockAnnotations; basPP];
+            end
             fprintf( '.' );
         end
         %% -------------------------------------------------------------------------------

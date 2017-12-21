@@ -93,7 +93,7 @@ sc(2).addSource( SceneConfig.BRIRsource( ...
     'snr', SceneConfig.ValGen( 'manual', 10 ),...
     'loop', 'randomSeq' );
 sc(2).setBRIRheadOrientation( 0.5 );
-pipe.init( sc, 'hrir', [], 'fs', 16000 );
+pipe.init( sc, 'hrir', [], 'fs', 16000, 'loadBlockAnnotations', true );
 
 % pipeInputAll = pipe.pipeline.trainSet(:,'fileName');
 % pipeInputCurrentClass = pipe.pipeline.trainSet('fileLabel',{{'type',classes{ll}}},'fileName');

@@ -35,6 +35,7 @@ classdef BAC_Weighter < ImportanceWeighters.Base
                 end
             end
             importanceWeights = mean( importanceWeights, 2 );
+            importanceWeights = importanceWeights / min( importanceWeights );
             obj.verboseOutput = '\nWeighting samples of \n';
             for ii = 1 : numel( labels )
                 obj.verboseOutput = sprintf( ['%s' ...

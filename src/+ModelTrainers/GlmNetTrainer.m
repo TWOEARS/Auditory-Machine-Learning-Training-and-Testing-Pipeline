@@ -54,7 +54,7 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             else
                 family = obj.family;
             end
-            verboseFprintf( obj, 'GlmNet training with alpha=%f\n', glmOpts.alpha );
+            verboseFprintf( obj, '\nGlmNet training with alpha=%f\n', glmOpts.alpha );
             verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(xScaled,1), size(xScaled,2) );
             obj.model.model = glmnet( xScaled, y, family, glmOpts );
             verboseFprintf( obj, '\n' );

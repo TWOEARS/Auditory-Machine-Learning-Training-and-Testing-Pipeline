@@ -109,6 +109,7 @@ classdef (Abstract) Base < handle & Parameterized
                 sampleIds = sampleIds(selectFilter);
             end
             iw = obj.importanceWeighter.getImportanceWeights( sampleIds );
+            verboseFprintf( obj, obj.importanceWeighter.verboseOutput );
             obj.buildModel( x, y, iw );
         end
         %% ----------------------------------------------------------------

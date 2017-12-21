@@ -23,10 +23,13 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function setSceneCfgDataUseRatio( obj, sceneCfgDataUseRatio, prioClass )
+        function setSceneCfgDataUseRatio( obj, sceneCfgDataUseRatio, dataSelector )
             obj.sceneCfgDataUseRatio = sceneCfgDataUseRatio;
-            if nargin < 3, prioClass = []; end
-            obj.prioClass = prioClass;
+            if nargin < 3
+                obj.dataSelector = DataSelectors.IgnorantSelector();
+            else
+                obj.dataSelector = dataSelector;
+            end
         end
         %% -------------------------------------------------------------------------------
 
@@ -34,6 +37,8 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             obj.inputProc.sceneId = obj.sceneId;
             if obj.loadBlockAnnotations
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi', 'a' );
+                xy.blockAnnotations = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a, xy.y );
+                xy = rmfield( xy, 'a' );
             else
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
             end
@@ -41,24 +46,22 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
-            if obj.sceneCfgDataUseRatio < 1  &&  ...
-                            ~strcmp( obj.prioClass, dataFile.getFileAnnotation( 'type' ) )
+            if obj.sceneCfgDataUseRatio < 1
                 nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
-                useIdxs = randperm( size( xy.x, 1 ) );
-                useIdxs(nUsePoints+1:end) = [];
+                obj.dataSelector.connectData( xy );
+                useIdxs = obj.dataSelector.getDataSelection( 1:size( xy.x, 1 ), nUsePoints );
             else
-                useIdxs = 1 : size( xy.x, 1 );
+                useIdxs = true( size( xy.x, 1 ), 1 );
             end
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
             dataFile.y = [dataFile.y; xy.y(useIdxs,:)];
             dataFile.ysi = [dataFile.ysi; xy.ysi(useIdxs)'];
             dataFile.bIdxs = [dataFile.bIdxs; xy.bIdxs(useIdxs)'];
             dataFile.bacfIdxs = [dataFile.bacfIdxs; ...
-                  repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, numel(useIdxs), 1 )];
+                  repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, sum(useIdxs), 1 )];
             dataFile.blockAnnotsCacheFile = [dataFile.blockAnnotsCacheFile; {inDataFilepath}];
             if obj.loadBlockAnnotations
-                basPP = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a(useIdxs), xy.y(useIdxs,:) );
-                dataFile.blockAnnotations = [dataFile.blockAnnotations; basPP];
+                dataFile.blockAnnotations = [dataFile.blockAnnotations; xy.blockAnnotations(useIdxs)];
             end
             fprintf( '.' );
         end

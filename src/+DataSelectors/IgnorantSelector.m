@@ -14,7 +14,8 @@ classdef IgnorantSelector < DataSelectors.Base
     
         function [selectFilter] = getDataSelection( obj, sampleIdsIn, maxDataSize )
             selectFilter = true( size( sampleIdsIn ) );
-            selectFilter(maxDataSize+1:end) = false;
+            rndIdxs = randperm( numel( sampleIdsIn ) );
+            selectFilter(rndIdxs(maxDataSize+1:end)) = false;
             obj.verboseOutput = sprintf( ['Out of a pool of %d samples, ' ...
                                           'randomly select %d...\n'], ...
                                           numel( sampleIdsIn ), maxDataSize );

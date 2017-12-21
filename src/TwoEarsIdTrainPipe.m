@@ -64,6 +64,7 @@ classdef TwoEarsIdTrainPipe < handle
             ip.addOptional( 'hrir', ...
                             'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
             ip.addOptional( 'sceneCfgDataUseRatio', 1 );
+            ip.addOptional( 'dataSelector', DataSelectors.IgnorantSelector() );
             ip.addOptional( 'loadBlockAnnotations', false );
             ip.addOptional( 'gatherFeaturesProc', true );
             ip.addOptional( 'stopAfterProc', inf );
@@ -105,7 +106,8 @@ classdef TwoEarsIdTrainPipe < handle
                         DataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.labelCreator );
             if ip.Results.gatherFeaturesProc
                 gatherFeaturesProc = DataProcs.GatherFeaturesProc( ip.Results.loadBlockAnnotations );
-                gatherFeaturesProc.setSceneCfgDataUseRatio( ip.Results.sceneCfgDataUseRatio );
+                gatherFeaturesProc.setSceneCfgDataUseRatio( ...
+                               ip.Results.sceneCfgDataUseRatio, ip.Results.dataSelector );
                 multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( ...
                                                              binSim, gatherFeaturesProc );
             end

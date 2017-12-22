@@ -100,14 +100,13 @@ classdef (Abstract) Base < handle
                 dpi.bIdxs = dpi.bIdxs(sampleIds);
                 dpi.bacfIdxs = testSet(:,'bacfIdxs');
                 dpi.bacfIdxs = dpi.bacfIdxs(sampleIds);
-                dpiarg = {dpi};
             else
-                dpiarg = {};
+                dpi = struct.empty;
             end
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )
-                perf(ii) = perfMeasure( yTrue, yModel(:,ii), iw, dpiarg{:} );
+                perf(ii) = perfMeasure( yTrue, yModel(:,ii), iw, dpi, testSet );
             end
         end
         %% ----------------------------------------------------------------

@@ -45,10 +45,8 @@ classdef ImportanceWeightedSquareBalancedAccuracy < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
-            if nargin < 5
-                dpi = struct.empty;
-            else
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
+            if ~isempty( dpi )
                 dpi.yTrue = yTrue;
                 dpi.yPred = yPred;
                 dpi.iw = iw;

@@ -38,14 +38,12 @@ classdef NSE < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
             e = yTrue - yPred;
             se = e.^2;
             performance = - mean( se );
             obj.mae = mean( abs( e ) );
-            if nargin < 5
-                dpi = struct.empty;
-            else
+            if ~isempty( dpi )
                 dpi.yTrue = yTrue;
                 dpi.yPred = yPred;
                 dpi.iw = iw;

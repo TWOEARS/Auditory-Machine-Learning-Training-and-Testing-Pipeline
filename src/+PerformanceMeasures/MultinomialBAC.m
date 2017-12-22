@@ -40,7 +40,7 @@ classdef MultinomialBAC < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
             labels = unique( [yTrue;yPred] );
             n_acc = 0;
             for tt = 1 : numel( labels )
@@ -56,9 +56,7 @@ classdef MultinomialBAC < PerformanceMeasures.Base
                 end
                 n_acc = n_acc + obj.confusionMatrix(tt,tt);
             end
-            if nargin < 5
-                dpi = struct.empty;
-            else
+            if ~isempty( dpi )
                 dpi.yTrue = yTrue;
                 dpi.yPred = yPred;
                 dpi.iw = iw;

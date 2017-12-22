@@ -9,17 +9,18 @@ classdef (Abstract) Base
     %% --------------------------------------------------------------------
     methods
         
-        function obj = Base( yTrue, yPred, iw, datapointInfo )
+        function obj = Base( yTrue, yPred, iw, datapointInfo, testSetIdData )
             if nargin < 3
                 iw = ones( size( yTrue ) );
             end
             if nargin < 4
-                dpiarg = {};
-            else
-                dpiarg = {datapointInfo};
+                datapointInfo = struct.empty;
+            end
+            if nargin < 5
+                testSetIdData = [];
             end
             [obj, obj.performance, obj.datapointInfo] = ...
-                                       obj.calcPerformance( yTrue, yPred, iw, dpiarg{:} );
+                    obj.calcPerformance( yTrue, yPred, iw, datapointInfo, testSetIdData );
         end
         % -----------------------------------------------------------------
     
@@ -127,7 +128,7 @@ classdef (Abstract) Base
 
     %% --------------------------------------------------------------------
     methods (Abstract)
-        [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpiarg )
+        [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, testSetIdData )
         b = eqPm( obj, otherPm )
         b = gtPm( obj, otherPm )
         s = char( obj )

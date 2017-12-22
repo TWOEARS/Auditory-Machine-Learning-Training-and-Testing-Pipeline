@@ -38,14 +38,9 @@ classdef BAC2 < PerformanceMeasures.BAC
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
-           if nargin < 5
-                dpiarg = {};
-            else
-                dpiarg = {dpi};
-            end
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
             [obj, performance, dpi] = ...
-                  calcPerformance@PerformanceMeasures.BAC( obj, yTrue, yPred, iw, dpiarg{:} );
+                  calcPerformance@PerformanceMeasures.BAC( obj, yTrue, yPred, iw, dpi, [] );
             obj.bac = performance;
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
         end

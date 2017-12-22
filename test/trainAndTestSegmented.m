@@ -172,46 +172,4 @@ pipe.init( sc, 'fs', 16000, 'loadBlockAnnotations', true );%, 'stopAfterProc', 5
 
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
-%% analysis
-
-% resc = RescSparse( 'uint32', 'uint8' );
-resct = RescSparse( 'uint32', 'uint8' );
-resct2 = RescSparse( 'uint32', 'uint8' );
-    
-% profile on
-
-% filesema = setfilesemaphore( 'test.mat' );
-% if exist( 'test.mat', 'file' )
-%     load( 'test.mat' );
-% end
-% removefilesemaphore( filesema );
-
-scp = struct('nSources',{3},'headPosIdx',{0},'ambientWhtNoise',{1},'whtNoiseSnr',{8});
-scp.id = 1;
-[~,resct,resct2,rescDescr] = analyzeBlockbased( [], resct, resct2, testPerfresults, scp, true, 'classIdx', 2, 'dd', 2 );
-
-% filesema = setfilesemaphore( 'test.mat' );
-% if exist( 'test.mat', 'file' )
-%     fileupdate = load( 'test.mat' );
-% %     [data,dataIdxs] = fileupdate.resc.getRowIndexed( 1:size( fileupdate.resc.dataIdxs, 1 ) );
-% %     dataIdxs(:,1) = dataIdxs(:,1)+1;
-% %     fileupdate.resc = fileupdate.resc.addData( dataIdxs, data );
-%     fprintf( ':' );
-%     resc = syncResults2( resc, fileupdate.resc, 2, 1 );
-%     fprintf( ':' );
-%     resct = syncResults2( resct, fileupdate.resct, 2, 1 );
-%     fprintf( ':' );
-% end
-% save( 'test.mat', ...
-%       'resc','resct', ...
-%       '-v7.3' );
-% fprintf( ';\n' );
-% removefilesemaphore( filesema );
-
-% profile viewer
-
-% [sens,spec] = getPerformanceDecorr( resc, [3], [] );
-% [senst,spect] = getPerformanceDecorr( resct, [3], [] );
-% [senst2,spect2] = getPerformanceDecorr( resct2, [3], [] );
-
 end

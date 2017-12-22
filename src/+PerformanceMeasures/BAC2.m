@@ -8,13 +8,8 @@ classdef BAC2 < PerformanceMeasures.BAC
     %% --------------------------------------------------------------------
     methods
         
-        function obj = BAC2( yTrue, yPred, datapointInfo )
-           if nargin < 3
-                dpiarg = {};
-            else
-                dpiarg = {datapointInfo};
-            end
-            obj = obj@PerformanceMeasures.BAC( yTrue, yPred, dpiarg{:} );
+        function obj = BAC2( yTrue, yPred, varargin )
+            obj = obj@PerformanceMeasures.BAC( yTrue, yPred, varargin{:} );
         end
         % -----------------------------------------------------------------
     
@@ -43,14 +38,14 @@ classdef BAC2 < PerformanceMeasures.BAC
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpi )
-           if nargin < 4
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
+           if nargin < 5
                 dpiarg = {};
             else
                 dpiarg = {dpi};
             end
             [obj, performance, dpi] = ...
-                  calcPerformance@PerformanceMeasures.BAC( obj, yTrue, yPred, dpiarg{:} );
+                  calcPerformance@PerformanceMeasures.BAC( obj, yTrue, yPred, iw, dpiarg{:} );
             obj.bac = performance;
             performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
         end

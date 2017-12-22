@@ -3,7 +3,7 @@ classdef (Abstract) Base < handle
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
         data;
-        verboseOutput;
+        verboseOutput = '';
     end
     
     %% --------------------------------------------------------------------

@@ -37,8 +37,6 @@ classdef (Abstract) Base < handle & Parameterized
         
         function setData( obj, trainSet, testSet )
             obj.trainSet = trainSet;
-            obj.dataSelector.connectData( obj.trainSet );
-            obj.importanceWeighter.connectData( obj.trainSet );
             if ~exist( 'testSet', 'var' ), testSet = []; end
             obj.testSet = testSet;
         end
@@ -81,17 +79,19 @@ classdef (Abstract) Base < handle & Parameterized
         %% -------------------------------------------------------------------------------
         
         function performance = getPerformance( obj, getDatapointInfo )
-            if nargin < 2, getDatapointInfo = 'noInfo'; end
+            if nargin < 2, getDatapointInfo = false; end
             verboseFprintf( obj, 'Applying model to test set...\n' );
             model = obj.getModel();
             model.verbose( obj.verbose );
             performance = Models.Base.getPerformance( ...
                 model, obj.testSet, obj.performanceMeasure, ...
-                obj.maxDataSize, true, getDatapointInfo );
+                obj.maxDataSize, obj.dataSelector, obj.importanceWeighter, getDatapointInfo );
         end
         %% ----------------------------------------------------------------
 
         function run( obj )
+            obj.dataSelector.connectData( obj.trainSet );
+            obj.importanceWeighter.connectData( obj.trainSet );
             [x,y,sampleIds] = obj.getPermutedTrainingData();
             nanXidxs = any( isnan( x ), 2 );
             infXidxs = any( isinf( x ), 2 );
@@ -119,6 +119,7 @@ classdef (Abstract) Base < handle & Parameterized
             if isempty( x )
                 warning( 'There is no data to train the model.' ); 
                 y = [];
+                permutationIdxs = [];
                 return;
             else
                 y = obj.trainSet(:,'y');

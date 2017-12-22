@@ -8,13 +8,8 @@ classdef NSE < PerformanceMeasures.Base
     %% --------------------------------------------------------------------
     methods
         
-        function obj = NSE( yTrue, yPred, datapointInfo )
-           if nargin < 3
-                dpiarg = {};
-            else
-                dpiarg = {datapointInfo};
-            end
-            obj = obj@PerformanceMeasures.Base( yTrue, yPred, dpiarg{:} );
+        function obj = NSE( yTrue, yPred, varargin )
+            obj = obj@PerformanceMeasures.Base( yTrue, yPred, varargin{:} );
         end
         % -----------------------------------------------------------------
     
@@ -43,16 +38,17 @@ classdef NSE < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpi )
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
             e = yTrue - yPred;
             se = e.^2;
             performance = - mean( se );
             obj.mae = mean( abs( e ) );
-            if nargin < 4
+            if nargin < 5
                 dpi = struct.empty;
             else
                 dpi.yTrue = yTrue;
                 dpi.yPred = yPred;
+                dpi.iw = iw;
             end
         end
         % -----------------------------------------------------------------

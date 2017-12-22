@@ -1,16 +1,21 @@
-classdef MultinomialBAC < PerformanceMeasures.Base
+classdef ImportanceWeightedSquareBalancedAccuracy < PerformanceMeasures.Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
-        confusionMatrix;
-        sens;
+        tp;
+        fp;
+        tn;
+        fn;
+        sensitivity;
+        specificity;
         acc;
+        bac;
     end
     
     %% --------------------------------------------------------------------
     methods
         
-        function obj = MultinomialBAC( yTrue, yPred, varargin )
+        function obj = ImportanceWeightedSquareBalancedAccuracy( yTrue, yPred, varargin )
             obj = obj@PerformanceMeasures.Base( yTrue, yPred, varargin{:} );
         end
         % -----------------------------------------------------------------
@@ -41,21 +46,6 @@ classdef MultinomialBAC < PerformanceMeasures.Base
         % -----------------------------------------------------------------
     
         function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi )
-            labels = unique( [yTrue;yPred] );
-            n_acc = 0;
-            for tt = 1 : numel( labels )
-                for pp = 1 : numel( labels )
-                    obj.confusionMatrix(tt,pp) = ...
-                                     sum( (yTrue == labels(tt)) & (yPred == labels(pp)) );
-                end
-                n_tt = sum( obj.confusionMatrix(tt,:) );
-                if n_tt > 0
-                    obj.sens(tt) = obj.confusionMatrix(tt,tt) / n_tt;
-                else
-                    obj.sens(tt) = nan;
-                end
-                n_acc = n_acc + obj.confusionMatrix(tt,tt);
-            end
             if nargin < 5
                 dpi = struct.empty;
             else
@@ -63,12 +53,34 @@ classdef MultinomialBAC < PerformanceMeasures.Base
                 dpi.yPred = yPred;
                 dpi.iw = iw;
             end
-            obj.acc = n_acc / sum( sum( obj.confusionMatrix ) ); 
-            performance = sum( obj.sens(~isnan(obj.sens)) ) / ...
-                                                      numel( obj.sens(~isnan(obj.sens)) );
-        end
+            tps = iw .* (yTrue == 1 & yPred > 0);
+            tns = iw .* (yTrue == -1 & yPred < 0);
+            fps = iw .* (yTrue == -1 & yPred > 0);
+            fns = iw .* (yTrue == 1 & yPred < 0);
+            tp_fn = sum( [tps(:);fns(:)], 1 );
+            tn_fp = sum( [tns(:);fps(:)], 1 );
+            obj.tp = sum( tps );
+            obj.tn = sum( tns );
+            obj.fp = sum( fps );
+            obj.fn = sum( fns );
+            if tp_fn == 0;
+                warning( 'No positive true label.' );
+                obj.sensitivity = nan;
+            else
+                obj.sensitivity = obj.tp / tp_fn;
+            end
+            if tn_fp == 0;
+                warning( 'No negative true label.' );
+                obj.specificity = nan;
+            else
+                obj.specificity = obj.tn / tn_fp;
+            end
+            obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
+            obj.bac = 0.5 * obj.sensitivity + 0.5 * obj.specificity;
+            performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
+       end
         % -----------------------------------------------------------------
-    
+
     end
 
 end

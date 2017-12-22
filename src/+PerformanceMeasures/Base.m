@@ -31,7 +31,7 @@ classdef (Abstract) Base
     
         function po = strapOffDpi( obj )
             po = obj;
-            po.datapointInfo = [];
+            po.datapointInfo = struct.empty;
         end
         % -----------------------------------------------------------------
     

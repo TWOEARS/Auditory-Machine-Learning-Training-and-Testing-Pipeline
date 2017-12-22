@@ -46,13 +46,9 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
-            if obj.sceneCfgDataUseRatio < 1
-                nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
-                obj.dataSelector.connectData( xy );
-                useIdxs = obj.dataSelector.getDataSelection( 1:size( xy.x, 1 ), nUsePoints );
-            else
-                useIdxs = true( size( xy.x, 1 ), 1 );
-            end
+            nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
+            obj.dataSelector.connectData( xy );
+            useIdxs = obj.dataSelector.getDataSelection( 1:size( xy.x, 1 ), nUsePoints );
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
             dataFile.y = [dataFile.y; xy.y(useIdxs,:)];
             dataFile.ysi = [dataFile.ysi; xy.ysi(useIdxs)'];

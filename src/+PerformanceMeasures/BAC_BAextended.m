@@ -21,6 +21,14 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             obj = obj@PerformanceMeasures.Base( yTrue, yPred, varargin{:} );
         end
         % -----------------------------------------------------------------
+
+        function po = strapOffDpi( obj )
+            po = strapOffDpi@PerformanceMeasures.Base( obj );
+            po.resc_b = [];
+            po.resc_t = [];
+            po.resc_t2 = [];
+        end
+        % -----------------------------------------------------------------
     
         function b = eqPm( obj, otherPm )
             b = obj.performance == otherPm.performance;

@@ -18,6 +18,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         nsrcsRndPlusMinusBias;
         isNsrcsFixed;
         isAzmFixedUniform;
+        softMaskExponent = 10;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -259,11 +260,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         %% -------------------------------------------------------------------------------
         
-        function afeBlock = softmaskAFE( ~, afeBlock, segHypos, idx_mask )
+        function afeBlock = softmaskAFE( obj, afeBlock, segHypos, idx_mask )
             afeBlock = SegmentIdentityKS.maskAFEData( afeBlock, ...
-                                                      segHypos.data(idx_mask).softMask, ...
-                                                      segHypos.data(idx_mask).cfHz, ...
-                                                      segHypos.data(idx_mask).hopSize );
+                            (segHypos.data(idx_mask).softMask).^obj.softMaskExponent, ...
+                                                        segHypos.data(idx_mask).cfHz, ...
+                                                        segHypos.data(idx_mask).hopSize );
         end
         %% -------------------------------------------------------------------------------
         

@@ -94,7 +94,8 @@ sc(2).addSource( SceneConfig.BRIRsource( ...
     'loop', 'randomSeq' );
 sc(2).setBRIRheadOrientation( 0.5 );
 pipe.init( sc, 'hrir', [], 'fs', 16000, 'loadBlockAnnotations', true, ...
-           'sceneCfgDataUseRatio', 1, 'dataSelector', DataSelectors.BAC_NPP_NS_Selector() );
+           'sceneCfgDataUseRatio', 0.5, 'sceneCfgPrioDataUseRatio', 1, ...
+           'dataSelector', DataSelectors.BAC_NPP_NS_Selector(), 'selectPrioClass', 1 );
 
 % pipeInputAll = pipe.pipeline.trainSet(:,'fileName');
 % pipeInputCurrentClass = pipe.pipeline.trainSet('fileLabel',{{'type',classes{ll}}},'fileName');

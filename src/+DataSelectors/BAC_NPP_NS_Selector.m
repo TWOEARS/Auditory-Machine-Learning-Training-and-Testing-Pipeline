@@ -34,12 +34,14 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             y = obj.getData( 'y' );
             y = y(sampleIdsIn);
             y_ = y .* (ba_ns+1) .* (1 + ~ba_pp * 9);
+            y_Idxs = find( selectFilter );
             shouldNotExistPos = (y_ == 1); % pos although ba_ns==0
-            selectFilter = selectFilter & ~shouldNotExistPos;
+            shouldNotExistPos_l = false( size( selectFilter ) );
+            shouldNotExistPos_l(y_Idxs) = shouldNotExistPos;
+            selectFilter = selectFilter & ~shouldNotExistPos_l;
             y_(shouldNotExistPos) = [];
             [throwoutIdxs,nClassSamples,nPerLabel,labels] = ...
                           DataSelectors.BAC_Selector.getBalThrowoutIdxs( y_, maxDataSize );
-            y_Idxs = find( selectFilter );
             selectFilter(y_Idxs(throwoutIdxs)) = false;
             obj.verboseOutput = sprintf( ['\nOut of a pool of %d samples,\n' ...
                                             'discard %d where na ~= ns, and\n'], ...

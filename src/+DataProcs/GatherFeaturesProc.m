@@ -3,7 +3,9 @@ classdef GatherFeaturesProc < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private, Transient)
         sceneCfgDataUseRatio = 1;
+        sceneCfgPrioDataUseRatio = 1;
         dataSelector;
+        selectPrioClass = [];
         loadBlockAnnotations = false;
         prioClass = [];
     end
@@ -23,13 +25,15 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function setSceneCfgDataUseRatio( obj, sceneCfgDataUseRatio, dataSelector )
+        function setSceneCfgDataUseRatio( obj, sceneCfgDataUseRatio, dataSelector, ...
+                                               sceneCfgPrioDataUseRatio, selectPrioClass )
             obj.sceneCfgDataUseRatio = sceneCfgDataUseRatio;
-            if nargin < 3
-                obj.dataSelector = DataSelectors.IgnorantSelector();
-            else
-                obj.dataSelector = dataSelector;
-            end
+            if nargin < 3, dataSelector = DataSelectors.IgnorantSelector(); end
+            if nargin < 4, sceneCfgPrioDataUseRatio = 1; end
+            if nargin < 5, selectPrioClass = []; end
+            obj.dataSelector = dataSelector;
+            obj.sceneCfgPrioDataUseRatio = sceneCfgPrioDataUseRatio;
+            obj.selectPrioClass = selectPrioClass;
         end
         %% -------------------------------------------------------------------------------
 
@@ -46,7 +50,11 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
-            nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
+            if ~isempty( obj.selectPrioClass ) && any( xy.y == obj.selectPrioClass )
+                nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgPrioDataUseRatio );
+            else
+                nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
+            end
             obj.dataSelector.connectData( xy );
             useIdxs = obj.dataSelector.getDataSelection( 1:size( xy.x, 1 ), nUsePoints );
             dataFile.x = [dataFile.x; xy.x(useIdxs,:)];

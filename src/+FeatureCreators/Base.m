@@ -39,7 +39,7 @@ classdef Base < Core.IdProcInterface
             for afeBlock = inData.afeBlocks'
                 obj.afeData = afeBlock{1};
                 xd = obj.constructVector();
-                obj.x(end+1,:) = xd{1};
+                obj.x(end+1,:,:) = xd{1};
                 fprintf( '.' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
@@ -221,7 +221,31 @@ classdef Base < Core.IdProcInterface
             for ii = 1 : size( grps, 2 )
                 grps{1,ii} = cat( 2, grps{:,ii} );
             end
-            grps(2,:) = [];
+            grps(2:end,:) = [];
+            grps = FeatureCreators.Base.removeGrpDuplicates( grps );
+            b{2} = grps;
+        end
+        %% -------------------------------------------------------------------------------
+
+        function b = reshape2timeSeriesFeatVec( obj, bl )
+            b{1} = reshape( bl{1}, size( bl{1}, 1), [] );
+            if obj.descriptionBuilt, return; end
+            for ii = 2 : size( bl, 2 ) - 1
+                bl{ii} = bl{ii+1};
+            end
+            bl(end) = [];
+            for ii = 1 : size( bl, 2 ) - 1
+                blszii = size( bl{1} );
+                blszii(ii+1) = 1;
+                blszii(1) = [];
+                dgprs{ii} = repmat( shiftdim( bl{ii+1}, 2-ii ), blszii );
+                dgprs{ii} = reshape( dgprs{ii}, 1, [] );
+            end
+            grps = cat( 1, dgprs{:} );
+            for ii = 1 : size( grps, 2 )
+                grps{1,ii} = cat( 2, grps{:,ii} );
+            end
+            grps(2:end,:) = [];
             grps = FeatureCreators.Base.removeGrpDuplicates( grps );
             b{2} = grps;
         end

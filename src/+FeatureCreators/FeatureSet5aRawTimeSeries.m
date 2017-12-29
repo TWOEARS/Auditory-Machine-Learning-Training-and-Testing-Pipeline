@@ -47,17 +47,25 @@ classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
             % 
             %   See getAFErequests
             
+            rmAfeData = obj.afeData(2);
+            rmFsHz = rmAfeData{1}.FsHz;
+            modAfeData = obj.afeData(1);
+            modFsHz = modAfeData{1}.FsHz;
             % afeIdx 1: ams
             modR = obj.makeBlockFromAfe( 1, 1, ...
-                @(a)(compressAndScale( a.Data, 1/obj.compressor )), ...
+                @(a)(compressAndScale( ...
+                    FeatureCreators.FeatureSet5aRawTimeSeries.resampleDataBlock(a.Data,modFsHz,rmFsHz,size(rmAfeData{1}.Data,1)), ...
+                    1/obj.compressor )), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ...
-                {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...,
+                {@(a)('t1')}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz,'UniformOutput', false)))}, ...
                 {@(a)(strcat('mf', arrayfun(@(f)(num2str(f)), a.modCfHz,'UniformOutput', false)))} );
             modL = obj.makeBlockFromAfe( 1, 2, ...
-                @(a)(compressAndScale( a.Data, 1/obj.compressor )), ...
+                @(a)(compressAndScale( ...
+                    FeatureCreators.FeatureSet5aRawTimeSeries.resampleDataBlock(a.Data,modFsHz,rmFsHz,size(rmAfeData{1}.Data,1)), ...
+                    1/obj.compressor )), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ... % groups
-                {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ... % varargin: time index
+                {@(a)('t1')}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz,'UniformOutput', false)))}, ... % varargin: freq. bins
                 {@(a)(strcat('mf', arrayfun(@(f)(num2str(f)), a.modCfHz,'UniformOutput', false)))} ); % vararing: modulation frequencies
             % afeIdx 2: rm
@@ -74,9 +82,8 @@ classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
             % average between right and left channels
             rm = obj.combineBlocks( @(b1,b2)(0.5*b1+0.5*b2), 'LRmean', rmR, rmL );
             mod = obj.combineBlocks( @(b1,b2)(0.5*b1+0.5*b2), 'LRmean', modR, modL );
-            mod = obj.reshapeBlock( mod, 1 ); % flatten
 
-            x = obj.concatFeats( obj.reshape2featVec( rm ), obj.reshape2featVec( mod ) );
+            x = obj.concatFeats( obj.reshape2timeSeriesFeatVec( rm ), obj.reshape2timeSeriesFeatVec( mod ) );
         end
         %% ----------------------------------------------------------------
         
@@ -93,7 +100,20 @@ classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
     end
     
     %% --------------------------------------------------------------------
-    methods (Access = protected)
+    methods (Static)
+    
+        function dataBlockResampled = resampleDataBlock( dataBlock, srcFsHz, targetFsHz, targetNt )
+            [nT, ~] = size(dataBlock);
+            srcTs = 0 : 1 / srcFsHz : (nT-1) / srcFsHz;
+            targetTs = 0 : 1 / targetFsHz : srcTs(end);
+            nTargetTsMissing = targetNt - numel( targetTs );
+            % pchip interpolation...
+            dataBlockResampled = interp1( srcTs, dataBlock, targetTs, 'pchip' );
+            % ...with 'last-datapoint' extrapolation.
+            dataBlockResampled(end+1:end+nTargetTsMissing,:) = ...
+                                 repmat( dataBlockResampled(end,:), nTargetTsMissing, 1 );
+            end
+            
     end
     
 end

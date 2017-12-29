@@ -20,7 +20,7 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
         function outputDeps = getBlockCreatorInternOutputDependencies( obj )
             outputDeps.sbc = getBlockCreatorInternOutputDependencies@...
                                                 BlockCreators.StandardBlockCreator( obj );
-            outputDeps.v = 2;
+            outputDeps.v = 3;
         end
         %% ------------------------------------------------------------------------------- 
 
@@ -32,6 +32,10 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                 blockAnnots = blockify@BlockCreators.StandardBlockCreator( ...
                                                               obj, afeData, annotations );
             end
+            [blockAnnots(:).nrj] = deal(struct('t',[],'nrj',[]));
+            [blockAnnots(:).nrjOthers] = deal(struct('t',[],'nrjOthers',[]));
+            [blockAnnots(:).srcSNRactive] = deal(struct('t',[],'srcSNRactive',[]));
+            [blockAnnots(:).srcSNR2] = deal(struct('t',[],'srcSNR2',[]));
             aFields = fieldnames( blockAnnots );
             isSequenceAnnotation = cellfun( @(af)(...
                                             isstruct( blockAnnots(1).(af) ) && ...
@@ -40,6 +44,9 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                                                                              ), aFields );
             sequenceAfields = aFields(isSequenceAnnotation);
             for ii = 1 : numel( blockAnnots )
+                blockAnnots(ii) = ...
+                    BlockCreators.MeanStandardBlockCreator.adjustPreMeanAnnotations( ...
+                                                                        blockAnnots(ii) );
                 for jj = 1 : numel( sequenceAfields )
                     seqAname = sequenceAfields{jj};
                     annot = blockAnnots(ii).(seqAname);
@@ -48,39 +55,18 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                         if iscell( annotSeq )
                             as_szs = cellfun( @(c)( size( c, 2 ) ), annotSeq(1,:) );
                             blockAnnots(ii).(seqAname) = ...
-                                   mat2cell( mean( cell2mat( annotSeq ), 1 ), 1, as_szs );
+                                   mat2cell( nanmean( cell2mat( annotSeq ), 1 ), 1, as_szs );
                         else
-                            blockAnnots(ii).(seqAname) = mean( annotSeq, 1 );
+                            blockAnnots(ii).(seqAname) = nanmean( annotSeq, 1 );
                         end
                     else
                         error( 'unexpected annotations sequence structure' );
                     end
                 end
-                if ii == 1
-                    [blockAnnots(:).nSrcs_sceneConfig] = deal([]);
-                    [blockAnnots(:).nSrcs_active] = deal([]);
-                    [blockAnnots(:).srcSNR2] = deal([]);
-                end
-                blockAnnots(ii) = obj.extendMeanAnnotations( blockAnnots(ii) );
+                blockAnnots(ii) = ...
+                    BlockCreators.MeanStandardBlockCreator.extendMeanAnnotations( ...
+                                                                        blockAnnots(ii) );
             end
-        end
-        %% -------------------------------------------------------------------------------
-        
-        % TODO: this is the wrong place for the annotation computation; it
-        % should be done in SceneEarSignalProc -- and is now here, for the
-        % moment, to avoid recomputation with SceneEarSignalProc.
-        
-        function avgdBlockAnnots = extendMeanAnnotations( obj, avgdBlockAnnots )
-            srcsEnergy = cellfun( @(se)(any(se > -40)), avgdBlockAnnots.srcEnergy );
-            isAmbientSource = isnan( avgdBlockAnnots.srcAzms );
-            srcsEnergy(isAmbientSource) = [];
-            avgdBlockAnnots.nSrcs_sceneConfig = single( numel( avgdBlockAnnots.srcEnergy ) );
-            avgdBlockAnnots.nSrcs_active = single( sum( srcsEnergy ) );
-            avgdBlockAnnots.srcSNR = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.srcSNR ) ) );
-            avgdBlockAnnots.srcSNR2 = num2cell( 10 * log10( ...
-                cell2mat( avgdBlockAnnots.nrj ) ./ cell2mat( avgdBlockAnnots.nrjOthers ) ) );
-            avgdBlockAnnots.nrj = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.nrj ) ) );
-            avgdBlockAnnots.nrjOthers = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.nrjOthers ) ) );
         end
         %% ------------------------------------------------------------------------------- 
         
@@ -89,7 +75,52 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
     
     methods (Static)
         
+        %% -------------------------------------------------------------------------------
+        
+        % TODO: this is the wrong place for the annotation computation; it
+        % should be done in SceneEarSignalProc -- and is now here, for the
+        % moment, to avoid recomputation with SceneEarSignalProc.
+        
+        function avgdBlockAnnots = extendMeanAnnotations( avgdBlockAnnots )
+            srcsGlobalRefEnergyMeanChannel = cellfun( ...
+                                    @(c)(sum(c) ./ 2 ), avgdBlockAnnots.globalSrcEnergy );
+            srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
+            haveSrcsEnergy = srcsGlobalRefEnergyMeanChannel_db > -40;
+            isAmbientSource = isnan( avgdBlockAnnots.srcAzms );
+            haveSrcsEnergy(isAmbientSource) = [];
+            avgdBlockAnnots.nActivePointSrcs = single( sum( haveSrcsEnergy ) );
+            avgdBlockAnnots.srcSNR2 = num2cell( ...
+                                 10 * log10( ...
+                                             cell2mat( avgdBlockAnnots.nrj ) ...
+                                             ./ cell2mat( avgdBlockAnnots.nrjOthers ) ) );
+            avgdBlockAnnots.nrj = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.nrj ) ) );
+            avgdBlockAnnots.nrjOthers = num2cell( ...
+                                    10 * log10( cell2mat( avgdBlockAnnots.nrjOthers ) ) );
+            avgdBlockAnnots.globalSrcEnergy = cellfun( @(c)(10 * log10( c )), ...
+                                avgdBlockAnnots.globalSrcEnergy, 'UniformOutput', false );
+        end
         %% ------------------------------------------------------------------------------- 
+        
+        % TODO: this is the wrong place for the annotation computation; it
+        % should be done in SceneEarSignalProc -- and is now here, for the
+        % moment, to avoid recomputation with SceneEarSignalProc.
+        
+        function annotations = adjustPreMeanAnnotations( annotations )
+            annotations.srcSNRactive.t = annotations.globalSrcEnergy.t;
+            annotations.srcSNRactive.srcSNRactive = cell2mat( ...
+                                                        annotations.srcSNR_db.srcSNR_db );
+            allSrcsInactive = ...
+                           cell2mat( annotations.nActivePointSrcs.nActivePointSrcs ) == 0;
+            annotations.srcSNRactive.srcSNRactive(allSrcsInactive,:) = nan;
+            annotations.srcSNRactive.srcSNRactive = num2cell( ...
+                                                  annotations.srcSNRactive.srcSNRactive );
+            annotations.nrj.t = annotations.globalSrcEnergy.t;
+            annotations.nrj.nrj = num2cell( ...
+                                        10.^(cell2mat( annotations.nrj_db.nrj_db )./10) );
+            annotations.nrjOthers.t = annotations.globalSrcEnergy.t;
+            annotations.nrjOthers.nrjOthers = num2cell( ...
+                            10.^(cell2mat( annotations.nrjOthers_db.nrjOthers_db )./10) );
+        end
         %% ------------------------------------------------------------------------------- 
         
     end

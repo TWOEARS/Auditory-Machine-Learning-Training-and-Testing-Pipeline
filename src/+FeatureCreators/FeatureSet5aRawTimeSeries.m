@@ -1,4 +1,4 @@
-classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
+classdef FeatureSet5aRawTimeSeries < FeatureCreators.TimeSeriesFeatureCreator
 
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
@@ -6,14 +6,13 @@ classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
     end
     
     %% --------------------------------------------------------------------
-    methods (Static)
-    end
-    
-    %% --------------------------------------------------------------------
     methods (Access = public)
         
         function obj = FeatureSet5aRawTimeSeries( )
-            obj = obj@FeatureCreators.Base();
+            afeRequests = FeatureCreators.LCDFeatureSet.getCommonAFEParams();
+            afeRequests = genParStruct( afeRequests{:} );
+            targetFsHz = 1 / afeRequests.rm_hSizeSec;
+            obj = obj@FeatureCreators.TimeSeriesFeatureCreator( targetFsHz );
         end
         %% ----------------------------------------------------------------
 
@@ -38,56 +37,52 @@ classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
         end
         %% ----------------------------------------------------------------
 
-        function x = constructVector( obj )
-            % constructVector for each feature: compress, scale, average
-            %   over left and right channels, construct individual feature names
-            %   returned flattened feature vector for entire block
-            %   The AFE data is indexed according to the order in which the requests
-            %   where made
-            % 
-            %   See getAFErequests
-            
+        function x = constructTSvector( obj )
             rmAfeData = obj.afeData(2);
-            rmFsHz = rmAfeData{1}.FsHz;
             modAfeData = obj.afeData(1);
             modFsHz = modAfeData{1}.FsHz;
             % afeIdx 1: ams
             modR = obj.makeBlockFromAfe( 1, 1, ...
                 @(a)(compressAndScale( ...
-                    FeatureCreators.FeatureSet5aRawTimeSeries.resampleDataBlock(a.Data,modFsHz,rmFsHz,size(rmAfeData{1}.Data,1)), ...
+                    FeatureCreators.TimeSeriesFeatureCreator.resampleDataBlock(a.Data,modFsHz,obj.targetFsHz,size(rmAfeData{1}.Data,1)), ...
                     1/obj.compressor )), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ...
                 {@(a)('t1')}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz,'UniformOutput', false)))}, ...
                 {@(a)(strcat('mf', arrayfun(@(f)(num2str(f)), a.modCfHz,'UniformOutput', false)))} );
+            fprintf( '.' );
             modL = obj.makeBlockFromAfe( 1, 2, ...
                 @(a)(compressAndScale( ...
-                    FeatureCreators.FeatureSet5aRawTimeSeries.resampleDataBlock(a.Data,modFsHz,rmFsHz,size(rmAfeData{1}.Data,1)), ...
+                    FeatureCreators.TimeSeriesFeatureCreator.resampleDataBlock(a.Data,modFsHz,obj.targetFsHz,size(rmAfeData{1}.Data,1)), ...
                     1/obj.compressor )), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ... % groups
                 {@(a)('t1')}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz,'UniformOutput', false)))}, ... % varargin: freq. bins
                 {@(a)(strcat('mf', arrayfun(@(f)(num2str(f)), a.modCfHz,'UniformOutput', false)))} ); % vararing: modulation frequencies
+            fprintf( '.' );
             % afeIdx 2: rm
             rmR = obj.makeBlockFromAfe( 2, 1, ...
                 @(a)(compressAndScale( a.Data, 1/obj.compressor, @(x)(median( x(x>0.01) )), 0 )), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ...
                 {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz, 'UniformOutput', false)))} );
+            fprintf( '.' );
             rmL = obj.makeBlockFromAfe( 2, 2, ...
                 @(a)(compressAndScale( a.Data, 1/obj.compressor, @(x)(median( x(x>0.01) )), 0 )), ...
                 {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ...
                 {@(a)(strcat('t', arrayfun(@(t)(num2str(t)),1:size(a.Data,1),'UniformOutput',false)))}, ...
                 {@(a)(strcat('f', arrayfun(@(f)(num2str(f)), a.cfHz, 'UniformOutput', false)))} );
+            fprintf( '.' );
             % average between right and left channels
             rm = obj.combineBlocks( @(b1,b2)(0.5*b1+0.5*b2), 'LRmean', rmR, rmL );
             mod = obj.combineBlocks( @(b1,b2)(0.5*b1+0.5*b2), 'LRmean', modR, modL );
 
             x = obj.concatFeats( obj.reshape2timeSeriesFeatVec( rm ), obj.reshape2timeSeriesFeatVec( mod ) );
+            fprintf( ':' );
         end
         %% ----------------------------------------------------------------
         
-        function outputDeps = getFeatureInternOutputDependencies( obj )
+        function outputDeps = getTSfeatureInternOutputDependencies( obj )
             outputDeps.compressor = obj.compressor;
             classInfo = metaclass( obj );
             [classname1, classname2] = strtok( classInfo.Name, '.' );
@@ -100,20 +95,7 @@ classdef FeatureSet5aRawTimeSeries < FeatureCreators.Base
     end
     
     %% --------------------------------------------------------------------
-    methods (Static)
-    
-        function dataBlockResampled = resampleDataBlock( dataBlock, srcFsHz, targetFsHz, targetNt )
-            [nT, ~] = size(dataBlock);
-            srcTs = 0 : 1 / srcFsHz : (nT-1) / srcFsHz;
-            targetTs = 0 : 1 / targetFsHz : srcTs(end);
-            nTargetTsMissing = targetNt - numel( targetTs );
-            % pchip interpolation...
-            dataBlockResampled = interp1( srcTs, dataBlock, targetTs, 'pchip' );
-            % ...with 'last-datapoint' extrapolation.
-            dataBlockResampled(end+1:end+nTargetTsMissing,:) = ...
-                                 repmat( dataBlockResampled(end,:), nTargetTsMissing, 1 );
-            end
-            
+    methods (Static)            
     end
     
 end

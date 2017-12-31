@@ -135,7 +135,7 @@ classdef Base < Core.IdProcInterface
                 out.ysi(removeNanBlocks_lidx) = [];
             end
             out.bIdxs(removeNanBlocks_lidx) = [];
-            out.y(removeNanBlocks_lidx,:) = [];
+            out.y(removeNanBlocks_lidx,:,:) = [];
         end
         %% -------------------------------------------------------------------------------
         

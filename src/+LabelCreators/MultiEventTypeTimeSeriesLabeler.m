@@ -27,7 +27,6 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.Base
         
         function obj = MultiEventTypeTimeSeriesLabeler( varargin )
             ip = inputParser;
-            ip.addOptional( 'minBlockToEventRatio', 0.75 );
             ip.addOptional( 'maxNegBlockToEventRatio', 0 );
             ip.addOptional( 'labelBlockSize_s', [] );
             ip.addOptional( 'removeUnclearBlocks', 'block-wise' );
@@ -43,7 +42,6 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.Base
             obj = obj@LabelCreators.Base( ...
                         'labelBlockSize_s', ip.Results.labelBlockSize_s, ...
                         'removeUnclearBlocks', ip.Results.removeUnclearBlocks );
-            obj.minBlockToEventRatio = ip.Results.minBlockToEventRatio;
             obj.maxNegBlockToEventRatio = ip.Results.maxNegBlockToEventRatio;
             obj.types = ip.Results.types;
             obj.negOut = ip.Results.negOut;

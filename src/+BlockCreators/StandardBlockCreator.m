@@ -119,6 +119,7 @@ classdef StandardBlockCreator < BlockCreators.Base
             srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
             snrRefNrjOffsets = cell2mat( annotations.globalNrjOffsets.globalNrjOffsets ) ...
                                   - annotations.globalNrjOffsets.globalNrjOffsets{snrRef};
+            annotations.globalNrjOffsets = snrRefNrjOffsets;
             for ss = 1 : nSrcs
                 otherIdxs = 1 : size( srcsGlobalRefEnergyMeanChannel, 2 );
                 otherIdxs(ss) = [];

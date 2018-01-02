@@ -16,7 +16,7 @@ isSegId = isfield( blockAnnotations, 'estAzm' );
 
 isP = yt > 0;
 
-baNsa = [blockAnnotations.nSrcs_active]';
+baNsa = [blockAnnotations.nActivePointSrcs]';
 tmp = num2cell( baNsa );
 [baParams.nAct] = tmp{:};
 baPp = [blockAnnotations.posPresent]';
@@ -44,7 +44,7 @@ if isSegId
     [baParams(isP).azmErr2] = azmErr{:};
 end
 
-baSrcSnr = {blockAnnotations.srcSNR}';
+baSrcSnr = {blockAnnotations.srcSNRactive}';
 baSrcSnr_db = {blockAnnotations.srcSNR_db}';
 baSrcSnr2 = {blockAnnotations.srcSNR2}';
 baSrcNrj = {blockAnnotations.nrj}';

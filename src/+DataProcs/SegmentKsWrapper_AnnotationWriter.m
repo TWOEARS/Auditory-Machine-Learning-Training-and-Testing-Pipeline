@@ -135,7 +135,7 @@ classdef SegmentKsWrapper_AnnotationWriter < DataProcs.BlackboardKsWrapper_Annot
         %% -------------------------------------------------------------------------------
                 
         function postproc( obj, blockAnnotations )
-            blockAnnotations = rmfield( blockAnnotations, {'srcType','srcFile','mixEnergy','oneVsAllAvgSnrs','nSrcs_sceneConfig','nSrcs_active'} );
+            blockAnnotations = rmfield( blockAnnotations, {'srcType','srcFile','mixEnergy','oneVsAllAvgSnrs','nSrcs_sceneConfig','nActivePointSrcs'} );
             newBAfields = fieldnames( blockAnnotations );
             for ii = 1 : numel( obj.out.blockAnnotations )
                 if isempty( obj.out.blockAnnotations(ii).srcAzms ), continue; end

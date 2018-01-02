@@ -20,9 +20,12 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             selectFilter = true( size( sampleIdsIn ) );
             ba = obj.getData( 'blockAnnotations' );
             ba = ba(sampleIdsIn);
-            ba_ns = cat( 1, ba.nSrcs_active );
+            ba_ns = cat( 1, ba.nActivePointSrcs );
             if obj.discardNsNotNa
-                ba_ns_scp = cat( 1, ba.nSrcs_sceneConfig );
+                % inferring nSrcs_sceneconfig. This fails in segId if one source is
+                % in sceneconfig that for _all_ blocks is below energy threshold
+                ba_nSrcs_sceneConfig = numel( unique( [ba.globalNrjOffsets] ) );
+                ba_ns_scp = repmat( ba_nSrcs_sceneConfig, size( ba_ns ) );
                 nsNotNa = (ba_ns ~= ba_ns_scp) & ~(ba_ns == 0 & ba_ns_scp == 1);
                 selectFilter(nsNotNa) = false;
                 sampleIdsIn(nsNotNa) = [];

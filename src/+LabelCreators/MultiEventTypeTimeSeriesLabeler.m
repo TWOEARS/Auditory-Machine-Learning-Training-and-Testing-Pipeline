@@ -138,13 +138,17 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.TimeSeriesLabelCreator
                 srcIdxs_tt = [blockAnnotations.srcType.srcType{eventsAreType,2}];
                 eventOnOffs_tt = [eventOnsets(eventsAreType)',eventOffsets(eventsAreType)'];
                 eventOnOffs_tt = eventOnOffs_tt - ts(1) + 1;
-                for ii = 1:2
-                    eventOnOffs_tt(:,ii) = max( ...
+                if ~isempty( eventOnOffs_tt )
+                    for ii = 1:2
+                        eventOnOffs_tt(:,ii) = max( ...
                                                 [zeros( size(eventOnOffs_tt, 1), 1 ), ...
                                                  eventOnOffs_tt(:,ii)], [], 2 );
-                    eventOnOffs_tt(:,ii) = min( ...
+                        eventOnOffs_tt(:,ii) = min( ...
                                    [repmat( numel( ts ), size(eventOnOffs_tt, 1), 1 ), ...
                                     eventOnOffs_tt(:,ii)], [], 2 );
+                    end
+                else
+                    eventOnOffs_tt = [];
                 end
                 for jj = 1 : size( eventOnOffs_tt, 1 )
                     event_jj_idxs = eventOnOffs_tt(jj,1) : eventOnOffs_tt(jj,2);

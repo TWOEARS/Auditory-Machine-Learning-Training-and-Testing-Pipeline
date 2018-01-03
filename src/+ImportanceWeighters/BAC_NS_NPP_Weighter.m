@@ -23,7 +23,7 @@ classdef BAC_NS_NPP_Weighter < ImportanceWeighters.Base
             assert( size( y, 2 ) == 1 );
             ba = obj.data(:,'blockAnnotations');
             ba = ba(sampleIds);
-            ba_ns = cat( 1, ba.nSrcs_active );
+            ba_ns = cat( 1, ba.nActivePointSrcs );
             ba_pp = cat( 1, ba.posPresent );
             clear ba;
             y_ = y .* (ba_ns+1) .* (1 + ~ba_pp * 9);

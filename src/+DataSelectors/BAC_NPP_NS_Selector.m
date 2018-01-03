@@ -20,9 +20,11 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             selectFilter = true( size( sampleIdsIn ) );
             ba = obj.getData( 'blockAnnotations' );
             ba = ba(sampleIdsIn);
-            ba_ns = cat( 1, ba.nSrcs_active );
+            ba_ns = cat( 1, ba.nActivePointSrcs );
             if obj.discardNsNotNa
-                ba_ns_scp = cat( 1, ba.nSrcs_sceneConfig );
+                % nPointSrcsSceneConfig is only in blockAnnotations if they
+                % are loaded through GatherFeaturesProc
+                ba_ns_scp = cat( 1, ba.nPointSrcsSceneConfig );
                 nsNotNa = (ba_ns ~= ba_ns_scp) & ~(ba_ns == 0 & ba_ns_scp == 1);
                 selectFilter(nsNotNa) = false;
                 sampleIdsIn(nsNotNa) = [];

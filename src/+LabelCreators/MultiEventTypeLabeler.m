@@ -89,7 +89,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             if any( activeTypes )
                 switch obj.srcPrioMethod
                     case 'energy'
-                        eSrcs = cellfun( @mean, blockAnnotations.srcEnergy(:,:) ); % mean over channels
+                        eSrcs = cellfun( @mean, blockAnnotations.globalSrcEnergy ); % mean over channels
                         for ii = 1 : numel( activeTypes )
                             if activeTypes(ii)
                                 eTypes(ii) = 1/sum( 1./eSrcs([srcIdxs{ii}]) );

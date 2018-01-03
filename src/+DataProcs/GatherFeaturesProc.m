@@ -43,6 +43,12 @@ classdef GatherFeaturesProc < Core.IdProcInterface
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi', 'a' );
                 xy.blockAnnotations = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a, xy.y );
                 xy = rmfield( xy, 'a' );
+                sceneCfgDeps = obj.inputProc.getOutputDependencies();
+                while ~(isstruct( sceneCfgDeps ) && isfield( sceneCfgDeps, 'sceneCfg' ) )
+                    sceneCfgDeps = sceneCfgDeps.preceding;
+                end
+                npssc = numel( sceneCfgDeps.sceneCfg.sources );
+                [xy.blockAnnotations(:).nPointSrcsSceneConfig] = deal( npssc );
             else
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
             end

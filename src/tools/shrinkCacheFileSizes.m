@@ -1,11 +1,13 @@
-function shrinkCacheFileSizes( cacheDir )
+function shrinkCacheFileSizes( cacheDir, cd_idxs )
 
 cfgFolders = dir( cacheDir );
 cfgFolders = cfgFolders([cfgFolders.isdir]);
 cfgFolders(1:2) = [];
 
 nextProgressOutStep_ii = 10;
-for ii = 1 : numel( cfgFolders )
+if nargin <= 2 || isempty( cd_idxs ), cd_idxs = 1 : numel( cfgFolders ); end;
+for ii = cd_idxs
+    if ii > numel( cfgFolders ), break; end
     if round( ii*100/numel( cfgFolders ) ) >= nextProgressOutStep_ii
         fprintf( ':' ); 
         nextProgressOutStep_ii = nextProgressOutStep_ii + 10;

@@ -143,7 +143,9 @@ classdef IdentificationTrainingPipeline < handle
                 if ~gcpMode
                     obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
                 else
-                    cacheDirs{ii} = obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
+                    gcpFileFilter = false( length( obj.data(:) ), 1 );
+                    gcpFileFilter(1) = true;
+                    cacheDirs{ii} = obj.dataPipeProcs{ii}.checkDataFiles( gcpFileFilter );
                 end
                 if ~gcpMode && ~rwcMode
                     successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;

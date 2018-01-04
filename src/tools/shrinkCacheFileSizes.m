@@ -5,7 +5,7 @@ cfgFolders = cfgFolders([cfgFolders.isdir]);
 cfgFolders(1:2) = [];
 
 nextProgressOutStep_ii = 10;
-if nargin <= 2 || isempty( cd_idxs ), cd_idxs = 1 : numel( cfgFolders ); end;
+if nargin < 2 || isempty( cd_idxs ), cd_idxs = 1 : numel( cfgFolders ); end;
 for ii = cd_idxs
     if ii > numel( cfgFolders ), break; end
     if round( ii*100/numel( cfgFolders ) ) >= nextProgressOutStep_ii

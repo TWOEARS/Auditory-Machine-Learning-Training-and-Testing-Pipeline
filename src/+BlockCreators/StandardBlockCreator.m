@@ -98,13 +98,13 @@ classdef StandardBlockCreator < BlockCreators.Base
         
         function annotations = extendAnnotations( sceneConfig, annotations )
             annotations.srcSNR_db.t = annotations.globalSrcEnergy.t;
-            annotations.srcSNR_db.srcSNR_db = cell( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.srcSNR_db.srcSNR_db = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
             annotations.nrj_db.t = annotations.globalSrcEnergy.t;
-            annotations.nrj_db.nrj_db = cell( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.nrj_db.nrj_db = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
             annotations.nrjOthers_db.t = annotations.globalSrcEnergy.t;
-            annotations.nrjOthers_db.nrjOthers_db = cell( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.nrjOthers_db.nrjOthers_db = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
             annotations.nActivePointSrcs.t = annotations.globalSrcEnergy.t;
-            annotations.nActivePointSrcs.nActivePointSrcs = cell( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.nActivePointSrcs.nActivePointSrcs = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
             if std( sceneConfig.snrRefs ) ~= 0
                 error( 'AMLTTP:usage:snrRefMustBeSame', 'different snrRefs not supported' );
             end
@@ -128,17 +128,15 @@ classdef StandardBlockCreator < BlockCreators.Base
                 srcsCurrentSrcRefEnergy = 10.^(srcsCurrentSrcRefEnergy_db./10);
                 sumOtherSrcsEnergy = sum( srcsCurrentSrcRefEnergy(:,otherIdxs), 2 );
                 sumOthersSrcsEnergy_db = 10 * log10( sumOtherSrcsEnergy );
-                annotations.nrjOthers_db.nrjOthers_db(:,ss) = num2cell( single( ...
-                                                               sumOthersSrcsEnergy_db ) );
-                annotations.nrj_db.nrj_db(:,ss) = num2cell( single( ...
-                                                     srcsCurrentSrcRefEnergy_db(:,ss) ) );
-                annotations.srcSNR_db.srcSNR_db(:,ss) = num2cell( single( ...
-                            srcsCurrentSrcRefEnergy_db(:,ss) - sumOthersSrcsEnergy_db ) );
+                annotations.nrjOthers_db.nrjOthers_db(:,ss) = single( sumOthersSrcsEnergy_db );
+                annotations.nrj_db.nrj_db(:,ss) = single( srcsCurrentSrcRefEnergy_db(:,ss) );
+                annotations.srcSNR_db.srcSNR_db(:,ss) = single( ...
+                              srcsCurrentSrcRefEnergy_db(:,ss) - sumOthersSrcsEnergy_db );
             end
             haveSrcsEnergy = srcsGlobalRefEnergyMeanChannel_db > -40;
             isAmbientSource = all( isnan( annotations.srcAzms.srcAzms ), 1 );
             haveSrcsEnergy(:,isAmbientSource) = [];
-            annotations.nActivePointSrcs.nActivePointSrcs = num2cell( single( sum( haveSrcsEnergy, 2 ) ) );
+            annotations.nActivePointSrcs.nActivePointSrcs = single( sum( haveSrcsEnergy, 2 ) );
         end
         %% ------------------------------------------------------------------------------- 
         

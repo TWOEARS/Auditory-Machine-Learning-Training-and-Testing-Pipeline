@@ -89,13 +89,9 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
             isAmbientSource = isnan( avgdBlockAnnots.srcAzms );
             haveSrcsEnergy(isAmbientSource) = [];
             avgdBlockAnnots.nActivePointSrcs = single( sum( haveSrcsEnergy ) );
-            avgdBlockAnnots.srcSNR2 = num2cell( ...
-                                 10 * log10( ...
-                                             cell2mat( avgdBlockAnnots.nrj ) ...
-                                             ./ cell2mat( avgdBlockAnnots.nrjOthers ) ) );
-            avgdBlockAnnots.nrj = num2cell( 10 * log10( cell2mat( avgdBlockAnnots.nrj ) ) );
-            avgdBlockAnnots.nrjOthers = num2cell( ...
-                                    10 * log10( cell2mat( avgdBlockAnnots.nrjOthers ) ) );
+            avgdBlockAnnots.srcSNR2 = 10 * log10( avgdBlockAnnots.nrj ./ avgdBlockAnnots.nrjOthers );
+            avgdBlockAnnots.nrj = 10 * log10( avgdBlockAnnots.nrj );
+            avgdBlockAnnots.nrjOthers = 10 * log10( avgdBlockAnnots.nrjOthers );
             avgdBlockAnnots.globalSrcEnergy = cellfun( @(c)(10 * log10( c )), ...
                                 avgdBlockAnnots.globalSrcEnergy, 'UniformOutput', false );
         end
@@ -107,19 +103,14 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
         
         function annotations = adjustPreMeanAnnotations( annotations )
             annotations.srcSNRactive.t = annotations.globalSrcEnergy.t;
-            annotations.srcSNRactive.srcSNRactive = cell2mat( ...
-                                                        annotations.srcSNR_db.srcSNR_db );
-            allSrcsInactive = ...
-                           cell2mat( annotations.nActivePointSrcs.nActivePointSrcs ) == 0;
+            annotations.srcSNRactive.srcSNRactive = annotations.srcSNR_db.srcSNR_db;
+            allSrcsInactive = annotations.nActivePointSrcs.nActivePointSrcs == 0;
             annotations.srcSNRactive.srcSNRactive(allSrcsInactive,:) = nan;
-            annotations.srcSNRactive.srcSNRactive = num2cell( ...
-                                                  annotations.srcSNRactive.srcSNRactive );
+            annotations.srcSNRactive.srcSNRactive = annotations.srcSNRactive.srcSNRactive;
             annotations.nrj.t = annotations.globalSrcEnergy.t;
-            annotations.nrj.nrj = num2cell( ...
-                                        10.^(cell2mat( annotations.nrj_db.nrj_db )./10) );
+            annotations.nrj.nrj = 10.^(annotations.nrj_db.nrj_db./10);
             annotations.nrjOthers.t = annotations.globalSrcEnergy.t;
-            annotations.nrjOthers.nrjOthers = num2cell( ...
-                            10.^(cell2mat( annotations.nrjOthers_db.nrjOthers_db )./10) );
+            annotations.nrjOthers.nrjOthers = 10.^(annotations.nrjOthers_db.nrjOthers_db./10);
         end
         %% ------------------------------------------------------------------------------- 
         

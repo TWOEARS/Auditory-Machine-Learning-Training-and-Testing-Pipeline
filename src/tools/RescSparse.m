@@ -167,6 +167,10 @@ classdef RescSparse
         %% -------------------------------------------------------------------------------
         
         function [obj,incidxs,insidxs] = addData( obj, idxs, data, areIdxsPresorted )
+            if isempty( idxs )
+                incidxs = []; insidxs = [];
+                return;
+            end
             idxs = obj.dataIdxsConvert( idxs );
             data = obj.dataConvert( data );
             if size( idxs, 2 ) < size( obj.dataIdxs, 2 )

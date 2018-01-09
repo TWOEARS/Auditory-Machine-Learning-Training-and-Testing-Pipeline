@@ -1,4 +1,4 @@
-function trainAndTestBlackboardEmbedded( modelPath, classIdx )
+function trainAndTestBlackboardEmbedded( modelpath_, classIdx, execBaseline )
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
@@ -16,21 +16,38 @@ end
 if nargin < 2 || isempty( classIdx )
     classIdx = 2;
 end
+if nargin < 3 || isempty( execBaseline )
+    execBaseline = false;
+end
+
+if ~execBaseline
+    modelname = 'bbsEmbModel';
+    modelpath = 'test_bbsEmbedded';
+else
+    modelname = 'bbsEmbModel_baselineCmp';
+    modelpath = 'test_bbsEmbedded_baselineCmp';
+end
 
 %% define blackboard
 
-% setup blackboard system to be embedded into pipe, maybe like:
-% identify200msBlocksBlackboard = build_identify200msBlocksBlackboard();
+if ~execBaseline
+    % setup blackboard system to be embedded into pipe, maybe like:
+    % identify200msBlocksBlackboard = build_identify200msBlocksBlackboard();
+end
 
 %% train
 
-if nargin < 1 || isempty( modelPath )
+if nargin < 1 || isempty( modelpath_ )
 
 pipe = TwoEarsIdTrainPipe();
-% embed blackboard system into pipe, maybe like:
-% pipe.blackboard = DataProcs.BlackboardWrapper( identify200msBlocksBlackboard );
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
-pipe.featureCreator = FeatureCreators.BBS_FullstreamIdProbs();
+if ~execBaseline
+    % embed blackboard system into pipe, maybe like:
+    % pipe.blackboard = DataProcs.BlackboardWrapper( identify200msBlocksBlackboard );
+    pipe.featureCreator = FeatureCreators.BBS_FullstreamIdProbs();
+else
+    pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
+end
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @PerformanceMeasures.ImportanceWeightedSquareBalancedAccuracy, ...
@@ -77,23 +94,27 @@ pipe.init( sc, 'fs', 16000, 'loadBlockAnnotations', true, ...
            'sceneCfgDataUseRatio', 1.0, 'sceneCfgPrioDataUseRatio', 1.0, ...
            'dataSelector', DataSelectors.BAC_Selector(), 'selectPrioClass', +1 );
 
-modelPath = pipe.pipeline.run( 'modelName', 'bbsEmbModel', 'modelPath', 'test_bbsEmbedded', ...
+modelpath_ = pipe.pipeline.run( 'modelName', modelname, 'modelPath', modelpath, ...
                                'debug', true  );
 
-fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
+fprintf( ' -- Model is saved at %s -- \n\n', modelpath_ );
 
 end
 
 %% test
 
 pipe = TwoEarsIdTrainPipe();
-% embed blackboard system into pipe, maybe like:
-% pipe.blackboard = DataProcs.BlackboardWrapper( identify200msBlocksBlackboard );
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
-pipe.featureCreator = FeatureCreators.BBS_FullstreamIdProbs();
+if ~execBaseline
+    % embed blackboard system into pipe, maybe like:
+    % pipe.blackboard = DataProcs.BlackboardWrapper( identify200msBlocksBlackboard );
+    pipe.featureCreator = FeatureCreators.BBS_FullstreamIdProbs();
+else
+    pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
+end
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
-    [pwd filesep 'test_bbsEmbedded/bbsEmbModel.model.mat'], ...
+    [pwd filesep modelpath filesep modelname '.model.mat'], ...
     'performanceMeasure', @PerformanceMeasures.BAC_BAextended );
 pipe.modelCreator.verbose( 'on' );
 
@@ -133,10 +154,10 @@ pipe.init( sc, 'fs', 16000, 'loadBlockAnnotations', true, ...
            'sceneCfgDataUseRatio', 1.0, 'sceneCfgPrioDataUseRatio', 1.0, ...
            'dataSelector', DataSelectors.BAC_Selector(), 'selectPrioClass', +1 );
 
-[modelPath,~,testPerfresults] = ...
-             pipe.pipeline.run( 'modelName', 'bbsEmbModel', 'modelPath', 'test_bbsEmbedded', ...
+[modelpath_,~,testPerfresults] = ...
+             pipe.pipeline.run( 'modelName', modelname, 'modelPath', modelpath, ...
                                 'debug', true  );
 
-fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
+fprintf( ' -- Model is saved at %s -- \n\n', modelpath_ );
 
 end

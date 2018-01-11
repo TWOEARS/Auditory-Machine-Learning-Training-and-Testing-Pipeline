@@ -34,9 +34,11 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                 error( 'sceneProc must implement Core.IdProcInterface.' );
             end
             obj.sceneProc = sceneProc;
-            if nargin < 3, multiSceneCfgs = SceneConfig.SceneConfiguration.empty; end
+            if nargin < 3 || isempty( multiSceneCfgs )
+                multiSceneCfgs = SceneConfig.SceneConfiguration.empty; 
+            end
             obj.sceneConfigurations = multiSceneCfgs;
-            if nargin < 4, wavFoldsAssignment = []; end
+            if nargin < 4, wavFoldsAssignment = {}; end
             obj.wavFoldsAssignment = wavFoldsAssignment;
         end
         %% ----------------------------------------------------------------

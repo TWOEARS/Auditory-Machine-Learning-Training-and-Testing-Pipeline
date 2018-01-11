@@ -124,7 +124,7 @@ classdef Base < Core.IdProcInterface
             end
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
                 out.x = obj.x;
-                out.x(removeNanBlocks_lidx,:) = [];
+                out.x(removeNanBlocks_lidx,:,:) = [];
             end
             if nargin < 2  || any( strcmpi( 'a', varargin ) )
                 out.a = obj.blockAnnotations;
@@ -135,7 +135,7 @@ classdef Base < Core.IdProcInterface
                 out.ysi(removeNanBlocks_lidx) = [];
             end
             out.bIdxs(removeNanBlocks_lidx) = [];
-            out.y(removeNanBlocks_lidx,:) = [];
+            out.y(removeNanBlocks_lidx,:,:) = [];
         end
         %% -------------------------------------------------------------------------------
         

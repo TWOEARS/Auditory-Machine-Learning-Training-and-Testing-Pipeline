@@ -14,13 +14,8 @@ classdef Fscore < PerformanceMeasures.Base
     %% --------------------------------------------------------------------
     methods
         
-        function obj = Fscore( yTrue, yPred, datapointInfo )
-           if nargin < 3
-                dpiarg = {};
-            else
-                dpiarg = {datapointInfo};
-            end
-            obj = obj@PerformanceMeasures.Base( yTrue, yPred, dpiarg{:} );
+        function obj = Fscore( yTrue, yPred, varargin )
+            obj = obj@PerformanceMeasures.Base( yTrue, yPred, varargin{:} );
         end
         % -----------------------------------------------------------------
     
@@ -49,16 +44,15 @@ classdef Fscore < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, dpi )
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
             tps = yTrue == 1 & yPred > 0;
             tns = yTrue == -1 & yPred < 0;
             fps = yTrue == -1 & yPred > 0;
             fns = yTrue == 1 & yPred < 0;
-            if nargin < 4
-                dpi = struct.empty;
-            else
+            if ~isempty( dpi )
                 dpi.yTrue = yTrue;
                 dpi.yPred = yPred;
+                dpi.iw = iw;
             end
             obj.tp = sum( tps );
             obj.tn = sum( tns );

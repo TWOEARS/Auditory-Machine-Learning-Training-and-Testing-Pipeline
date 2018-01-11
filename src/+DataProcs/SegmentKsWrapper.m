@@ -18,6 +18,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         nsrcsRndPlusMinusBias;
         isNsrcsFixed;
         isAzmFixedUniform;
+        softMaskExponent = 10;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -37,6 +38,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             ip.addOptional( 'varAzmSigma', 0 );
             ip.addOptional( 'nsrcsBias', 0 );
             ip.addOptional( 'nsrcsRndPlusMinusBias', 0 );
+            ip.addOptional( 'softMaskExponent', 10 );
             ip.parse( varargin{:} );
             segmentKs = StreamSegregationKS( paramFilepath ); 
             fprintf( '.' );
@@ -130,6 +132,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                           ['unrecognized azm bias flag.'] );
                 end
             end
+            obj.softMaskExponent = ip.Results.softMaskExponent;
             fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
@@ -141,8 +144,11 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 error( 'AMLTTP:procBinding:singleValueBlockAnnotationsNeeded', ...
                     'SegmentKsWrapper can only handle one azm value per source per block.' );
             end
-            srcsHaveEnergy = cellfun( @(se)(any(se > -40)), blockAnnotations.srcEnergy );
-            obj.energeticBaidxs = 1 : numel( blockAnnotations.srcEnergy );
+            srcsGlobalRefEnergyMeanChannel = cellfun( ...
+                                    @(c)(sum(10.^(c./10)) ./ 2 ), blockAnnotations.globalSrcEnergy );
+            srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
+            srcsHaveEnergy = srcsGlobalRefEnergyMeanChannel_db > -40;
+            obj.energeticBaidxs = 1 : numel( blockAnnotations.globalSrcEnergy );
             obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
             srcsHaveEnergy(isnan(obj.azmsGroundTruth)) = [];
             obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
@@ -222,11 +228,14 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                     [~,segSrcAssignment] = min( hypAzmGtDists, [], 1 );
             end                   
             for ss = 1 : nSegments
-                obj.out.afeBlocks{end+1,1} = obj.softmaskAFE( afeData, segHypos, ss );
+                segData = segHypos.data(ss);
+                softmask = (segData.softMask) .^ obj.softMaskExponent;
+                obj.out.afeBlocks{end+1,1} = SegmentIdentityKS.maskAFEData( ...
+                                       afeData, softmask, segData.cfHz, segData.hopSize );
                 srcIdxs = find( segSrcAssignment == ss );
                 srcIdxs = obj.energeticBaidxs(srcIdxs); %#ok<FNDSB>
                 maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); 
-                maskedBlockAnnotations.estAzm = segHypos.data(ss).refAzm;
+                maskedBlockAnnotations.estAzm = segData.refAzm;
                 maskedBlockAnnotations.nSrcs_estimationError = nSegments - nTrue;
                 if isempty(obj.out.blockAnnotations)
                     obj.out.blockAnnotations = maskedBlockAnnotations;
@@ -239,7 +248,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 15;
+            outputDeps.v = 16;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );
@@ -249,6 +258,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.segSrcAssignmentMethod = obj.segSrcAssignmentMethod;
             outputDeps.nsrcsBias = obj.nsrcsBias;
             outputDeps.nsrcsRndPlusMinusBias = obj.nsrcsRndPlusMinusBias;
+            outputDeps.softMaskExponent = obj.softMaskExponent;
         end
         %% -------------------------------------------------------------------------------
 
@@ -257,14 +267,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        %% -------------------------------------------------------------------------------
-        
-        function afeBlock = softmaskAFE( ~, afeBlock, segHypos, idx_mask )
-            afeBlock = SegmentIdentityKS.maskAFEData( afeBlock, ...
-                                                      segHypos.data(idx_mask).softMask, ...
-                                                      segHypos.data(idx_mask).cfHz, ...
-                                                      segHypos.data(idx_mask).hopSize );
-        end
         %% -------------------------------------------------------------------------------
         
         function blockAnnotations = maskBA( ~, blockAnnotations, srcIdxs )

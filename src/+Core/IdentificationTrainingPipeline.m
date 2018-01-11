@@ -143,7 +143,9 @@ classdef IdentificationTrainingPipeline < handle
                 if ~gcpMode
                     obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
                 else
-                    cacheDirs{ii} = obj.dataPipeProcs{ii}.checkDataFiles( successiveProcFileFilter );
+                    gcpFileFilter = false( length( obj.data(:) ), 1 );
+                    gcpFileFilter(1) = true;
+                    cacheDirs{ii} = obj.dataPipeProcs{ii}.checkDataFiles( gcpFileFilter );
                 end
                 if ~gcpMode && ~rwcMode
                     successiveProcFileFilter = obj.dataPipeProcs{ii}.fileListOverlay;
@@ -228,7 +230,7 @@ classdef IdentificationTrainingPipeline < handle
             if ~isempty( obj.testSet )
                 fprintf( '\n==  Testing model on testSet... \n\n' );
                 tic;
-                testPerfresults = obj.trainer.getPerformance( 'datapointInfo' );
+                testPerfresults = obj.trainer.getPerformance( true );
                 testTime = toc;
                 if numel( testPerfresults ) == 1
                     fprintf( ['\n\n===================================\n',...

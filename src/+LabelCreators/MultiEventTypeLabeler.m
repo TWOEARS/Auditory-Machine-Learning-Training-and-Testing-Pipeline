@@ -89,7 +89,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             if any( activeTypes )
                 switch obj.srcPrioMethod
                     case 'energy'
-                        eSrcs = cellfun( @mean, blockAnnotations.srcEnergy(:,:) ); % mean over channels
+                        eSrcs = cellfun( @mean, blockAnnotations.globalSrcEnergy ); % mean over channels
                         for ii = 1 : numel( activeTypes )
                             if activeTypes(ii)
                                 eTypes(ii) = 1/sum( 1./eSrcs([srcIdxs{ii}]) );
@@ -123,7 +123,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                     if isa( srcfAzm, 'SceneConfig.ValGen' )
                         srcfAzm = srcfAzm.val;
                     end
-                    if activeTypes(typef) && any( abs( blockAnnotations.srcAzms(srcIdxs{typef}) - srcfAzm ) >= 0.1 )
+                    if activeTypes(typef) && (any( abs( blockAnnotations.srcAzms(srcIdxs{typef}) - srcfAzm ) >= 0.1 ) || any( abs( blockAnnotations.globalNrjOffsets(srcIdxs{typef}) ) >= 0.1 ))
                         y = NaN;
                         return;
                     end

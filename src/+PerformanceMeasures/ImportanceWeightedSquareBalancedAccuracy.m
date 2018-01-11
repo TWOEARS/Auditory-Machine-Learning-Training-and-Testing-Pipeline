@@ -1,14 +1,21 @@
-classdef NSE < PerformanceMeasures.Base
+classdef ImportanceWeightedSquareBalancedAccuracy < PerformanceMeasures.Base
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
-        mae;
+        tp;
+        fp;
+        tn;
+        fn;
+        sensitivity;
+        specificity;
+        acc;
+        bac;
     end
     
     %% --------------------------------------------------------------------
     methods
         
-        function obj = NSE( yTrue, yPred, varargin )
+        function obj = ImportanceWeightedSquareBalancedAccuracy( yTrue, yPred, varargin )
             obj = obj@PerformanceMeasures.Base( yTrue, yPred, varargin{:} );
         end
         % -----------------------------------------------------------------
@@ -39,45 +46,37 @@ classdef NSE < PerformanceMeasures.Base
         % -----------------------------------------------------------------
     
         function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
-            e = yTrue - yPred;
-            se = e.^2;
-            performance = - mean( se );
-            obj.mae = mean( abs( e ) );
             if ~isempty( dpi )
                 dpi.yTrue = yTrue;
                 dpi.yPred = yPred;
                 dpi.iw = iw;
             end
-        end
-        % -----------------------------------------------------------------
-    
-        function [cm, performance, acc, sens] = getConfusionMatrix( obj, ypRange )
-            if isempty( obj.datapointInfo )
-                cm = [];
-                return;
+            tps = iw .* (yTrue == 1 & yPred > 0);
+            tns = iw .* (yTrue == -1 & yPred < 0);
+            fps = iw .* (yTrue == -1 & yPred > 0);
+            fns = iw .* (yTrue == 1 & yPred < 0);
+            tp_fn = sum( [tps(:);fns(:)], 1 );
+            tn_fp = sum( [tns(:);fps(:)], 1 );
+            obj.tp = sum( tps );
+            obj.tn = sum( tns );
+            obj.fp = sum( fps );
+            obj.fn = sum( fns );
+            if tp_fn == 0;
+                warning( 'No positive true label.' );
+                obj.sensitivity = nan;
+            else
+                obj.sensitivity = obj.tp / tp_fn;
             end
-            if nargin < 2, ypRange = [-inf inf]; end
-            ypOrd = round( obj.datapointInfo.yPred );
-            ypOrd = max( ypOrd, ypRange(1) );
-            ypOrd = min( ypOrd, ypRange(2) );
-            yTrue = obj.datapointInfo.yTrue;
-            labels = unique( [yTrue;ypOrd] );
-            n_acc = 0;
-            for tt = 1 : numel( labels )
-                for pp = 1 : numel( labels )
-                    cm(tt,pp) = sum( (yTrue == labels(tt)) & (ypOrd == labels(pp)) );
-                end
-                n_tt = sum( cm(tt,:) );
-                if n_tt > 0
-                    sens(tt) = cm(tt,tt) / n_tt;
-                else
-                    sens(tt) = nan;
-                end
-                n_acc = n_acc + cm(tt,tt);
+            if tn_fp == 0;
+                warning( 'No negative true label.' );
+                obj.specificity = nan;
+            else
+                obj.specificity = obj.tn / tn_fp;
             end
-            acc = n_acc / sum( sum( cm ) ); 
-            performance = sum( sens(~isnan(sens)) ) / numel( sens(~isnan(sens)) );
-        end
+            obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
+            obj.bac = 0.5 * obj.sensitivity + 0.5 * obj.specificity;
+            performance = 1 - (((1 - obj.sensitivity)^2 + (1 - obj.specificity)^2) / 2)^0.5;
+       end
         % -----------------------------------------------------------------
 
     end

@@ -3,6 +3,7 @@ classdef IdentTrainPipeData < handle
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         data;
+        folds;
         stratificationLabels;
         autoStratify;
     end
@@ -12,6 +13,7 @@ classdef IdentTrainPipeData < handle
         
         function obj = IdentTrainPipeData( varargin )
             obj.data = Core.IdentTrainPipeDataElem.empty;
+            obj.folds = {obj};
             rng( 'shuffle' );
             ip = inputParser;
             ip.addOptional( 'autoStratify', true );
@@ -217,6 +219,10 @@ classdef IdentTrainPipeData < handle
                 permFolds = [];
                 return;
             end
+            if ischar( nFolds ) && strcmpi( nFolds, 'preFolded' )
+                permFolds = obj.folds;
+                return;
+            end
             for ii = nFolds : -1 : 1, permFolds{ii} = Core.IdentTrainPipeData(); end
             if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
                 if obj.autoStratify, obj.autoSetStratificationLabels(); end
@@ -372,7 +378,7 @@ classdef IdentTrainPipeData < handle
             for ff = 1 : numel( fileNames )
                 fIdxff = find( strcmp( fileNames{ff}, {obj.data.fileName} ) );
                 if isempty( fIdxff ), continue; end
-                fIdx(ff) = fIdxff;
+                fIdx(ff) = fIdxff; %#ok<AGROW>
             end
         end
         %% -------------------------------------------------------------------------------
@@ -385,9 +391,10 @@ classdef IdentTrainPipeData < handle
         function combinedData = combineData( varargin )
             combinedData = Core.IdentTrainPipeData();
             for ii = 1 : numel(varargin)
-                dii = varargin{ii};
-                nDii = numel( dii.data );
-                combinedData.data(end+1:end+nDii) = dii.data;
+                idData_ii = varargin{ii};
+                nDii = numel( idData_ii.data );
+                combinedData.data(end+1:end+nDii) = idData_ii.data;
+                combinedData.folds{ii} = idData_ii;
             end
         end
         

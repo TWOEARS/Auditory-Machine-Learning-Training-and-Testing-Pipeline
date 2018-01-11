@@ -18,9 +18,6 @@ classdef TwoEarsIdTrainPipe < handle
         ksWrapper = [];
         featureCreator = [];    % feature extraction (default: featureCreators.RatemapPlusDeltasBlockmean())
         modelCreator = [];      % model trainer
-        trainset = [];          % file list with train examples
-        testset = [];           % file list with test examples
-        data = [];              % list of files to split in train and test
         trainsetShare = 0.5;
         checkFileExistence = true;
     end
@@ -29,6 +26,9 @@ classdef TwoEarsIdTrainPipe < handle
     properties (SetAccess = private)
         pipeline;
         dataSetupAlreadyDone = false;   % pre-processing steps already done.
+        dataFlists = [];              % list of files to split in train and test
+        trainFlists = [];          % file list with train examples
+        testFlists = [];           % file list with test examples
     end
     
     %% -----------------------------------------------------------------------------------
@@ -128,23 +128,32 @@ classdef TwoEarsIdTrainPipe < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function set.trainset( obj, newTrainset )
-            obj.dataSetupAlreadyDone = strcmp(obj.trainset,newTrainset);
-            obj.trainset = newTrainset;
+        function setTrainset( obj, newTrainFlists )
+            obj.dataSetupAlreadyDone = all( strcmp(obj.trainFlists,newTrainFlists) );
+            if ~iscell( newTrainFlists )
+                newTrainFlists = {newTrainFlists};
+            end
+            obj.trainFlists = newTrainFlists;
         end
         %% -------------------------------------------------------------------------------
 
-        function set.testset( obj, newTestset )
-            obj.dataSetupAlreadyDone = strcmp(obj.testset,newTestset);
-            obj.testset = newTestset;
+        function setTestset( obj, newTestFlists )
+            obj.dataSetupAlreadyDone = all( strcmp(obj.testFlists,newTestFlists) );
+            if ~iscell( newTestFlists )
+                newTestFlists = {newTestFlists};
+            end
+            obj.testFlists = newTestFlists;
         end
         %% -------------------------------------------------------------------------------
 
-        function set.data( obj, newData )
+        function setData( obj, newDataFlists )
             % set the data to be split into train and test set by the
             % pipeline
-            obj.dataSetupAlreadyDone = strcmp(obj.data,newData);
-            obj.data = newData;
+            obj.dataSetupAlreadyDone = all( strcmp(obj.dataFlists,newDataFlists) );
+            if ~iscell( newDataFlists )
+                newDataFlists = {newDataFlists};
+            end
+            obj.dataFlists = newDataFlists;
         end
         %% -------------------------------------------------------------------------------
 
@@ -154,17 +163,26 @@ classdef TwoEarsIdTrainPipe < handle
             if nargin > 1 && skipIfAlreadyDone && obj.dataSetupAlreadyDone
                 return;
             end
-            if ~isempty( obj.trainset ) || ~isempty( obj.testset )
-                trainSet = Core.IdentTrainPipeData();
-                trainSet.loadFileList( obj.trainset, obj.checkFileExistence );
-                obj.pipeline.setTrainData( trainSet );
-                testSet = Core.IdentTrainPipeData();
-                testSet.loadFileList( obj.testset, obj.checkFileExistence );
-                obj.pipeline.setTestData( testSet );
+            if ~isempty( obj.trainFlists ) || ~isempty( obj.testFlists )
+                trainFolds = cell( 1, numel( obj.trainFlists ) );
+                for ii = 1 : numel( obj.trainFlists )
+                    trainFolds{ii} = Core.IdentTrainPipeData();
+                    trainFolds{ii}.loadFileList( obj.trainFlists{ii}, obj.checkFileExistence );
+                end
+                obj.pipeline.setTrainData( Core.IdentTrainPipeData.combineData( trainFolds{:} ) );
+                testFolds = cell( 1, numel( obj.testFlists ) );
+                for ii = 1 : numel( obj.testFlists )
+                    testFolds{ii} = Core.IdentTrainPipeData();
+                    testFolds{ii}.loadFileList( obj.testFlists{ii}, obj.checkFileExistence );
+                end
+                obj.pipeline.setTestData( Core.IdentTrainPipeData.combineData( testFolds{:} ) );
             else
-                data = Core.IdentTrainPipeData();
-                data.loadFileList( obj.data, obj.checkFileExistence );
-                obj.pipeline.connectData( data );
+                dataFolds = cell( 1, numel( obj.dataFlists ) );
+                for ii = 1 : numel( obj.dataFlists )
+                    dataFolds{ii} = Core.IdentTrainPipeData();
+                    dataFolds{ii}.loadFileList( obj.dataFlists{ii}, obj.checkFileExistence );
+                end
+                obj.pipeline.connectData( Core.IdentTrainPipeData.combineData( dataFolds{:} ) );
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
             end
             obj.dataSetupAlreadyDone = true;

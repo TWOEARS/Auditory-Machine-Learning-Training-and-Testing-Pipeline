@@ -59,18 +59,7 @@ classdef DataPipeProc < handle
                 if ~obj.fileListOverlay(ii), continue; end
                 dataFile = datalist(ii);
                 fprintf( '%s\n', dataFile.fileName );
-                isFirstCheckInFold = true;
-                for jj = 1 : numel( dataFile.containedIn )
-                    for kk = 1 : numel( foldsProcessed )
-                        if dataFile.containedIn{jj} == foldsProcessed{kk}
-                            isFirstCheckInFold = false;
-                            break;
-                        end
-                    end
-                    if isFirstCheckInFold
-                        break;
-                    end
-                end
+                isFirstCheckInFold = obj.determineWhetherFirstFileInFold( foldsProcessed, dataFile );
                 if isFirstCheckInFold % with the first file in a fold, caches often update
                     % load cache before restricting access, because it takes long
                     obj.dataFileProcessor.loadCacheDirectory();
@@ -98,6 +87,22 @@ classdef DataPipeProc < handle
             fprintf( ';\n' );
         end
         %% ----------------------------------------------------------------
+        
+        function isFirstFileInFold = determineWhetherFirstFileInFold( obj, foldsProcessed, dataFile )
+            isFirstFileInFold = true;
+            for jj = 1 : numel( dataFile.containedIn )
+                for kk = 1 : numel( foldsProcessed )
+                    if dataFile.containedIn{jj} == foldsProcessed{kk}
+                        isFirstFileInFold = false;
+                        break;
+                    end
+                end
+                if isFirstFileInFold
+                    break;
+                end
+            end
+        end
+        %% ----------------------------------------------------------------
 
         function run( obj, varargin )
             ip = inputParser;
@@ -113,19 +118,8 @@ classdef DataPipeProc < handle
             dfii = 1;
             foldsProcessed = {};
             for dataFile = datalist(randperm(length(datalist)))'
-                isFirstCheckInFold = true;
-                for jj = 1 : numel( dataFile.containedIn )
-                    for kk = 1 : numel( foldsProcessed )
-                        if dataFile.containedIn{jj} == foldsProcessed{kk}
-                            isFirstCheckInFold = false;
-                            break;
-                        end
-                    end
-                    if isFirstCheckInFold
-                        break;
-                    end
-                end
-                if isFirstCheckInFold % with the first file in each fold, caches of wrapped procs often update
+                isFirstRunInFold = obj.determineWhetherFirstFileInFold( foldsProcessed, dataFile );
+                if isFirstRunInFold % with the first file in each fold, caches of wrapped procs often update
                     obj.dataFileProcessor.getSingleProcessCacheAccess();
                     obj.dataFileProcessor.setDirectCacheSave( false );
                     foldsProcessed = uniqueHandles( [foldsProcessed, dataFile.containedIn] ); 
@@ -155,7 +149,7 @@ classdef DataPipeProc < handle
                 else
                     obj.dataFileProcessor.processSaveAndGetOutput( dataFile.fileName );
                 end
-                if isFirstCheckInFold
+                if isFirstRunInFold
                     obj.dataFileProcessor.saveCacheDirectory();
                     obj.dataFileProcessor.setDirectCacheSave( true );
                     obj.dataFileProcessor.releaseSingleProcessCacheAccess();

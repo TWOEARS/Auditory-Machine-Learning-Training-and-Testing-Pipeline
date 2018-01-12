@@ -11,20 +11,35 @@ classdef IdentTrainPipeDataElem < handle
         blockAnnotsCacheFile;
         fileAnnotations = struct;
         blockAnnotations;
+        containedIn;
     end
     
     %% -----------------------------------------------------------------------------------
     methods
         
         %% Constructor
-        function obj = IdentTrainPipeDataElem( fileName )
+        function obj = IdentTrainPipeDataElem( fileName, container )
             if exist( 'fileName', 'var' ), obj.fileName = fileName; end
+            if nargin >= 2 && isa( container, 'Core.IdentTrainPipeData' )
+                obj.containedIn{1} = container;
+            end
         end
         %% -------------------------------------------------------------------------------
         
         function set.fileName( obj, fileName )
             obj.fileName = fileName;
             obj.readFileAnnotations();
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function set.containedIn( obj, containers )
+            obj.containedIn = uniqueHandles( containers );
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function addContainers( obj, containers )
+            containers = [obj.containedIn, containers];
+            obj.containedIn = containers;
         end
         %% -------------------------------------------------------------------------------
 

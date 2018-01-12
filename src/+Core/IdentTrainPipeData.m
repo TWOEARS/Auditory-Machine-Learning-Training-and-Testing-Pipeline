@@ -365,7 +365,7 @@ classdef IdentTrainPipeData < handle
                     filepath = cleanPathFromRelativeRefs( filepath );
                     fprintf( '%s\n', filepath );
                 end
-                obj.data(end+1) = Core.IdentTrainPipeDataElem( filepath );
+                obj.data(end+1) = Core.IdentTrainPipeDataElem( filepath, obj );
             end
             fclose( fid );
             fprintf( '.\n' );
@@ -394,6 +394,8 @@ classdef IdentTrainPipeData < handle
                 idData_ii = varargin{ii};
                 nDii = numel( idData_ii.data );
                 combinedData.data(end+1:end+nDii) = idData_ii.data;
+                arrayfun( @(a)(a.addContainers( {combinedData} )), ...
+                                                      combinedData.data(end-nDii+1:end) );
                 combinedData.folds{ii} = idData_ii;
             end
         end

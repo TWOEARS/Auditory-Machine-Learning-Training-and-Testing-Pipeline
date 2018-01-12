@@ -9,7 +9,7 @@ classdef MultiFileListValGen < SceneConfig.ValGen
     methods
         
         function obj = MultiFileListValGen( val )
-            if ~iscell( val ) || any( ~cellfun( @iscellstr, val ) && ~cellfun( @ischar, val ) )
+            if ~iscell( val ) || any( ~cellfun( @iscellstr, val ) & ~cellfun( @ischar, val ) )
                 error( 'MultiFileListValGen requires cell of [cell] array(s) with file name[s] as input.' );
             end
             for ii = 1 : numel( val )

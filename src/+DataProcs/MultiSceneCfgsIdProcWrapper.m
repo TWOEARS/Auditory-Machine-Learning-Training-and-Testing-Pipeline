@@ -58,7 +58,7 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                 wavFold = obj.wavFoldsAssignment{strcmp( wavFilepath, obj.wavFoldsAssignment(:,1) ), 2 };
             end
             for ii = 1 : numel( obj.sceneConfigurations )
-                sceneCfg_ii = obj.sceneConfigurations(ii);
+                sceneCfg_ii = copy( obj.sceneConfigurations(ii) );
                 if ~isempty( obj.wavFoldsAssignment )
                     for ss = 1 : numel( sceneCfg_ii.sources )
                         src_ss_data = sceneCfg_ii.sources(ss).data;
@@ -84,6 +84,7 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
                 end
                 if DataProcs.MultiSceneCfgsIdProcWrapper.doEarlyHasProcessedStop ...
                         && ~fileProcessed
+                    fprintf( '\n' );
                     return;
                 end
             end

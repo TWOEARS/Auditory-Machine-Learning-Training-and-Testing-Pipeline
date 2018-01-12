@@ -36,7 +36,7 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
             pds{4} = struct( 'name', 'cvFolds', ...
                               'default', 10, ...
-                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
+                              'valFun', @(x)((ischar(x) && strcmpi(x,'preFolded')) || (rem(x,1) == 0 && x >= 0)) );
             obj = obj@Parameterized( pds );
             obj = obj@ModelTrainers.Base( varargin{:} );
             obj.setParameters( true, varargin{:} );

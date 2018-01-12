@@ -29,7 +29,7 @@ classdef MBFmodelSelectTrainer < ModelTrainers.Base & Parameterized
                              'valFun', @(x)(sum(x)>=0 ) );
             pds{5} = struct( 'name', 'cvFolds', ...
                               'default', 4, ...
-                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
+                              'valFun', @(x)((ischar(x) && strcmpi(x,'preFolded')) || (rem(x,1) == 0 && x >= 0)) );
             obj = obj@Parameterized( pds );
             obj.setParameters( true, varargin{:} );
         end

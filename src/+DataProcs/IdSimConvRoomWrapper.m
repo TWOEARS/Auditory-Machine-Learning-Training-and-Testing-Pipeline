@@ -10,6 +10,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
         annotsOut;
         srcAzimuth;
         outFs;
+        hrirFile;
     end
     
     %% --------------------------------------------------------------------
@@ -27,17 +28,9 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...
-                'SampleRate', 44100, ... % default sample rate
                 'MaximumDelay', 0.05 ... % for distances up to ~15m
                 );
-            if ~isempty( hrirFile )
-                set( obj.convRoomSim, 'Renderer', @ssr_binaural );
-                obj.IRDataset.dir = simulator.DirectionalIR( db.getFile( hrirFile ) );
-                obj.IRDataset.fname = hrirFile;
-                set( obj.convRoomSim, 'HRIRDataset', obj.IRDataset.dir );
-            else
-                set( obj.convRoomSim, 'Renderer', @ssr_brs );
-            end
+            obj.hrirFile = hrirFile;
             set(obj.convRoomSim, ...
                 'Sinks', simulator.AudioSink(2) ...
                 );
@@ -97,22 +90,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             if ~isempty( outputDeps.sceneConfig )
                 outputDeps.sceneConfig.sources(1).data = []; % configs shall not include filename
             end
-            outputDeps.SampleRate = obj.convRoomSim.SampleRate;
             outputDeps.outFs = obj.outFs;
             outputDeps.ReverberationMaxOrder = obj.reverberationMaxOrder;
-            rendererFunction = functions( obj.convRoomSim.Renderer );
-            rendererName = rendererFunction.function;
-            outputDeps.Renderer = rendererName;
-            persistent hrirHash;
-            persistent hrirFName;
-            if isempty( obj.IRDataset ) || isfield( obj.IRDataset, 'isbrir' )
-                hrirHash = [];
-                hrirFName = [];
-            elseif isempty( hrirFName ) || ~strcmpi( hrirFName, obj.IRDataset.dir.Filename )
-                hrirFName = obj.IRDataset.dir.Filename;
-                hrirHash = calcDataHash( audioread( hrirFName ) );
-            end
-            outputDeps.hrir = hrirHash;
             outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
@@ -157,6 +136,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
 
         function setupSceneConfig( obj, sceneConfig )
             obj.convRoomSim.set( 'ShutDown', true );
+
             if ~isempty(obj.convRoomSim.Sources), obj.convRoomSim.Sources(2:end) = []; end;
             useSimReverb = ~isempty( sceneConfig.room );
             if useSimReverb
@@ -168,7 +148,20 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                                           obj.reverberationMaxOrder );
             end
             channelMapping = 1;
-            if isa( sceneConfig.sources(1), 'SceneConfig.PointSource' ) 
+            
+            if isa( sceneConfig.sources(1), 'SceneConfig.PointSource' )
+                % load hrir IRDataset
+                if ~isempty( obj.hrirFile )
+                    % set processing sample rate
+                    set( obj.convRoomSim, 'SampleRate', 44100 );
+                    set( obj.convRoomSim, 'Renderer', @ssr_binaural );
+                    obj.IRDataset.dir = simulator.DirectionalIR( db.getFile( obj.hrirFile ) );
+                    obj.IRDataset.fname = obj.hrirFile;
+                    set( obj.convRoomSim, 'HRIRDataset', obj.IRDataset.dir );
+                else
+                    error('hrirFile must be set');
+                end
+                
                 if useSimReverb
                     obj.convRoomSim.Sources{1} = simulator.source.ISMGroup();
                     obj.convRoomSim.Sources{1}.set( 'Room', obj.convRoomSim.Room );
@@ -178,7 +171,9 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.convRoomSim.Sources{1}.Radius = sceneConfig.sources(1).distance.value;
                 obj.srcAzimuth = sceneConfig.sources(1).azimuth.value;
                 obj.convRoomSim.Sources{1}.Azimuth = obj.srcAzimuth;
-            elseif isa( sceneConfig.sources(1), 'SceneConfig.BRIRsource' ) 
+                
+            elseif isa( sceneConfig.sources(1), 'SceneConfig.BRIRsource' )
+                set( obj.convRoomSim, 'Renderer', @ssr_brs );
                 obj.convRoomSim.Sources{1} = simulator.source.Point();
 
                 if isempty( obj.IRDataset ) ...

@@ -100,7 +100,7 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.TimeSeriesLabelCreator
 %                 for ii = 1 : size( obj.segIdTargetSrcFilter, 1 )
 %                     srcf = obj.segIdTargetSrcFilter(ii,1);
 %                     typef = obj.segIdTargetSrcFilter(ii,2);
-%                     srcfAzm = obj.lastConfig{obj.sceneId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
+%                     srcfAzm = obj.lastConfig{obj.sceneId,obj.foldId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
 %                     if isa( srcfAzm, 'SceneConfig.ValGen' )
 %                         srcfAzm = srcfAzm.val;
 %                     end

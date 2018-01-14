@@ -273,26 +273,34 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             rSrcIdxs = 1:max( srcIdxs );
             rSrcIdxs(srcIdxs) = 1:numel(srcIdxs);
             baFields = fieldnames( blockAnnotations );
-            for ff = 1 : numel( baFields )
+            meBaf = strcmpi( 'mixEnergy', baFields );
+            ffs = 1 : numel( baFields );
+            ffs(meBaf) = [];
+            for ff = ffs
                 if isstruct( blockAnnotations.(baFields{ff}) )
-                    baSrcs = blockAnnotations.(baFields{ff}).(baFields{ff})(:,2);
-                    baIsSrcIdEq = cellfun( @(x)( any( x == srcIdxs) ), baSrcs );
-                    blockAnnotations.(baFields{ff}).t.onset(~baIsSrcIdEq) = [];
-                    blockAnnotations.(baFields{ff}).t.offset(~baIsSrcIdEq) = [];
-                    blockAnnotations.(baFields{ff}).(baFields{ff})(~baIsSrcIdEq,:) = [];
+                    baSrcs = cell2mat( blockAnnotations.(baFields{ff}).(baFields{ff})(:,2) );
+                    baIsSrcIdEq = false( size( baSrcs ) );
+                    for ii = 1 : numel( baSrcs )
+                        baIsSrcIdEq(ii) = any( baSrcs(ii) == srcIdxs );
+                    end
+                    blockAnnotations.(baFields{ff}).t.onset = ...
+                                     blockAnnotations.(baFields{ff}).t.onset(baIsSrcIdEq);
+                    blockAnnotations.(baFields{ff}).t.offset = ...
+                                     blockAnnotations.(baFields{ff}).t.offset(baIsSrcIdEq);
+                    blockAnnotations.(baFields{ff}).(baFields{ff}) = ...
+                            blockAnnotations.(baFields{ff}).(baFields{ff})(baIsSrcIdEq,:);
                     blockAnnotations.(baFields{ff}).(baFields{ff})(:,2) = ...
-                        cellfun( @(x)(rSrcIdxs(x)), ...
-                        blockAnnotations.(baFields{ff}).(baFields{ff})(:,2), ...
-                                                       'UniformOutput', false );
-                elseif ~strcmpi('mixEnergy',baFields{ff}) && ...
-                        (iscell( blockAnnotations.(baFields{ff}) ) ...
-                        || numel( blockAnnotations.(baFields{ff}) ) > 1)
+                                                           cellfun( @(x)(rSrcIdxs(x)), ...
+                                  blockAnnotations.(baFields{ff}).(baFields{ff})(:,2), ...
+                                                                 'UniformOutput', false );
+                elseif iscell( blockAnnotations.(baFields{ff}) ) ...
+                       || (numel( blockAnnotations.(baFields{ff}) ) > 1)
                     baIsSrcIdEq = false( size( blockAnnotations.(baFields{ff}) ) );
                     baIsSrcIdEq(srcIdxs) = true;
-                    blockAnnotations.(baFields{ff})(~baIsSrcIdEq) = [];
+                    blockAnnotations.(baFields{ff}) = ...
+                                             blockAnnotations.(baFields{ff})(baIsSrcIdEq);
                 end
             end
-%             blockAnnotations.mixEnergy = blockAnnotations.srcEnergy{1};
         end
         %% -------------------------------------------------------------------------------
         

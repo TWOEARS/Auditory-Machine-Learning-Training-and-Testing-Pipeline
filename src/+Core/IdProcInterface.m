@@ -3,10 +3,12 @@ classdef (Abstract) IdProcInterface < handle
     %
     
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties
         procName;
         cacheSystemDir;
         nPathLevelsForCacheName = 3;
+        procCacheFolderNames = '';
+        procCacheFolderNames_intern = '';
     end
     
     %% -----------------------------------------------------------------------------------
@@ -18,6 +20,7 @@ classdef (Abstract) IdProcInterface < handle
         lastConfig = {};
         outFileSema;
         sceneId = 1;
+        foldId = 1;
         saveImmediately = true;
     end
     
@@ -26,7 +29,7 @@ classdef (Abstract) IdProcInterface < handle
     end
     
     %% -----------------------------------------------------------------------------------
-    methods (Access = public)
+    methods
         
         function delete( obj )
             removefilesemaphore( obj.outFileSema );
@@ -35,6 +38,24 @@ classdef (Abstract) IdProcInterface < handle
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function set.procCacheFolderNames( obj, newPCFN )
+            newPCFN = obj.overridableSetPCFN( newPCFN );
+            obj.procCacheFolderNames = newPCFN;
+        end
+        %% ----------------------------------------------------------------
+        
+        function set.sceneId( obj, newScnId )
+            newScnId = obj.overridableSetScnId( newScnId );
+            obj.sceneId = newScnId;
+        end
+        %% ----------------------------------------------------------------
+        
+        function set.foldId( obj, newFoldId )
+            newFoldId = obj.overridableSetFoldId( newFoldId );
+            obj.foldId = newFoldId;
+        end
+        %% ----------------------------------------------------------------
         
         function saveCacheDirectory( obj )
             obj.cacheDirectory.saveCacheDirectory();
@@ -65,6 +86,7 @@ classdef (Abstract) IdProcInterface < handle
             obj.lastFolder = {};
             obj.lastConfig = {};
             obj.sceneId = 1;
+            obj.foldId = 1;
         end
         %% -------------------------------------------------------------------------------
         
@@ -161,19 +183,24 @@ classdef (Abstract) IdProcInterface < handle
         
         function currentFolder = getCurrentFolder( obj )
             currentConfig = obj.getOutputDependencies();
-            if numel( obj.lastFolder ) >= obj.sceneId ...
-                    && ~isempty( obj.lastFolder{obj.sceneId} ) ...
-                    && isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId} )
-                currentFolder = obj.lastFolder{obj.sceneId};
+            if size( obj.lastFolder, 1 ) >= obj.sceneId ...
+                    && size( obj.lastFolder, 2 ) >= obj.foldId ...
+                    && ~isempty( obj.lastFolder{obj.sceneId,obj.foldId} ) ...
+                    && isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId,obj.foldId} )
+                currentFolder = obj.lastFolder{obj.sceneId,obj.foldId};
                 return;
             end
             obj.cacheDirectory.loadCacheDirectory();
-            currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
+            newFolderName = ['.' obj.procCacheFolderNames ...
+                             '_' obj.procCacheFolderNames_intern ...
+                             '_scene' num2str( obj.sceneId ) ...
+                             '_fold' num2str( obj.foldId )];
+            currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true, newFolderName );
             if obj.saveImmediately
                 obj.cacheDirectory.saveCacheDirectory();
             end
-            obj.lastFolder{obj.sceneId} = currentFolder;
-            obj.lastConfig{obj.sceneId} = currentConfig;
+            obj.lastFolder{obj.sceneId,obj.foldId} = currentFolder;
+            obj.lastConfig{obj.sceneId,obj.foldId} = currentConfig;
         end
         %% -------------------------------------------------------------------------------
         
@@ -196,7 +223,7 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function save( obj, wavFilepath, out )
+        function save( obj, wavFilepath, out ) %#ok<INUSD>
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
@@ -227,6 +254,21 @@ classdef (Abstract) IdProcInterface < handle
             procFileExt = '.mat';
         end
         %% -------------------------------------------------------------------------------
+        
+        function newPCFN = overridableSetPCFN( obj, newPCFN )
+            assert( ischar( newPCFN ) );
+        end
+        %% ----------------------------------------------------------------
+        
+        function newScnId = overridableSetScnId( obj, newScnId )
+            assert( isnumeric( newScnId ) && numel( newScnId ) == 1 );
+        end
+        %% ----------------------------------------------------------------
+        
+        function newFoldId = overridableSetFoldId( obj, newFoldId )
+            assert( isnumeric( newFoldId ) && numel( newFoldId ) == 1 );
+        end
+        %% ----------------------------------------------------------------
         
     end
     

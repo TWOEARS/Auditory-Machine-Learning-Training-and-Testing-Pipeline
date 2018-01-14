@@ -48,15 +48,26 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
         end
         %% ----------------------------------------------------------------
 
-        function sceneCfg_ii = getCurrentFoldSceneConfig( obj, ii, wavFilepath )
+        function [foldId,foldIdx] = getCurrentFoldId( obj, wavFilepath )
             if ~isempty( obj.wavFoldsAssignment )
                 wfa_idx = strcmp( wavFilepath, obj.wavFoldsAssignment(:,1) );
-                wavFold = obj.wavFoldsAssignment{wfa_idx,2};
+                foldId = obj.wavFoldsAssignment{wfa_idx,2};
+                foldIds = unique( [obj.wavFoldsAssignment{:,2}], 'stable' );
+                foldIdx = find( foldIds == foldId );
+            else
+                foldId = 1;
+                foldIdx = 1;
+            end
+        end
+        %% ----------------------------------------------------------------
+
+        function sceneCfg_ii = getCurrentFoldSceneConfig( obj, ii, foldId )
+            if ~isempty( obj.wavFoldsAssignment )
                 sceneCfg_ii = copy( obj.sceneConfigurations(ii) );
                 for ss = 1 : numel( sceneCfg_ii.sources )
                     src_ss_data = sceneCfg_ii.sources(ss).data;
                     if isa( src_ss_data, 'SceneConfig.MultiFileListValGen' )
-                        sceneCfg_ii.sources(ss).data = src_ss_data.val{wavFold};
+                        sceneCfg_ii.sources(ss).data = src_ss_data.val{foldId};
                     end
                 end
             else
@@ -71,8 +82,10 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
             if nargout > 1
                 cacheDirs = cell( numel( obj.sceneConfigurations ), 1 );
             end
+            [foldId,foldIdx] = obj.getCurrentFoldId( wavFilepath );
+            obj.wrappedProcs{1}.foldId = foldId;
             for ii = 1 : numel( obj.sceneConfigurations )
-                sceneCfg_ii = obj.getCurrentFoldSceneConfig( ii, wavFilepath );
+                sceneCfg_ii = obj.getCurrentFoldSceneConfig( ii, foldIdx );
                 obj.sceneProc.setSceneConfig( sceneCfg_ii );
                 obj.wrappedProcs{1}.sceneId = ii;
                 if nargout > 1
@@ -106,8 +119,10 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
+            [foldId,foldIdx] = obj.getCurrentFoldId( wavFilepath );
+            obj.wrappedProcs{1}.foldId = foldId;
             for ii = 1 : numel( obj.sceneConfigurations )
-                sceneCfg_ii = obj.getCurrentFoldSceneConfig( ii, wavFilepath );
+                sceneCfg_ii = obj.getCurrentFoldSceneConfig( ii, foldIdx );
                 obj.sceneProc.setSceneConfig( sceneCfg_ii );
                 fprintf( 'sc%d', ii );
                 obj.wrappedProcs{1}.sceneId = ii;

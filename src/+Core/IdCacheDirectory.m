@@ -38,13 +38,14 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function filepath = getCacheFilepath( obj, cfg, createIfnExist )
+        function filepath = getCacheFilepath( obj, cfg, createIfnExist, newFolderName )
             if isempty( cfg ), filepath = obj.topCacheDirectory; return; end
             if nargin < 3, createIfnExist = false; end
+            if nargin < 4, newFolderName = []; end
             treeNode = obj.findCfgTreeNode( cfg, createIfnExist );
             if isempty( treeNode ), filepath = []; return; end
             if isempty( treeNode.path ) && createIfnExist
-                treeNode.path = obj.makeNewCacheFolder( cfg );
+                treeNode.path = obj.makeNewCacheFolder( cfg, newFolderName );
                 obj.cacheDirChanged = true;
             end
             filepath = treeNode.path;
@@ -261,9 +262,16 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function folderName = makeNewCacheFolder( obj, cfg )
+        function folderName = makeNewCacheFolder( obj, cfg, newFolderName )  %#ok<INUSL>
             timestr = buildCurrentTimeString( true );
-            folderName = [obj.topCacheDirectory filesep 'cache' timestr];
+            if ~isempty( newFolderName )
+                folderName = [obj.topCacheDirectory filesep 'cache' newFolderName];
+                if exist( folderName, 'dir' )
+                    folderName = [folderName timestr];
+                end
+            else
+                folderName = [obj.topCacheDirectory filesep 'cache' timestr];
+            end
             mkdir( folderName );
             save( [folderName filesep 'cfg.mat'], 'cfg' );
         end

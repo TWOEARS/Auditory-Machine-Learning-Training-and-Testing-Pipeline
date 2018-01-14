@@ -116,6 +116,33 @@ classdef IdProcWrapper < Core.IdProcInterface
             end
         end
         %% ----------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function newPCFN = overridableSetPCFN( obj, newPCFN )
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.procCacheFolderNames = newPCFN;
+            end
+            newPCFN = overridableSetPCFN@Core.IdProcInterface( obj, newPCFN );
+        end
+        %% ----------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function newScnId = overridableSetScnId( obj, newScnId )
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.sceneId = newScnId;
+            end
+            newScnId = overridableSetScnId@Core.IdProcInterface( obj, newScnId );
+        end
+        %% ----------------------------------------------------------------
+        
+        % override of Core.IdProcInterface's method
+        function newFoldId = overridableSetFoldId( obj, newFoldId )
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.foldId = newFoldId;
+            end
+            newFoldId = overridableSetFoldId@Core.IdProcInterface( obj, newFoldId );
+        end
+        %% ----------------------------------------------------------------
                 
     end
     

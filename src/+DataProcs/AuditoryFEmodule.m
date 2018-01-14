@@ -41,6 +41,8 @@ classdef AuditoryFEmodule < Core.IdProcInterface
             end
             obj.afeParams.p = DataProcs.AuditoryFEmodule.parameterSummary2struct( ...
                                 obj.afeDataObj.getParameterSummary( obj.managerObject ) );
+            reqNames = cellfun( @(c)([c.name '_']), afeRequests, 'UniformOutput', false );
+            obj.procCacheFolderNames_intern = strcat( reqNames{:} );
         end
         %% ----------------------------------------------------------------
         

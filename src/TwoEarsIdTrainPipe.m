@@ -72,11 +72,13 @@ classdef TwoEarsIdTrainPipe < handle
             ip.addOptional( 'stopAfterProc', inf );
             ip.addOptional( 'fs', 44100 );
             ip.addOptional( 'wavFoldAssignments', {} );
+            ip.addOptional( 'classesOnMultipleSourcesFilter', {} );
             ip.parse( varargin{:} );
             obj.setupData( true );
             obj.pipeline.resetDataProcs();
             binSim = DataProcs.SceneEarSignalProc( DataProcs.IdSimConvRoomWrapper( ...
-                                                       ip.Results.hrir, ip.Results.fs ) );
+                                                      ip.Results.hrir, ip.Results.fs ),...
+                                              ip.Results.classesOnMultipleSourcesFilter );
             if isempty( obj.blockCreator )
                 obj.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 0.4 );
             end

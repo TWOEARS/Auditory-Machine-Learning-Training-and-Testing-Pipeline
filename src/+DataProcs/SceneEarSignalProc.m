@@ -3,28 +3,23 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         sceneConfig;
-        binauralSim;        % binaural simulator
-%        ratemapAFE;
+        binauralSim;
         earSout;
         annotsOut;
+        classesOnMultipleSourcesFilter;
     end
     
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = SceneEarSignalProc( binauralSim )
-%            ratemapAfeRequest{1}.name = 'ratemap';
-%            ratemapAfeRequest{1}.params = genParStruct( ...
-%                'pp_bNormalizeRMS', false, ...
-%                'rm_scaling', 'power', ...
-%                'fb_nChannels', 64 );
-%            afe = DataProcs.AuditoryFEmodule( binauralSim.getDataFs(), ratemapAfeRequest );
-%            obj = obj@DataProcs.IdProcWrapper( {binauralSim,afe}, false );
+        function obj = SceneEarSignalProc( binauralSim, varargin )
+            ip = inputParser();
+            ip.addOptional( 'classesOnMultipleSourcesFilter', {} );
+            ip.parse( varargin{:} );
             obj = obj@DataProcs.IdProcWrapper( binauralSim, false );
             obj.binauralSim = obj.wrappedProcs{1};
-%            obj.ratemapAFE = obj.wrappedProcs{2};
             obj.sceneConfig = SceneConfig.SceneConfiguration.empty;
-%            obj.ratemapAFE.setInputProc( obj.binauralSim );
+            obj.classesOnMultipleSourcesFilter = ip.Results.classesOnMultipleSourcesFilter;
         end
         %% ----------------------------------------------------------------
 
@@ -65,56 +60,74 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
             splitEarSignals = cell( numSrcs, 1 );
             tSplitAzms = cell(numSrcs,1);
             splitAzms = cell(numSrcs,1);
-%            splitRms = cell(numSrcs,2);
             for srcIdx = srcIndexes
                 splitSignalLen = 0;
                 while (splitSignalLen == 0) || (splitSignalLen < targetSignalLen - 0.01)
-                    if (splitSignalLen == 0) || ...
-                                  strcmpi( obj.sceneConfig.loopSrcs{srcIdx}, 'randomSeq' )
-                        sc = obj.sceneConfig.getSingleConfig( srcIdx );
-                        scInst = sc.instantiate(); % TODO: problem: this not only creates
-                                                   % loop variations in the files, but
-                                                   % in all ValGens, so maybe azm etc...
-                        if isa( scInst.sources(1).data, 'SceneConfig.FileListValGen' )
-                            if strcmp( scInst.sources(1).data.value, 'pipeInput' )
-                                scInst.sources(1).data = ...
-                                    SceneConfig.FileListValGen( pipeWavFilepath );
+                    isEventOverlapping = true;
+                    while isEventOverlapping
+                        if (splitSignalLen == 0) || ...
+                                strcmpi( obj.sceneConfig.loopSrcs{srcIdx}, 'randomSeq' )
+                            sc = obj.sceneConfig.getSingleConfig( srcIdx );
+                            scInst = sc.instantiate(); % TODO: problem: this not only creates
+                            % loop variations in the files, but
+                            % in all ValGens, so maybe azm etc...
+                            if isa( scInst.sources(1).data, 'SceneConfig.FileListValGen' )
+                                if strcmp( scInst.sources(1).data.value, 'pipeInput' )
+                                    scInst.sources(1).data = ...
+                                        SceneConfig.FileListValGen( pipeWavFilepath );
+                                end
+                                splitWavFilepath = scInst.sources(1).data.value;
+                            else % data through ValGen like NoiseValGen
+                                splitWavFilepath = ''; % don't cache in binauralSim
                             end
-                            splitWavFilepath = scInst.sources(1).data.value;
-                        else % data through ValGen like NoiseValGen
-                            splitWavFilepath = ''; % don't cache in binauralSim
+                            obj.binauralSim.setSceneConfig( scInst );
+                            splitOut = ...
+                                obj.binauralSim.processSaveAndGetOutput( splitWavFilepath );
                         end
-                        obj.binauralSim.setSceneConfig( scInst );
-                        splitOut = ...
-                              obj.binauralSim.processSaveAndGetOutput( splitWavFilepath );
-%                        splitOutRm = ...
-%                               obj.ratemapAFE.processSaveAndGetOutput( splitWavFilepath );
+                        if ~isempty( splitEarSignals{srcIdx} )
+                            splitOut.earSout = DataProcs.SceneEarSignalProc.adjustSNR( ...
+                                obj.getDataFs(), splitEarSignals{srcIdx}, ...
+                                'energy', splitOut.earSout, 0 );
+                        end
+                        tSoFar = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
+                        if ~isempty( splitOut.annotations.srcType.srcType )
+                            splitOut.annotations.srcType.srcType(:,2) = ...
+                                repmat( {srcIdx}, ...
+                                size( splitOut.annotations.srcType.srcType, 1 ), 1 );
+                        end
+                        splitOut_types = splitOut.annotations.srcType.srcType;
+                        splitOut_onsets = tSoFar + splitOut.annotations.srcType.t.onset;
+                        splitOut_offsets = tSoFar + splitOut.annotations.srcType.t.offset;
+                        isEventOverlapping = false;
+                        for ii = 1 : numel( splitOut_onsets )
+                            so_type_ii = splitOut_types{ii,1};
+                            if ~any( cellfun( @(c)(any( strcmpi( c, so_type_ii ) ) ), ...
+                                    obj.classesOnMultipleSourcesFilter ) )
+                                continue;
+                            end
+                            so_onset_ii = splitOut_onsets(ii);
+                            so_offset_ii = splitOut_offsets(ii);
+                            events_are_type_ii = strcmpi( so_type_ii, obj.annotsOut.srcType.srcType(:,1) );
+                            onsets_are_type_ii = obj.annotsOut.srcType.t.onset(events_are_type_ii);
+                            offsets_are_type_ii = obj.annotsOut.srcType.t.offset(events_are_type_ii);
+                            isEventOverlapping = any( ...
+                                (onsets_are_type_ii >= so_onset_ii & onsets_are_type_ii <= so_offset_ii) | ...
+                                (offsets_are_type_ii >= so_onset_ii & offsets_are_type_ii <= so_offset_ii) | ...
+                                (onsets_are_type_ii <= so_onset_ii & offsets_are_type_ii >= so_offset_ii) );
+                            if isEventOverlapping, break; end
+                        end
                     end
-                    if ~isempty( splitEarSignals{srcIdx} )
-                        splitOut.earSout = DataProcs.SceneEarSignalProc.adjustSNR( ...
-                                             obj.getDataFs(), splitEarSignals{srcIdx}, ...
-                                                          'energy', splitOut.earSout, 0 );
-                    end
-                    tSoFar = size( splitEarSignals{srcIdx}, 1 ) / obj.getDataFs();
+                    obj.annotsOut.srcType.t.onset = [obj.annotsOut.srcType.t.onset ...
+                                                                         splitOut_onsets];
+                    obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
+                                                                        splitOut_offsets];
+                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType; ...
+                                                                          splitOut_types];
                     splitEarSignals{srcIdx} = [splitEarSignals{srcIdx}; splitOut.earSout];
                     tSplitAzms{srcIdx} = ...
                              [tSplitAzms{srcIdx} (tSoFar+splitOut.annotations.srcAzms.t)];
                     splitAzms{srcIdx} = ...
                                  [splitAzms{srcIdx}; splitOut.annotations.srcAzms.srcAzms];
- %                   rm = splitOutRm.afeData(1);
- %                   splitRms{srcIdx,1} = [splitRms{srcIdx,1}; [rm{1}.Data(:); rm{1}.Data(end,:)]];
- %                   splitRms{srcIdx,2} = [splitRms{srcIdx,2}; [rm{2}.Data(:); rm{2}.Data(end,:)]];
-                    obj.annotsOut.srcType.t.onset = [obj.annotsOut.srcType.t.onset ...
-                                           (tSoFar+splitOut.annotations.srcType.t.onset)];
-                    obj.annotsOut.srcType.t.offset = [obj.annotsOut.srcType.t.offset ...
-                                          (tSoFar+splitOut.annotations.srcType.t.offset)];
-                    if ~isempty( splitOut.annotations.srcType.srcType )                  
-                        splitOut.annotations.srcType.srcType(:,2) = ...
-                             repmat( {srcIdx}, ...
-                                     size( splitOut.annotations.srcType.srcType, 1 ), 1 );
-                    end
-                    obj.annotsOut.srcType.srcType = [obj.annotsOut.srcType.srcType; ...
-                                                    splitOut.annotations.srcType.srcType];
                     obj.annotsOut.srcFile.t.onset = [obj.annotsOut.srcFile.t.onset ...
                                            (tSoFar+splitOut.annotations.srcFile.t.onset)];
                     obj.annotsOut.srcFile.t.offset = [obj.annotsOut.srcFile.t.offset ...
@@ -166,17 +179,6 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                              splitAzms{ii}, obj.annotsOut.srcAzms.t, 'next', 'extrap' ) );
             end
 
-%             obj.annotsOut.srcEnergy = struct( 't', {[]} );
-%             obj.annotsOut.srcEnergy_db = struct( 't', {[]} );
-%             for ss = 1 : numSrcs
-%                 obj.annotsOut.srcEnergy = obj.annotateNrj( splitEarSignals{ss}, ...
-%                                                            obj.annotsOut.srcEnergy, ss,...
-%                                                            'srcEnergy', false );
-%                 obj.annotsOut.srcEnergy_db = obj.annotateNrj( splitEarSignals{ss}, ...
-%                                                            obj.annotsOut.srcEnergy_db, ss,...
-%                                                            'srcEnergy_db' );
-%             end
-%             
             obj.earSout = zeros( mixLen, 2 );
             obj.annotsOut.globalSrcEnergy = struct( 't', {[]} );
             obj.annotsOut.globalSrcEnergy_db = struct( 't', {[]} );
@@ -259,10 +261,11 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
         
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.sceneCfg = obj.sceneConfig;
+            outputDeps.classesOnMultipleSourcesFilter = obj.classesOnMultipleSourcesFilter;
             % SceneEarSignalProc doesn't (/must not) depend on the binSim's sceneConfig
             obj.binauralSim.setSceneConfig( SceneConfig.SceneConfiguration.empty );
             outputDeps.wrapDeps = getInternOutputDependencies@DataProcs.IdProcWrapper( obj );
-            outputDeps.v = 2;
+            outputDeps.v = 3;
         end
         %% ----------------------------------------------------------------
 

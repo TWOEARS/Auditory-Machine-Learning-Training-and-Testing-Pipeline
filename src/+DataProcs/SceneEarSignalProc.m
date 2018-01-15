@@ -250,7 +250,7 @@ classdef SceneEarSignalProc < DataProcs.IdProcWrapper
                 nrjAnnots.t = single( tEnergy );
             end
             nrjAnnots.(annotsName)(:,signalId) = ...
-                          arrayfun( @(e1,e2)( {single( [e1,e2] )} ), energy1', energy2' );
+                mat2cell( single( [energy1',energy2'] ), ones( numel( energy1 ), 1 ), 2 );
         end
         %% ------------------------------------------------------------------------------- 
                 

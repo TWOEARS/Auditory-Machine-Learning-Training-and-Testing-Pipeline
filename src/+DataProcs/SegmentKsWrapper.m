@@ -19,6 +19,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         isNsrcsFixed;
         isAzmFixedUniform;
         softMaskExponent = 10;
+        srcSegregateNrjThreshold;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -39,6 +40,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             ip.addOptional( 'nsrcsBias', 0 );
             ip.addOptional( 'nsrcsRndPlusMinusBias', 0 );
             ip.addOptional( 'softMaskExponent', 10 );
+            ip.addOptional( 'srcSegregateNrjThreshold', -40 );
             ip.parse( varargin{:} );
             segmentKs = StreamSegregationKS( paramFilepath ); 
             fprintf( '.' );
@@ -133,6 +135,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 end
             end
             obj.softMaskExponent = ip.Results.softMaskExponent;
+            obj.srcSegregateNrjThreshold = ip.Results.srcSegregateNrjThreshold;
             fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
@@ -147,7 +150,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             srcsGlobalRefEnergyMeanChannel = cellfun( ...
                                     @(c)(sum(10.^(c./10)) ./ 2 ), blockAnnotations.globalSrcEnergy );
             srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
-            srcsHaveEnergy = srcsGlobalRefEnergyMeanChannel_db > -40;
+            srcsHaveEnergy = srcsGlobalRefEnergyMeanChannel_db >= obj.srcSegregateNrjThreshold;
             obj.energeticBaidxs = 1 : numel( blockAnnotations.globalSrcEnergy );
             obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
             srcsHaveEnergy(isnan(obj.azmsGroundTruth)) = [];
@@ -237,6 +240,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); 
                 maskedBlockAnnotations.estAzm = segData.refAzm;
                 maskedBlockAnnotations.nSrcs_estimationError = nSegments - nTrue;
+                maskedBlockAnnotations.nActivePointSrcs = nTrue;
                 if isempty(obj.out.blockAnnotations)
                     obj.out.blockAnnotations = maskedBlockAnnotations;
                 else
@@ -259,6 +263,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.nsrcsBias = obj.nsrcsBias;
             outputDeps.nsrcsRndPlusMinusBias = obj.nsrcsRndPlusMinusBias;
             outputDeps.softMaskExponent = obj.softMaskExponent;
+            outputDeps.srcSegregateNrjThreshold = obj.srcSegregateNrjThreshold;
         end
         %% -------------------------------------------------------------------------------
 

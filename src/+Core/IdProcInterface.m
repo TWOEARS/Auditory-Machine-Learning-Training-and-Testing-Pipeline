@@ -227,7 +227,7 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
-            save( outFilepath, '-struct', 'out' );
+            save( outFilepath, '-struct', 'out', '-v6' );
             removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------

@@ -5,6 +5,7 @@ classdef Base < Core.IdProcInterface
     properties (SetAccess = protected)
         x;
         blockAnnotations;
+        baIdx;
         afeData;                    % current AFE signals used for vector construction
         description;
         descriptionBuilt = false;
@@ -36,10 +37,14 @@ classdef Base < Core.IdProcInterface
             inData = obj.loadInputData( wavFilepath );
             obj.blockAnnotations = inData.blockAnnotations;
             obj.x = [];
-            for afeBlock = inData.afeBlocks'
-                obj.afeData = afeBlock{1};
+            for ii = 1 : numel( inData.afeBlocks )
+                obj.baIdx = ii;
+                obj.afeData = inData.afeBlocks{ii};
                 xd = obj.constructVector();
-                obj.x(end+1,:,:) = xd{1};
+                if isempty( obj.x )
+                    obj.x = zeros( numel( inData.afeBlocks ), size( xd{1}, 1 ), size( xd{1}, 2 ) );
+                end
+                obj.x(ii,:,:) = xd{1};
                 fprintf( '.' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};

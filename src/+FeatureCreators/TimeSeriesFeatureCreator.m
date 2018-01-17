@@ -24,7 +24,7 @@ classdef TimeSeriesFeatureCreator < FeatureCreators.Base
         function x = constructVector( obj )
             x = obj.constructTSvector();
             T = size( x{1}, 1 );
-            bas = obj.blockAnnotations;
+            bas = obj.blockAnnotations(obj.baIdx);
             aFields = fieldnames( bas );
             isSequenceAnnotation = cellfun( @(af)(...
                                       isstruct( bas.(af) ) && isfield( bas.(af), 't' ) ...
@@ -63,7 +63,7 @@ classdef TimeSeriesFeatureCreator < FeatureCreators.Base
                 end
                 bas.(seqAname) = annot;
             end
-            obj.blockAnnotations = bas;
+            obj.blockAnnotations(obj.baIdx) = bas;
             fprintf( ';' );
         end
         %% ----------------------------------------------------------------

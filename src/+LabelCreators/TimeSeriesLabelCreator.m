@@ -7,6 +7,8 @@ classdef TimeSeriesLabelCreator < LabelCreators.Base
     %% -----------------------------------------------------------------------------------
     methods (Abstract, Access = protected)
         outputDeps = getLabelInternOutputDependencies( obj )
+    end
+    methods (Abstract)
         [y, ysi] = label( obj, annotations )
     end
 

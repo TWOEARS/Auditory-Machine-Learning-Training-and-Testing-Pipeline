@@ -1,7 +1,7 @@
 classdef Base < Core.IdProcInterface
     % Base Abstract base class for labeling blocks
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties
         y;
         ysi;
         x;
@@ -14,6 +14,8 @@ classdef Base < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Abstract, Access = protected)
         outputDeps = getLabelInternOutputDependencies( obj )
+    end
+    methods (Abstract)
         [y, ysi] = label( obj, annotations )
     end
 

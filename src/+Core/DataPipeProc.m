@@ -11,6 +11,23 @@ classdef DataPipeProc < handle
         fileListOverlay;
     end
     
+    %% -----------------------------------------------------------------------------------
+    methods (Static)
+        
+        function b = doEarlyHasProcessedStop( bSet, newValue )
+            persistent dehps;
+            if isempty( dehps )
+                dehps = false;
+            end
+            if nargin > 0  &&  bSet
+                dehps = newValue;
+            end
+            b = dehps;
+        end
+        %% ----------------------------------------------------------------
+        
+    end
+    
     %% --------------------------------------------------------------------
     methods (Access = public)
         
@@ -64,7 +81,7 @@ classdef DataPipeProc < handle
                     % load cache before restricting access, because it takes long
                     obj.dataFileProcessor.loadCacheDirectory();
                     obj.dataFileProcessor.getSingleProcessCacheAccess();
-                    DataProcs.MultiSceneCfgsIdProcWrapper.doEarlyHasProcessedStop( true, false );
+                    Core.DataPipeProc.doEarlyHasProcessedStop( true, false );
                     foldsProcessed = uniqueHandles( [foldsProcessed, dataFile.containedIn] ); 
                 end
                 if nargout > 0 && ~exist( 'cacheDirs', 'var' )
@@ -75,7 +92,7 @@ classdef DataPipeProc < handle
                         obj.dataFileProcessor.hasFileAlreadyBeenProcessed( dataFile.fileName );
                 end
                 if isFirstCheckInFold
-                    DataProcs.MultiSceneCfgsIdProcWrapper.doEarlyHasProcessedStop( true, true );
+                    Core.DataPipeProc.doEarlyHasProcessedStop( true, true );
                     obj.dataFileProcessor.saveCacheDirectory();
                     obj.dataFileProcessor.releaseSingleProcessCacheAccess();
                 end

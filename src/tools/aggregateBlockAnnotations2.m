@@ -55,7 +55,7 @@ if ~isempty( tpIdxR )
     azmErrs = abs( wrapTo180( azmErrs ) );
     azmErrs(~isyp(tpIdxR,:)) = nan;
     [tpAzmErr,tpIdxC_] = min( azmErrs, [], 2 );
-    tpAzmErr2 = mean( azmErrs, 2 );
+    tpAzmErr2 = nanMean( azmErrs, 2 );
     tpIdx_ = sub2ind( size( ag ), tpIdxR, tpIdxC_ );
     istp_(tpIdx_) = true;
 end

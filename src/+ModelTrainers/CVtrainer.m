@@ -29,7 +29,13 @@ classdef CVtrainer < ModelTrainers.Base
         %% ----------------------------------------------------------------
 
         function setNumberOfFolds( obj, nFolds )
+            if ischar( nFolds ) && strcmpi( nFolds, 'preFolded' )
+                nFolds = numel( obj.trainSet.folds );
+            end
             if nFolds < 2, error( 'CV cannot be executed with less than two folds.' ); end
+            if mod( numel( obj.trainSet.folds ), nFolds ) ~= 0
+                warning( 'Executing CV with nFolds different from the number of set up disjunct data folds -- data will not be stratified wrt files on sources 2:n!' );
+            end
             obj.nFolds = nFolds;
         end
         %% ----------------------------------------------------------------

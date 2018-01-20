@@ -66,7 +66,7 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
             obj.coreTrainer.setParameters( false, 'lambda', lambdas );
             obj.cvTrainer = ModelTrainers.CVtrainer( obj.coreTrainer );
             obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
-            obj.cvTrainer.setData( obj.trainSet, obj.testSet );
+            obj.cvTrainer.setData( obj.trainSet, [] );
             obj.cvTrainer.setNumberOfFolds( obj.cvFolds );
             obj.cvTrainer.run();
             cvModels = obj.cvTrainer.models;

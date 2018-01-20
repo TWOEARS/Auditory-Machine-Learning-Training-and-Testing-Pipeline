@@ -31,6 +31,12 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
                 ba(nsNotNa) = [];
                 ba_ns(nsNotNa) = [];
             end
+            obj.verboseOutput = sprintf( ['\nOut of a pool of %d samples,\n' ...
+                                            'discard %d where na ~= ns\n'], ...
+                                         numel( nsNotNa ), sum( nsNotNa ) );
+            if isempty( sampleIdsIn )
+                return;
+            end
             ba_pp = cat( 1, ba.posPresent );
             clear ba;
             y = obj.getData( 'y' );
@@ -45,9 +51,6 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             [throwoutIdxs,nClassSamples,nPerLabel,labels] = ...
                           DataSelectors.BAC_Selector.getBalThrowoutIdxs( y_, maxDataSize );
             selectFilter(y_Idxs(throwoutIdxs)) = false;
-            obj.verboseOutput = sprintf( ['\nOut of a pool of %d samples,\n' ...
-                                            'discard %d where na ~= ns, and\n'], ...
-                                         numel( nsNotNa ), sum( nsNotNa ) );
             for ii = 1 : numel( nClassSamples )
                 trueLabel = unique( y(y_==labels(ii)) );
                 obj.verboseOutput = sprintf( ['%s' ...

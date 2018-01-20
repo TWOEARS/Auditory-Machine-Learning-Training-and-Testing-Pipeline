@@ -223,6 +223,19 @@ classdef IdentTrainPipeData < handle
                 permFolds = obj.folds;
                 return;
             end
+            if nFolds == numel( obj.folds )
+                permFolds = obj.folds;
+                return;
+            end
+            if mod( numel( obj.folds ), nFolds ) == 0
+                rndFoldIdxs = randperm( numel( obj.folds ) );
+                rndFoldIdxs = reshape( rndFoldIdxs, nFolds, [] );
+                for ii = 1 : nFolds
+                    permFolds{ii} = Core.IdentTrainPipeData.combineData( ...
+                                                           obj.folds{rndFoldIdxs(ii,:)} ); %#ok<AGROW>
+                end
+                return;
+            end
             for ii = nFolds : -1 : 1, permFolds{ii} = Core.IdentTrainPipeData(); end
             if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
                 if obj.autoStratify, obj.autoSetStratificationLabels(); end

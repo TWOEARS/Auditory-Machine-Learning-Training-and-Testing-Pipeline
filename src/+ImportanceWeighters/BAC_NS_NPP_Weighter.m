@@ -28,13 +28,23 @@ classdef BAC_NS_NPP_Weighter < ImportanceWeighters.Base
             clear ba;
             y_ = y .* (ba_ns+1) .* (1 + ~ba_pp * 9);
             y_unique = unique( y_ );
+            lw = []; lwp = []; lwn = [];
             for ii = 1 : numel( y_unique )
                 y_unique_ii_lidxs = y_ == y_unique(ii);
-                lw = numel( sampleIds ) / sum( y_unique_ii_lidxs );
+                lw(end+1) = numel( sampleIds ) / sum( y_unique_ii_lidxs ); %#ok<AGROW>
                 if y_unique(ii) > 0
-                    lw = lw * 2; % because their is p vs (npp+nnp)
+                    lwp(end+1) = lw(end); %#ok<AGROW>
+                else
+                    lwn(end+1) = lw(end); %#ok<AGROW>
                 end
-                importanceWeights(y_unique_ii_lidxs) = lw;
+            end
+            for ii = 1 : numel( lw )
+                y_unique_ii_lidxs = y_ == y_unique(ii);
+                if y_unique(ii) > 0
+                    % because there is p vs (npp+nnp)
+                    lw(ii) = lw(ii) * sum(lwn)/sum(lwp); %#ok<AGROW> 
+                end
+                importanceWeights(y_unique_ii_lidxs) = lw(ii);
             end
             importanceWeights = importanceWeights / min( importanceWeights );
             obj.verboseOutput = '\nWeighting samples of \n';

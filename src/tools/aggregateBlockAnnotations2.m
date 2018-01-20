@@ -26,9 +26,10 @@ otherIdxs = arrayfun( ...
 otherIdxs = cellfun( @(c)(c(nonemptyBaps(c))), otherIdxs, 'UniformOutput', false );
 
 selfGtAzms = wrapTo180( [bap(selfIdx).gtAzm] );
-selfGtAzms = sign(selfGtAzms).*abs(abs(abs(selfGtAzms)-90)-90); % mirror to frontal hemisphere
+% selfGtAzms = sign(selfGtAzms).*abs(abs(abs(selfGtAzms)-90)-90); % mirror to frontal hemisphere
+% instead map bisectAzm to frontal hemisphere!
 otherGtAzms = cellfun( @(c)(wrapTo180( [bap(c).gtAzm] )), otherIdxs, 'UniformOutput', false );
-otherGtAzms = cellfun( @(c)(sign(c).*abs(abs(abs(c)-90)-90)), otherGtAzms, 'UniformOutput', false );
+% otherGtAzms = cellfun( @(c)(sign(c).*abs(abs(abs(c)-90)-90)), otherGtAzms, 'UniformOutput', false );
 bisectAzms = cellfun( @(s,o)(s + ( o - s )/2), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
 spreads = cellfun( @(s,o)(max(eps,abs( o - s ))), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
 bisectNormAzms = cellfun( @(b,s)((s - 2*abs( b ))./s), bisectAzms, spreads, 'UniformOutput', false );

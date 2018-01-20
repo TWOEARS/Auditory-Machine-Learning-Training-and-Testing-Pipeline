@@ -101,7 +101,6 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             sampleFileIdxs = testSetIdData(:,'pointwiseFileIdxs');
             for ii = 1 : numel( testSetIdData.data )
                 scp.classIdx = nan;
-                scp.dd = nan;
                 scp.fileClassId = bacfClassIdxs(ii);
                 scp.fileId = sum( bacfci_ic(1:ii) == bacfci_ic(ii) );
                 blockAnnotations_ii = testSetIdData(ii,'blockAnnotations');

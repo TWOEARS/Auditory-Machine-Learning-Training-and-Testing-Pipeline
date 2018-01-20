@@ -36,7 +36,7 @@ classdef MultiExecuteLabeler < DataProcs.IdProcWrapper
                 if processed
                     fprintf( ',' );
                 else
-                    fprintf( '°' );
+                    fprintf( '~' );
                 end
                 if Core.DataPipeProc.doEarlyHasProcessedStop && ~fileProcessed
                     return;

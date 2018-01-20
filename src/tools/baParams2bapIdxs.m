@@ -5,8 +5,6 @@ baParamIdxs = repmat( emptyBapi, numel( baParams ), 1);
 
 tmp = num2cell( nan2inf( [baParams.classIdx] ) );
 [baParamIdxs.classIdx] = tmp{:};
-tmp = num2cell( nan2inf( [baParams.dd] ) );
-[baParamIdxs.dd] = tmp{:};
 tmp = num2cell( nan2inf( [baParams.nAct] + 1 ) );
 [baParamIdxs.nAct] = tmp{:};
 tmp = num2cell( nan2inf( round( ([baParams.curSnr]+35)/5 ) + 1 ) );

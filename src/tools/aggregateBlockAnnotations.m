@@ -14,11 +14,7 @@ asgn(:,4) = ~isyp & isyt;
 ag = bap(:,1);
 [ag.nAct_segStream] = deal( nan );
 
-% tmp = reshape( [bap.multiSrcsAttributability], size( bap ) );
-% tmp = num2cell( nanMean( tmp, 2 ) );
-% [ag.multiSrcsAttributability] = tmp{:};
-
-if sum( isyt ) > 0
+if any( isyt )
 ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
 [ag(isyt).curSnr] = bap(ytIdxs).curSnr;
 [ag(isyt).curNrj] = bap(ytIdxs).curNrj;
@@ -34,13 +30,17 @@ ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
 [ag(isyt).estAzm] = bap(ytIdxs).estAzm;
 end
 
-if sum( ~isyt ) > 0
+if any( ~isyt )
 tmp = reshape( double( [bap(~isyt,:).curSnr] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
 [ag(~isyt).curSnr] = bap(nIdxs).curSnr;
 [ag(~isyt).curNrj] = bap(nIdxs).curNrj;
 [ag(~isyt).curNrjOthers] = bap(nIdxs).curNrjOthers;
+[ag(~isyt).dist2bisector] = bap(nIdxs).dist2bisector;
+[ag(~isyt).blockClass] = bap(nIdxs).blockClass;
+[ag(~isyt).gtAzm] = bap(nIdxs).gtAzm;
+[ag(~isyt).estAzm] = bap(nIdxs).estAzm;
 tmp = reshape( double( [bap(~isyt,:).curSnr_db] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
@@ -51,10 +51,6 @@ tmp = reshape( double( [bap(~isyt,:).curSnr2] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
 [ag(~isyt).curSnr2] = bap(nIdxs).curSnr2;
-[ag(~isyt).dist2bisector] = bap(nIdxs).dist2bisector;
-[ag(~isyt).blockClass] = bap(nIdxs).blockClass;
-[ag(~isyt).gtAzm] = bap(nIdxs).gtAzm;
-[ag(~isyt).estAzm] = bap(nIdxs).estAzm;
 [ag(~isyt).azmErr] = deal( nan );
 end
 

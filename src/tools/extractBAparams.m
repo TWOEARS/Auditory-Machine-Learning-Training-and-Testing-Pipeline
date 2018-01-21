@@ -82,7 +82,7 @@ nCond = (yt < 0) & (~isSegId | ~cellfun( @isempty, baSrcSnr ));
 
 if any( nCond )
 % if is negative, the most dominant src in the stream is selected
-[~,curSnr2NmaxIdx] = cellfun( @(x)(max( x )), baSrcSnr2(nCond), 'UniformOutput', false );
+[~,curSnr2NmaxIdx] = cellfun( @(x)(max( x )), baSrcSnr(nCond), 'UniformOutput', false );
 curSnr2N_ = cellfun( @(x,x2)(x(x2)), baSrcSnr2(nCond), curSnr2NmaxIdx );
 curSnr2N = num2cell( min( max( curSnr2N_, -35 ), 35 ) );
 [baParams(nCond).curSnr2] = curSnr2N{:};

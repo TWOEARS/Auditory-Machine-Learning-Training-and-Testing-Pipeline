@@ -26,16 +26,16 @@ if sum( baPp ) > 0
     tmp = num2cell( baPs );
     [baParams(logical(baPp)).posSnr] = tmp{:};
 end
+baSrcAzms = {blockAnnotations.srcAzms}';
+srcAzmP_ = cellfun( @(x)(x(1)), baSrcAzms(isP) );
+tmp = num2cell( srcAzmP_ );
+[baParams(isP).gtAzm] = tmp{:};
 if isSegId
-    baSrcAzms = {blockAnnotations.srcAzms}';
     tmp = num2cell( [blockAnnotations.nSrcs_estimationError] );
     [baParams.nEstErr] = tmp{:};
     tmp = num2cell( min( cellfun( @numel, baSrcAzms ), baNsa ) );
     [baParams.nAct_segStream] = tmp{:};
     estAzm = [blockAnnotations.estAzm]';
-    srcAzmP_ = cellfun( @(x)(x(1)), baSrcAzms(isP) );
-    tmp = num2cell( srcAzmP_ );
-    [baParams(isP).gtAzm] = tmp{:};
     tmp = num2cell( estAzm );
     [baParams.estAzm] = tmp{:};
     azmErr = num2cell( abs( wrapTo180( srcAzmP_ - estAzm(isP) ) ) );

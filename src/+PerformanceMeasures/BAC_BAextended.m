@@ -123,11 +123,15 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             asgns = PerformanceMeasures.BAC_BAextended.catAsgns( asgns );
             obj.resc_b = addDpiToResc( obj.resc_b, asgns, cat( 1, bapis{:} ) );
             fprintf( ':' );
-            agAsgns = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns );
-            obj.resc_t = addDpiToResc( obj.resc_t, agAsgns, cat( 1, agBapis{:} ) );
+            if any( ~cellfun( @isempty, agAsgns ) )
+                agAsgns = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns );
+                obj.resc_t = addDpiToResc( obj.resc_t, agAsgns, cat( 1, agBapis{:} ) );
+            end
             fprintf( ':' );
-            agAsgns2 = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns2 );
-            obj.resc_t2 = addDpiToResc( obj.resc_t2, agAsgns2, cat( 1, agBapis2{:} ) );
+            if any( ~cellfun( @isempty, agAsgns2 ) )
+                agAsgns2 = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns2 );
+                obj.resc_t2 = addDpiToResc( obj.resc_t2, agAsgns2, cat( 1, agBapis2{:} ) );
+            end
             fprintf( ';' );
             fprintf( '\n' );
         end

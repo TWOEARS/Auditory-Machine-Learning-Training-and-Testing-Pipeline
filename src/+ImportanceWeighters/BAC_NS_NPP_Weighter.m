@@ -41,8 +41,8 @@ classdef BAC_NS_NPP_Weighter < ImportanceWeighters.Base
             for ii = 1 : numel( lw )
                 y_unique_ii_lidxs = y_ == y_unique(ii);
                 if y_unique(ii) > 0
-                    % because there is p vs (npp+nnp)
-                    lw(ii) = lw(ii) * sum(lwn)/sum(lwp); %#ok<AGROW> 
+                    % because there is different number of p and n classes
+                    lw(ii) = lw(ii) * numel(lwn)/numel(lwp); %#ok<AGROW> 
                 end
                 importanceWeights(y_unique_ii_lidxs) = lw(ii);
             end

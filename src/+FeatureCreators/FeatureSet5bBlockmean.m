@@ -17,7 +17,7 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
         function obj = FeatureSet5bBlockmean( )
             obj = obj@FeatureCreators.Base();
             obj.deltasLevels = 2;
-            sfProc = [];
+            obj.sfProc = [];
         end
         %% ----------------------------------------------------------------
 

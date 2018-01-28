@@ -36,7 +36,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                              'default', inf, ...
                              'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             pds{5} = struct( 'name', 'hpsRefineStages', ...
-                             'default', 1, ...
+                             'default', 0, ...
                              'valFun', @(x)(rem(x,1) == 0 && x >= 0) );
             pds{6} = struct( 'name', 'hpsSearchBudget', ...
                              'default', 8, ...
@@ -88,8 +88,15 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
             end
             obj.hpsSets = obj.sortHpsSetsByPerformance( hps );
             verboseFprintf( obj, ['\n\n==============================\n' ...
-                                      'Best HPS set performance: %f\n' ...
-                                      '==============================\n'], obj.hpsSets.perfs(end) );
+                                      'HPS sets:\n' ...
+                                      '==============================\n'] );
+            for ii = 1 : numel( obj.hpsSets.perfs )
+                paramNames = fieldnames( obj.hpsSets.params );
+                for jj = 1 : numel( paramNames )
+                    verboseFprintf( obj, [paramNames{jj} ': %f \t '], obj.hpsSets.params(ii).(paramNames{jj}) );
+                end
+                verboseFprintf( obj, '== %f\n', obj.hpsSets.perfs(ii) );
+            end
             if obj.trainWithBestHps
                 obj.coreTrainer.setParameters( false, ...
                     obj.hpsSets.params(end), ...
@@ -124,7 +131,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
         function createHpsTrainer( obj )
             obj.hpsCVtrainer = ModelTrainers.CVtrainer( obj.coreTrainer );
             obj.hpsCVtrainer.setPerformanceMeasure( obj.performanceMeasure );
-            obj.hpsCVtrainer.setData( obj.trainSet, obj.testSet );
+            obj.hpsCVtrainer.setData( obj.trainSet, [] );
             obj.hpsCVtrainer.setNumberOfFolds( obj.hpsCvFolds );
         end
         %% -------------------------------------------------------------------------------
@@ -134,7 +141,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                 case 'grid'
                     hpsSets = obj.getHpsGridSearchSets();
                 case 'random'
-                    error( 'not implemented' );
+                    hpsSets = obj.getHpsRandomSearchSets();
                 case 'intelligrid'
                     error( 'not implemented.' );
             end
@@ -163,6 +170,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
     %% -----------------------------------------------------------------------------------
     methods (Abstract, Access = protected)
         hpsSets = getHpsGridSearchSets( obj )
+        hpsSets = getHpsRandomSearchSets( obj )
         refinedHpsTrainer = refineGridTrainer( obj, hps )
     end
         

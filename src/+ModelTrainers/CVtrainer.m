@@ -52,11 +52,11 @@ classdef CVtrainer < ModelTrainers.Base
             for ff = 1 : obj.nFolds
                 foldsRecombinedData = obj.getAllFoldsButOne( ff );
                 obj.trainer.setData( foldsRecombinedData, obj.folds{ff} );
-                verboseFprintf( obj, 'Starting run %d of CV... ', ff );
+                verboseFprintf( obj, 'Starting run %d of CV... \n', ff );
                 obj.trainer.run();
                 obj.models{ff} = obj.trainer.getModel();
                 obj.foldsPerformance(ff) = double( obj.trainer.getPerformance() );
-                verboseFprintf( obj, 'Done. Performance = %f\n\n', obj.foldsPerformance(ff) );
+                verboseFprintf( obj, '\nDone. Performance = %f\n\n', obj.foldsPerformance(ff) );
                 maxPossiblePerf = mean( obj.foldsPerformance );
                 if (ff < obj.nFolds) && (maxPossiblePerf <= obj.abortPerfMin)
                     break;

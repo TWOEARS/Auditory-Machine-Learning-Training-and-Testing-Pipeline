@@ -59,6 +59,10 @@ classdef CVtrainer < ModelTrainers.Base
                 verboseFprintf( obj, '\nDone. Performance = %f\n\n', obj.foldsPerformance(ff) );
                 maxPossiblePerf = mean( obj.foldsPerformance );
                 if (ff < obj.nFolds) && (maxPossiblePerf <= obj.abortPerfMin)
+                    % assume mean performance so far is about right --
+                    % important when using CV to not only judge about the
+                    % best model
+                    obj.foldsPerformance(ff+1:end) = mean( obj.foldsPerformance(1:ff) );
                     break;
                 end
             end

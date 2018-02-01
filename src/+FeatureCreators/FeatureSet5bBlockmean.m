@@ -88,6 +88,9 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
             % last afeIdx is SoftMask
             sm = obj.afeData(3);
             x = [x, lMomentAlongDim( sm.Data, [1,2,3], 1, true )];
+            x = [x, sum( sm.Data(:) )];
+            curBA = obj.blockAnnotations(obj.baIdx);
+            x = [x, curBA.nStreams];
             % compute masked spectral features
             sf = obj.sfProc.processChunk( 0.5*rm{1}.Data + 0.5*rm{2}.Data );
             x = [x, lMomentAlongDim( sf, [1,2,3], 1, true )];
@@ -165,6 +168,7 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
                         {{'1.LMom', @(idxs)(idxs(1:2:end))},...
                          {'2.LMom', @(idxs)(idxs(2:2:end))}} ) );
                 end
+                % softmask
                 sm = obj.makeBlockFromAfe( 3, 1, ...
                     @(a)(a.Data), ...
                     {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ...
@@ -177,6 +181,14 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
                      {'2.LMom',@(idxs)(idxs(2:3:end))},...
                      {'3.LMom',@(idxs)(idxs(3:3:end))}} );
                 x = obj.concatFeats( x, xtmp );
+                sumSM = obj.block2feat( sm, ...
+                    @(b)(sum( b(:) )), ...
+                    1, @(idxs)(1),...
+                    {{'Sum',@(idxs)(1)}} );
+                x = obj.concatFeats( x, sumSM );
+                curBA = obj.blockAnnotations(obj.baIdx);
+                baNs = {curBA.nStreams,{{'nSpatialStreams'}}};
+                x = obj.concatFeats( x, baNs );
                 % compute masked spectral features
                 sf = {sf,...
                        repmat({{'Masked','SpectralFeatures','32-ch','LRmean','t'}}, 1, size( sf, 1 )),...
@@ -214,7 +226,7 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
             [classname1, classname2] = strtok( classInfo.Name, '.' );
             if isempty( classname2 ), outputDeps.featureProc = classname1;
             else outputDeps.featureProc = classname2(2:end); end
-            outputDeps.v = 1;
+            outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------
         

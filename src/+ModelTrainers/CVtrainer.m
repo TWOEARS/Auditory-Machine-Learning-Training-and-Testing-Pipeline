@@ -84,10 +84,10 @@ classdef CVtrainer < ModelTrainers.Base
                 trainers(ff).setData( obj.getAllFoldsButOne( ff ), obj.folds{ff} );
             end
             parfor ff = 1 : obj.nFolds
-                verboseFprintf( obj, '\nStarting run %d of CV... \n', ff );
+                fprintf( '\nStarting run %d of CV... \n', ff );
                 trainers(ff).run();
                 foldsPerformance_tmp(ff) = double( trainers(ff).getPerformance() );
-                verboseFprintf( obj, '\nDone with run %d of CV. Performance = %f\n\n', ...
+                fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...
                                                            ff, foldsPerformance_tmp(ff) );
             end
             for ff = 1 : obj.nFolds

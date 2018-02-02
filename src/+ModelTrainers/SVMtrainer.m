@@ -11,6 +11,16 @@ classdef SVMtrainer < ModelTrainers.Base & Parameterized
     end
 
     %% --------------------------------------------------------------------
+    methods (Access = protected)
+
+        function cpObj = copyElement( obj )
+            cpObj = copyElement@ModelTrainers.Base( obj );
+            cpObj.model = copy( obj.model );
+        end
+        %% ----------------------------------------------------------------
+    end
+    
+    %% --------------------------------------------------------------------
     methods
 
         function obj = SVMtrainer( varargin )
@@ -54,8 +64,8 @@ classdef SVMtrainer < ModelTrainers.Base & Parameterized
                 obj.c, cp, ...
                 obj.epsilon, m, obj.makeProbModel );
             if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end
-            verboseFprintf( obj, '\nSVM training with param string\n\t%s\n', svmParamStr );
-            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(x,1), size(x,2) );
+            verboseFprintf( obj, ['\nSVM training with param string\n\t%s\n' ...
+                                  '\tsize(x) = %dx%d\n'], svmParamStr, size(x,1), size(x,2) );
             obj.model.model = libsvmtrain( y, xScaled, svmParamStr );
             verboseFprintf( obj, '\n' );
         end

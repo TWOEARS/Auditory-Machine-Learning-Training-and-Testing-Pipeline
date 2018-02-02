@@ -15,6 +15,23 @@ classdef CVtrainer < ModelTrainers.Base
     end
     
     %% --------------------------------------------------------------------
+    methods (Static)
+    
+        function usePCT = useParallelComputing( newValue )
+            persistent usePCT_staticVar;
+            if isempty( usePCT_staticVar )
+                usePCT_staticVar = false;
+            end
+            if nargin > 0
+                if ~islogical( newValue ), newValue = logical( newValue ); end
+                usePCT_staticVar = newValue;
+            end
+            usePCT = usePCT_staticVar;
+        end
+        
+    end
+    
+    %% --------------------------------------------------------------------
     methods
 
         function obj = CVtrainer( trainer )
@@ -49,6 +66,38 @@ classdef CVtrainer < ModelTrainers.Base
             obj.trainer.setPerformanceMeasure( obj.performanceMeasure );
             obj.createFolds();
             obj.foldsPerformance = ones( obj.nFolds, 1 );
+            pctInstalled = ~isempty( ver( 'distcomp' ) );
+            pctLicensed = license( 'test', 'Distrib_Computing_Toolbox' );
+            if ModelTrainers.CVtrainer.useParallelComputing && pctInstalled && pctLicensed
+                obj.buildModel_pct();
+            else
+                obj.buildModel_standard();
+            end
+        end
+        %% ----------------------------------------------------------------
+        
+        function buildModel_pct( obj, ~, ~, ~ )
+            foldsPerformance_tmp = obj.foldsPerformance;
+            trainers(obj.nFolds) = obj.trainer;
+            for ff = 1 : obj.nFolds
+                trainers(ff) = copy( trainers(obj.nFolds) );
+                trainers(ff).setData( obj.getAllFoldsButOne( ff ), obj.folds{ff} );
+            end
+            parfor ff = 1 : obj.nFolds
+                verboseFprintf( obj, '\nStarting run %d of CV... \n', ff );
+                trainers(ff).run();
+                foldsPerformance_tmp(ff) = double( trainers(ff).getPerformance() );
+                verboseFprintf( obj, '\nDone with run %d of CV. Performance = %f\n\n', ...
+                                                           ff, foldsPerformance_tmp(ff) );
+            end
+            for ff = 1 : obj.nFolds
+                obj.models{ff} = trainers(ff).getModel();
+            end
+            obj.foldsPerformance = foldsPerformance_tmp;
+        end
+        %% ----------------------------------------------------------------
+        
+        function buildModel_standard( obj, ~, ~, ~ )
             for ff = 1 : obj.nFolds
                 foldsRecombinedData = obj.getAllFoldsButOne( ff );
                 obj.trainer.setData( foldsRecombinedData, obj.folds{ff} );
@@ -80,7 +129,7 @@ classdef CVtrainer < ModelTrainers.Base
     %% --------------------------------------------------------------------
     methods (Access = protected)
         
-        function model = giveTrainedModel( ~ )
+        function model = giveTrainedModel( ~ ) %#ok<STOUT>
             error( 'cvtrainer -- which model do you want?' );
         end
         %% ----------------------------------------------------------------

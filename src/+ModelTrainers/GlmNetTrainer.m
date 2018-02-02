@@ -10,6 +10,16 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
     end
 
     %% --------------------------------------------------------------------
+    methods (Access = protected)
+
+        function cpObj = copyElement( obj )
+            cpObj = copyElement@ModelTrainers.Base( obj );
+            cpObj.model = copy( obj.model );
+        end
+        %% ----------------------------------------------------------------
+    end
+    
+    %% --------------------------------------------------------------------
     methods
 
         function obj = GlmNetTrainer( varargin )
@@ -54,8 +64,8 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             else
                 family = obj.family;
             end
-            verboseFprintf( obj, '\nGlmNet training with alpha=%f\n', glmOpts.alpha );
-            verboseFprintf( obj, '\tsize(x) = %dx%d\n', size(xScaled,1), size(xScaled,2) );
+            verboseFprintf( obj, '\nGlmNet training with alpha=%f\n\tsize(x) = %dx%d\n', ...
+                                        glmOpts.alpha, size(xScaled,1), size(xScaled,2) );
             obj.model.model = glmnet( xScaled, y, family, glmOpts );
             verboseFprintf( obj, '\n' );
         end

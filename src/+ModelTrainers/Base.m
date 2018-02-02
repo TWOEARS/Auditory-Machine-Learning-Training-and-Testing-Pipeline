@@ -1,4 +1,4 @@
-classdef (Abstract) Base < handle & Parameterized
+classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -12,6 +12,17 @@ classdef (Abstract) Base < handle & Parameterized
         maxTestDataSize;
         dataSelector;
         importanceWeighter;
+    end
+    
+    %% --------------------------------------------------------------------
+    methods (Access = protected)
+
+        function cpObj = copyElement( obj )
+            cpObj = copyElement@matlab.mixin.Copyable( obj );
+            cpObj.dataSelector = copy( obj.dataSelector );
+            cpObj.importanceWeighter = copy( obj.importanceWeighter );
+        end
+        %% ----------------------------------------------------------------
     end
     
     %% --------------------------------------------------------------------
@@ -84,7 +95,7 @@ classdef (Abstract) Base < handle & Parameterized
         
         function performance = getPerformance( obj, getDatapointInfo )
             if nargin < 2, getDatapointInfo = false; end
-            verboseFprintf( obj, 'Applying model to test set...\n' );
+            verboseFprintf( obj, '\nApplying model to test set...\n' );
             model = obj.getModel();
             model.verbose( obj.verbose );
             performance = Models.Base.getPerformance( ...

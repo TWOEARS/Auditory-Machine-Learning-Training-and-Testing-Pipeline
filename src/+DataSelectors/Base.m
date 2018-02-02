@@ -1,4 +1,4 @@
-classdef (Abstract) Base < handle
+classdef (Abstract) Base < matlab.mixin.Copyable
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)

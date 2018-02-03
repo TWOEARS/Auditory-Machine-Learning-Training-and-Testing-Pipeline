@@ -103,11 +103,13 @@ classdef CVtrainer < ModelTrainers.Base
                 foldsIdx_tmp(ff) = [];
                 foldCombi = Core.IdentTrainPipeData.combineData( ...
                                                   parallelFolds_tmp.Value{foldsIdx_tmp} ); %#ok<PFBNS>
-                trainers_tmp(ff).setData( foldCombi, parallelFolds_tmp.Value{ff} );
-                trainers_tmp(ff).run();
-                foldsPerformance_tmp(ff) = double( trainers_tmp(ff).getPerformance() );
+                trainer_ff = trainers_tmp(ff);
+                trainer_ff.setData( foldCombi, parallelFolds_tmp.Value{ff} );
+                trainer_ff.run();
+                foldsPerformance_tmp(ff) = double( trainer_ff.getPerformance() );
                 fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...
                                                            ff, foldsPerformance_tmp(ff) );
+                trainers_tmp(ff) = trainer_ff;
             end
             for ff = 1 : obj.nFolds
                 obj.models{ff} = trainers_tmp(ff).getModel();

@@ -90,7 +90,7 @@ classdef IdCacheDirectory < handle
                 obj.cacheFileRWsema.releaseReadAccess();
                 obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
             end
-            cacheTree = obj.treeRoot;
+            cacheTree = obj.treeRoot; %#ok<NASGU>
             save( cacheWriteFilepath, 'cacheTree' );
             obj.cacheFileRWsema.getWriteAccess();
             copyfile( cacheWriteFilepath, cacheFilepath ); % this blocks cacheFile shorter
@@ -127,13 +127,9 @@ classdef IdCacheDirectory < handle
                     obj.cacheFileInfo(cacheFilepath) = [];
                 end
             else
-                try
-                    newCacheFileInfo = dir( cacheFilepath );
-                catch
-                    % another process just have written the cache, try again
-                    pause(1);
-                    newCacheFileInfo = dir( cacheFilepath );
-                end
+                obj.cacheFileRWsema.getReadAccess();
+                newCacheFileInfo = dir( cacheFilepath );
+                obj.cacheFileRWsema.releaseReadAccess();
                 if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
                                       newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                     obj.cacheFileRWsema.getReadAccess();

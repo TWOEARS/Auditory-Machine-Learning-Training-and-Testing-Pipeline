@@ -56,6 +56,9 @@ classdef CVtrainer < ModelTrainers.Base
                 warning( 'Executing CV with nFolds different from the number of set up disjunct data folds -- data will not be stratified wrt files on sources 2:n!' );
             end
             obj.nFolds = nFolds;
+            if nFolds ~= obj.nFolds
+                obj.parallelFolds = [];
+            end
         end
         %% ----------------------------------------------------------------
 
@@ -88,14 +91,15 @@ classdef CVtrainer < ModelTrainers.Base
         
         function buildModel_pct( obj, ~, ~, ~ )
             foldsPerformance_tmp = obj.foldsPerformance;
-            if numel( obj.parallelFolds ) ~= obj.nFolds
-                trainers_tmp(obj.nFolds) = obj.trainer;
-                for ff = 1 : obj.nFolds
-                    trainers_tmp(ff) = copy( trainers_tmp(obj.nFolds) );
-                end
+            if isempty( obj.parallelFolds )
                 obj.parallelFolds = parallel.pool.Constant( obj.folds );
             end
             parallelFolds_tmp = obj.parallelFolds;
+            trainers_tmp(obj.nFolds) = obj.trainer;
+            trainers_tmp(obj.nFolds).setData( [], [] );
+            for ff = 1 : obj.nFolds
+                trainers_tmp(ff) = copy( trainers_tmp(obj.nFolds) );
+            end
             foldsIdx = 1 : obj.nFolds;
             parfor ff = foldsIdx
                 fprintf( '\nStarting run %d of CV... \n', ff );
@@ -159,7 +163,7 @@ classdef CVtrainer < ModelTrainers.Base
             if ~obj.recreateFolds, return; end
             obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
             obj.recreateFolds = false;
-            obj.parallelFolds = {};
+            obj.parallelFolds = [];
         end
         %% ----------------------------------------------------------------
         

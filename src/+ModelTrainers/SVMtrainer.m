@@ -65,10 +65,10 @@ classdef SVMtrainer < ModelTrainers.Base & Parameterized
                 obj.c, cp, ...
                 obj.epsilon, m, obj.makeProbModel );
             if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end
-            fprintf( obj, ['\nSVM training with param string\n\t%s\n' ...
+            fprintf( ['\nSVM training with param string\n\t%s\n' ...
                                   '\tsize(x) = %dx%d\n'], svmParamStr, size(x,1), size(x,2) );
             obj.model.model = libsvmtrain( y, xScaled, svmParamStr );
-            fprintf( obj, '\n' );
+            fprintf( '\n' );
         end
         %% ----------------------------------------------------------------
 

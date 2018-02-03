@@ -101,6 +101,7 @@ classdef CVtrainer < ModelTrainers.Base
                 trainers_tmp(ff) = copy( trainers_tmp(obj.nFolds) );
             end
             foldsIdx = 1 : obj.nFolds;
+            models_tmp = cell( obj.nFolds, 1 );
             parfor ff = foldsIdx
                 fprintf( '\nStarting run %d of CV... \n', ff );
                 foldsIdx_tmp = foldsIdx;
@@ -113,11 +114,9 @@ classdef CVtrainer < ModelTrainers.Base
                 foldsPerformance_tmp(ff) = double( trainer_ff.getPerformance() );
                 fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...
                                                            ff, foldsPerformance_tmp(ff) );
-                trainers_tmp(ff) = trainer_ff;
+                models_tmp{ff} = trainer_ff.getModel();
             end
-            for ff = 1 : obj.nFolds
-                obj.models{ff} = trainers_tmp(ff).getModel();
-            end
+            obj.models = models_tmp;
             obj.foldsPerformance = foldsPerformance_tmp;
         end
         %% ----------------------------------------------------------------

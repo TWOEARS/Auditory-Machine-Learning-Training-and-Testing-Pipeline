@@ -102,8 +102,8 @@ classdef CVtrainer < ModelTrainers.Base
                 foldsIdx_tmp = foldsIdx;
                 foldsIdx_tmp(ff) = [];
                 foldCombi = Core.IdentTrainPipeData.combineData( ...
-                                                        parallelFolds_tmp{foldsIdx_tmp} ); %#ok<PFBNS>
-                trainers_tmp(ff).setData( foldCombi, parallelFolds_tmp{ff} );
+                                                  parallelFolds_tmp.Value{foldsIdx_tmp} ); %#ok<PFBNS>
+                trainers_tmp(ff).setData( foldCombi, parallelFolds_tmp.Value{ff} );
                 trainers_tmp(ff).run();
                 foldsPerformance_tmp(ff) = double( trainers_tmp(ff).getPerformance() );
                 fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...

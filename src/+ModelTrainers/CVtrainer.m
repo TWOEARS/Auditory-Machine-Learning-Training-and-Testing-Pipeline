@@ -3,7 +3,7 @@ classdef CVtrainer < ModelTrainers.Base
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
         trainer;
-        parallelTrainers;
+        parallelFolds;
         nFolds;
         folds;
         foldsPerformance;
@@ -88,24 +88,29 @@ classdef CVtrainer < ModelTrainers.Base
         
         function buildModel_pct( obj, ~, ~, ~ )
             foldsPerformance_tmp = obj.foldsPerformance;
-            if numel( obj.parallelTrainers ) ~= obj.nFolds
-                obj.parallelTrainers(obj.nFolds) = obj.trainer;
+            if numel( obj.parallelFolds ) ~= obj.nFolds
+                trainers_tmp(obj.nFolds) = obj.trainer;
                 for ff = 1 : obj.nFolds
-                    obj.parallelTrainers(ff) = copy( obj.parallelTrainers(obj.nFolds) );
-                    obj.parallelTrainers(ff).setData( obj.getAllFoldsButOne( ff ), obj.folds{ff} );
+                    trainers_tmp(ff) = copy( trainers_tmp(obj.nFolds) );
                 end
-                obj.parallelTrainers = parallel.pool.Constant( obj.parallelTrainers );
+                obj.parallelFolds = parallel.pool.Constant( obj.folds );
             end
-            parallelTrainers_tmp = obj.parallelTrainers;
-            parfor ff = 1 : obj.nFolds
+            parallelFolds_tmp = obj.parallelFolds;
+            foldsIdx = 1 : obj.nFolds;
+            parfor ff = foldsIdx
                 fprintf( '\nStarting run %d of CV... \n', ff );
-                parallelTrainers_tmp(ff).run();
-                foldsPerformance_tmp(ff) = double( parallelTrainers_tmp(ff).getPerformance() );
+                foldsIdx_tmp = foldsIdx;
+                foldsIdx_tmp(ff) = [];
+                foldCombi = Core.IdentTrainPipeData.combineData( ...
+                                                        parallelFolds_tmp{foldsIdx_tmp} ); %#ok<PFBNS>
+                trainers_tmp(ff).setData( foldCombi, parallelFolds_tmp{ff} );
+                trainers_tmp(ff).run();
+                foldsPerformance_tmp(ff) = double( trainers_tmp(ff).getPerformance() );
                 fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...
                                                            ff, foldsPerformance_tmp(ff) );
             end
             for ff = 1 : obj.nFolds
-                obj.models{ff} = parallelTrainers_tmp(ff).getModel();
+                obj.models{ff} = trainers_tmp(ff).getModel();
             end
             obj.foldsPerformance = foldsPerformance_tmp;
         end
@@ -152,8 +157,7 @@ classdef CVtrainer < ModelTrainers.Base
             if ~obj.recreateFolds, return; end
             obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
             obj.recreateFolds = false;
-            coreTrainerClass = metaclass(obj.trainer);
-            obj.parallelTrainers = feval( [coreTrainerClass.Name '.empty'] );
+            obj.parallelFolds = {};
         end
         %% ----------------------------------------------------------------
         

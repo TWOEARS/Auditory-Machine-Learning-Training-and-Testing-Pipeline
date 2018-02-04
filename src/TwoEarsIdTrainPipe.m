@@ -63,22 +63,39 @@ classdef TwoEarsIdTrainPipe < handle
             ip = inputParser;
             ip.addOptional( 'hrir', ...
                             'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
-            ip.addOptional( 'sceneCfgDataUseRatio', 1 );
-            ip.addOptional( 'sceneCfgPrioDataUseRatio', 1 );
+            ip.addOptional( 'sceneCfgDataUseRatio', inf );
+            ip.addOptional( 'sceneCfgPrioDataUseRatio', inf );
             ip.addOptional( 'selectPrioClass', [] );
             ip.addOptional( 'dataSelector', DataSelectors.IgnorantSelector() );
             ip.addOptional( 'loadBlockAnnotations', false );
             ip.addOptional( 'gatherFeaturesProc', true );
+            ip.addOptional( 'trainerFeedDataType', @single );
             ip.addOptional( 'stopAfterProc', inf );
             ip.addOptional( 'fs', 44100 );
             ip.addOptional( 'wavFoldAssignments', {} );
             ip.addOptional( 'classesOnMultipleSourcesFilter', {} );
+            ip.addOptional( 'pipeReUse', [] );
             ip.parse( varargin{:} );
+            hrir = ip.Results.hrir;
+            fs = ip.Results.fs;
+            classesOnMultipleSourcesFilter = ip.Results.classesOnMultipleSourcesFilter;
+            wavFoldAssignments = ip.Results.wavFoldAssignments;
+            useGatherFeaturesProc = ip.Results.gatherFeaturesProc;
+            trainerFeedDataType = ip.Results.trainerFeedDataType;
+            loadBlockAnnotations = ip.Results.loadBlockAnnotations;
+            sceneCfgDataUseRatio = ip.Results.sceneCfgDataUseRatio;
+            sceneCfgPrioDataUseRatio = ip.Results.sceneCfgPrioDataUseRatio;
+            selectPrioClass = ip.Results.selectPrioClass;
+            dataSelector = ip.Results.dataSelector;
+            stopAfterProc = ip.Results.stopAfterProc;
+            pipeReUseIdxs = ip.Results.pipeReUse;
+
             obj.setupData( true );
             obj.pipeline.resetDataProcs();
-            binSim = DataProcs.SceneEarSignalProc( DataProcs.IdSimConvRoomWrapper( ...
-                                                      ip.Results.hrir, ip.Results.fs ),...
-                                              ip.Results.classesOnMultipleSourcesFilter );
+            
+            binSim = DataProcs.SceneEarSignalProc( ...
+                                            DataProcs.IdSimConvRoomWrapper( hrir, fs ),...
+                                                         classesOnMultipleSourcesFilter );
             if isempty( obj.blockCreator )
                 obj.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 0.4 );
             end
@@ -93,38 +110,40 @@ classdef TwoEarsIdTrainPipe < handle
             if ~isempty( obj.ksWrapper )
                 obj.ksWrapper.setAfeDataIndexOffset( numel( afeReqs ) );
                 afeReqs = [afeReqs obj.ksWrapper.getAfeRequests];
+            else
+                pipeReUseIdxs(4:end) = pipeReUseIdxs(4:end) + 1;
             end
             obj.pipeline.featureCreator = obj.featureCreator;
-            multiCfgProcs{1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
-                                                                               binSim, ...
-                                                      [], ip.Results.wavFoldAssignments );
+            multiCfgProcs{1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim, ...
+                                                                 [], wavFoldAssignments );
             multiCfgProcs{2} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
                    DataProcs.ParallelRequestsAFEmodule( binSim.getDataFs(), afeReqs ), ...
-                                                      [], ip.Results.wavFoldAssignments );
+                                                                 [], wavFoldAssignments );
             multiCfgProcs{3} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
                                                                      obj.blockCreator, ...
-                                                      [], ip.Results.wavFoldAssignments );
+                                                                 [], wavFoldAssignments );
             if ~isempty( obj.ksWrapper )
                 multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
                                                                         obj.ksWrapper, ...
-                                                      [], ip.Results.wavFoldAssignments );
+                                                                 [], wavFoldAssignments );
             end
             multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
                                                                    obj.featureCreator, ...
-                                                      [], ip.Results.wavFoldAssignments );
+                                                                 [], wavFoldAssignments );
             multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
                                                                      obj.labelCreator, ...
-                                                      [], ip.Results.wavFoldAssignments );
-            if ip.Results.gatherFeaturesProc
-                gatherFeaturesProc = DataProcs.GatherFeaturesProc( ip.Results.loadBlockAnnotations );
+                                                                 [], wavFoldAssignments );
+            if useGatherFeaturesProc
+                gatherFeaturesProc = DataProcs.GatherFeaturesProc( loadBlockAnnotations, ...
+                                                                   trainerFeedDataType );
                 gatherFeaturesProc.setSceneCfgDataUseRatio( ...
-                        ip.Results.sceneCfgDataUseRatio, ip.Results.dataSelector, ...
-                        ip.Results.sceneCfgPrioDataUseRatio, ip.Results.selectPrioClass );
+                                              sceneCfgDataUseRatio, dataSelector, ...
+                                              sceneCfgPrioDataUseRatio, selectPrioClass );
                 multiCfgProcs{end+1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, ...
                                                                    gatherFeaturesProc, ...
-                                                      [], ip.Results.wavFoldAssignments );
+                                                                 [], wavFoldAssignments );
             end
-            for ii = 1 : min( numel( multiCfgProcs ), ip.Results.stopAfterProc )
+            for ii = 1 : min( numel( multiCfgProcs ), stopAfterProc )
                 multiCfgProcs{ii}.setSceneConfig( sceneCfgs );
                 obj.pipeline.addDataPipeProc( multiCfgProcs{ii} );
             end

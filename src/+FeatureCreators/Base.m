@@ -69,7 +69,7 @@ classdef Base < Core.IdProcInterface
                 end
             end
             out = obj.getOutput( varargin{:} );
-            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            fdescFilepath = [obj.lastFolder{obj.sceneId,obj.foldId} filesep 'fdesc.mat'];
             if ~obj.descriptionBuilt 
                 if exist( fdescFilepath, 'file' )
                     fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );

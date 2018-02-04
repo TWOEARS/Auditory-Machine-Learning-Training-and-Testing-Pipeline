@@ -23,6 +23,7 @@ classdef (Abstract) IdProcInterface < handle
         foldId = 1;
         saveImmediately = true;
         setLoadSemaphore = true;
+        secondCfgCheck = true;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -89,6 +90,7 @@ classdef (Abstract) IdProcInterface < handle
             obj.sceneId = 1;
             obj.foldId = 1;
             obj.setLoadSemaphore = true;
+            obj.secondCfgCheck = true;
         end
         %% -------------------------------------------------------------------------------
         
@@ -128,6 +130,7 @@ classdef (Abstract) IdProcInterface < handle
             obj.inputProc.sceneId = obj.sceneId;
             obj.inputProc.foldId = obj.foldId;
             obj.inputProc.setLoadSemaphore = obj.setLoadSemaphore;
+            obj.inputProc.secondCfgCheck = obj.secondCfgCheck;
             [inData, inDataFilepath] = ...
                               obj.inputProc.loadProcessedData( wavFilepath, varargin{:} );
         end
@@ -194,10 +197,12 @@ classdef (Abstract) IdProcInterface < handle
             currentConfig = obj.getOutputDependencies();
             if size( obj.lastFolder, 1 ) >= obj.sceneId ...
                     && size( obj.lastFolder, 2 ) >= obj.foldId ...
-                    && ~isempty( obj.lastFolder{obj.sceneId,obj.foldId} ) ...
-                    && isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId,obj.foldId} )
-                currentFolder = obj.lastFolder{obj.sceneId,obj.foldId};
-                return;
+                    && ~isempty( obj.lastFolder{obj.sceneId,obj.foldId} ) 
+                if ~obj.secondCfgCheck ...
+                        || isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId,obj.foldId} )
+                    currentFolder = obj.lastFolder{obj.sceneId,obj.foldId};
+                    return;
+                end
             end
             obj.cacheDirectory.loadCacheDirectory();
             newFolderName = ['.' obj.procCacheFolderNames ...

@@ -56,8 +56,8 @@ classdef SVMtrainer < ModelTrainers.Base & Parameterized
             [x, y, cp] = obj.prepareData( x, y );
             obj.model = Models.SVMmodel();
             obj.model.useProbModel = obj.makeProbModel;
-            xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-            m = ceil( numel(  x  ) * 8 / (1024 * 1024) );
+            x = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
+            m = ceil( numel(  x  ) * 8 / (1024 * 1000) );
             m = min( 2*m, 2000 );
             svmParamStrScheme = '-t %d -g %e -c %e -w-1 1 -w1 %e -e %e -m %d -b %d -h 0';
             svmParamStr = sprintf( svmParamStrScheme, ...
@@ -67,7 +67,7 @@ classdef SVMtrainer < ModelTrainers.Base & Parameterized
             if ~obj.verbose, svmParamStr = [svmParamStr, ' -q']; end
             fprintf( ['\nSVM training with param string\n\t%s\n' ...
                                   '\tsize(x) = %dx%d\n'], svmParamStr, size(x,1), size(x,2) );
-            obj.model.model = libsvmtrain( y, xScaled, svmParamStr );
+            obj.model.model = libsvmtrain( double( y ), double( x ), svmParamStr );
             fprintf( '\n' );
         end
         %% ----------------------------------------------------------------

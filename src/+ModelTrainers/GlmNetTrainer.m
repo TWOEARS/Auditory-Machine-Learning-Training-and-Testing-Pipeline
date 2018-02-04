@@ -51,22 +51,21 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             obj.model = Models.GlmNetModel();
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;
-            xScaled = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
-            clear x;
+            x = obj.model.scale2zeroMeanUnitVar( x, 'saveScalingFactors' );
             glmOpts.alpha = obj.alpha;
             glmOpts.nlambda = obj.nLambda;
             if ~isempty( obj.lambda )
                 glmOpts.lambda = obj.lambda;
             end
             if strcmpi( obj.family, 'multinomialGrouped' )
-                family = 'multinomial';
+                family = 'multinomial'; %#ok<*PROPLC>
                 glmOpts.mtype = 'grouped';
             else
                 family = obj.family;
             end
             fprintf( '\nGlmNet training with alpha=%f\n\tsize(x) = %dx%d\n\n', ...
-                                        glmOpts.alpha, size(xScaled,1), size(xScaled,2) );
-            obj.model.model = glmnet( xScaled, y, family, glmOpts );
+                                        glmOpts.alpha, size(x,1), size(x,2) );
+            obj.model.model = glmnet( double( x ), double( y ), family, glmOpts );
         end
         %% ----------------------------------------------------------------
 

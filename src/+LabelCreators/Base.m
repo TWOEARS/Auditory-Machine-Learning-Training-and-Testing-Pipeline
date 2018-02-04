@@ -42,7 +42,6 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             in = obj.loadInputData( wavFilepath, 'blockAnnotations' );
             obj.y = [];
             obj.ysi = {};
@@ -66,7 +65,6 @@ classdef Base < Core.IdProcInterface
                                                            obj, wavFilepath, 'y', 'ysi' );
             obj.y = tmpOut.y;
             obj.ysi = tmpOut.ysi;
-            obj.inputProc.sceneId = obj.sceneId;
             if nargin < 3  || (any( strcmpi( 'x', varargin ) ) && (any( strcmpi( 'a', varargin ) )  || strcmpi( obj.removeUnclearBlocks, 'time-wise' )))
                 inData = obj.loadInputData( wavFilepath, 'x', 'blockAnnotations' );
                 obj.x = inData.x;

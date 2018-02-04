@@ -33,7 +33,6 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             inData = obj.loadInputData( wavFilepath );
             obj.blockAnnotations = inData.blockAnnotations;
             obj.x = [];
@@ -64,7 +63,6 @@ classdef Base < Core.IdProcInterface
                 if isfield( tmpOut, 'blockAnnotations' ) % new version
                     obj.blockAnnotations = tmpOut.blockAnnotations;
                 else % old version; ba was saved in blockCreator cache
-                    obj.inputProc.sceneId = obj.sceneId;
                     inData = obj.loadInputData( wavFilepath, 'blockAnnotations' );
                     obj.blockAnnotations = inData.blockAnnotations;
                     obj.save( wavFilepath );

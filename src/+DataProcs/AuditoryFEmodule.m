@@ -47,7 +47,6 @@ classdef AuditoryFEmodule < Core.IdProcInterface
         %% ----------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             in = obj.loadInputData( wavFilepath, 'earSout', 'annotations' );
             obj.output.afeData = obj.makeAFEdata( in.earSout );
             obj.output.annotations = in.annotations;

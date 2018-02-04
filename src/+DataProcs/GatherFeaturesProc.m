@@ -38,7 +38,6 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             if obj.loadBlockAnnotations
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi', 'a' );
                 xy.blockAnnotations = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a, xy.y );
@@ -53,6 +52,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
             end
             obj.inputProc.inputProc.sceneId = obj.sceneId;
+            obj.inputProc.inputProc.foldId = obj.foldId;
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );

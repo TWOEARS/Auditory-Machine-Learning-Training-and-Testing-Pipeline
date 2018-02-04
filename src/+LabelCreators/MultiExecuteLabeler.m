@@ -53,7 +53,6 @@ classdef MultiExecuteLabeler < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             in = obj.individualLabelers{1}.loadInputData( wavFilepath, 'blockAnnotations' );
             for ii = 1 : numel( obj.individualLabelers )
                 if ~obj.individualLabelers{ii}.hasFileAlreadyBeenProcessed( wavFilepath )

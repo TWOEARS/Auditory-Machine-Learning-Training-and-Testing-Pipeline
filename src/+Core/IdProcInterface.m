@@ -119,6 +119,8 @@ classdef (Abstract) IdProcInterface < handle
         %% -------------------------------------------------------------------------------
         
         function [inData, inDataFilepath] = loadInputData( obj, wavFilepath, varargin )
+            obj.inputProc.sceneId = obj.sceneId;
+            obj.inputProc.foldId = obj.foldId;
             [inData, inDataFilepath] = ...
                               obj.inputProc.loadProcessedData( wavFilepath, varargin{:} );
         end

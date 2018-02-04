@@ -81,6 +81,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             if obj.loadBlockAnnotations
                 dataFile.blockAnnotations = [dataFile.blockAnnotations; xy.blockAnnotations(useIdxs)];
             end
+            obj.dataSelector.connectData( [] );
             fprintf( '.' );
         end
         %% -------------------------------------------------------------------------------

@@ -22,6 +22,7 @@ classdef (Abstract) IdProcInterface < handle
         sceneId = 1;
         foldId = 1;
         saveImmediately = true;
+        setLoadSemaphore = true;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -87,6 +88,7 @@ classdef (Abstract) IdProcInterface < handle
             obj.lastConfig = {};
             obj.sceneId = 1;
             obj.foldId = 1;
+            obj.setLoadSemaphore = true;
         end
         %% -------------------------------------------------------------------------------
         
@@ -112,15 +114,20 @@ classdef (Abstract) IdProcInterface < handle
 
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
+            if obj.setLoadSemaphore
+                obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
+            end
             out = load( outFilepath, varargin{:} );
-            removefilesemaphore( obj.outFileSema );
+            if obj.setLoadSemaphore
+                removefilesemaphore( obj.outFileSema );
+            end
         end
         %% -------------------------------------------------------------------------------
         
         function [inData, inDataFilepath] = loadInputData( obj, wavFilepath, varargin )
             obj.inputProc.sceneId = obj.sceneId;
             obj.inputProc.foldId = obj.foldId;
+            obj.inputProc.setLoadSemaphore = obj.setLoadSemaphore;
             [inData, inDataFilepath] = ...
                               obj.inputProc.loadProcessedData( wavFilepath, varargin{:} );
         end

@@ -38,6 +38,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
+            obj.setLoadSemaphore = false;
             if obj.loadBlockAnnotations
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi', 'a' );
                 xy.blockAnnotations = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a, xy.y );

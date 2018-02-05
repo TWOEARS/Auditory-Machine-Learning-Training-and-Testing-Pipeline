@@ -18,10 +18,10 @@ classdef BAC_NS_NPP_Weighter < ImportanceWeighters.Base
     
         function [importanceWeights] = getImportanceWeights( obj, sampleIds )
             importanceWeights = ones( size( sampleIds ) );
-            y = obj.data(:,'y');
+            y = getDataHelper( obj.data, 'y' );
             y = y(sampleIds,:);
             assert( size( y, 2 ) == 1 );
-            ba = obj.data(:,'blockAnnotations');
+            ba = getDataHelper( obj.data, 'blockAnnotations' );
             ba = ba(sampleIds);
             ba_ns = cat( 1, ba.nActivePointSrcs );
             ba_pp = cat( 1, ba.posPresent );

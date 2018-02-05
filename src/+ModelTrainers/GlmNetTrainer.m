@@ -47,7 +47,7 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
         %% ----------------------------------------------------------------
 
         function buildModel( obj, x, y, iw )
-            glmOpts.weights = iw;
+            glmOpts.weights = iw(:);
             obj.model = Models.GlmNetModel();
             x(isnan(x)) = 0;
             x(isinf(x)) = 0;

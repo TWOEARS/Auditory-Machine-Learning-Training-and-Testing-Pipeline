@@ -22,7 +22,7 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
     
         function [selectFilter] = getDataSelection( obj, sampleIdsIn, maxDataSize )
             selectFilter = true( size( sampleIdsIn ) );
-            ba = obj.getData( 'blockAnnotations' );
+            ba = getDataHelper( obj.data, 'blockAnnotations' );
             ba = ba(sampleIdsIn);
             ba_ns = cat( 1, ba.nActivePointSrcs );
             if obj.discardNsNotNa
@@ -40,7 +40,7 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             end
             ba_pp = cat( 1, ba.posPresent );
             clear ba;
-            y = obj.getData( 'y' );
+            y = getDataHelper( obj.data, 'y' );
             y = y(sampleIdsIn);
             y_ = y .* (ba_ns+1) .* (1 + ~ba_pp * 9);
             selectFilter = selectFilter(:) & (y_(:) ~= 1); % pos although ba_ns==0

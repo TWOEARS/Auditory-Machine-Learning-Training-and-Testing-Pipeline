@@ -59,37 +59,12 @@ classdef (Abstract) Base < matlab.mixin.Copyable
             if nargin < 4  || isempty( maxDataSize )
                 maxDataSize = inf; 
             end
-            if nargin < 5  || isempty( dataSelector )
-                dataSelector = DataSelectors.IgnorantSelector(); 
-            end
-            dataSelector.connectData( testSet );
-            if nargin < 6  || isempty( importanceWeighter )
-                importanceWeighter = ImportanceWeighters.IgnorantWeighter(); 
-            end
-            importanceWeighter.connectData( testSet );
+            [x,yTrue,iw,vo,~,sampleIds] = ModelTrainers.Base.getSelectedData( ...
+                                 testSet, maxDataSize, dataSelector, importanceWeighter );
             if nargin < 7  || isempty( getDatapointInfo )
                 getDatapointInfo = false; 
             end
-            x = testSet(:,'x');
-            yTrue = testSet(:,'y');
-            sampleIds = (1:numel( yTrue ))';
-            nanXidxs = any( isnan( x ), 2 );
-            infXidxs = any( isinf( x ), 2 );
-            if any( nanXidxs ) || any( infXidxs ) 
-                warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
-                x(nanXidxs | infXidxs,:) = [];
-                yTrue(nanXidxs | infXidxs,:) = [];
-                sampleIds(nanXidxs | infXidxs) = [];
-            end
-            if size( yTrue, 1 ) > maxDataSize
-                selectFilter = dataSelector.getDataSelection( sampleIds, maxDataSize );
-                verboseFprintf( model, dataSelector.verboseOutput );
-                x = x(selectFilter,:);
-                yTrue = yTrue(selectFilter,:);
-                sampleIds = sampleIds(selectFilter);
-            end
-            iw = importanceWeighter.getImportanceWeights( sampleIds );
-            verboseFprintf( model, importanceWeighter.verboseOutput );
+            verboseFprintf( model, vo );
             if getDatapointInfo
                 dpi.fileIdxs = testSet(:,'pointwiseFileIdxs');
                 dpi.fileIdxs = dpi.fileIdxs(sampleIds);
@@ -106,7 +81,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )
-                perf(ii) = perfMeasure( yTrue, yModel(:,ii), iw, dpi, testSet );
+                perf(ii) = perfMeasure( yTrue, yModel(:,ii), iw(:), dpi, testSet ); %#ok<AGROW>
             end
         end
         %% ----------------------------------------------------------------

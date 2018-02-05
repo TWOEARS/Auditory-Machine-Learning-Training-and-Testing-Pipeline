@@ -100,60 +100,19 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
             model.verbose( obj.verbose );
             performance = Models.Base.getPerformance( ...
                 model, obj.testSet, obj.performanceMeasure, ...
-                obj.maxTestDataSize, obj.dataSelector, obj.importanceWeighter, getDatapointInfo );
+                obj.maxTestDataSize, obj.dataSelector, obj.importanceWeighter, ...
+                getDatapointInfo );
         end
         %% ----------------------------------------------------------------
 
         function run( obj )
-            obj.dataSelector.connectData( obj.trainSet );
-            obj.importanceWeighter.connectData( obj.trainSet );
-            [x,y,sampleIds] = obj.getPermutedTrainingData();
-            nanXidxs = any( isnan( x ), 2 );
-            infXidxs = any( isinf( x ), 2 );
-            if any( nanXidxs ) || any( infXidxs ) 
-                warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
-                x(nanXidxs | infXidxs,:) = [];
-                y(nanXidxs | infXidxs,:) = [];
-                sampleIds(nanXidxs | infXidxs) = [];
-            end
-            if size( y, 1 ) > obj.maxDataSize
-                selectFilter = obj.dataSelector.getDataSelection( sampleIds, obj.maxDataSize );
-                verboseFprintf( obj, obj.dataSelector.verboseOutput );
-                x = x(selectFilter,:);
-                y = y(selectFilter,:);
-                sampleIds = sampleIds(selectFilter);
-            end
-            iw = obj.importanceWeighter.getImportanceWeights( sampleIds );
-            verboseFprintf( obj, obj.importanceWeighter.verboseOutput );
+            [x,y,iw,verbOutput] = ModelTrainers.Base.getSelectedData( ...
+                                               obj.trainSet, obj.maxDataSize, ...
+                                               obj.dataSelector, obj.importanceWeighter );
+            verboseFprintf( obj, verbOutput );
             obj.buildModel( x, y, iw );
         end
         %% ----------------------------------------------------------------
-
-        function [x,y,permutationIdxs] = getPermutedTrainingData( obj )
-            x = obj.trainSet(:,'x');
-            if isempty( x )
-                warning( 'There is no data to train the model.' ); 
-                y = [];
-                permutationIdxs = [];
-                return;
-            else
-                y = obj.trainSet(:,'y');
-            end
-            % apply feature mask, if set
-            fmask = ModelTrainers.Base.featureMask;
-            if ~isempty( fmask )
-                p_feat = size( x, 2 );
-                p_mask = size( ModelTrainers.Base.featureMask, 1 );
-                fmask = fmask( 1 : min( p_feat, p_mask ) );
-                x = x(:,fmask);
-            end
-            % permute data
-            permutationIdxs = randperm( size( y, 1 ) )';
-            x = x(permutationIdxs,:);
-            y = y(permutationIdxs,:);
-        end
-        %% ----------------------------------------------------------------
-
         
     end
 
@@ -170,6 +129,75 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
     %% --------------------------------------------------------------------
     methods (Static)
     
+        function [x,y,iw,verbOutput,ba,sampleIds] = getSelectedData( dataset, ...
+                                                                     maxDataSize, ...
+                                                                     dataSelector, ...
+                                                                     importanceWeighter )
+            y = getDataHelper( dataset, 'y' );
+            verbOutput = [];
+            if isempty( y )
+                x = [];
+                iw = [];
+                return;
+            end
+            x = getDataHelper( dataset, 'x' );
+            sampleIds = 1 : size( x, 1 );
+            if nargout >= 5
+                ba = getDataHelper( dataset, 'blockAnnotations' );
+            end
+            nanXidxs = any( isnan( x ), 2 );
+            infXidxs = any( isinf( x ), 2 );
+            if any( nanXidxs ) || any( infXidxs ) 
+                warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
+                x(nanXidxs | infXidxs,:) = [];
+                y(nanXidxs | infXidxs,:) = [];
+                if nargout >= 5
+                    ba(nanXidxs | infXidxs) = [];
+                end
+                sampleIds(nanXidxs | infXidxs) = [];
+            end
+            if nargin < 3  || isempty( dataSelector )
+                dataSelector = DataSelectors.IgnorantSelector(); 
+            end
+            dataSelector.connectData( dataset );
+            if numel( sampleIds ) > maxDataSize
+                selectFilter = dataSelector.getDataSelection( sampleIds, maxDataSize );
+                verbOutput = dataSelector.verboseOutput;
+                x = x(selectFilter,:);
+                y = y(selectFilter,:);
+                if nargout >= 5
+                    ba = ba(selectFilter);
+                end
+                sampleIds = sampleIds(selectFilter);
+            end
+            dataSelector.connectData( [] );
+            % apply feature mask, if set
+            fmask = ModelTrainers.Base.featureMask;
+            if ~isempty( fmask )
+                nFeat = size( x, 2 );
+                nMask = numel( ModelTrainers.Base.featureMask );
+                fmask = fmask(1:min( nFeat, nMask ));
+                x = x(:,fmask);
+            end
+            % permute data
+            permIds = randperm( size( y, 1 ) )';
+            x = x(permIds,:);
+            y = y(permIds,:);
+            if nargout >= 5
+                ba = ba(permIds);
+            end
+            sampleIds = sampleIds(permIds);
+            if ~isempty( importanceWeighter )
+                importanceWeighter.connectData( dataset );
+                iw = importanceWeighter.getImportanceWeights( sampleIds );
+                verbOutput = [verbOutput importanceWeighter.verboseOutput];
+                importanceWeighter.connectData( [] );
+            else
+                iw = ones( size( x, 1 ), 1 );
+            end
+        end
+        %% ----------------------------------------------------------------
+        
         function fm = featureMask( setNewMask, newmask )
             % Set/Reset the featureMask and return it.
             %   featureMask() reset the featurMask
@@ -186,6 +214,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
             end
             fm = featureMask;
         end
+        %% ----------------------------------------------------------------
         
     end
 

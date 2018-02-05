@@ -14,7 +14,7 @@ classdef BAC_Selector < DataSelectors.Base
     
         function [selectFilter] = getDataSelection( obj, sampleIdsIn, maxDataSize )
             selectFilter = true( size( sampleIdsIn ) );
-            y = obj.getData( 'y' );
+            y = getDataHelper( obj.data, 'y' );
             y = y(sampleIdsIn);
             [throwoutIdxs,nClassSamples,nPerLabel,labels] = ...
                           DataSelectors.BAC_Selector.getBalThrowoutIdxs( y, maxDataSize );

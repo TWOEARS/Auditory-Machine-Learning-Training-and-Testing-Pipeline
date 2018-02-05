@@ -81,17 +81,20 @@ classdef CVtrainer < ModelTrainers.Base
             obj.foldsPerformance = ones( obj.nFolds, 1 );
             pctInstalled = ~isempty( ver( 'distcomp' ) );
             pctLicensed = license( 'test', 'Distrib_Computing_Toolbox' );
+            freemem = memReport() %#ok<*NOPRT,*NASGU> % for debugging
             if ModelTrainers.CVtrainer.useParallelComputing && pctInstalled && pctLicensed
                 obj.buildModel_pct();
             else
                 obj.buildModel_standard();
             end
+            freemem = memReport() % for debugging
         end
         %% ----------------------------------------------------------------
         
         function buildModel_pct( obj, ~, ~, ~ )
             foldsPerformance_tmp = obj.foldsPerformance;
             if isempty( obj.parallelFolds )
+                parpool( min( obj.nFolds, feature( 'numcores' ) ) );
                 obj.parallelFolds = parallel.pool.Constant( obj.folds );
             end
             parallelFolds_tmp = obj.parallelFolds;
@@ -102,19 +105,26 @@ classdef CVtrainer < ModelTrainers.Base
             end
             foldsIdx = 1 : obj.nFolds;
             models_tmp = cell( obj.nFolds, 1 );
+            freemem = memReport() % for debugging
             parfor ff = foldsIdx
                 fprintf( '\nStarting run %d of CV... \n', ff );
+                freemem = memReport() % for debugging
                 foldsIdx_tmp = foldsIdx;
                 foldsIdx_tmp(ff) = [];
-                foldCombi = Core.IdentTrainPipeData.combineData( ...
-                                                  parallelFolds_tmp.Value{foldsIdx_tmp} ); %#ok<PFBNS>
+                fc = cat( 1, parallelFolds_tmp.Value{foldsIdx_tmp} ); %#ok<PFBNS>
+                foldCombi = struct( 'x', {cat( 1, fc(:).x )}, ...
+                                    'y', {cat( 1, fc(:).y )}, ...
+                                    'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
                 trainer_ff = trainers_tmp(ff);
                 trainer_ff.setData( foldCombi, parallelFolds_tmp.Value{ff} );
+                freemem = memReport() % for debugging
                 trainer_ff.run();
+                freemem = memReport() % for debugging
                 foldsPerformance_tmp(ff) = double( trainer_ff.getPerformance() );
                 fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...
                                                            ff, foldsPerformance_tmp(ff) );
                 models_tmp{ff} = trainer_ff.getModel();
+                freemem = memReport() % for debugging
             end
             obj.models = models_tmp;
             obj.foldsPerformance = foldsPerformance_tmp;
@@ -123,14 +133,22 @@ classdef CVtrainer < ModelTrainers.Base
         
         function buildModel_standard( obj, ~, ~, ~ )
             for ff = 1 : obj.nFolds
-                foldsRecombinedData = obj.getAllFoldsButOne( ff );
+                foldsIdx = 1 : obj.nFolds;
+                foldsIdx(ff) = [];
+                fc = cat( 1, obj.folds{foldsIdx} ); 
+                foldsRecombinedData = struct( 'x', {cat( 1, fc(:).x )}, ...
+                                              'y', {cat( 1, fc(:).y )}, ...
+                                              'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
                 obj.trainer.setData( foldsRecombinedData, obj.folds{ff} );
                 verboseFprintf( obj, 'Starting run %d of CV... \n', ff );
+                freemem = memReport() % for debugging
                 obj.trainer.run();
+                freemem = memReport() % for debugging
                 obj.models{ff} = obj.trainer.getModel();
                 obj.foldsPerformance(ff) = double( obj.trainer.getPerformance() );
                 verboseFprintf( obj, '\nDone. Performance = %f\n\n', obj.foldsPerformance(ff) );
                 maxPossiblePerf = mean( obj.foldsPerformance );
+                freemem = memReport() % for debugging
                 if (ff < obj.nFolds) && (maxPossiblePerf <= obj.abortPerfMin)
                     % assume mean performance so far is about right --
                     % important when using CV to not only judge about the
@@ -161,6 +179,14 @@ classdef CVtrainer < ModelTrainers.Base
         function createFolds( obj )
             if ~obj.recreateFolds, return; end
             obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
+            maxFoldDataSize = ceil( max( obj.trainer.maxDataSize / obj.nFolds, ...
+                                         obj.trainer.maxTestDataSize ) );
+            for ff = 1 : obj.nFolds
+                fprintf( '\nPreparing fold %d\n', ff );
+                [x,y,~,~,ba] = ModelTrainers.Base.getSelectedData( ...
+                           obj.folds{ff}, maxFoldDataSize, obj.trainer.dataSelector, [] );
+                obj.folds{ff} = struct( 'x', {x}, 'y', {y}, 'blockAnnotations', {ba} );
+            end
             obj.recreateFolds = false;
             obj.parallelFolds = [];
         end

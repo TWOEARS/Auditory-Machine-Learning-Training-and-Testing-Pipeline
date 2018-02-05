@@ -100,8 +100,8 @@ classdef GlmNetModel < Models.DataScalingModel
     methods (Access = protected)
         
         function [y,score] = applyModelToScaledData( obj, x )
-            y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
-            score = glmnetPredict( obj.model, x, obj.lambda, 'response' );
+            y = glmnetPredict( obj.model, double( x ), obj.lambda, 'class' );
+            score = glmnetPredict( obj.model, double( x ), obj.lambda, 'response' );
             if any( strcmpi( obj.model.class, {'elnet','fishnet'} ) )
                 y = score;
             end

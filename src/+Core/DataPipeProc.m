@@ -173,7 +173,7 @@ classdef DataPipeProc < handle
                 end
                 dfii = dfii + 1;
                 fprintf( '\n' );
-                memReport()
+                memReport() % for debugging, and maybe this even helps garbage collection?
                 fprintf( '\n' );
             end
             obj.dataFileProcessor.saveCacheDirectory();

@@ -173,7 +173,7 @@ classdef DataPipeProc < handle
                 end
                 dfii = dfii + 1;
                 fprintf( '\n' );
-                memory
+                memReport()
                 fprintf( '\n' );
             end
             obj.dataFileProcessor.saveCacheDirectory();

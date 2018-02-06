@@ -2,11 +2,15 @@ classdef Base < Core.IdProcInterface
     % Base Abstract base class for specifying features sets with which features
     % are extracted.
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties (SetAccess = protected, Transient)
         x;
         blockAnnotations;
         baIdx;
         afeData;                    % current AFE signals used for vector construction
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    properties (SetAccess = protected)
         description;
         descriptionBuilt = false;
     end

@@ -184,8 +184,6 @@ classdef IdentificationTrainingPipeline < handle
             if rwcMode, return; end;
             
             featureCreator = obj.featureCreator;  %#ok<*PROPLC>
-            featureCreator.x = [];
-            featureCreator.blockAnnotations = []; 
             lastDataProcParams = ...
                 obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies(); %#ok<NASGU>
             blockCreator = obj.blockCreator; %#ok<NASGU>

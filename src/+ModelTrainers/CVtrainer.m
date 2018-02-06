@@ -95,7 +95,11 @@ classdef CVtrainer < ModelTrainers.Base
             foldsPerformance_tmp = obj.foldsPerformance;
             if isempty( obj.parallelFolds )
                 if isempty( gcp( 'nocreate' ) )
-                    parpool( min( obj.nFolds, feature( 'numcores' ) ) );
+                    pc = parcluster();
+                    pc_tmpDir = fullfile( pwd, 'parpool_tmps', ['parpool_tmp' buildCurrentTimeString()] );
+                    mkdir( pc_tmpDir );
+                    pc.JobStorageLocation = pc_tmpDir;
+                    parpool( pc, min( obj.nFolds, feature( 'numcores' ) ) );
                 end
                 obj.parallelFolds = parallel.pool.Constant( obj.folds );
             end

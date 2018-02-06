@@ -96,7 +96,9 @@ classdef CVtrainer < ModelTrainers.Base
             if isempty( obj.parallelFolds )
                 if isempty( gcp( 'nocreate' ) )
                     pc = parcluster();
-                    pc_tmpDir = fullfile( pwd, 'parpool_tmps', ['parpool_tmp' buildCurrentTimeString()] );
+                    pc_tmpDir = cleanPathFromRelativeRefs( fullfile( ...
+                                             pwd, '..', 'parpool_tmps', ...
+                                             ['parpool_tmp' buildCurrentTimeString()] ) );
                     mkdir( pc_tmpDir );
                     pc.JobStorageLocation = pc_tmpDir;
                     parpool( pc, min( obj.nFolds, feature( 'numcores' ) ) );

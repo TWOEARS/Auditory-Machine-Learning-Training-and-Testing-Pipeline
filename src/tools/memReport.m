@@ -11,6 +11,7 @@ try
     end
 catch err
     warning( err.message );
+    freemem = [];
 end
 
 end

@@ -183,12 +183,14 @@ classdef IdentificationTrainingPipeline < handle
             if strcmp(ip.Results.runOption, 'onlyGenCache'), return; end;
             if rwcMode, return; end;
             
-            featureCreator = obj.featureCreator; %#ok<NASGU,PROPLC>
+            featureCreator = obj.featureCreator;  %#ok<*PROPLC>
+            featureCreator.x = [];
+            featureCreator.blockAnnotations = []; 
             lastDataProcParams = ...
                 obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies(); %#ok<NASGU>
-            blockCreator = obj.blockCreator; %#ok<NASGU,PROPLC>
+            blockCreator = obj.blockCreator; %#ok<NASGU>
             if strcmp( ip.Results.runOption, 'dataStore' )
-                data = obj.data; %#ok<NASGU,PROPLC>
+                data = obj.data; %#ok<NASGU>
                 save( 'dataStore.mat', ...
                       'data', ...,
                       'featureCreator', 'blockCreator', ...

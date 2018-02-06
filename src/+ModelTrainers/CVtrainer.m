@@ -94,7 +94,9 @@ classdef CVtrainer < ModelTrainers.Base
         function buildModel_pct( obj, ~, ~, ~ )
             foldsPerformance_tmp = obj.foldsPerformance;
             if isempty( obj.parallelFolds )
-                parpool( min( obj.nFolds, feature( 'numcores' ) ) );
+                if isempty( gcp( 'nocreate' ) )
+                    parpool( min( obj.nFolds, feature( 'numcores' ) ) );
+                end
                 obj.parallelFolds = parallel.pool.Constant( obj.folds );
             end
             parallelFolds_tmp = obj.parallelFolds;

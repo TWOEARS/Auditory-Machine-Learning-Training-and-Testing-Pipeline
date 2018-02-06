@@ -88,13 +88,13 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                 refinedHpsTrainer = obj.createRefineGridTrainer( hps );
                 refinedHpsTrainer.run();
                 hps.params = [hps.params; refinedHpsTrainer.hpsSets.params];
-                hps.perfs = [hps.perfs; refinedHpsTrainer.hpsSets.perfs];
-                hps.stds = [hps.stds; refinedHpsTrainer.hpsSets.stds];
-                hps.dataSizes = [hps.dataSizes; refinedHpsTrainer.hpsSets.dataSizes];
-                hps.testDataSizes = [hps.testDataSizes; refinedHpsTrainer.hpsSets.testDataSizes];
+                hps.perfs = [hps.perfs(:); refinedHpsTrainer.hpsSets.perfs(:)];
+                hps.stds = [hps.stds(:); refinedHpsTrainer.hpsSets.stds(:)];
+                hps.dataSizes = [hps.dataSizes(:); refinedHpsTrainer.hpsSets.dataSizes(:)];
+                hps.testDataSizes = [hps.testDataSizes(:); refinedHpsTrainer.hpsSets.testDataSizes(:)];
             end
             obj.hpsSets = obj.sortHpsSetsByPerformance( hps );
-            if obj.hpsSets.dataSizes(end) < max( obj.hpsSets.dataSizes(:) )
+            while obj.hpsSets.dataSizes(end) < max( obj.hpsSets.dataSizes(:) )
                 verboseFprintf( obj, '\nchecking best hps set with max data size...\n ' );
                 obj.coreTrainer.setParameters( false, ...
                     'maxDataSize', max( obj.hpsSets.dataSizes(:) ), ...
@@ -107,6 +107,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                 obj.hpsSets.stds(end) = obj.hpsCVtrainer.getPerformance().std;
                 obj.hpsSets.dataSizes(end) = max( obj.hpsSets.dataSizes(:) );
                 obj.hpsSets.testDataSizes(end) = obj.maxTestDataSize(end);
+                obj.hpsSets = obj.sortHpsSetsByPerformance( obj.hpsSets );
             end
             verboseFprintf( obj, ['\n\n==============================\n' ...
                                       'HPS sets:\n' ...

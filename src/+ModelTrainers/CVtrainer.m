@@ -9,6 +9,7 @@ classdef CVtrainer < ModelTrainers.Base
         foldsPerformance;
         models;
         recreateFolds;
+        lastMaxFoldSize;
     end
 
     %% --------------------------------------------------------------------
@@ -44,6 +45,8 @@ classdef CVtrainer < ModelTrainers.Base
             obj.nFolds = 5;
             obj.abortPerfMin = -inf;
             obj.performanceMeasure = trainer.performanceMeasure;
+            obj.lastMaxFoldSize = 0;
+            obj.recreateFolds = true;
         end
         %% ----------------------------------------------------------------
 
@@ -185,10 +188,10 @@ classdef CVtrainer < ModelTrainers.Base
         %% ----------------------------------------------------------------
         
         function createFolds( obj )
-            if ~obj.recreateFolds, return; end
-            obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
             maxFoldDataSize = ceil( max( obj.trainer.maxDataSize / obj.nFolds, ...
                                          obj.trainer.maxTestDataSize ) );
+            if ~obj.recreateFolds && (maxFoldDataSize == obj.lastMaxFoldSize), return; end
+            obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
             for ff = 1 : obj.nFolds
                 fprintf( '\nPreparing fold %d\n', ff );
                 [x,y,~,~,ba] = ModelTrainers.Base.getSelectedData( ...
@@ -196,6 +199,7 @@ classdef CVtrainer < ModelTrainers.Base
                 obj.folds{ff} = struct( 'x', {x}, 'y', {y}, 'blockAnnotations', {ba} );
             end
             obj.recreateFolds = false;
+            obj.lastMaxFoldSize = maxFoldDataSize;
             obj.parallelFolds = [];
         end
         %% ----------------------------------------------------------------

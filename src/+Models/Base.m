@@ -78,7 +78,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
             else
                 dpi = struct.empty;
             end
-            dpi.sampleIds = sampleIds;
+            dpi(1).sampleIds = sampleIds;
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )

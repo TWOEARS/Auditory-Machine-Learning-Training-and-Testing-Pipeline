@@ -60,7 +60,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
                 maxDataSize = inf; 
             end
             [x,yTrue,iw,vo,~,sampleIds] = ModelTrainers.Base.getSelectedData( ...
-                                 testSet, maxDataSize, dataSelector, importanceWeighter );
+                          testSet, maxDataSize, dataSelector, importanceWeighter, true );
             if nargin < 7  || isempty( getDatapointInfo )
                 getDatapointInfo = false; 
             end
@@ -78,6 +78,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
             else
                 dpi = struct.empty;
             end
+            dpi.sampleIds = sampleIds;
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )

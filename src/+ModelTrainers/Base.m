@@ -132,9 +132,10 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
         function [x,y,iw,verbOutput,ba,sampleIds] = getSelectedData( dataset, ...
                                                                      maxDataSize, ...
                                                                      dataSelector, ...
-                                                                     importanceWeighter )
+                                                                     importanceWeighter,...
+                                                                     permuteData )
             y = getDataHelper( dataset, 'y' );
-            verbOutput = [];
+            verbOutput = '';
             if isempty( y )
                 x = [];
                 iw = [];
@@ -179,14 +180,15 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                 fmask = fmask(1:min( nFeat, nMask ));
                 x = x(:,fmask);
             end
-            % permute data
-            permIds = randperm( size( y, 1 ) )';
-            x = x(permIds,:);
-            y = y(permIds,:);
-            if nargout >= 5
-                ba = ba(permIds);
+            if nargin < 5 || permuteData
+                permIds = randperm( size( y, 1 ) )';
+                x = x(permIds,:);
+                y = y(permIds,:);
+                if nargout >= 5
+                    ba = ba(permIds);
+                end
+                sampleIds = sampleIds(permIds);
             end
-            sampleIds = sampleIds(permIds);
             if ~isempty( importanceWeighter )
                 importanceWeighter.connectData( dataset );
                 iw = importanceWeighter.getImportanceWeights( sampleIds );

@@ -56,8 +56,9 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% ------------------------------------------------------------------------------- 
         
-        function resetDataProcs( obj )
-            obj.dataPipeProcs = {};
+        function resetDataProcs( obj, pipeReUseIdx )
+            if nargin < 2, pipeReUseIdx = 1; end
+            obj.dataPipeProcs(pipeReUseIdx:end) = [];
         end
         %% ------------------------------------------------------------------------------- 
 

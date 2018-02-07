@@ -55,12 +55,11 @@ classdef BAC_BAextended < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, ~, ~, testSetIdData )
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, ~, dpi, testSetIdData )
             tps = yTrue == 1 & yPred > 0;
             tns = yTrue == -1 & yPred < 0;
             fps = yTrue == -1 & yPred > 0;
             fns = yTrue == 1 & yPred < 0;
-            dpi = struct.empty;
             obj.tp = sum( tps );
             obj.tn = sum( tns );
             obj.fp = sum( fps );
@@ -81,11 +80,11 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             end
             obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
             performance = 0.5 * obj.sensitivity + 0.5 * obj.specificity;
-            obj = obj.analyzeBAextended( yTrue, yPred, testSetIdData );
+            obj = obj.analyzeBAextended( yTrue, yPred, testSetIdData, dpi.sampleIds );
         end
         % -----------------------------------------------------------------
 
-        function obj = analyzeBAextended( obj, yTrue, yPred, testSetIdData )
+        function obj = analyzeBAextended( obj, yTrue, yPred, testSetIdData, sampleIds )
             fprintf( 'analyzing BA-extended' );
             obj.resc_b = RescSparse( 'uint32', 'uint8' );
             obj.resc_t = RescSparse( 'uint32', 'uint8' );
@@ -98,15 +97,20 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             agAsgns2 = cell( numel( testSetIdData.data ), 1 );
             blockAnnotsCacheFiles = testSetIdData(:,'blockAnnotsCacheFile');
             [bacfClassIdxs,bacfci_ic] = PerformanceMeasures.BAC_BAextended.getFileIds( blockAnnotsCacheFiles );
-            sampleFileIdxs = testSetIdData(:,'pointwiseFileIdxs');
+            sampleFileIdxs_all = testSetIdData(:,'pointwiseFileIdxs');
+            sampleFileIdxs = sampleFileIdxs_all(sampleIds);
             for ii = 1 : numel( testSetIdData.data )
                 scp.classIdx = nan;
                 scp.fileClassId = bacfClassIdxs(ii);
                 scp.fileId = sum( bacfci_ic(1:ii) == bacfci_ic(ii) );
                 blockAnnotations_ii = testSetIdData(ii,'blockAnnotations');
+                sampleIds_ii = sampleIds(sampleFileIdxs==ii);
+                sampleIds_ii = sampleIds_ii - sum( sampleFileIdxs_all <= ii-1 );
+                blockAnnotations_ii = blockAnnotations_ii(sampleIds_ii);
                 yt_ii = yTrue(sampleFileIdxs==ii,:);
                 yp_ii = yPred(sampleFileIdxs==ii,:);
                 bacfIdxs_ii = testSetIdData(ii,'bacfIdxs');
+                bacfIdxs_ii = bacfIdxs_ii(sampleIds_ii);
                 for jj = 1 : numel( blockAnnotsCacheFiles{ii} )
                     scp.id = jj;
                     blockAnnotations = blockAnnotations_ii(bacfIdxs_ii==jj);

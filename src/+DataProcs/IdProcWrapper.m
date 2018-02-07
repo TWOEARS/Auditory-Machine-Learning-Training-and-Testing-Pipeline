@@ -78,6 +78,15 @@ classdef IdProcWrapper < Core.IdProcInterface
                 obj.wrappedProcs{ii}.connectIdData( idData );
             end
         end
+        %% -----------------------------------------------------------------
+
+        % override of Core.IdProcInterface's method
+        function init( obj )
+            init@Core.IdProcInterface( obj );
+            for ii = 1 : numel( obj.wrappedProcs )
+                obj.wrappedProcs{ii}.init();
+            end
+        end
         %% -------------------------------------------------------------------------------
 
         % override of Core.IdProcInterface's method

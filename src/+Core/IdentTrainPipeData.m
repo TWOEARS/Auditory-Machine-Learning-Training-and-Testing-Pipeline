@@ -91,8 +91,10 @@ classdef IdentTrainPipeData < handle
                     elseif any( strcmpi( dSubScript, {'fileName','blockAnnotsCacheFile'} ) )
                         varargout{1:nargout} = { obj.data(fIdx).(dSubScript) }';
                     elseif any( strcmpi( dSubScript, {'blockAnnotations'} ) )
-                        isEmpty_bas_bb = arrayfun( @(c)(isempty(c.blockAnnotations)), obj.data(fIdx) );
-                        for bb = find( isEmpty_bas_bb )
+                        isEmpty_bas_bb = arrayfun( ...
+                                     @(c)(isempty( fieldnames( c.blockAnnotations ))), ...
+                                                                         obj.data(fIdx) );
+                        for bb = fIdx(isEmpty_bas_bb)
                             bas_bb = [];
                             bacfIdxs = obj.data(bb).bacfIdxs;
                             bacfs = obj.data(bb).blockAnnotsCacheFile;
@@ -110,7 +112,8 @@ classdef IdentTrainPipeData < handle
                             end
                             obj.data(bb).blockAnnotations = bas_bb;
                         end
-                        varargout{1:nargout} = vertcat( obj.data(fIdx).blockAnnotations );
+                        baNempty = ~cellfun( @isempty, {obj.data(fIdx).blockAnnotations} );
+                        varargout{1:nargout} = vertcat( obj.data(fIdx(baNempty)).blockAnnotations );
                     elseif strcmpi( dSubScript, 'pointwiseFileIdxs' )
                         out = [];
                         for ff = fIdx
@@ -392,6 +395,23 @@ classdef IdentTrainPipeData < handle
                 fIdxff = find( strcmp( fileNames{ff}, {obj.data.fileName} ) );
                 if isempty( fIdxff ), continue; end
                 fIdx(ff) = fIdxff; %#ok<AGROW>
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function clear( obj, mode )
+            if strcmpi( mode, 'all' )
+                clearFields = {'x','y','ysi','bIdxs','bacfIdxs',...
+                               'blockAnnotsCacheFile','blockAnnotations'};
+            elseif strcmpi( mode, 'y' )
+                clearFields = {'y','ysi'};
+            else
+                clearFields = {};
+            end
+            for ff = 1 : numel( obj.data )
+                for cc = 1 : numel( clearFields )
+                    obj.data(ff).(clearFields{cc}) = [];
+                end
             end
         end
         %% -------------------------------------------------------------------------------

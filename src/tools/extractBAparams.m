@@ -31,8 +31,9 @@ srcAzmP_ = cellfun( @(x)(x(1)), baSrcAzms(isP) );
 tmp = num2cell( srcAzmP_ );
 [baParams(isP).gtAzm] = tmp{:};
 if isSegId
-    tmp = num2cell( [blockAnnotations.nSrcs_estimationError] );
-    [baParams.nEstErr] = tmp{:};
+    nUsedSpatialStreams = cat( 1, blockAnnotations.nStreams );
+    tmp = num2cell( nUsedSpatialStreams );
+    [baParams.nStream] = tmp{:};
     tmp = num2cell( min( cellfun( @numel, baSrcAzms ), baNsa ) );
     [baParams.nAct_segStream] = tmp{:};
     estAzm = [blockAnnotations.estAzm]';

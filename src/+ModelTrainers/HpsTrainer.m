@@ -65,37 +65,38 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
         function buildModel( obj, ~, ~, ~ )
             obj.coreTrainer = obj.buildCoreTrainer();
             obj.createHpsTrainer();
-            hps.params = obj.determineHyperparameterSets();
-            hps.perfs = zeros( size( hps.params ) );
             verboseFprintf( obj, '\nHyperparameter search CV...\n===========================\n' );
-            for ii = 1 : size( hps.params, 1 )
-                verboseFprintf( obj, '\nhps set %d...\n ', ii );
-                obj.coreTrainer.setParameters( false, ...
-                    'maxDataSize', obj.hpsMaxDataSize(1), ...
-                    'maxTestDataSize', obj.maxTestDataSize, ...
-                    hps.params(ii), ...
-                    obj.hpsCoreTrainerParams{:} );
-                obj.hpsCVtrainer.abortPerfMin = max( max( hps.perfs ), obj.abortPerfMin );
-                obj.hpsCVtrainer.run();
-                hps.perfs(ii) = obj.hpsCVtrainer.getPerformance().avg;
-                hps.stds(ii) = obj.hpsCVtrainer.getPerformance().std;
-                hps.dataSizes(ii) = obj.hpsMaxDataSize(1);
-                hps.testDataSizes(ii) = obj.maxTestDataSize;
+            curHpsStageStartIdx = 1;
+            hps.params = [];
+            hps.perfs = 0;
+            while obj.hpsRefineStages > -1
+                newHpsParams = obj.determineHyperparameterSets();
+                hps.params = [hps.params; newHpsParams];
+                for ii = curHpsStageStartIdx : numel( hps.params )
+                    verboseFprintf( obj, '\nhps set %d...\n ', ii );
+                    obj.coreTrainer.setParameters( false, ...
+                        'maxDataSize', obj.hpsMaxDataSize(1), ...
+                        'maxTestDataSize', obj.maxTestDataSize, ...
+                        hps.params(ii), ...
+                        obj.hpsCoreTrainerParams{:} );
+                    obj.hpsCVtrainer.abortPerfMin = max( max( hps.perfs ), obj.abortPerfMin );
+                    obj.hpsCVtrainer.run();
+                    hps.perfs(ii) = obj.hpsCVtrainer.getPerformance().avg;
+                    hps.stds(ii) = obj.hpsCVtrainer.getPerformance().std;
+                    hps.dataSizes(ii) = obj.hpsMaxDataSize(1);
+                    hps.testDataSizes(ii) = obj.maxTestDataSize;
+                end
+                obj.hpsRefineStages = obj.hpsRefineStages - 1;
+                if obj.hpsRefineStages > -1
+                    verboseFprintf( obj, '\n== HPS refine stage...\n' );
+                    curHpsStageStartIdx = numel( hps.params ) + 1;
+                    obj.refineHpsTrainer( hps );
+                end
             end
             verboseFprintf( obj, 'Done\n' );
-            if obj.hpsRefineStages > 0
-                verboseFprintf( obj, '\n== HPS refine stage...\n' );
-                refinedHpsTrainer = obj.createRefineGridTrainer( hps );
-                refinedHpsTrainer.run();
-                hps.params = [hps.params; refinedHpsTrainer.hpsSets.params];
-                hps.perfs = [hps.perfs(:); refinedHpsTrainer.hpsSets.perfs(:)];
-                hps.stds = [hps.stds(:); refinedHpsTrainer.hpsSets.stds(:)];
-                hps.dataSizes = [hps.dataSizes(:); refinedHpsTrainer.hpsSets.dataSizes(:)];
-                hps.testDataSizes = [hps.testDataSizes(:); refinedHpsTrainer.hpsSets.testDataSizes(:)];
-            end
             obj.hpsSets = obj.sortHpsSetsByPerformance( hps );
             while obj.hpsSets.dataSizes(end) < max( obj.hpsSets.dataSizes(:) )
-                verboseFprintf( obj, '\nchecking best hps set with max data size...\n ' );
+                verboseFprintf( obj, '\nchecking best hps set with max hps data size...\n ' );
                 obj.coreTrainer.setParameters( false, ...
                     'maxDataSize', max( obj.hpsSets.dataSizes(:) ), ...
                     'maxTestDataSize', obj.maxTestDataSize(end), ...
@@ -171,18 +172,14 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
         end
         %% -------------------------------------------------------------------------------
 
-        function refinedHpsTrainer = createRefineGridTrainer( obj, hps )
+        function refineHpsTrainer( obj, hps )
             hps = obj.sortHpsSetsByPerformance( hps );
-            refinedHpsTrainer = obj.refineGridTrainer( hps );
-            refinedHpsTrainer.setData( obj.trainSet, obj.testSet );
-            refinedHpsTrainer.trainWithBestHps = false;
+            obj.refineGridTrainer( hps );
             newHpsMaxDataSize = obj.hpsMaxDataSize(min(2,numel( obj.hpsMaxDataSize )):end);
             newHpsSearchBudget = obj.hpsSearchBudget(min(2,numel( obj.hpsSearchBudget )):end);
-            refinedHpsTrainer.setParameters( false, ...
-                'hpsRefineStages', obj.hpsRefineStages - 1, ...
+            obj.setParameters( false, ...
                 'hpsMaxDataSize', newHpsMaxDataSize, ...
                 'hpsSearchBudget', newHpsSearchBudget );
-            refinedHpsTrainer.abortPerfMin = max( hps.perfs );
         end
         %% -------------------------------------------------------------------------------
         
@@ -201,7 +198,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
     methods (Abstract, Access = protected)
         hpsSets = getHpsGridSearchSets( obj )
         hpsSets = getHpsRandomSearchSets( obj )
-        refinedHpsTrainer = refineGridTrainer( obj, hps )
+        refineGridTrainer( obj, hps )
     end
         
 end

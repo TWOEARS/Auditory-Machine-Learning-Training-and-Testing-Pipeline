@@ -29,7 +29,7 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
                 % nPointSrcsSceneConfig is only in blockAnnotations if they
                 % are loaded through GatherFeaturesProc
                 ba_ns_scp = cat( 1, ba.nPointSrcsSceneConfig );
-                nsNotNa = (ba_ns ~= ba_ns_scp) & ~(ba_ns == 0 & ba_ns_scp == 1);
+                nsNotNa = (ba_ns ~= ba_ns_scp) & (ba_ns ~= 0);
                 selectFilter(nsNotNa) = false;
             end
             obj.verboseOutput = sprintf( ['\nOut of a pool of %d samples,\n' ...

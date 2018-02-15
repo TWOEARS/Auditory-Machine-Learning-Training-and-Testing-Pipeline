@@ -177,7 +177,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
             if ~isempty( fmask )
                 nFeat = size( x, 2 );
                 nMask = numel( ModelTrainers.Base.featureMask );
-                fmask = fmask(1:min( nFeat, nMask ));
+                assert( nFeat == nMask );
                 x = x(:,fmask);
             end
             if nargin < 5 || permuteData

@@ -117,6 +117,7 @@ classdef CVtrainer < ModelTrainers.Base
             foldsIdx = 1 : obj.nFolds;
             models_tmp = cell( obj.nFolds, 1 );
             freemem = memReport() % for debugging
+            fmask = obj.featureMask;
             parfor ff = foldsIdx
                 fprintf( '\nStarting run %d of CV... \n', ff );
                 freemem = memReport() % for debugging
@@ -127,6 +128,7 @@ classdef CVtrainer < ModelTrainers.Base
                                     'y', {cat( 1, fc(:).y )}, ...
                                     'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
                 trainer_ff = trainers_tmp(ff);
+                ModelTrainers.Base.featureMask( true, fmask ); % persistent variables are not copied to workers
                 trainer_ff.setData( foldCombi, parallelFolds_tmp.Value{ff} );
                 freemem = memReport() % for debugging
                 trainer_ff.run();
@@ -194,8 +196,9 @@ classdef CVtrainer < ModelTrainers.Base
             obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
             for ff = 1 : obj.nFolds
                 fprintf( '\nPreparing fold %d\n', ff );
-                [x,y,~,~,ba] = ModelTrainers.Base.getSelectedData( ...
-                           obj.folds{ff}, maxFoldDataSize, obj.trainer.dataSelector, [] );
+                [x,y,~,~,ba] = ModelTrainers.Base.getSelectedData( obj.folds{ff}, ...
+                                        maxFoldDataSize, obj.trainer.dataSelector, [], ...
+                                                                            true, false );
                 obj.folds{ff} = struct( 'x', {x}, 'y', {y}, 'blockAnnotations', {ba} );
             end
             obj.recreateFolds = false;

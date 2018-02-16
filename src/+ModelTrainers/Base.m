@@ -133,7 +133,8 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                                                                      maxDataSize, ...
                                                                      dataSelector, ...
                                                                      importanceWeighter,...
-                                                                     permuteData )
+                                                                     permuteData, ...
+                                                                     applyFmask )
             y = getDataHelper( dataset, 'y' );
             verbOutput = '';
             if isempty( y )
@@ -173,12 +174,14 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
             end
             dataSelector.connectData( [] );
             % apply feature mask, if set
-            fmask = ModelTrainers.Base.featureMask;
-            if ~isempty( fmask )
-                nFeat = size( x, 2 );
-                nMask = numel( ModelTrainers.Base.featureMask );
-                assert( nFeat == nMask );
-                x = x(:,fmask);
+            if nargin < 6 || applyFmask
+                fmask = ModelTrainers.Base.featureMask;
+                if ~isempty( fmask )
+                    nFeat = size( x, 2 );
+                    nMask = numel( ModelTrainers.Base.featureMask );
+                    assert( nFeat == nMask );
+                    x = x(:,fmask);
+                end
             end
             if nargin < 5 || permuteData
                 permIds = randperm( size( y, 1 ) )';

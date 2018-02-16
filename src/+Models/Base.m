@@ -10,10 +10,10 @@ classdef (Abstract) Base < matlab.mixin.Copyable
 
         function [y,score] = applyModel( obj, x )
             if ~isempty( obj.featureMask )
-                p_feat = size( x, 2 );
-                p_mask = size( obj.featureMask, 1 );
-                fmask = obj.featureMask( 1 : min( p_feat, p_mask ) );
-                x = x(:,fmask);
+                nFeat = size( x, 2 );
+                nMask = numel( obj.featureMask );
+                assert( nFeat == nMask );
+                x = x(:,obj.featureMask);
             end
             verboseFprintf( obj, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             [y,score] = obj.applyModelMasked( x );
@@ -59,8 +59,8 @@ classdef (Abstract) Base < matlab.mixin.Copyable
             if nargin < 4  || isempty( maxDataSize )
                 maxDataSize = inf; 
             end
-            [x,yTrue,iw,vo,~,sampleIds] = ModelTrainers.Base.getSelectedData( ...
-                          testSet, maxDataSize, dataSelector, importanceWeighter, true );
+            [x,yTrue,iw,vo,~,sampleIds] = ModelTrainers.Base.getSelectedData( testSet, ...
+                             maxDataSize, dataSelector, importanceWeighter, true, false );
             if nargin < 7  || isempty( getDatapointInfo )
                 getDatapointInfo = false; 
             end

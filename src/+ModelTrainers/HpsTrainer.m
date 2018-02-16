@@ -73,7 +73,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                 newHpsParams = obj.determineHyperparameterSets();
                 hps.params = [hps.params; newHpsParams];
                 for ii = curHpsStageStartIdx : numel( hps.params )
-                    verboseFprintf( obj, '\nhps set %d...\n ', ii );
+                    verboseFprintf( obj, '\nhps set %d...\n\n ', ii );
                     obj.coreTrainer.setParameters( false, ...
                         'maxDataSize', obj.hpsMaxDataSize(1), ...
                         'maxTestDataSize', obj.maxTestDataSize, ...
@@ -144,6 +144,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
             model = Models.HPSmodel();
             model.model = obj.coreTrainer.getModel();
             model.hpsSet = obj.hpsSets;
+            model.featureMask = model.model.featureMask;
         end
         %% -------------------------------------------------------------------------------
         

@@ -22,8 +22,8 @@ baPp = [blockAnnotations.posPresent]';
 tmp = num2cell( baPp );
 [baParams.posPresent] = tmp{:};
 if sum( baPp ) > 0
-    baPs = [blockAnnotations.posSnr]';
-    tmp = num2cell( baPs );
+    baPs = cat( 1, blockAnnotations.posSnr );
+    tmp = num2cell( min( max(  baPs, -35 ), 35 ) );
     [baParams(logical(baPp)).posSnr] = tmp{:};
 end
 baSrcAzms = {blockAnnotations.srcAzms}';
@@ -76,7 +76,6 @@ curNrj_dbP = num2cell( min( max( curNrj_dbP_, -35 ), 35 ) );
 curSnr2P_ = cellfun( @(x)(x(1)), baSrcSnr2(isP) );
 curSnr2P = num2cell( min( max( curSnr2P_, -35 ), 35 ) );
 [baParams(isP).curSnr2] = curSnr2P{:};
-[baParams(isP).posSnr] = curSnr2P{:};
 end
 
 nCond = (yt < 0) & (~isSegId | ~cellfun( @isempty, baSrcSnr ));

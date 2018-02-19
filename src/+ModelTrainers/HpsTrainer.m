@@ -85,6 +85,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                     hps.stds(ii) = obj.hpsCVtrainer.getPerformance().std;
                     hps.dataSizes(ii) = obj.hpsMaxDataSize(1);
                     hps.testDataSizes(ii) = obj.maxTestDataSize;
+                    hps.addInfo(ii) = obj.getHpsAddInfo();
                 end
                 obj.hpsRefineStages = obj.hpsRefineStages - 1;
                 if obj.hpsRefineStages > -1
@@ -106,6 +107,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                 obj.hpsCVtrainer.run();
                 obj.hpsSets.perfs(end) = obj.hpsCVtrainer.getPerformance().avg;
                 obj.hpsSets.stds(end) = obj.hpsCVtrainer.getPerformance().std;
+                obj.hpsSets.addInfo(end) = obj.getHpsAddInfo();
                 obj.hpsSets.dataSizes(end) = max( obj.hpsSets.dataSizes(:) );
                 obj.hpsSets.testDataSizes(end) = obj.maxTestDataSize(end);
                 obj.hpsSets = obj.sortHpsSetsByPerformance( obj.hpsSets );
@@ -148,6 +150,22 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
         end
         %% -------------------------------------------------------------------------------
         
+        function hps = sortHpsSetsByPerformance( obj, hps )
+            [hps.perfs,idx] = sort( hps.perfs );
+            hps.stds = hps.stds(idx);
+            hps.dataSizes = hps.dataSizes(idx);
+            hps.testDataSizes = hps.testDataSizes(idx);
+            hps.params = hps.params(idx);
+            hps.addInfo = hps.addInfo(idx);
+        end
+        %% -------------------------------------------------------------------------------
+
+        % to be possibly overwritten
+        function hpsAddInfo = getHpsAddInfo( obj )
+            hpsAddInfo = [];
+        end
+        %% -------------------------------------------------------------------------------
+        
     end
 
     %% -----------------------------------------------------------------------------------
@@ -183,15 +201,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
                 'hpsSearchBudget', newHpsSearchBudget );
         end
         %% -------------------------------------------------------------------------------
-        
-        function hps = sortHpsSetsByPerformance( obj, hps )
-            [hps.perfs,idx] = sort( hps.perfs );
-            hps.stds = hps.stds(idx);
-            hps.dataSizes = hps.dataSizes(idx);
-            hps.testDataSizes = hps.testDataSizes(idx);
-            hps.params = hps.params(idx);
-        end
-        %% -------------------------------------------------------------------------------
+
         
     end
 

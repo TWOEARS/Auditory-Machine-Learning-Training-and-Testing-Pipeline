@@ -9,6 +9,7 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
         makeProbModel;
         usePca;
         pcaVarThres;
+        useSelectHeuristic;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -36,6 +37,9 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
             pds{7} = struct( 'name', 'pcaVarThres', ...
                              'default', 0.99, ...
                              'valFun', @(x)(isfloat(x) && x > 0 && x <= 1) );
+            pds{8} = struct( 'name', 'useSelectHeuristic', ...
+                             'default', false, ...
+                             'valFun', @islogical );
             obj = obj@Parameterized( pds );
             obj = obj@ModelTrainers.HpsTrainer( varargin{:} );
             obj.setParameters( true, ...
@@ -113,6 +117,37 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
                 'hpsCrange', cRefinedRange, ...
                 'hpsEpsilons', eRefinedRange, ...
                 'hpsKernels', kRefinedRange );
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override
+        function hpsAddInfo = getHpsAddInfo( obj )
+            nsv = cellfun( @(c)(c.model.totalSV), obj.hpsCVtrainer.models );
+            xsizes = cellfun( @(c)(size( c.x, 1 )), obj.hpsCVtrainer.folds );
+            xsize = min( arrayfun( @(a)(sum( xsizes ) - a), xsizes ), ...
+                         obj.hpsMaxDataSize(1) );
+            hpsAddInfo.nsvRatio = mean( nsv(:) ./ xsize(:) );
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override
+        function hps = sortHpsSetsByPerformance( obj, hps )
+            hps = sortHpsSetsByPerformance@ModelTrainers.HpsTrainer( obj, hps );
+            if obj.useSelectHeuristic
+                s = hps.stds;
+                r = [hps.addInfo.nsvRatio];
+                rPenalty = s .* r;
+                for ii = 1 : numel( hps.perfs )
+                    p(ii) = hps.perfs(ii) - rPenalty(ii); %#ok<AGROW>
+                end
+                [~,idx] = sort( p );
+                hps.perfs = hps.perfs(idx);
+                hps.stds = hps.stds(idx);
+                hps.dataSizes = hps.dataSizes(idx);
+                hps.testDataSizes = hps.testDataSizes(idx);
+                hps.params = hps.params(idx);
+                hps.addInfo = hps.addInfo(idx);
+            end
         end
         %% -------------------------------------------------------------------------------
         

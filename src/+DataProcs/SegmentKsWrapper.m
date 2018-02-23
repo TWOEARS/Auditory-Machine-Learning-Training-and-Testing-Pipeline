@@ -156,7 +156,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             if any( srcsHaveEnergy )
                 streamAzms = obj.azmsGroundTruth(srcsHaveEnergy);
                 [~, ~, ia] = uniquetol( streamAzms, 2.5, 'DataScale', 1 );
-                streamAzms = accumarray( ia, streamAzms, [], @mean );
+                streamAzms = accumarray( ia, streamAzms, [], @mean )';
                 nStreamsWithEnergy = numel( streamAzms );
             else
                 streamAzms = 0;

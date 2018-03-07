@@ -16,6 +16,7 @@ classdef TwoEarsIdTrainPipe < handle
         blockCreator = [];      % (default: BlockCreators.MeanStandardBlockCreator( 1.0, 0.4 ))
         labelCreator = [];
         ksWrapper = [];
+        blackboardSystem = [];
         featureCreator = [];    % feature extraction (default: featureCreators.RatemapPlusDeltasBlockmean())
         modelCreator = [];      % model trainer
         trainset = [];          % file list with train examples
@@ -90,6 +91,16 @@ classdef TwoEarsIdTrainPipe < handle
             if ~isempty( obj.ksWrapper )
                 obj.ksWrapper.setAfeDataIndexOffset( numel( afeReqs ) );
                 afeReqs = [afeReqs obj.ksWrapper.getAfeRequests];
+            end
+            if ~isempty( obj.blackboardSystem )
+                afeDataLength = numel( afeReqs );
+                for ks = obj.blackboardSystem.blackboard.KSs
+                    if isa(ks, 'AuditoryFrontEndBridgeKS')
+                        ks.setAfeDataIndexOffset(afeDataLength);
+                    elseif isa(ks, 'AuditoryFrontEndDepKS')
+                        afeReqs = [afeReqs ks.requests];
+                    end
+                end
             end
             obj.pipeline.featureCreator = obj.featureCreator;
             multiCfgProcs{1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim );

@@ -7,7 +7,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         output;
     end
     
-    methods
+    methods (Access = public)
         
         % Constructor
         function obj = BlackboardSystemWrapper(bbs)
@@ -17,23 +17,18 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             obj.bbs = bbs;           
         end
         
-        
-        
         % process
         function process( obj, wavFilepath )
             % load AFE data
             in = obj.loadInputData( wavFilepath, 'afeData');
             % give input to AFE-Connection
-            obj.robotConnect.setAfeData(in);
+            obj.bbs.robotConnect.setAfeData(in);
             % run blackboardSystem
             obj.bbs.run();
             % save blackboard of blackboardSystem as output
             obj.output.blackboardData = obj.bbs.blackboard;       
         end
         
-        function out = getOutput( obj, varargin )
-            out = obj.output.blackboardData;
-        end
         
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             outFilepath = obj.getOutputFilepath( wavFilepath );
@@ -44,6 +39,18 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         end
         
         
+    end
+    
+    methods (Access = protected)
+
+        function outputDeps = getInternOutputDependencies( obj )
+            % TODO!
+            outputDeps.timeStep = obj.bbs.dataConnect.timeStep;
+        end
+        
+        function out = getOutput( obj, varargin )
+            out = obj.output;
+        end        
     end
     
 end

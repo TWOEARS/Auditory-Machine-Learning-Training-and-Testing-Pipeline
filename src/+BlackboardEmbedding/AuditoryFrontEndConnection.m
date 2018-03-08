@@ -2,7 +2,7 @@ classdef AuditoryFrontEndConnection
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties (Access = private)
+    properties (SetAccess = private)
         afeData;
         afeDataLength;
         SampleRate;
@@ -10,7 +10,7 @@ classdef AuditoryFrontEndConnection
         Time = 0.0;
     end
     
-    methods
+    methods (Access = public)
         
         function obj = AuditoryFrontEndConnection(SampleRate)
             obj.SampleRate = SampleRate;
@@ -45,7 +45,7 @@ classdef AuditoryFrontEndConnection
             end
             
         end
-        
+                
         % returns true if connection is active
         % necessary for running the blackboardSystem
         function b = isActive(obj)

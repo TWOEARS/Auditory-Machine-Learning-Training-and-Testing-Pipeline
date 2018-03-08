@@ -33,7 +33,8 @@ end
 if ~execBaseline
     % setup blackboard system to be embedded into pipe
     bbs = BlackboardSystem(1);
-    afeCon = AuditoryFrontEndConnection(16000);
+    idModels = setDefaultIdModels();
+    afeCon = BlackboardEmbedding.AuditoryFrontEndConnection(16000);
     bbs.setRobotConnect(afeCon);
     bbs.setDataConnect('AuditoryFrontEndBridgeKS', [], 0.2);
     ppRemoveDc = false;

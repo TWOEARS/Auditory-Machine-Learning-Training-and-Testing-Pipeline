@@ -93,20 +93,18 @@ classdef TwoEarsIdTrainPipe < handle
                 afeReqs = [afeReqs obj.ksWrapper.getAfeRequests];
             end
             if ~isempty( obj.blackboardSystem )
-                afeDataLength = numel( afeReqs );
-                for ks = obj.blackboardSystem.blackboard.KSs
-                    if isa(ks, 'AuditoryFrontEndBridgeKS')
-                        ks.setAfeDataIndexOffset(afeDataLength);
-                    elseif isa(ks, 'AuditoryFrontEndDepKS')
-                        afeReqs = [afeReqs ks.requests];
-                    end
-                end
+                obj.blackboardSystem.bbs.dataConnect.setAfeDataIndexOffset( numel( afeReqs ) );
+                afeReqs = [afeReqs obj.blackboardSystem.bbs.dataConnect.requests];
             end
             obj.pipeline.featureCreator = obj.featureCreator;
             multiCfgProcs{1} = DataProcs.MultiSceneCfgsIdProcWrapper( binSim, binSim );
             multiCfgProcs{2} = DataProcs.MultiSceneCfgsIdProcWrapper( ...
                      binSim, ...
                      DataProcs.ParallelRequestsAFEmodule( binSim.getDataFs(), afeReqs ) );
+            if ~isempty( obj.blackboardSystem )
+                multiCfgProcs{end+1} =  ...
+                           DataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.blackboardSystem );
+            end
             multiCfgProcs{end+1} =  ...
                         DataProcs.MultiSceneCfgsIdProcWrapper( binSim, obj.blockCreator );
             if ~isempty( obj.ksWrapper )

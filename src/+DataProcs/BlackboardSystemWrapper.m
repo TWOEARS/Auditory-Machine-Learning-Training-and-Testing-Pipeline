@@ -25,8 +25,12 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             obj.bbs.robotConnect.activate(in.afeData);
             % run blackboardSystem
             obj.bbs.run();
+            % TODO: make feature signals
+            
             % save blackboard of blackboardSystem as output
-            obj.output.blackboardData = obj.bbs.blackboard;       
+            obj.output.blackboardData = obj.bbs.blackboard;
+            % clear blackboard
+            obj.bbs.blackboard.deleteData();
         end
         
         

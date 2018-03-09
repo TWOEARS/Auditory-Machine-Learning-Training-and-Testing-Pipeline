@@ -36,7 +36,7 @@ if ~execBaseline
     idModels = setDefaultIdModels();
     afeCon = BlackboardEmbedding.AuditoryFrontEndConnection(16000);
     bbs.setRobotConnect(afeCon);
-    bbs.setDataConnect('AuditoryFrontEndBridgeKS', [], 0.2);
+    bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', [], 0.2);
     ppRemoveDc = false;
     for ii = 1 : numel( idModels )
         idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});

@@ -26,7 +26,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             % run blackboardSystem
             obj.bbs.run();
             % TODO: make feature signals
-            
+            FsHz = 1 / obj.bbs.dataConnect.timeStep;
             % save blackboard of blackboardSystem as output
             obj.output.blackboardData = obj.bbs.blackboard;
             % clear blackboard
@@ -50,6 +50,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             % TODO!
             outputDeps.timeStep = obj.bbs.dataConnect.timeStep;
+            %
         end
         
         function out = getOutput( obj, varargin )

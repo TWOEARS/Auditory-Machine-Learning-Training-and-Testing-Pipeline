@@ -2,7 +2,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
     %BLACKBOARDSYSTEMWRAPPER Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         bbs;
         output;
     end
@@ -22,7 +22,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             % load AFE data
             in = obj.loadInputData( wavFilepath, 'afeData');
             % give input to AFE-Connection
-            obj.bbs.robotConnect.setAfeData(in);
+            obj.bbs.robotConnect.activate(in.afeData);
             % run blackboardSystem
             obj.bbs.run();
             % save blackboard of blackboardSystem as output

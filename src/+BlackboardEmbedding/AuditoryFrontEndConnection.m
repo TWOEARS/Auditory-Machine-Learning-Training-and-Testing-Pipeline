@@ -1,4 +1,4 @@
-classdef AuditoryFrontEndConnection
+classdef AuditoryFrontEndConnection < matlab.mixin.SetGet
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -30,18 +30,20 @@ classdef AuditoryFrontEndConnection
                     afeSignalExtract = cell( size( afeSignal ) );
                     for ii = 1 : numel( afeSignal )
                         afeSignalExtract{ii} = ...
-                            afeSignal{ii}.cutSignalCopy( timeStep, obj.afeDateLength + obj.Time);
+                            afeSignal{ii}.cutSignalCopyReducedToArray( timeStep, obj.afeDataLength - obj.Time);
                     end
                 else
                     afeSignalExtract = ...
-                        afeSignal.cutSignalCopy( timeStep, obj.afeDataLength + obj.Time);
+                        afeSignal.cutSignalCopyReducedToArray( timeStep, obj.afeDataLength - obj.Time);
                 end
                 afeBlock(afeKey{1}) = afeSignalExtract;
             end
             
+            fprintf('.');
+            
             % if afeData ended go inactive
             if obj.Time >= obj.afeDataLength
-                bActive = false;
+                obj.bActive = false;
             end
             
         end
@@ -54,14 +56,14 @@ classdef AuditoryFrontEndConnection
         
         % sets the afeData, resets necessary parameters and activates the
         % connection
-        function obj = setAfeData(obj, afeData)
+        function activate(obj, afeData)
             obj.afeData = afeData;
-            obj.afeDataLength = length(afeData) / obj.SampleRate;
+            anySignal = afeData(1);
+            obj.afeDataLength = length(anySignal{1,1}.Data) / anySignal{1,1}.FsHz;
             obj.Time = 0.0;
             obj.bActive = true;
         end
-        
-        
+                
     end
     
 end

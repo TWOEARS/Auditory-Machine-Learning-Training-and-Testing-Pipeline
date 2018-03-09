@@ -32,7 +32,7 @@ end
 
 if ~execBaseline
     % setup blackboard system to be embedded into pipe
-    bbs = BlackboardSystem(1);
+    bbs = BlackboardSystem(0);
     idModels = setDefaultIdModels();
     afeCon = BlackboardEmbedding.AuditoryFrontEndConnection(16000);
     bbs.setRobotConnect(afeCon);

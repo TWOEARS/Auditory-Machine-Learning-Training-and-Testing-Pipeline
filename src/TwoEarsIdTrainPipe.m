@@ -93,7 +93,7 @@ classdef TwoEarsIdTrainPipe < handle
                 afeReqs = [afeReqs obj.ksWrapper.getAfeRequests];
             end
             if ~isempty( obj.blackboardSystem )
-                obj.blackboardSystem.bbs.dataConnect.setAfeDataIndexOffset( numel( afeReqs ) );
+                obj.blackboardSystem.bbs.dataConnect.afeDataIndexOffset = numel( afeReqs );
                 afeReqs = [afeReqs obj.blackboardSystem.bbs.dataConnect.requests];
             end
             obj.pipeline.featureCreator = obj.featureCreator;

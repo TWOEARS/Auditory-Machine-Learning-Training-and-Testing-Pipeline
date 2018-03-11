@@ -18,12 +18,10 @@ classdef AuditoryFrontEndBridgeKS < AbstractKS
         
         % constructor
         function obj = AuditoryFrontEndBridgeKS(robotInterfaceObj, timeStep)
-            % inherit everything but ignor managerObject (will be set to []
-            % by MATLAB default)
             obj = obj@AbstractKS();
             obj.robotInterfaceObj = robotInterfaceObj;
-            if nargin < 3 || isempty( timeStep )
-                obj.timestep = 1.0;
+            if nargin < 2 || isempty( timeStep )
+                obj.timeStep = 1.0;
             end
             obj.timeStep = timeStep;
             obj.invocationMaxFrequency_Hz = inf;

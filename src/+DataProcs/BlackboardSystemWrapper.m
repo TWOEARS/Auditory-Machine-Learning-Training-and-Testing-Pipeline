@@ -17,9 +17,14 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         end
         
         function process( obj, wavFilepath )
-            % reset blackboard
+            % reset blackboard and KSs
             obj.bbs.blackboard.deleteData();
+            warning('off','BB:tNotIncreasing');
             obj.bbs.blackboard.setSoundTimeIdx(0);
+            warning('on','BB:tNotIncreasing');
+            for ks = obj.bbs.blackboard.KSs 
+                ks{1}.timeStamp();
+            end
             % load AFE data
             in = obj.loadInputData( wavFilepath, 'afeData');
             % give input to AFE-Connection
@@ -29,12 +34,14 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             % make feature signals
             proc = emptyProc( 1 / obj.bbs.dataConnect.timeStep );
             data = [];
+            fList = [];
             for val = obj.bbs.blackboard.data.values
                 idHyp = val{1}.('identityHypotheses');
                 data = [data; idHyp.p];
+                if isempty(fList)
+                    fList = {idHyp.label};
+                end
             end
-            keys = obj.bbs.blackboard.data.keys;
-            fList = {obj.bbs.blackboard.data(keys{1}).identityHypotheses.label};
             featureSignal = FeatureSignal(proc, [], 'mono', data, fList);
             % save blackboard of blackboardSystem as output
             obj.output.blackboardData = featureSignal;                    
@@ -52,14 +59,9 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.ksHashs = [];
-            outputDeps.bindHashs = [];            
-            for ks = obj.bbs.blackboard.KSs
-                outputDeps.ksHashs = [ outputDeps.ksHashs calcDataHash(ks)];
-            end
-            for listener = obj.bbs.blackboardMonitor.listeners
-                outputDeps.bindHashs = [ outputDeps.bindHashs calcDataHash(listener)];
-            end                    
+            outputDeps.timeStep = obj.bbs.dataConnect.timeStep;
+            %outputDeps.ksHashs = obj.bbs.blackboard.KSs;
+            %outputDeps.bindHashs = obj.bbs.blackboardMonitor.listeners;                             
         end
         
         function out = getOutput( obj, varargin )

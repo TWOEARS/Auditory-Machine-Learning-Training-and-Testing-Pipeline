@@ -44,7 +44,7 @@ classdef AuditoryFrontEndConnection < matlab.mixin.SetGet
             end
             
             % calculate the actual minimum processed time
-            processedTime = min(processedTime);
+            processedTime = min(processedTime) - obj.Time;
             
             % increase time
             obj.Time = obj.Time + processedTime;

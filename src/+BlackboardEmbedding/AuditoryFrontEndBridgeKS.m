@@ -6,8 +6,7 @@ classdef AuditoryFrontEndBridgeKS < AbstractKS
         reqHashs;                       % all unique requestHashs from the blackboard's KSs
         requests;                       % all unique requests from the blackboard's KSs
         robotInterfaceObj;              % Scene simulator object
-        timeStep = (512.0 / 44100.0);   % basic time step, i.e. update rate
-        afeFs = 44100;                  % sample rate of AFE. If different from
+        timeStep;                       % basic time step in s, i.e. update rate
     end
     
     properties (SetAccess = public)
@@ -18,14 +17,10 @@ classdef AuditoryFrontEndBridgeKS < AbstractKS
     methods (Access = public)
         
         % constructor
-        function obj = AuditoryFrontEndBridgeKS(robotInterfaceObj, afeFs, timeStep)
+        function obj = AuditoryFrontEndBridgeKS(robotInterfaceObj, timeStep)
             % inherit everything but ignor managerObject (will be set to []
             % by MATLAB default)
             obj = obj@AbstractKS();
-            if nargin < 2 || isempty( afeFs )
-                afeFs = robotInterfaceObj.SampleRate;
-            end
-            obj.afeFs = afeFs;
             obj.robotInterfaceObj = robotInterfaceObj;
             if nargin < 3 || isempty( timeStep )
                 obj.timestep = 1.0;

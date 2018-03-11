@@ -34,9 +34,9 @@ if ~execBaseline
     % setup blackboard system to be embedded into pipe
     bbs = BlackboardSystem(0);
     idModels = setDefaultIdModels();
-    afeCon = BlackboardEmbedding.AuditoryFrontEndConnection(16000);
+    afeCon = BlackboardEmbedding.AuditoryFrontEndConnection();
     bbs.setRobotConnect(afeCon);
-    bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', [], 0.2);
+    bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', 0.2);
     ppRemoveDc = false;
     for ii = 1 : numel( idModels )
         idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});

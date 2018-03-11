@@ -5,15 +5,13 @@ classdef AuditoryFrontEndConnection < matlab.mixin.SetGet
     properties (SetAccess = private)
         afeData;
         afeDataLength;
-        SampleRate;
         bActive = false;
         Time = 0.0;
     end
     
     methods (Access = public)
         
-        function obj = AuditoryFrontEndConnection(SampleRate)
-            obj.SampleRate = SampleRate;
+        function obj = AuditoryFrontEndConnection()
         end
         
         function [afeBlock, processedTime] = getSignal(obj, timeStep)

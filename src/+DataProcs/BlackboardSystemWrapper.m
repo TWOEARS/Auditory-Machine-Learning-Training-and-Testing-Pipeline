@@ -9,7 +9,6 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
     
     methods (Access = public)
         
-        % Constructor
         function obj = BlackboardSystemWrapper(bbs)
             % init
             obj = obj@Core.IdProcInterface();
@@ -17,7 +16,6 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             obj.bbs = bbs;
         end
         
-        % process
         function process( obj, wavFilepath )
             % reset blackboard
             obj.bbs.blackboard.deleteData();
@@ -28,8 +26,8 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             obj.bbs.robotConnect.activate(in.afeData);
             % run blackboardSystem
             obj.bbs.run();
-            % TODO: make feature signals
-            FsHz = 1 / obj.bbs.dataConnect.timeStep;
+            % make feature signals
+            proc = emptyProc( 1 / obj.bbs.dataConnect.timeStep );
             data = [];
             for val = obj.bbs.blackboard.data.values
                 idHyp = val{1}.('identityHypotheses');
@@ -37,31 +35,31 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             end
             keys = obj.bbs.blackboard.data.keys;
             fList = {obj.bbs.blackboard.data(keys{1}).identityHypotheses.label};
-            featureSignal = FeatureSignal([], [], 'mono', data, fList);
-            featureSignal.FsHz = FsHz;
+            featureSignal = FeatureSignal(proc, [], 'mono', data, fList);
             % save blackboard of blackboardSystem as output
-            obj.output.blackboardData = featureSignal;
-            
+            obj.output.blackboardData = featureSignal;                    
         end
-        
-        
+                
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             out = obj.loadInputData( wavFilepath, varargin{:});
             out.afeData(out.afeData.Count+1) = load( outFilepath, varargin{:} );
             removefilesemaphore( obj.outFileSema );
-        end
-        
-        
+        end                
     end
     
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            % TODO!
-            outputDeps.timeStep = obj.bbs.dataConnect.timeStep;
-            %
+            outputDeps.ksHashs = [];
+            outputDeps.bindHashs = [];            
+            for ks = obj.bbs.blackboard.KSs
+                outputDeps.ksHashs = [ outputDeps.ksHashs calcDataHash(ks)];
+            end
+            for listener = obj.bbs.blackboardMonitor.listeners
+                outputDeps.bindHashs = [ outputDeps.bindHashs calcDataHash(listener)];
+            end                    
         end
         
         function out = getOutput( obj, varargin )

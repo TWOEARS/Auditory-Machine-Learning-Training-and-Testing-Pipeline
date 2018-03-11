@@ -14,11 +14,14 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             % init
             obj = obj@Core.IdProcInterface();
             % set blackboardSystem
-            obj.bbs = bbs;           
+            obj.bbs = bbs;
         end
         
         % process
         function process( obj, wavFilepath )
+            % reset blackboard
+            obj.bbs.blackboard.deleteData();
+            obj.bbs.blackboard.setSoundTimeIdx(0);
             % load AFE data
             in = obj.loadInputData( wavFilepath, 'afeData');
             % give input to AFE-Connection
@@ -27,10 +30,18 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             obj.bbs.run();
             % TODO: make feature signals
             FsHz = 1 / obj.bbs.dataConnect.timeStep;
+            data = [];
+            for val = obj.bbs.blackboard.data.values
+                idHyp = val{1}.('identityHypotheses');
+                data = [data; idHyp.p];
+            end
+            keys = obj.bbs.blackboard.data.keys;
+            fList = {obj.bbs.blackboard.data(keys{1}).identityHypotheses.label};
+            featureSignal = FeatureSignal([], [], 'mono', data, fList);
+            featureSignal.FsHz = FsHz;
             % save blackboard of blackboardSystem as output
-            obj.output.blackboardData = obj.bbs.blackboard;
-            % clear blackboard
-            obj.bbs.blackboard.deleteData();
+            obj.output.blackboardData = featureSignal;
+            
         end
         
         
@@ -46,7 +57,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
     end
     
     methods (Access = protected)
-
+        
         function outputDeps = getInternOutputDependencies( obj )
             % TODO!
             outputDeps.timeStep = obj.bbs.dataConnect.timeStep;
@@ -55,7 +66,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         
         function out = getOutput( obj, varargin )
             out = obj.output;
-        end        
+        end
     end
     
 end

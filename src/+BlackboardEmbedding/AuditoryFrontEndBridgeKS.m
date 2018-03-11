@@ -53,7 +53,7 @@ classdef AuditoryFrontEndBridgeKS < AbstractKS
                 hash = obj.reqHashs(i);
                 obj.blackboard.addSignal(hash{1}, afeSignal(i + obj.afeDataIndexOffset));
             end
-            obj.blackboard.advanceSoundTimeIdx(obj.timeStep);
+            obj.blackboard.advanceSoundTimeIdx(processedTime);
             obj.blackboard.addData('headOrientation', 0);
             % Trigger event
             notify(obj, 'KsFiredEvent');

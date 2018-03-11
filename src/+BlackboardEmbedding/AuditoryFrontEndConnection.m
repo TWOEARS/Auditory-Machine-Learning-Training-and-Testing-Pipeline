@@ -17,12 +17,11 @@ classdef AuditoryFrontEndConnection < matlab.mixin.SetGet
         end
         
         function [afeBlock, processedTime] = getSignal(obj, timeStep)
+                                    
+            processedTime = [];
+            tmpProcessedTime = obj.Time + timeStep;
             
-            % increase time
-            obj.Time = obj.Time + timeStep;
-            processedTime = obj.Time;
-            
-            % get data from current time until time+timestep
+            % get data from beginning of signal to current time
             afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             for afeKey = obj.afeData.keys
                 afeSignal = obj.afeData(afeKey{1});
@@ -30,15 +29,29 @@ classdef AuditoryFrontEndConnection < matlab.mixin.SetGet
                     afeSignalExtract = cell( size( afeSignal ) );
                     for ii = 1 : numel( afeSignal )
                         afeSignalExtract{ii} = ...
-                            afeSignal{ii}.cutSignalCopyReducedToArray( timeStep, obj.afeDataLength - obj.Time);
+                            afeSignal{ii}.cutSignalCopyReducedToArray( tmpProcessedTime, obj.afeDataLength - tmpProcessedTime);
                     end
+                    sigSize = size(afeSignalExtract{1}.Data);
+                    processedTime = [ processedTime ... 
+                        sigSize(1) / afeSignalExtract{1}.FsHz ];
                 else
                     afeSignalExtract = ...
-                        afeSignal.cutSignalCopyReducedToArray( timeStep, obj.afeDataLength - obj.Time);
+                        afeSignal.cutSignalCopyReducedToArray( tmpProcessedTime, obj.afeDataLength - tmpProcessedTime);
+                    sigSize = size(afeSignalExtract.Data);
+                    processedTime = [ processedTime ...
+                        sigSize(1) / afeSignalExtract.FsHz ];
+
                 end
                 afeBlock(afeKey{1}) = afeSignalExtract;
             end
             
+            % calculate the actual minimum processed time
+            processedTime = min(processedTime);
+            
+            % increase time
+            obj.Time = obj.Time + processedTime;
+            
+            % indicate processing
             fprintf('.');
             
             % if afeData ended go inactive
@@ -58,8 +71,22 @@ classdef AuditoryFrontEndConnection < matlab.mixin.SetGet
         % connection
         function activate(obj, afeData)
             obj.afeData = afeData;
-            anySignal = afeData(1);
-            obj.afeDataLength = length(anySignal{1,1}.Data) / anySignal{1,1}.FsHz;
+            afeDataLength = [];
+            % calculate maximum AFE data time in s
+            for afeKey = obj.afeData.keys
+                afeSignal = obj.afeData(afeKey{1});
+                if isa( afeSignal, 'cell' )
+                    % assumption: all channels are equally sized
+                    sigSize = size(afeSignal{1}.Data);
+                    afeDataLength = [ afeDataLength ...
+                        sigSize(1) / afeSignal{1}.FsHz ];
+                else
+                    sigSize = size(afeSignal.Data);
+                    afeDataLength = [ afeDataLength ...
+                        sigSize(1) / afeSignal.FsHz ];
+                end
+            end
+            obj.afeDataLength = max(afeDataLength);
             obj.Time = 0.0;
             obj.bActive = true;
         end

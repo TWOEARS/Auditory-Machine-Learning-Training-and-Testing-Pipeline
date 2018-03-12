@@ -49,10 +49,8 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
                 
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             out = obj.loadInputData( wavFilepath, varargin{:});
             out.afeData(out.afeData.Count+1) = load( outFilepath, varargin{:} );
-            removefilesemaphore( obj.outFileSema );
         end                
     end
     

@@ -23,7 +23,8 @@ classdef (Abstract) IdProcInterface < handle
         foldId = 1;
         saveImmediately = true;
         setLoadSemaphore = true;
-        secondCfgCheck = true;
+        secondCfgCheck = true
+        saveSerialized = false;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -119,7 +120,14 @@ classdef (Abstract) IdProcInterface < handle
             if obj.setLoadSemaphore
                 obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
             end
-            out = load( outFilepath, varargin{:} );
+            if obj.saveSerialized
+                out = load( outFilepath );
+                if isfield( out, 'outSerialized' )
+                    out = getArrayFromByteStream( out.outSerialized );
+                end
+            else
+                out = load( outFilepath, varargin{:} );
+            end
             if obj.setLoadSemaphore
                 removefilesemaphore( obj.outFileSema );
             end
@@ -241,7 +249,12 @@ classdef (Abstract) IdProcInterface < handle
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
-            save( outFilepath, '-struct', 'out', '-v6' );
+            if obj.saveSerialized
+                outSerialized = getByteStreamFromArray( out ); %#ok<NASGU>
+                save( outFilepath, 'outSerialized', '-v6' );
+            else
+                save( outFilepath, '-struct', 'out', '-v6' );
+            end
             removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
@@ -251,8 +264,8 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        function obj = IdProcInterface( procName )
-            if nargin < 1
+        function obj = IdProcInterface( procName, saveSerialized )
+            if nargin < 1 || isempty( procName )
                 classInfo = metaclass( obj );
                 [classname1, classname2] = strtok( classInfo.Name, '.' );
                 if isempty( classname2 ), obj.procName = classname1;
@@ -261,6 +274,10 @@ classdef (Abstract) IdProcInterface < handle
                 obj.procName = procName;
             end
             obj.cacheDirectory = Core.IdCacheDirectory();
+            if nargin < 2 || isempty( saveSerialized )
+                saveSerialized = false;
+            end
+            obj.saveSerialized = saveSerialized;
         end
         %% -------------------------------------------------------------------------------
 
@@ -300,7 +317,8 @@ classdef (Abstract) IdProcInterface < handle
                 b = fcrw;
             end
         end
-                
+        %% ----------------------------------------------------------------
+
     end
     %% -----------------------------------------------------------------------------------
     methods (Abstract)

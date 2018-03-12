@@ -24,6 +24,20 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
             % noop
         end
         %% ----------------------------------------------------------------
+        
+        % override of ModelTrainers.Base
+        function model = getModel( obj )
+            model = obj.giveTrainedModel();
+            if ~isa( model, 'Models.Base' )
+                error( 'giveTrainedModel must produce an Models.Base object.' );
+            end
+            if ~isempty( ModelTrainers.Base.featureMask )
+                assert( isequal( model.featureMask, ModelTrainers.Base.featureMask ) );
+            else
+                ModelTrainers.Base.featureMask( true, model.featureMask );
+            end
+        end
+        %% -------------------------------------------------------------------------------
 
     end
     

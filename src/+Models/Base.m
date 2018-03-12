@@ -1,7 +1,7 @@
-classdef (Abstract) Base < handle
+classdef (Abstract) Base < matlab.mixin.Copyable
     
     %% --------------------------------------------------------------------
-    properties (SetAccess = {?ModelTrainers.Base})
+    properties (SetAccess = {?ModelTrainers.Base,?Models.Base})
         featureMask = [];
     end
     
@@ -10,10 +10,10 @@ classdef (Abstract) Base < handle
 
         function [y,score] = applyModel( obj, x )
             if ~isempty( obj.featureMask )
-                p_feat = size( x, 2 );
-                p_mask = size( obj.featureMask, 1 );
-                fmask = obj.featureMask( 1 : min( p_feat, p_mask ) );
-                x = x(:,fmask);
+                nFeat = size( x, 2 );
+                nMask = numel( obj.featureMask );
+                assert( nFeat == nMask );
+                x = x(:,obj.featureMask);
             end
             verboseFprintf( obj, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
             [y,score] = obj.applyModelMasked( x );
@@ -59,37 +59,12 @@ classdef (Abstract) Base < handle
             if nargin < 4  || isempty( maxDataSize )
                 maxDataSize = inf; 
             end
-            if nargin < 5  || isempty( dataSelector )
-                dataSelector = DataSelectors.IgnorantSelector(); 
-            end
-            dataSelector.connectData( testSet );
-            if nargin < 6  || isempty( importanceWeighter )
-                importanceWeighter = ImportanceWeighters.IgnorantWeighter(); 
-            end
-            importanceWeighter.connectData( testSet );
+            [x,yTrue,iw,vo,~,sampleIds] = ModelTrainers.Base.getSelectedData( testSet, ...
+                             maxDataSize, dataSelector, importanceWeighter, true, false );
             if nargin < 7  || isempty( getDatapointInfo )
                 getDatapointInfo = false; 
             end
-            x = testSet(:,'x');
-            yTrue = testSet(:,'y');
-            sampleIds = (1:numel( yTrue ))';
-            nanXidxs = any( isnan( x ), 2 );
-            infXidxs = any( isinf( x ), 2 );
-            if any( nanXidxs ) || any( infXidxs ) 
-                warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
-                x(nanXidxs | infXidxs,:) = [];
-                yTrue(nanXidxs | infXidxs,:) = [];
-                sampleIds(nanXidxs | infXidxs) = [];
-            end
-            if size( yTrue, 1 ) > maxDataSize
-                selectFilter = dataSelector.getDataSelection( sampleIds, maxDataSize );
-                verboseFprintf( model, dataSelector.verboseOutput );
-                x = x(selectFilter,:);
-                yTrue = yTrue(selectFilter,:);
-                sampleIds = sampleIds(selectFilter);
-            end
-            iw = importanceWeighter.getImportanceWeights( sampleIds );
-            verboseFprintf( model, importanceWeighter.verboseOutput );
+            verboseFprintf( model, vo );
             if getDatapointInfo
                 dpi.fileIdxs = testSet(:,'pointwiseFileIdxs');
                 dpi.fileIdxs = dpi.fileIdxs(sampleIds);
@@ -103,10 +78,11 @@ classdef (Abstract) Base < handle
             else
                 dpi = struct.empty;
             end
+            dpi(1).sampleIds = sampleIds;
             if isempty( x ), error( 'There is no data to test the model.' ); end
             yModel = model.applyModel( x );
             for ii = 1 : size( yModel, 2 )
-                perf(ii) = perfMeasure( yTrue, yModel(:,ii), iw, dpi, testSet );
+                perf(ii) = perfMeasure( yTrue, yModel(:,ii), iw(:), dpi, testSet ); %#ok<AGROW>
             end
         end
         %% ----------------------------------------------------------------

@@ -3,10 +3,12 @@ classdef (Abstract) IdProcInterface < handle
     %
     
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties
         procName;
         cacheSystemDir;
         nPathLevelsForCacheName = 3;
+        procCacheFolderNames = '';
+        procCacheFolderNames_intern = '';
     end
     
     %% -----------------------------------------------------------------------------------
@@ -18,7 +20,11 @@ classdef (Abstract) IdProcInterface < handle
         lastConfig = {};
         outFileSema;
         sceneId = 1;
+        foldId = 1;
         saveImmediately = true;
+        setLoadSemaphore = true;
+        secondCfgCheck = true
+        saveSerialized = false;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -26,7 +32,7 @@ classdef (Abstract) IdProcInterface < handle
     end
     
     %% -----------------------------------------------------------------------------------
-    methods (Access = public)
+    methods
         
         function delete( obj )
             removefilesemaphore( obj.outFileSema );
@@ -35,6 +41,24 @@ classdef (Abstract) IdProcInterface < handle
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function set.procCacheFolderNames( obj, newPCFN )
+            newPCFN = obj.overridableSetPCFN( newPCFN );
+            obj.procCacheFolderNames = newPCFN;
+        end
+        %% ----------------------------------------------------------------
+        
+        function set.sceneId( obj, newScnId )
+            newScnId = obj.overridableSetScnId( newScnId );
+            obj.sceneId = newScnId;
+        end
+        %% ----------------------------------------------------------------
+        
+        function set.foldId( obj, newFoldId )
+            newFoldId = obj.overridableSetFoldId( newFoldId );
+            obj.foldId = newFoldId;
+        end
+        %% ----------------------------------------------------------------
         
         function saveCacheDirectory( obj )
             obj.cacheDirectory.saveCacheDirectory();
@@ -65,6 +89,9 @@ classdef (Abstract) IdProcInterface < handle
             obj.lastFolder = {};
             obj.lastConfig = {};
             obj.sceneId = 1;
+            obj.foldId = 1;
+            obj.setLoadSemaphore = true;
+            obj.secondCfgCheck = true;
         end
         %% -------------------------------------------------------------------------------
         
@@ -90,13 +117,28 @@ classdef (Abstract) IdProcInterface < handle
 
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
             outFilepath = obj.getOutputFilepath( wavFilepath );
-            obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
-            out = load( outFilepath, varargin{:} );
-            removefilesemaphore( obj.outFileSema );
+            if obj.setLoadSemaphore
+                obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
+            end
+            if obj.saveSerialized
+                out = load( outFilepath );
+                if isfield( out, 'outSerialized' )
+                    out = getArrayFromByteStream( out.outSerialized );
+                end
+            else
+                out = load( outFilepath, varargin{:} );
+            end
+            if obj.setLoadSemaphore
+                removefilesemaphore( obj.outFileSema );
+            end
         end
         %% -------------------------------------------------------------------------------
         
         function [inData, inDataFilepath] = loadInputData( obj, wavFilepath, varargin )
+            obj.inputProc.sceneId = obj.sceneId;
+            obj.inputProc.foldId = obj.foldId;
+            obj.inputProc.setLoadSemaphore = obj.setLoadSemaphore;
+            obj.inputProc.secondCfgCheck = obj.secondCfgCheck;
             [inData, inDataFilepath] = ...
                               obj.inputProc.loadProcessedData( wavFilepath, varargin{:} );
         end
@@ -161,19 +203,26 @@ classdef (Abstract) IdProcInterface < handle
         
         function currentFolder = getCurrentFolder( obj )
             currentConfig = obj.getOutputDependencies();
-            if numel( obj.lastFolder ) >= obj.sceneId ...
-                    && ~isempty( obj.lastFolder{obj.sceneId} ) ...
-                    && isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId} )
-                currentFolder = obj.lastFolder{obj.sceneId};
-                return;
+            if size( obj.lastFolder, 1 ) >= obj.sceneId ...
+                    && size( obj.lastFolder, 2 ) >= obj.foldId ...
+                    && ~isempty( obj.lastFolder{obj.sceneId,obj.foldId} ) 
+                if ~obj.secondCfgCheck ...
+                        || isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId,obj.foldId} )
+                    currentFolder = obj.lastFolder{obj.sceneId,obj.foldId};
+                    return;
+                end
             end
             obj.cacheDirectory.loadCacheDirectory();
-            currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true );
+            newFolderName = ['.' obj.procCacheFolderNames ...
+                             '_' obj.procCacheFolderNames_intern ...
+                             '_scene' num2str( obj.sceneId ) ...
+                             '_fold' num2str( obj.foldId )];
+            currentFolder = obj.cacheDirectory.getCacheFilepath( currentConfig, true, newFolderName );
             if obj.saveImmediately
                 obj.cacheDirectory.saveCacheDirectory();
             end
-            obj.lastFolder{obj.sceneId} = currentFolder;
-            obj.lastConfig{obj.sceneId} = currentConfig;
+            obj.lastFolder{obj.sceneId,obj.foldId} = currentFolder;
+            obj.lastConfig{obj.sceneId,obj.foldId} = currentConfig;
         end
         %% -------------------------------------------------------------------------------
         
@@ -196,11 +245,16 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function save( obj, wavFilepath, out )
+        function save( obj, wavFilepath, out ) %#ok<INUSD>
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
-            save( outFilepath, '-struct', 'out' );
+            if obj.saveSerialized
+                outSerialized = getByteStreamFromArray( out ); %#ok<NASGU>
+                save( outFilepath, 'outSerialized', '-v6' );
+            else
+                save( outFilepath, '-struct', 'out', '-v6' );
+            end
             removefilesemaphore( obj.outFileSema );
         end
         %% -------------------------------------------------------------------------------
@@ -210,8 +264,8 @@ classdef (Abstract) IdProcInterface < handle
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
-        function obj = IdProcInterface( procName )
-            if nargin < 1
+        function obj = IdProcInterface( procName, saveSerialized )
+            if nargin < 1 || isempty( procName )
                 classInfo = metaclass( obj );
                 [classname1, classname2] = strtok( classInfo.Name, '.' );
                 if isempty( classname2 ), obj.procName = classname1;
@@ -220,6 +274,10 @@ classdef (Abstract) IdProcInterface < handle
                 obj.procName = procName;
             end
             obj.cacheDirectory = Core.IdCacheDirectory();
+            if nargin < 2 || isempty( saveSerialized )
+                saveSerialized = false;
+            end
+            obj.saveSerialized = saveSerialized;
         end
         %% -------------------------------------------------------------------------------
 
@@ -227,6 +285,21 @@ classdef (Abstract) IdProcInterface < handle
             procFileExt = '.mat';
         end
         %% -------------------------------------------------------------------------------
+        
+        function newPCFN = overridableSetPCFN( obj, newPCFN )
+            assert( ischar( newPCFN ) );
+        end
+        %% ----------------------------------------------------------------
+        
+        function newScnId = overridableSetScnId( obj, newScnId )
+            assert( isnumeric( newScnId ) && numel( newScnId ) == 1 );
+        end
+        %% ----------------------------------------------------------------
+        
+        function newFoldId = overridableSetFoldId( obj, newFoldId )
+            assert( isnumeric( newFoldId ) && numel( newFoldId ) == 1 );
+        end
+        %% ----------------------------------------------------------------
         
     end
     
@@ -244,7 +317,8 @@ classdef (Abstract) IdProcInterface < handle
                 b = fcrw;
             end
         end
-                
+        %% ----------------------------------------------------------------
+
     end
     %% -----------------------------------------------------------------------------------
     methods (Abstract)

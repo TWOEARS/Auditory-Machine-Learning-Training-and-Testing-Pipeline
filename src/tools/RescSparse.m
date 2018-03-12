@@ -307,6 +307,28 @@ classdef RescSparse
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function [meanedResc,meanedDataOrigin] = meanDown( obj, keepDims, rowIdxs, sdoPrior, intraGroupNorm )
+            meanedResc = obj;
+            if nargin < 3, rowIdxs = []; end
+            if nargin < 4, sdoPrior = []; end
+            meanedDataOrigin = sdoPrior;
+            if nargin < 5, intraGroupNorm = []; end
+            keepDims_ = 1 : size( obj.dataIdxs, 2 );
+            meanDims = keepDims_;
+            meanDims(keepDims) = [];
+            for md = flip( meanDims )
+                keepDims_(md) = [];
+                if nargout > 1
+                    [meanedResc,meanedDataOrigin] = meanedResc.summarizeDown( keepDims_, rowIdxs, [], @mean, meanedDataOrigin, intraGroupNorm );
+                else
+                    meanedResc = meanedResc.summarizeDown( keepDims_, rowIdxs, [], @mean );
+                end
+                keepDims_ = 1 : size( meanedResc.dataIdxs, 2 );
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
 
         function robj = resample( obj, depIdx, rIdx, resample_weights, conditions )
             if nargin >= 5 && ~isempty( conditions )

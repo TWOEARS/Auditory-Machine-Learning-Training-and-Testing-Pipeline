@@ -3,6 +3,7 @@ classdef IdentTrainPipeData < handle
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private)
         data;
+        folds;
         stratificationLabels;
         autoStratify;
     end
@@ -12,6 +13,7 @@ classdef IdentTrainPipeData < handle
         
         function obj = IdentTrainPipeData( varargin )
             obj.data = Core.IdentTrainPipeDataElem.empty;
+            obj.folds = {obj};
             rng( 'shuffle' );
             ip = inputParser;
             ip.addOptional( 'autoStratify', true );
@@ -89,8 +91,10 @@ classdef IdentTrainPipeData < handle
                     elseif any( strcmpi( dSubScript, {'fileName','blockAnnotsCacheFile'} ) )
                         varargout{1:nargout} = { obj.data(fIdx).(dSubScript) }';
                     elseif any( strcmpi( dSubScript, {'blockAnnotations'} ) )
-                        isEmpty_bas_bb = arrayfun( @(c)(isempty(c.blockAnnotations)), obj.data(fIdx) );
-                        for bb = find( isEmpty_bas_bb )
+                        isEmpty_bas_bb = arrayfun( ...
+                                     @(c)(isempty( fieldnames( c.blockAnnotations ))), ...
+                                                                         obj.data(fIdx) );
+                        for bb = fIdx(isEmpty_bas_bb)
                             bas_bb = [];
                             bacfIdxs = obj.data(bb).bacfIdxs;
                             bacfs = obj.data(bb).blockAnnotsCacheFile;
@@ -108,7 +112,8 @@ classdef IdentTrainPipeData < handle
                             end
                             obj.data(bb).blockAnnotations = bas_bb;
                         end
-                        varargout{1:nargout} = vertcat( obj.data(fIdx).blockAnnotations );
+                        baNempty = ~cellfun( @isempty, {obj.data(fIdx).blockAnnotations} );
+                        varargout{1:nargout} = vertcat( obj.data(fIdx(baNempty)).blockAnnotations );
                     elseif strcmpi( dSubScript, 'pointwiseFileIdxs' )
                         out = [];
                         for ff = fIdx
@@ -215,6 +220,23 @@ classdef IdentTrainPipeData < handle
         function permFolds = splitInPermutedStratifiedFolds( obj, nFolds, stratifyLabels )
             if nFolds == 0
                 permFolds = [];
+                return;
+            end
+            if ischar( nFolds ) && strcmpi( nFolds, 'preFolded' )
+                permFolds = obj.folds;
+                return;
+            end
+            if nFolds == numel( obj.folds )
+                permFolds = obj.folds;
+                return;
+            end
+            if mod( numel( obj.folds ), nFolds ) == 0
+                rndFoldIdxs = randperm( numel( obj.folds ) );
+                rndFoldIdxs = reshape( rndFoldIdxs, nFolds, [] );
+                for ii = 1 : nFolds
+                    permFolds{ii} = Core.IdentTrainPipeData.combineData( ...
+                                                           obj.folds{rndFoldIdxs(ii,:)} ); %#ok<AGROW>
+                end
                 return;
             end
             for ii = nFolds : -1 : 1, permFolds{ii} = Core.IdentTrainPipeData(); end
@@ -359,7 +381,7 @@ classdef IdentTrainPipeData < handle
                     filepath = cleanPathFromRelativeRefs( filepath );
                     fprintf( '%s\n', filepath );
                 end
-                obj.data(end+1) = Core.IdentTrainPipeDataElem( filepath );
+                obj.data(end+1) = Core.IdentTrainPipeDataElem( filepath, obj );
             end
             fclose( fid );
             fprintf( '.\n' );
@@ -372,7 +394,24 @@ classdef IdentTrainPipeData < handle
             for ff = 1 : numel( fileNames )
                 fIdxff = find( strcmp( fileNames{ff}, {obj.data.fileName} ) );
                 if isempty( fIdxff ), continue; end
-                fIdx(ff) = fIdxff;
+                fIdx(ff) = fIdxff; %#ok<AGROW>
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function clear( obj, mode )
+            if strcmpi( mode, 'all' )
+                clearFields = {'x','y','ysi','bIdxs','bacfIdxs',...
+                               'blockAnnotsCacheFile','blockAnnotations'};
+            elseif strcmpi( mode, 'y' )
+                clearFields = {'y','ysi'};
+            else
+                clearFields = {};
+            end
+            for ff = 1 : numel( obj.data )
+                for cc = 1 : numel( clearFields )
+                    obj.data(ff).(clearFields{cc}) = [];
+                end
             end
         end
         %% -------------------------------------------------------------------------------
@@ -385,9 +424,12 @@ classdef IdentTrainPipeData < handle
         function combinedData = combineData( varargin )
             combinedData = Core.IdentTrainPipeData();
             for ii = 1 : numel(varargin)
-                dii = varargin{ii};
-                nDii = numel( dii.data );
-                combinedData.data(end+1:end+nDii) = dii.data;
+                idData_ii = varargin{ii};
+                nDii = numel( idData_ii.data );
+                combinedData.data(end+1:end+nDii) = idData_ii.data;
+                arrayfun( @(a)(a.addContainers( {combinedData} )), ...
+                                                      combinedData.data(end-nDii+1:end) );
+                combinedData.folds{ii} = idData_ii;
             end
         end
         

@@ -13,12 +13,12 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         dnnLocKs;
         nsrcsKs;
         idKss;
-        energeticBaidxs;
         nsrcsBias;
         nsrcsRndPlusMinusBias;
         isNsrcsFixed;
         isAzmFixedUniform;
         softMaskExponent = 10;
+        srcSegregateNrjThreshold;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -39,6 +39,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             ip.addOptional( 'nsrcsBias', 0 );
             ip.addOptional( 'nsrcsRndPlusMinusBias', 0 );
             ip.addOptional( 'softMaskExponent', 10 );
+            ip.addOptional( 'srcSegregateNrjThreshold', -40 );
             ip.parse( varargin{:} );
             segmentKs = StreamSegregationKS( paramFilepath ); 
             fprintf( '.' );
@@ -100,7 +101,6 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             obj.dnnLocKs = dnnLocKs;
             obj.idKss = idKss;
             obj.nsrcsKs = nsrcsKs;
-            obj.energeticBaidxs = [];
             obj.isNsrcsFixed = false;
             obj.isAzmFixedUniform = false;
             obj.nsrcsBias = ip.Results.nsrcsBias;
@@ -133,6 +133,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                 end
             end
             obj.softMaskExponent = ip.Results.softMaskExponent;
+            obj.srcSegregateNrjThreshold = ip.Results.srcSegregateNrjThreshold;
             fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
@@ -147,47 +148,48 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             srcsGlobalRefEnergyMeanChannel = cellfun( ...
                                     @(c)(sum(10.^(c./10)) ./ 2 ), blockAnnotations.globalSrcEnergy );
             srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
-            srcsHaveEnergy = srcsGlobalRefEnergyMeanChannel_db > -40;
-            obj.energeticBaidxs = 1 : numel( blockAnnotations.globalSrcEnergy );
-            obj.energeticBaidxs(isnan(obj.azmsGroundTruth)) = [];
-            srcsHaveEnergy(isnan(obj.azmsGroundTruth)) = [];
-            obj.azmsGroundTruth(isnan(obj.azmsGroundTruth)) = [];
+            srcsHaveEnergy = srcsGlobalRefEnergyMeanChannel_db >= obj.srcSegregateNrjThreshold;
+            isDiffuseSrc = isnan( obj.azmsGroundTruth );
+            srcsHaveEnergy(isDiffuseSrc) = [];
+            obj.azmsGroundTruth(isDiffuseSrc) = [];
+            obj.azmsGroundTruth = wrapTo180( obj.azmsGroundTruth );
             if any( srcsHaveEnergy )
-                obj.azmsGroundTruth(~srcsHaveEnergy) = [];
-                obj.energeticBaidxs(~srcsHaveEnergy) = [];
+                streamAzms = obj.azmsGroundTruth(srcsHaveEnergy);
+                [~, ~, ia] = uniquetol( streamAzms, 2.5, 'DataScale', 1 );
+                streamAzms = accumarray( ia, streamAzms, [], @mean )';
+                nStreamsWithEnergy = numel( streamAzms );
             else
-                rndIdx = randi( numel( obj.azmsGroundTruth ) );
-                obj.azmsGroundTruth = obj.azmsGroundTruth(rndIdx);
-                obj.energeticBaidxs = obj.energeticBaidxs(rndIdx);
+                streamAzms = 0;
+                nStreamsWithEnergy = 0;
             end
             if ~obj.useNsrcsKs
                 rndNbias = randi( obj.nsrcsRndPlusMinusBias*2 + 1 ) ...
                                                 - obj.nsrcsRndPlusMinusBias - 1;
                 if obj.isNsrcsFixed
-                    setNsrcs = max( 1, obj.nsrcsBias + rndNbias );
+                    setNstreams = max( 1, obj.nsrcsBias + rndNbias );
                 else
-                    setNsrcs = max( 1, sum( srcsHaveEnergy ) + obj.nsrcsBias + rndNbias );
+                    setNstreams = max( 1, nStreamsWithEnergy + obj.nsrcsBias + rndNbias );
                 end
-                obj.segmentKs.setFixedNoSrcs( setNsrcs );
+                obj.segmentKs.setFixedNoSrcs( setNstreams );
             else
                 obj.segmentKs.setFixedNoSrcs( [] );
             end
             if ~obj.useDnnLocKs
                 if obj.isAzmFixedUniform
-                    azmStep = round( 360 / setNsrcs );
-                    currentVarAzms = round( azmStep/2 ) : azmStep : 360;
+                    azmStep = round( 360 / setNstreams );
+                    streamAzms = round( azmStep/2 ) : azmStep : 360;
                 else
-                    azmVar = obj.varAzmSigma * randn( size( obj.azmsGroundTruth ) );
-                    currentVarAzms = wrapTo180( obj.azmsGroundTruth + azmVar );
-                    setNsrcsDiff = setNsrcs - numel( currentVarAzms );
-                    if setNsrcsDiff > 0
-                        currentVarAzms = [currentVarAzms 360*rand( 1, setNsrcsDiff )];
-                    elseif setNsrcsDiff < 0
-                        rndidxs = randperm( numel( currentVarAzms ) );
-                        currentVarAzms(rndidxs(1:abs(setNsrcsDiff))) = [];
+                    azmVar = obj.varAzmSigma * randn( size( streamAzms ) );
+                    streamAzms = wrapTo180( streamAzms + azmVar );
+                    setNstreamsDiff = setNstreams - numel( streamAzms );
+                    if setNstreamsDiff > 0
+                        streamAzms = [streamAzms 360*rand( 1, setNstreamsDiff )];
+                    elseif setNstreamsDiff < 0
+                        rndidxs = randperm( numel( streamAzms ) );
+                        streamAzms(rndidxs(1:abs(setNstreamsDiff))) = [];
                     end
                 end
-                obj.segmentKs.setFixedAzimuths( wrapTo180( currentVarAzms ) );
+                obj.segmentKs.setFixedAzimuths( wrapTo180( streamAzms ) );
             else
                 obj.segmentKs.setFixedAzimuths( [] );
                 warning( 'off', 'BBS:badBlockTimeRequest' );
@@ -199,18 +201,18 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         
         function postproc( obj, afeData, blockAnnotations )
             segHypos = obj.bbs.blackboard.getLastData( 'segmentationHypotheses' );
-            nSegments = numel( segHypos.data );
-            nTrue = numel( obj.azmsGroundTruth );
-            hypAzms = repmat( wrapTo180( [segHypos.data.refAzm]' ), 1, nTrue );
-            gtAzms = repmat( wrapTo180( obj.azmsGroundTruth ), nSegments, 1 );
-            hypAzmGtDists = abs( wrapTo180( gtAzms - hypAzms ) );
+            nStreams = numel( segHypos.data );
+            nSrcs = numel( obj.azmsGroundTruth );
+            streamAzms = repmat( wrapTo180( [segHypos.data.refAzm]' ), 1, nSrcs );
+            srcAzms = repmat( wrapTo180( obj.azmsGroundTruth ), nStreams, 1 );
+            streamSrcAzmDists = abs( wrapTo180( srcAzms - streamAzms ) );
             switch obj.segSrcAssignmentMethod
                 case 'minPermutedDistance'
-                    segIdxs = [];
-                    while numel( segIdxs ) < nTrue
-                        segIdxs = [segIdxs 1:nSegments]; %#ok<AGROW>
+                    streamIdxs = [];
+                    while numel( streamIdxs ) < nSrcs
+                        streamIdxs = [streamIdxs 1:nStreams]; %#ok<AGROW>
                     end
-                    distCombinations = nchoosek( segIdxs, nTrue );
+                    distCombinations = nchoosek( streamIdxs, nSrcs );
                     distPermutations = [];
                     for ii = 1 : size( distCombinations, 1 )
                         distPermutations = [distPermutations; ...
@@ -219,24 +221,32 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
                     distPermutations = unique( distPermutations, 'rows' );
                     distances = zeros( size( distPermutations ) );
                     for tt = 1 : size( distPermutations, 2 )
-                        distances(:,tt) = hypAzmGtDists(distPermutations(:,tt),tt);
+                        distances(:,tt) = streamSrcAzmDists(distPermutations(:,tt),tt);
                     end
                     permutedDistances = sum( distances, 2 );
                     [~,minPermutedDistanceIdx] = min( permutedDistances );
-                    segSrcAssignment = distPermutations(minPermutedDistanceIdx,:);
+                    streamSrcAssignment = distPermutations(minPermutedDistanceIdx,:);
                 case 'minDistance'
-                    [~,segSrcAssignment] = min( hypAzmGtDists, [], 1 );
+                    [~,streamSrcAssignment] = min( streamSrcAzmDists, [], 1 );
             end                   
-            for ss = 1 : nSegments
+            for ss = 1 : nStreams
                 segData = segHypos.data(ss);
                 softmask = (segData.softMask) .^ obj.softMaskExponent;
                 obj.out.afeBlocks{end+1,1} = SegmentIdentityKS.maskAFEData( ...
                                        afeData, softmask, segData.cfHz, segData.hopSize );
-                srcIdxs = find( segSrcAssignment == ss );
-                srcIdxs = obj.energeticBaidxs(srcIdxs); %#ok<FNDSB>
-                maskedBlockAnnotations = obj.maskBA( blockAnnotations, srcIdxs ); 
+                softMaskSignal = struct( ...
+                                   'FsHz', {1/segData.hopSize}, ...
+                                   'Name', {'SoftMask'}, 'Label', {'SoftMask'}, ...
+                                   'cfHz', {segData.cfHz}, ...
+                                   'Dimensions', {'nSamples x nFilters'}, ...
+                                   'Channel', {'mono'}, ...
+                                   'Data', {segData.softMask} );
+                softMaskSignalKey = max( cell2mat( obj.out.afeBlocks{end,1}.keys ) ) + 1;               
+                obj.out.afeBlocks{end,1}(softMaskSignalKey) = softMaskSignal;
+                thisStreamSrcIdxs = find( streamSrcAssignment == ss );
+                maskedBlockAnnotations = obj.maskBA( blockAnnotations, thisStreamSrcIdxs );  %#ok<FNDSB>
                 maskedBlockAnnotations.estAzm = segData.refAzm;
-                maskedBlockAnnotations.nSrcs_estimationError = nSegments - nTrue;
+                maskedBlockAnnotations.nStreams = nStreams;
                 if isempty(obj.out.blockAnnotations)
                     obj.out.blockAnnotations = maskedBlockAnnotations;
                 else
@@ -248,7 +258,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )
-            outputDeps.v = 16;
+            outputDeps.v = 17;
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );
@@ -259,6 +269,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.nsrcsBias = obj.nsrcsBias;
             outputDeps.nsrcsRndPlusMinusBias = obj.nsrcsRndPlusMinusBias;
             outputDeps.softMaskExponent = obj.softMaskExponent;
+            outputDeps.srcSegregateNrjThreshold = obj.srcSegregateNrjThreshold;
         end
         %% -------------------------------------------------------------------------------
 
@@ -273,26 +284,34 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             rSrcIdxs = 1:max( srcIdxs );
             rSrcIdxs(srcIdxs) = 1:numel(srcIdxs);
             baFields = fieldnames( blockAnnotations );
-            for ff = 1 : numel( baFields )
+            meBaf = strcmpi( 'mixEnergy', baFields );
+            ffs = 1 : numel( baFields );
+            ffs(meBaf) = [];
+            for ff = ffs
                 if isstruct( blockAnnotations.(baFields{ff}) )
-                    baSrcs = blockAnnotations.(baFields{ff}).(baFields{ff})(:,2);
-                    baIsSrcIdEq = cellfun( @(x)( any( x == srcIdxs) ), baSrcs );
-                    blockAnnotations.(baFields{ff}).t.onset(~baIsSrcIdEq) = [];
-                    blockAnnotations.(baFields{ff}).t.offset(~baIsSrcIdEq) = [];
-                    blockAnnotations.(baFields{ff}).(baFields{ff})(~baIsSrcIdEq,:) = [];
+                    baSrcs = cell2mat( blockAnnotations.(baFields{ff}).(baFields{ff})(:,2) );
+                    baIsSrcIdEq = false( size( baSrcs ) );
+                    for ii = 1 : numel( baSrcs )
+                        baIsSrcIdEq(ii) = any( baSrcs(ii) == srcIdxs );
+                    end
+                    blockAnnotations.(baFields{ff}).t.onset = ...
+                                     blockAnnotations.(baFields{ff}).t.onset(baIsSrcIdEq);
+                    blockAnnotations.(baFields{ff}).t.offset = ...
+                                     blockAnnotations.(baFields{ff}).t.offset(baIsSrcIdEq);
+                    blockAnnotations.(baFields{ff}).(baFields{ff}) = ...
+                            blockAnnotations.(baFields{ff}).(baFields{ff})(baIsSrcIdEq,:);
                     blockAnnotations.(baFields{ff}).(baFields{ff})(:,2) = ...
-                        cellfun( @(x)(rSrcIdxs(x)), ...
-                        blockAnnotations.(baFields{ff}).(baFields{ff})(:,2), ...
-                                                       'UniformOutput', false );
-                elseif ~strcmpi('mixEnergy',baFields{ff}) && ...
-                        (iscell( blockAnnotations.(baFields{ff}) ) ...
-                        || numel( blockAnnotations.(baFields{ff}) ) > 1)
+                                                           cellfun( @(x)(rSrcIdxs(x)), ...
+                                  blockAnnotations.(baFields{ff}).(baFields{ff})(:,2), ...
+                                                                 'UniformOutput', false );
+                elseif iscell( blockAnnotations.(baFields{ff}) ) ...
+                       || (numel( blockAnnotations.(baFields{ff}) ) > 1)
                     baIsSrcIdEq = false( size( blockAnnotations.(baFields{ff}) ) );
                     baIsSrcIdEq(srcIdxs) = true;
-                    blockAnnotations.(baFields{ff})(~baIsSrcIdEq) = [];
+                    blockAnnotations.(baFields{ff}) = ...
+                                             blockAnnotations.(baFields{ff})(baIsSrcIdEq);
                 end
             end
-%             blockAnnotations.mixEnergy = blockAnnotations.srcEnergy{1};
         end
         %% -------------------------------------------------------------------------------
         

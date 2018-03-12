@@ -56,8 +56,9 @@ classdef IdentificationTrainingPipeline < handle
         end
         %% ------------------------------------------------------------------------------- 
         
-        function resetDataProcs( obj )
-            obj.dataPipeProcs = {};
+        function resetDataProcs( obj, pipeReUseIdx )
+            if nargin < 2, pipeReUseIdx = 1; end
+            obj.dataPipeProcs(pipeReUseIdx:end) = [];
         end
         %% ------------------------------------------------------------------------------- 
 
@@ -165,7 +166,7 @@ classdef IdentificationTrainingPipeline < handle
                         if any( strcmpi( err.identifier, ...
                                 {'AMLTTP:dataprocs:fileErrors'} ...
                                 ) )
-                            errs{end+1} = err;
+                            errs{end+1} = err; %#ok<AGROW>
                             warning( err.message );
                         else
                             rethrow( err );
@@ -183,27 +184,27 @@ classdef IdentificationTrainingPipeline < handle
             if strcmp(ip.Results.runOption, 'onlyGenCache'), return; end;
             if rwcMode, return; end;
             
-            featureCreator = obj.featureCreator;
+            featureCreator = obj.featureCreator;  %#ok<*PROPLC>
             lastDataProcParams = ...
-                obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies();
-            blockCreator = obj.blockCreator;
+                obj.dataPipeProcs{end}.dataFileProcessor.getOutputDependencies(); %#ok<NASGU>
+            blockCreator = obj.blockCreator; %#ok<NASGU>
             if strcmp( ip.Results.runOption, 'dataStore' )
-                data = obj.data;
+                data = obj.data; %#ok<NASGU>
                 save( 'dataStore.mat', ...
                       'data', ...,
                       'featureCreator', 'blockCreator', ...
                       'lastDataProcParams', '-v7.3' );
                 return; 
             elseif strcmp( ip.Results.runOption, 'dataStoreUni' )
-                x = obj.data(:,'x');
-                y = obj.data(:,'y');
-                featureNames = obj.featureCreator.description;
+                x = obj.data(:,'x'); %#ok<NASGU>
+                y = obj.data(:,'y'); %#ok<NASGU>
+                featureNames = obj.featureCreator.description; %#ok<NASGU>
                 save( 'dataStoreUni.mat', ...
                       'x', 'y', 'featureNames', '-v7.3' );
                 return; 
             elseif strcmp( ip.Results.runOption, 'dataStoreGT' )
-                bIdxs = obj.data(:,'bIdxs');
-                y = obj.data(:,'y');
+                bIdxs = obj.data(:,'bIdxs'); %#ok<NASGU>
+                y = obj.data(:,'y'); %#ok<NASGU>
                 save( 'dataStoreGT.mat', ...
                       'bIdxs', 'y', '-v7.3' );
                 return; 
@@ -225,13 +226,13 @@ classdef IdentificationTrainingPipeline < handle
             fprintf( '\n==  Training model on trainSet...\n\n' );
             tic;
             obj.trainer.run();
-            trainTime = toc;
-            testTime = nan;
+            trainTime = toc; %#ok<NASGU>
+            testTime = nan; %#ok<NASGU>
             if ~isempty( obj.testSet )
                 fprintf( '\n==  Testing model on testSet... \n\n' );
                 tic;
                 testPerfresults = obj.trainer.getPerformance( true );
-                testTime = toc;
+                testTime = toc; %#ok<NASGU>
                 if numel( testPerfresults ) == 1
                     fprintf( ['\n\n===================================\n',...
                               '##   "%s" Performance: %f\n',...
@@ -247,7 +248,7 @@ classdef IdentificationTrainingPipeline < handle
             model = obj.trainer.getModel();
             save( modelFilename, ...
                 'model', 'featureCreator', 'blockCreator', ...
-                'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams' );
+                'testPerfresults', 'trainTime', 'testTime', 'lastDataProcParams', '-v7' );
         end
         
         %% -------------------------------------------------------------------------------

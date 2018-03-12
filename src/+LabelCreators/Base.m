@@ -1,7 +1,7 @@
 classdef Base < Core.IdProcInterface
     % Base Abstract base class for labeling blocks
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties
         y;
         ysi;
         x;
@@ -14,6 +14,8 @@ classdef Base < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Abstract, Access = protected)
         outputDeps = getLabelInternOutputDependencies( obj )
+    end
+    methods (Abstract)
         [y, ysi] = label( obj, annotations )
     end
 
@@ -40,7 +42,6 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             in = obj.loadInputData( wavFilepath, 'blockAnnotations' );
             obj.y = [];
             obj.ysi = {};
@@ -64,7 +65,6 @@ classdef Base < Core.IdProcInterface
                                                            obj, wavFilepath, 'y', 'ysi' );
             obj.y = tmpOut.y;
             obj.ysi = tmpOut.ysi;
-            obj.inputProc.sceneId = obj.sceneId;
             if nargin < 3  || (any( strcmpi( 'x', varargin ) ) && (any( strcmpi( 'a', varargin ) )  || strcmpi( obj.removeUnclearBlocks, 'time-wise' )))
                 inData = obj.loadInputData( wavFilepath, 'x', 'blockAnnotations' );
                 obj.x = inData.x;
@@ -115,24 +115,22 @@ classdef Base < Core.IdProcInterface
             if ~any( removeNanBlocks ) || any( strcmpi( 'noRemoveNanBlocks', varargin ) )
                 removeNanBlocks_lidx = [];
             else
-                removeNanBlocks_lidx = any(isnan(out.y),2);
+                removeNanBlocks_lidx = any( isnan( out.y ), 2 );
                 if removeNanBlocks(2)
                     [~,~,sameTimeIdxs] = unique( [obj.blockAnnotations.blockOffset] );
                     nanTimeIdxs = sameTimeIdxs(removeNanBlocks_lidx);
                     removeNanBlocks_lidx = ismember( sameTimeIdxs, nanTimeIdxs );
                 end
             end
+            keepBlocks_lidx = ~removeNanBlocks_lidx;
             if nargin < 2  || any( strcmpi( 'x', varargin ) )
-                out.x = obj.x;
-                out.x(removeNanBlocks_lidx,:,:) = [];
+                out.x = obj.x(keepBlocks_lidx,:,:);
             end
             if nargin < 2  || any( strcmpi( 'a', varargin ) )
-                out.a = obj.blockAnnotations;
-                out.a(removeNanBlocks_lidx) = [];
+                out.a = obj.blockAnnotations(keepBlocks_lidx);
             end
             if nargin < 2  || any( strcmpi( 'ysi', varargin ) )
-                out.ysi = obj.ysi;
-                out.ysi(removeNanBlocks_lidx) = [];
+                out.ysi = obj.ysi(keepBlocks_lidx);
             end
             out.bIdxs(removeNanBlocks_lidx) = [];
             out.y(removeNanBlocks_lidx,:,:) = [];

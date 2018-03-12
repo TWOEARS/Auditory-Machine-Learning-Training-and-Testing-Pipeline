@@ -13,6 +13,14 @@ classdef HPSmodel < Models.Base
         end
         %% -----------------------------------------------------------------
         
+        % override of Models.Base
+        function [y,score] = applyModel( obj, x )
+            if ~isempty( obj.model.featureMask ) && isempty( obj.featureMask )
+                obj.featureMask = obj.model.featureMask;
+            end
+            [y,score] = applyModel@Models.Base( obj, x );
+        end
+        %% -------------------------------------------------------------------------------
     end
     
     %% -----------------------------------------------------------------------------------

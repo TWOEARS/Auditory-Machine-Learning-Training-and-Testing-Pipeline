@@ -8,6 +8,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         selectPrioClass = [];
         loadBlockAnnotations = false;
         prioClass = [];
+        dataConverter;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -17,11 +18,15 @@ classdef GatherFeaturesProc < Core.IdProcInterface
     %% -----------------------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = GatherFeaturesProc( loadBlockAnnotations )
+        function obj = GatherFeaturesProc( loadBlockAnnotations, dataConverter )
             obj = obj@Core.IdProcInterface();
             if nargin >= 1
                 obj.loadBlockAnnotations = loadBlockAnnotations;
             end
+            if nargin < 2 || isempty( dataConverter )
+                dataConverter = @single;
+            end
+            obj.dataConverter = dataConverter;
         end
         %% -------------------------------------------------------------------------------
 
@@ -38,7 +43,8 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
+            obj.setLoadSemaphore = false;
+            obj.secondCfgCheck = false;
             if obj.loadBlockAnnotations
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi', 'a' );
                 xy.blockAnnotations = Core.IdentTrainPipeDataElem.addPPtoBas( xy.a, xy.y );
@@ -53,27 +59,30 @@ classdef GatherFeaturesProc < Core.IdProcInterface
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );
             end
             obj.inputProc.inputProc.sceneId = obj.sceneId;
+            obj.inputProc.inputProc.foldId = obj.foldId;
+            obj.inputProc.inputProc.secondCfgCheck = false;
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
             if ~isempty( obj.selectPrioClass ) && any( xy.y == obj.selectPrioClass )
-                nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgPrioDataUseRatio );
+                nUsePoints = min( [size( xy.x, 1 ), obj.sceneCfgPrioDataUseRatio] );
             else
-                nUsePoints = round( size( xy.x, 1 ) * obj.sceneCfgDataUseRatio );
+                nUsePoints = min( [size( xy.x, 1 ), obj.sceneCfgDataUseRatio] );
             end
             obj.dataSelector.connectData( xy );
             useIdxs = obj.dataSelector.getDataSelection( 1:size( xy.x, 1 ), nUsePoints );
-            dataFile.x = [dataFile.x; xy.x(useIdxs,:)];
-            dataFile.y = [dataFile.y; xy.y(useIdxs,:)];
+            dataFile.x = [dataFile.x; obj.dataConverter( xy.x(useIdxs,:) )];
+            dataFile.y = [dataFile.y; obj.dataConverter( xy.y(useIdxs,:) )];
             dataFile.ysi = [dataFile.ysi; xy.ysi(useIdxs)'];
-            dataFile.bIdxs = [dataFile.bIdxs; xy.bIdxs(useIdxs)'];
+            dataFile.bIdxs = [dataFile.bIdxs; int32( xy.bIdxs(useIdxs)' )];
             dataFile.bacfIdxs = [dataFile.bacfIdxs; ...
-                  repmat( numel(dataFile.blockAnnotsCacheFile ) + 1, sum(useIdxs), 1 )];
+                  repmat( int32( numel(dataFile.blockAnnotsCacheFile ) + 1 ), sum(useIdxs), 1 )];
             dataFile.blockAnnotsCacheFile = [dataFile.blockAnnotsCacheFile; {inDataFilepath}];
             if obj.loadBlockAnnotations
                 dataFile.blockAnnotations = [dataFile.blockAnnotations; xy.blockAnnotations(useIdxs)];
             end
-            fprintf( '.' );
+            obj.dataSelector.connectData( [] );
+            fprintf( ':%d.', size( dataFile.x, 1 ) );
         end
         %% -------------------------------------------------------------------------------
 

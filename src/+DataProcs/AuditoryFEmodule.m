@@ -41,11 +41,12 @@ classdef AuditoryFEmodule < Core.IdProcInterface
             end
             obj.afeParams.p = DataProcs.AuditoryFEmodule.parameterSummary2struct( ...
                                 obj.afeDataObj.getParameterSummary( obj.managerObject ) );
+            reqNames = cellfun( @(c)([c.name '_']), afeRequests, 'UniformOutput', false );
+            obj.procCacheFolderNames_intern = strcat( reqNames{:} );
         end
         %% ----------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             in = obj.loadInputData( wavFilepath, 'earSout', 'annotations' );
             obj.output.afeData = obj.makeAFEdata( in.earSout );
             obj.output.annotations = in.annotations;

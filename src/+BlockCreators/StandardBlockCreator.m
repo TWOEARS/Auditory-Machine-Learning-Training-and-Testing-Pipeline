@@ -24,7 +24,10 @@ classdef StandardBlockCreator < BlockCreators.Base
 
         function [blockAnnots,afeBlocks] = blockify( obj, afeData, annotations )
             currentDependencies = obj.getOutputDependencies();
-            sceneConfig = currentDependencies.preceding.preceding.sceneCfg;
+            while ~isfield(currentDependencies, 'sceneCfg')
+                currentDependencies = currentDependencies.preceding;
+            end
+            sceneConfig = currentDependencies.sceneCfg;
             annotations = BlockCreators.StandardBlockCreator.extendAnnotations( ...
                                                                sceneConfig, annotations );
             anyAFEsignal = afeData(1);

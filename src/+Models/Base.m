@@ -3,6 +3,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
     %% --------------------------------------------------------------------
     properties (SetAccess = {?ModelTrainers.Base,?Models.Base})
         featureMask = [];
+        trainTime = nan;
     end
     
     %% --------------------------------------------------------------------

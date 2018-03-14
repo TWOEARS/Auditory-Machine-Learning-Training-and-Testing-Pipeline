@@ -118,7 +118,13 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
             for ii = 1 : numel( obj.hpsSets.perfs )
                 paramNames = fieldnames( obj.hpsSets.params );
                 for jj = 1 : numel( paramNames )
-                    verboseFprintf( obj, [paramNames{jj} ': %f \t '], obj.hpsSets.params(ii).(paramNames{jj}) );
+                    param = obj.hpsSets.params(ii).(paramNames{jj});
+                    if isa( param, 'function_handle' )
+                        param = func2str( param );
+                        verboseFprintf( obj, [paramNames{jj} ': %s \t '], param );
+                    else
+                        verboseFprintf( obj, [paramNames{jj} ': %f \t '], param );
+                    end
                 end
                 verboseFprintf( obj, '== %f\n', obj.hpsSets.perfs(ii) );
             end
@@ -162,7 +168,7 @@ classdef (Abstract) HpsTrainer < ModelTrainers.Base & Parameterized
 
         % to be possibly overwritten
         function hpsAddInfo = getHpsAddInfo( obj )
-            hpsAddInfo = [];
+            hpsAddInfo = nan;
         end
         %% -------------------------------------------------------------------------------
         

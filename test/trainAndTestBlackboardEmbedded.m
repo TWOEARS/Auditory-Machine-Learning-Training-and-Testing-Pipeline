@@ -134,12 +134,10 @@ end
 pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
-    % embed blackboard system into pipe, maybe like:
-    % pipe.blackboard = DataProcs.BlackboardWrapper( identify200msBlocksBlackboard );
-    pipe.featureCreator = FeatureCreators.BBS_FullstreamIdProbs();
-else
-    pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
+    % embed blackboard system into pipe    
+    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs );
 end
+pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep modelpath filesep modelname '.model.mat'], ...

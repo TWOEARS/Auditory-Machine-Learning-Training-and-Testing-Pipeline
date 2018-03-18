@@ -48,9 +48,20 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         end
                 
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
-            outFilepath = obj.getOutputFilepath( wavFilepath );
-            out = obj.loadInputData( wavFilepath, varargin{:});
-            out.afeData(out.afeData.Count+1) = load( outFilepath, varargin{:} );
+            [tmpOut, outFilepath] = loadProcessedData@Core.IdProcInterface( ...
+                                                           obj, wavFilepath, 'blackboardData' );
+            if any( strcmpi( 'afeData', varargin ) )
+                out = obj.loadInputData( wavFilepath, 'afeData' , 'annotations');
+                afeKeys = out.afeData.keys;
+                bbsKeys = afeKeys(obj.bbs.dataConnect.afeDataIndexOffset+1:length(afeKeys));
+                out.afeData.remove(bbsKeys);
+                out.afeData(out.afeData.Count+1) = tmpOut.blackboardData;
+            elseif any( strcmpi( 'annotations', varargin ) )
+                out = obj.loadInputData( wavFilepath, 'annotations');
+                out.afeData = tmpOut.blackboardData;
+            else            
+                out = tmpOut;
+            end
         end                
     end
     

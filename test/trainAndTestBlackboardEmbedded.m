@@ -65,7 +65,7 @@ if ~execBaseline
     % embed blackboard system into pipe    
     pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs );
 end
-pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
+pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @PerformanceMeasures.ImportanceWeightedSquareBalancedAccuracy, ...
@@ -137,7 +137,7 @@ if ~execBaseline
     % embed blackboard system into pipe    
     pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs );
 end
-pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
+pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep modelpath filesep modelname '.model.mat'], ...

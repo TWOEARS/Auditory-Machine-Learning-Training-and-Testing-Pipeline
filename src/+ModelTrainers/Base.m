@@ -110,7 +110,11 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                                                obj.trainSet, obj.maxDataSize, ...
                                                obj.dataSelector, obj.importanceWeighter );
             verboseFprintf( obj, verbOutput );
+            tic;
             obj.buildModel( x, y, iw );
+            trainTime = toc;
+            model = obj.giveTrainedModel();
+            model.trainTime = trainTime;
         end
         %% ----------------------------------------------------------------
         

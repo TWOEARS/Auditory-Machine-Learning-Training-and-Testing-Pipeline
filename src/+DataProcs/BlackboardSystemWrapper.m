@@ -48,7 +48,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
                 out = obj.loadInputData( wavFilepath, 'afeData' , 'annotations');
                 afeKeys = out.afeData.keys;
                 bbsKeys = afeKeys(obj.bbs.dataConnect.afeDataIndexOffset+1:length(afeKeys));
-                out.afeData.remove(bbsKeys);                
+                out.afeData.remove(bbsKeys);
                 out.afeData(out.afeData.Count+1) = obj.makeFeatureSignal(tmpOut.blackboardData);
             elseif any( strcmpi( 'annotations', varargin ) )
                 out = obj.loadInputData( wavFilepath, 'annotations');

@@ -23,8 +23,8 @@ classdef FullStreamIdProbStats < FeatureCreators.Base
         function [featureSignalVal, fList] = blackboardVal2FeatureSignalVal( obj, val )
          % turns one sample of blackboard data to a sample that can be
          % stored in a featureSignal
-            idHyp = val.identityHypotheses;
-            featureSignalVal = idHyp.p;
+            idHyp = val.('identityHypotheses');
+            featureSignalVal = [idHyp.p];
             fList = {idHyp.label};
         end
 

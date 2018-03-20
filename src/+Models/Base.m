@@ -4,6 +4,8 @@ classdef (Abstract) Base < matlab.mixin.Copyable
     properties (SetAccess = {?ModelTrainers.Base,?Models.Base})
         featureMask = [];
         trainTime = nan;
+        trainsetSize = [nan nan];
+        testTime = nan;
     end
     
     %% --------------------------------------------------------------------
@@ -17,7 +19,10 @@ classdef (Abstract) Base < matlab.mixin.Copyable
                 x = x(:,obj.featureMask);
             end
             verboseFprintf( obj, 'Testing, \tsize(x) = %dx%d\n', size(x,1), size(x,2) );
+            tic;
             [y,score] = obj.applyModelMasked( x );
+            t = toc;
+            obj.testTime = t / size( x, 1 );
         end
         %% -------------------------------------------------------------------------------
         

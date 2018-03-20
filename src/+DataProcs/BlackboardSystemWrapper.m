@@ -5,15 +5,21 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
     properties (SetAccess = protected)
         bbs;
         output;
+        featureCreator;
+        ksHashs;
+        bindHashs;
     end
     
     methods (Access = public)
         
-        function obj = BlackboardSystemWrapper(bbs)
+        function obj = BlackboardSystemWrapper(bbs, featureCreator)
             % init
             obj = obj@Core.IdProcInterface();
             % set blackboardSystem
             obj.bbs = bbs;
+            obj.featureCreator = featureCreator;
+            obj.ksHashs = calcDataHash(obj.bbs.blackboard.KSs);
+            obj.bindHashs = calcDataHash(obj.bbs.blackboardMonitor.listeners);            
         end
         
         function process( obj, wavFilepath )
@@ -31,20 +37,8 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             obj.bbs.robotConnect.activate(in.afeData);
             % run blackboardSystem
             obj.bbs.run();
-            % make feature signals
-            proc = emptyProc( 1 / obj.bbs.dataConnect.timeStep );
-            data = [];
-            fList = [];
-            for val = obj.bbs.blackboard.data.values
-                idHyp = val{1}.('identityHypotheses');
-                data = [data; idHyp.p];
-                if isempty(fList)
-                    fList = {idHyp.label};
-                end
-            end
-            featureSignal = FeatureSignal(proc, [], 'mono', data, fList);
-            % save blackboard of blackboardSystem as output
-            obj.output.blackboardData = featureSignal;                    
+            % save blackboard data of blackboardSystem as output
+            obj.output.blackboardData = obj.bbs.blackboard.data;                    
         end
                 
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
@@ -55,10 +49,10 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
                 afeKeys = out.afeData.keys;
                 bbsKeys = afeKeys(obj.bbs.dataConnect.afeDataIndexOffset+1:length(afeKeys));
                 out.afeData.remove(bbsKeys);
-                out.afeData(out.afeData.Count+1) = tmpOut.blackboardData;
+                out.afeData(out.afeData.Count+1) = obj.makeFeatureSignal(tmpOut.blackboardData);
             elseif any( strcmpi( 'annotations', varargin ) )
                 out = obj.loadInputData( wavFilepath, 'annotations');
-                out.afeData = tmpOut.blackboardData;
+                out.afeData = obj.makeFeatureSignal(tmpOut.blackboardData);
             else            
                 out = tmpOut;
             end
@@ -68,13 +62,23 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.timeStep = obj.bbs.dataConnect.timeStep;
-            %outputDeps.ksHashs = obj.bbs.blackboard.KSs;
-            %outputDeps.bindHashs = obj.bbs.blackboardMonitor.listeners;                             
+            outputDeps.ksHashs = obj.ksHashs;
+            outputDeps.bindHash = obj.bindHashs;                             
         end
         
         function out = getOutput( obj, varargin )
             out = obj.output;
+        end
+        
+        function featureSignal = makeFeatureSignal( obj , blackboardData)
+            proc = emptyProc( 1 / obj.bbs.dataConnect.timeStep );
+            data = [];
+            fList = [];
+            for val = blackboardData.values                
+                [featureSigVal, fList] = obj.featureCreator.blackboardVal2FeatureSignalVal(val{1});
+                data = [data; featureSigVal];
+            end
+            featureSignal = FeatureSignal(proc, 0, 'mono', data, fList);
         end
     end
     

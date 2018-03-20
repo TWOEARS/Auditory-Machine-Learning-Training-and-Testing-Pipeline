@@ -63,9 +63,11 @@ pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe    
-    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs );
+    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats();
+    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs , pipe.featureCreator );
+else
+    pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 end
-pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @PerformanceMeasures.ImportanceWeightedSquareBalancedAccuracy, ...
@@ -135,9 +137,11 @@ pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe    
-    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs );
+    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats();
+    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs , pipe.featureCreator);
+else
+    pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 end
-pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep modelpath filesep modelname '.model.mat'], ...

@@ -115,6 +115,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
             trainTime = toc;
             model = obj.giveTrainedModel();
             model.trainTime = trainTime;
+            model.trainsetSize = size( x );
         end
         %% ----------------------------------------------------------------
         

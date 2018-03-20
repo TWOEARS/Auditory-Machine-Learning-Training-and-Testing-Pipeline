@@ -122,11 +122,12 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
 
         % override
         function hpsAddInfo = getHpsAddInfo( obj )
-            nsv = cellfun( @(c)(c.model.totalSV), obj.hpsCVtrainer.models );
-            xsizes = cellfun( @(c)(size( c.x, 1 )), obj.hpsCVtrainer.folds );
-            xsize = min( arrayfun( @(a)(sum( xsizes ) - a), xsizes ), ...
-                         obj.hpsMaxDataSize(1) );
-            hpsAddInfo.nsvRatio = mean( nsv(:) ./ xsize(:) );
+            tTrain = cellfun( @(c)(c.trainTime), obj.hpsCVtrainer.models );
+            hpsAddInfo.tTrain = mean( tTrain );
+            szTrain = cellfun( @(c)(c.trainsetSize(1)), obj.hpsCVtrainer.models );
+            hpsAddInfo.szTrain = mean( szTrain(:,1) );
+            tTest = cellfun( @(c)(c.testTime), obj.hpsCVtrainer.models );
+            hpsAddInfo.tTest = mean( tTest );
         end
         %% -------------------------------------------------------------------------------
 
@@ -135,11 +136,17 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
             hps = sortHpsSetsByPerformance@ModelTrainers.HpsTrainer( obj, hps );
             if obj.useSelectHeuristic
                 s = hps.stds;
-                r = [hps.addInfo.nsvRatio];
-                rPenalty = s .* r;
-                for ii = 1 : numel( hps.perfs )
-                    p(ii) = hps.perfs(ii) - rPenalty(ii); %#ok<AGROW>
+                tte = [hps.addInfo.tTest];
+                ttr = [hps.addInfo.tTrain];
+                [u_szt,~,ic] = uniquetol( [hps.addInfo.szTrain], 0.1 );
+                for ii = 1 : numel( u_szt )
+                    max_tr_u_sz(ii) = max( ttr(ic==ii) );
+                    max_te_u_sz(ii) = max( tte(ic==ii) );
                 end
+                ttr = ttr ./ max_tr_u_sz(ic');
+                tte = tte ./ max_te_u_sz(ic');
+                tPenalty = s .* (0.5*tte+0.5*ttr);
+                p = [hps.perfs] - tPenalty;
                 [~,idx] = sort( p );
                 hps.perfs = hps.perfs(idx);
                 hps.stds = hps.stds(idx);

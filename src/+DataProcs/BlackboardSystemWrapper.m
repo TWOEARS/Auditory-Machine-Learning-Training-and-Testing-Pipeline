@@ -78,7 +78,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
                 [featureSigVal, fList] = obj.featureCreator.blackboardVal2FeatureSignalVal(val{1});
                 data = [data; featureSigVal];
             end
-            featureSignal = FeatureSignal(proc, [], 'mono', data, fList);
+            featureSignal = FeatureSignal(proc, 0, 'mono', data, fList);
         end
     end
     

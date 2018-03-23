@@ -145,7 +145,10 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function maintenance( obj, deleteEmpties )
+        function maintenance( obj, deleteEmpties, filename )
+            if nargin < 3 || isempty( filename )
+                filename = obj.cacheDirectoryFilename;
+            end
             cDirs = dir( [obj.topCacheDirectory filesep 'cache.*'] );
             cacheDirs = cell( 0, 3 );
             fprintf( '-> read cache folders\n' );
@@ -242,7 +245,7 @@ classdef IdCacheDirectory < handle
             end
             fprintf( '\n' );
             fprintf( '-> saveCacheDirectory\n' );
-            obj.saveCacheDirectory();
+            obj.saveCacheDirectory( filename );
         end
         %% -------------------------------------------------------------------------------
 
@@ -314,12 +317,13 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function standaloneMaintain( cacheTopDir, deleteEmpties )
-            if nargin < 2, deleteEmpties = true; end
+        function standaloneMaintain( cacheTopDir, deleteEmpties, filename )
+            if nargin < 2 || isempty( deleteEmpties ), deleteEmpties = true; end
+            if nargin < 3 || isempty( filename ), filename = []; end
             cache = Core.IdCacheDirectory();
             cache.setCacheTopDir( cacheTopDir );
-            cache.loadCacheDirectory();
-            cache.maintenance( deleteEmpties );
+            cache.loadCacheDirectory( filename );
+            cache.maintenance( deleteEmpties, filename );
         end
         %% -------------------------------------------------------------------------------
         

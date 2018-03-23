@@ -1,12 +1,12 @@
 classdef FileListValGen < SceneConfig.ValGen
 
-    %%
+    %% ---------------------------------------------------------------------------------------------
     properties
         filesepsAreUnix = false; % for compatibility with saved FileListValGens
         eqTestFlistPrep = {};
     end
     
-    %%
+    %% ---------------------------------------------------------------------------------------------
     methods
         
         function obj = FileListValGen( val )
@@ -25,6 +25,7 @@ classdef FileListValGen < SceneConfig.ValGen
             obj.filesepsAreUnix = true;
             obj.prepEqTestFlist();
         end
+        %% -----------------------------------------------------------------------------------------
         
         function obj = prepEqTestFlist( obj )
             if strcmpi( obj.type, 'set' )
@@ -51,22 +52,23 @@ classdef FileListValGen < SceneConfig.ValGen
                 e = false;
                 return;
             end
-            if ~obj1.filesepsAreUnix
-                obj1.val = strrep( obj1.val, '\', '/' );
-                obj1.filesepsAreUnix = true;
-            end
-            if ~obj2.filesepsAreUnix
-                obj2.val = strrep( obj2.val, '\', '/' );
-                obj2.filesepsAreUnix = true;
-            end
-            if isempty( obj1.eqTestFlistPrep )
+            if isempty( obj1.eqTestFlistPrep ) && ~isempty( obj1.val )
+                if ~obj1.filesepsAreUnix
+                    obj1.val = strrep( obj1.val, '\', '/' );
+                    obj1.filesepsAreUnix = true;
+                end
                 obj1.prepEqTestFlist();
             end
-            if isempty( obj2.eqTestFlistPrep )
+            if isempty( obj2.eqTestFlistPrep )&& ~isempty( obj2.val )
+                if ~obj2.filesepsAreUnix
+                    obj2.val = strrep( obj2.val, '\', '/' );
+                    obj2.filesepsAreUnix = true;
+                end
                 obj2.prepEqTestFlist();
             end
             e = isequal( obj1.eqTestFlistPrep, obj2.eqTestFlistPrep );
         end
+        %% -----------------------------------------------------------------------------------------
         
     end
     

@@ -38,6 +38,30 @@ classdef FileListValGen < SceneConfig.ValGen
                 obj.eqTestFlistPrep = obj.val;
             end
         end
+        %% -----------------------------------------------------------------------------------------
+
+        function svCmpCfg = getSaveCompareConfig( obj )
+            svCmpCfg = obj.copy();
+            if isempty( svCmpCfg.eqTestFlistPrep ) && ~isempty( svCmpCfg.val )
+                if ~svCmpCfg.filesepsAreUnix
+                    svCmpCfg.val = strrep( svCmpCfg.val, '\', '/' );
+                    svCmpCfg.filesepsAreUnix = true;
+                end
+                obj1svCmpCfg.prepEqTestFlist();
+            end
+            if ~strcmpi( svCmpCfg.type, 'manual' )
+                svCmpCfg.val = [];
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function s = saveobj( obj )
+            if ~any( isa( obj, 'SceneConfig.FileListValGen' ) ) % add all subtypes
+                error( 'Subclasses must implement saveobj too. When done add type to condition.' );
+            end
+            s = obj.getSaveCompareConfig();
+        end
+        %% -------------------------------------------------------------------------------
         
         function e = isequal( obj1, obj2 )
             if ~strcmpi( obj1.type, obj2.type )
@@ -47,10 +71,6 @@ classdef FileListValGen < SceneConfig.ValGen
             if strcmpi( obj1.type, 'manual' )
                 e = isequal( obj1.val, obj2.val ); 
                 return; 
-            end
-            if length( obj1.val ) ~= length( obj2.val )
-                e = false;
-                return;
             end
             if isempty( obj1.eqTestFlistPrep ) && ~isempty( obj1.val )
                 if ~obj1.filesepsAreUnix
@@ -72,4 +92,24 @@ classdef FileListValGen < SceneConfig.ValGen
         
     end
     
+    %% ---------------------------------------------------------------------------------------------
+    methods(Static)
+        
+        function obj = loadobj( s )
+            if isstruct( s )
+                obj = SceneConfig.FileListValGen( 'tmp' );
+                obj.val = [];
+                obj.eqTestFlistPrep = s.eqTestFlistPrep;
+                obj.filesepsAreUnix = s.filesepsAreUnix;
+            else
+                obj = s;
+                if ~strcmpi( obj.type, 'manual' )
+                    obj.val = [];
+                end
+            end
+        end
+        %% -----------------------------------------------------------------------------------------
+
+    end
+
 end

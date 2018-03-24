@@ -103,7 +103,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
         function loadCacheDirectory( obj, filename )
-            if nargin < 2 || isempty( filename );
+            if nargin < 2 || isempty( filename )
                 filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )

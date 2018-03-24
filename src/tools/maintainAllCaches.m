@@ -5,11 +5,13 @@ parfor jj = 1 : numel( ipcDirs )
 
     if ~ipcDirs(jj).isdir, continue; end
     if ipcDirs(jj).name(1) == '.', continue; end
-    afeCacheDir = [idPipeCacheDir filesep ipcDirs(jj).name];
-    if all( arrayfun( @(a)(a.name(1)), dir( afeCacheDir ) ) == '.' ), continue; end
-    fprintf( '\n%s\n', afeCacheDir );
+    cacheDir_jj = [idPipeCacheDir filesep ipcDirs(jj).name];
+    if all( arrayfun( @(a)(a.name(1)), dir( cacheDir_jj ) ) == '.' ), continue; end
+    fprintf( '\n%s\n', cacheDir_jj );
     
-    movefile( [afeCacheDir filesep 'cacheDirectory.mat'], [afeCacheDir filesep 'cacheDirectory.mat.bak'] );
-    Core.IdCacheDirectory.standaloneMaintain( afeCacheDir );
+    if exist( [cacheDir_jj filesep 'cacheDirectory.mat'], 'file' )
+        movefile( [cacheDir_jj filesep 'cacheDirectory.mat'], [cacheDir_jj filesep 'cacheDirectory.mat.bak' buildCurrentTimeString()] );
+    end
+    Core.IdCacheDirectory.standaloneMaintain( cacheDir_jj );
 
 end

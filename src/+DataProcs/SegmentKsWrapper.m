@@ -18,7 +18,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
         isNsrcsFixed;
         isAzmFixedUniform;
         softMaskExponent = 10;
-        srcSegregateNrjThreshold;
+        srcSegregateNrjThreshold
+        od;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -134,6 +135,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end
             obj.softMaskExponent = ip.Results.softMaskExponent;
             obj.srcSegregateNrjThreshold = ip.Results.srcSegregateNrjThreshold;
+            obj.od.params.compare = DataHash( obj.kss{end}.observationModel.trainingParameters, struct( 'Method', {'SHA-512'} ) );
+            obj.od.params.noCompare = obj.kss{end}.observationModel.trainingParameters;
             fprintf( '.\n' );
         end
         %% -------------------------------------------------------------------------------
@@ -262,7 +265,8 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             outputDeps.useDnnLocKs = obj.useDnnLocKs;
             outputDeps.useNsrcsKs = obj.useNsrcsKs;
             outputDeps.useIdModels = ~isempty( obj.idKss );
-            outputDeps.params = obj.kss{end}.observationModel.trainingParameters;
+            outputDeps.params = obj.od.params.compare;
+            outputDeps.noCompare = obj.od.params.noCompare;
             [~,outputDeps.afeHashs] = obj.getAfeRequests();
             outputDeps.varAzmSigma = obj.varAzmSigma;
             outputDeps.segSrcAssignmentMethod = obj.segSrcAssignmentMethod;

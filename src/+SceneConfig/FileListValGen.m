@@ -34,6 +34,7 @@ classdef FileListValGen < SceneConfig.ValGen
                                     @(f,idx)( f(idx(end-2):end) ), obj.val, fSepIdxs, ...
                                                                  'UniformOutput', false );
                 obj.eqTestFlistPrep = sort( obj.eqTestFlistPrep );
+                obj.eqTestFlistPrep = DataHash_( obj.eqTestFlistPrep, struct( 'Method', {'SHA-512'} ) );
             else
                 obj.eqTestFlistPrep = obj.val;
             end

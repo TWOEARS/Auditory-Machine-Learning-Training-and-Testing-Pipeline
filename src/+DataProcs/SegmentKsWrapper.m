@@ -135,7 +135,7 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end
             obj.softMaskExponent = ip.Results.softMaskExponent;
             obj.srcSegregateNrjThreshold = ip.Results.srcSegregateNrjThreshold;
-            obj.od.params.compare = DataHash( obj.kss{end}.observationModel.trainingParameters, struct( 'Method', {'SHA-512'} ) );
+            obj.od.params.compare = DataHash_( obj.kss{end}.observationModel.trainingParameters, struct( 'Method', {'SHA-512'} ) );
             obj.od.params.noCompare = obj.kss{end}.observationModel.trainingParameters;
             fprintf( '.\n' );
         end

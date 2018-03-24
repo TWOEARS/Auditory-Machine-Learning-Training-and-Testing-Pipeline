@@ -67,7 +67,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
         function saveCacheDirectory( obj, filename )
-            if nargin < 2 
+            if nargin < 2 || isempty( filename )
                 filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
@@ -103,7 +103,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
         function loadCacheDirectory( obj, filename )
-            if nargin < 2
+            if nargin < 2 || isempty( filename );
                 filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
@@ -295,6 +295,11 @@ classdef IdCacheDirectory < handle
                 prefix = [prefix '_'];
             end
             cfgFieldnames = fieldnames( cfg );
+            noCmpIdx = strcmp( 'noCompare', cfgFieldnames );
+            if any( noCmpIdx )
+                cfgFieldnames(noCmpIdx) = [];
+                cfg = rmfield( cfg, 'noCompare' );
+            end
             cfgSubCfgIdxs = cellfun( @(cf)(isstruct( cfg.(cf) )), cfgFieldnames );
             subCfgFieldnames = cfgFieldnames(cfgSubCfgIdxs);
             uSubCfgs = cellfun( ...

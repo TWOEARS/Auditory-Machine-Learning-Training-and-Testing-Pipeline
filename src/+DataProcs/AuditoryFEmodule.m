@@ -21,26 +21,30 @@ classdef AuditoryFEmodule < Core.IdProcInterface
             obj.afeSignals = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
             obj.afeDataObj = dataObject( [], fs, 2, 2 );
             obj.managerObject = manager( obj.afeDataObj );
+            afeParamsStruct = struct;
             for ii = 1:length( afeRequests )
                 obj.afeSignals(ii) = obj.managerObject.addProcessor( ...
                                            afeRequests{ii}.name, afeRequests{ii}.params );
                 sig = obj.afeSignals(ii);
                 sigsr = DataProcs.AuditoryFEmodule.signal2struct( sig );
-                if isfield( obj.afeParams, 'sr' ) &&...
-                        isfield( obj.afeParams.sr, sig{1}.Name )
-                    sigsrs = obj.afeParams.sr.(sig{1}.Name);
+                if isfield( afeParamsStruct, 'sr' ) && isfield( afeParamsStruct.sr, sig{1}.Name )
+                    sigsrs = afeParamsStruct.sr.(sig{1}.Name);
                     if ~iscell( sigsrs ), sigsrs = {sigsrs}; end
                     sigsrs{end+1} = sigsr;
                     sigsrsHashes = cellfun( @calcDataHash, sigsrs, 'UniformOutput', false );
                     [~,order] = sort( sigsrsHashes );
                     sigsrs = sigsrs(order);
-                    obj.afeParams.sr.(sig{1}.Name) = sigsrs;
+                    afeParamsStruct.sr.(sig{1}.Name) = sigsrs;
                 else
-                    obj.afeParams.sr.(sig{1}.Name) = sigsr;
+                    afeParamsStruct.sr.(sig{1}.Name) = sigsr;
                 end
             end
-            obj.afeParams.p = DataProcs.AuditoryFEmodule.parameterSummary2struct( ...
+            afeParamsStruct.p = DataProcs.AuditoryFEmodule.parameterSummary2struct( ...
                                 obj.afeDataObj.getParameterSummary( obj.managerObject ) );
+            obj.afeParams.noCompare = afeParamsStruct;
+            afeParamsStruct.p = structfun( @(s)(DataHash_(s, struct( 'Method', {'SHA-512'} ))), afeParamsStruct.p, 'UniformOutput', false );
+            afeParamsStruct.sr = structfun( @(s)(DataHash_(s, struct( 'Method', {'SHA-512'} ))), afeParamsStruct.sr, 'UniformOutput', false );
+            obj.afeParams.compare = afeParamsStruct;
             reqNames = cellfun( @(c)([c.name '_']), afeRequests, 'UniformOutput', false );
             obj.procCacheFolderNames_intern = strcat( reqNames{:} );
         end
@@ -96,7 +100,8 @@ classdef AuditoryFEmodule < Core.IdProcInterface
     methods (Access = protected)
         
         function outputDeps = getInternOutputDependencies( obj )
-            outputDeps.afeParams = obj.afeParams;
+            outputDeps.noCompare.afeParams = obj.afeParams.noCompare;
+            outputDeps.afeParams = obj.afeParams.compare;
             outputDeps.v = 2;
         end
         %% ----------------------------------------------------------------

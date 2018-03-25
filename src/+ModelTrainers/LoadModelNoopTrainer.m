@@ -3,6 +3,7 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
         model;
+        modelParams;
     end
 
     %% --------------------------------------------------------------------
@@ -20,9 +21,9 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
             end
             ms = load( modelPath, 'model' );
             model = ms.model;
-            fieldsModelParams = fieldnames( modelParams );
+            fieldsModelParams = fieldnames( obj.modelParams );
             for ii = 1: length( fieldsModelParams )
-                model.(fieldsModelParams{ii}) = modelParams.(fieldsModelParams{ii});
+                model.(fieldsModelParams{ii}) = obj.modelParams.(fieldsModelParams{ii});
             end
             obj.model = model;
         end

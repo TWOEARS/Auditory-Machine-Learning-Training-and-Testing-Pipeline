@@ -25,6 +25,7 @@ classdef (Abstract) IdProcInterface < handle
         setLoadSemaphore = true;
         secondCfgCheck = true
         saveSerialized = false;
+%        cfPredictionCorrect = [];
     end
     
     %% -----------------------------------------------------------------------------------
@@ -88,6 +89,7 @@ classdef (Abstract) IdProcInterface < handle
         function init( obj )
             obj.lastFolder = {};
             obj.lastConfig = {};
+%            obj.cfPredictionCorrect = [];
             obj.sceneId = 1;
             obj.foldId = 1;
             obj.setLoadSemaphore = true;
@@ -200,7 +202,12 @@ classdef (Abstract) IdProcInterface < handle
             end
         end
         %% -------------------------------------------------------------------------------
-        
+
+%        function resetCfpredictions( obj )
+%            obj.cfPredictionCorrect(obj.cfPredictionCorrect==+1) = -1;
+%        end
+        %% -------------------------------------------------------------------------------
+
         function currentFolder = getCurrentFolder( obj )
             currentConfig = obj.getOutputDependencies();
             if size( obj.lastFolder, 1 ) >= obj.sceneId ...
@@ -209,9 +216,14 @@ classdef (Abstract) IdProcInterface < handle
                 if ~obj.secondCfgCheck ...
                         || isequalDeepCompare( currentConfig, obj.lastConfig{obj.sceneId,obj.foldId} )
                     currentFolder = obj.lastFolder{obj.sceneId,obj.foldId};
+%                    obj.cfPredictionCorrect(obj.sceneId,obj.foldId) = +1;
+%                    if obj.suspendUnchangingCache && all( obj.cfPredictionCorrect(:) > -1 )
+%                        obj.cacheDirectory.suspend();
+%                    end
                     return;
                 end
             end
+%            obj.cfPredictionCorrect(obj.sceneId,obj.foldId) = -1;
             obj.cacheDirectory.loadCacheDirectory();
             newFolderName = ['.' obj.procCacheFolderNames ...
                              '_' obj.procCacheFolderNames_intern ...
@@ -245,7 +257,7 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function save( obj, wavFilepath, out ) %#ok<INUSD>
+        function save( obj, wavFilepath, out ) 
             if isempty( wavFilepath ), return; end
             outFilepath = obj.getOutputFilepath( wavFilepath );
             obj.outFileSema = setfilesemaphore( outFilepath, 'semaphoreOldTime', 30 );
@@ -317,6 +329,19 @@ classdef (Abstract) IdProcInterface < handle
                 b = fcrw;
             end
         end
+        %% ----------------------------------------------------------------
+
+%        function b = suspendUnchangingCache( newValue )
+%            persistent suc;
+%            if isempty( suc )
+%                suc = false;
+%            end
+%            if nargin > 0 
+%                suc = newValue;
+%            else
+%                b = suc;
+%            end
+%        end
         %% ----------------------------------------------------------------
 
     end

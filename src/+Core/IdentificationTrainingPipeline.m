@@ -131,6 +131,9 @@ classdef IdentificationTrainingPipeline < handle
             testPerfresults = [];
             model = [];
             
+%            suc = Core.IdProcInterface.suspendUnchangingCache;
+%            Core.IdProcInterface.suspendUnchangingCache( false ); % not while checking files
+            
             successiveProcFileFilter = ip.Results.filterPipeInput;
             gcpMode = strcmpi( ip.Results.runOption, 'getCachePathes' );
             rwcMode = strcmpi( ip.Results.runOption, 'rewriteCache' );
@@ -157,6 +160,8 @@ classdef IdentificationTrainingPipeline < handle
                       'cacheDirs' );
                 return;
             end
+            
+%            Core.IdProcInterface.suspendUnchangingCache( suc );
             errs = {};
             for ii = ip.Results.startWithProc : numel( obj.dataPipeProcs )
                 if ~ip.Results.debug

@@ -66,6 +66,14 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function suspend( obj )
+            obj.saveCacheDirectory();
+            obj.treeRoot = Core.IdCacheTreeElem();
+            obj.cacheFileInfo = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            obj.cacheDirChanged = false;
+        end
+        %% -------------------------------------------------------------------------------
+        
         function saveCacheDirectory( obj, filename )
             if nargin < 2 || isempty( filename )
                 filename = obj.cacheDirectoryFilename;

@@ -16,6 +16,10 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
             obj = obj@Parameterized( pds );
             obj = obj@ModelTrainers.Base( varargin{:} );
             obj.setParameters( true, varargin{:} );
+            if isempty( modelPath ) || strcmpi( modelPath, 'noop' )
+                obj.model = [];
+                return;
+            end
             if ~exist( modelPath, 'file' )
                 error( 'Could not find "%s".', modelPath );
             end

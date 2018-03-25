@@ -1,7 +1,7 @@
 function maintainAllCaches( idPipeCacheDir )
 
 ipcDirs = dir( idPipeCacheDir );
-parfor jj = 1 : numel( ipcDirs )
+parfor (jj = 1 : numel( ipcDirs ), 6)
 
     if ~ipcDirs(jj).isdir, continue; end
     if ipcDirs(jj).name(1) == '.', continue; end

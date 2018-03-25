@@ -31,7 +31,7 @@ for ii = 2 : numel( bapiFields )
 end
 
 [C,~,ic] = unique( C, 'rows' );
-paramFactor = accumarray( ic, ones( size( C, 1 ), 1 ) );
-resc = resc.addData( C, paramFactor', true );
+paramFactor = accumarray( ic, ones( size( ic ) ) );
+resc = resc.addData( C, paramFactor, true );
 
 end

@@ -172,9 +172,9 @@ classdef DataPipeProc < handle
                     obj.dataFileProcessor.releaseSingleProcessCacheAccess();
                 end
                 dfii = dfii + 1;
-                fprintf( '\n' );
+%                 fprintf( '\n' );
 %                 freemem = memReport() % for debugging
-                fprintf( '\n' );
+%                 fprintf( '\n' );
             end
             obj.dataFileProcessor.saveCacheDirectory();
             fprintf( '..;\n' );

@@ -98,17 +98,22 @@ classdef IdCacheDirectory < handle
                     ~isequalDeepCompare( newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                 obj.cacheFileRWsema.getReadAccess();
                 Parameters.dynPropsOnLoad( true, false );
-                fprintf( ' [%s: loading changed cacheTree] ', obj.getCacheDirName() );
+                fprintf( ' [%s: loading changed cacheTree', obj.getCacheDirName() );
                 newCacheFile = load( cacheFilepath );
                 Parameters.dynPropsOnLoad( true, true );
+                fprintf( '] ' );
                 obj.cacheFileRWsema.releaseReadAccess();
-                fprintf( ' [%s: integrating changed cacheTree] ', obj.getCacheDirName() );
+                fprintf( ' [%s: integrating changed cacheTree', obj.getCacheDirName() );
                 obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
+                fprintf( '] ' );
             end
             cacheTree = obj.treeRoot; %#ok<NASGU>
+            fprintf( ' [%s: saving cacheTree', obj.getCacheDirName() );
             save( cacheWriteFilepath, 'cacheTree' );
+            fprintf( '.' );
             obj.cacheFileRWsema.getWriteAccess();
             copyfile( cacheWriteFilepath, cacheFilepath ); % this blocks cacheFile shorter
+            fprintf( '] ' );
             obj.cacheFileInfo(cacheFilepath) = dir( cacheFilepath );
             obj.cacheFileRWsema.releaseWriteAccess();
             delete( cacheWriteFilepath );
@@ -130,11 +135,12 @@ classdef IdCacheDirectory < handle
                 obj.cacheFileRWsema = ReadersWritersFileSemaphore( cacheFilepath );
                 if exist( cacheFilepath, 'file' )
                     obj.cacheFileRWsema.getReadAccess();
-                    fprintf( ' [%s: loading cacheTree] ', obj.getCacheDirName() );
+                    fprintf( ' [%s: loading cacheTree', obj.getCacheDirName() );
                     Parameters.dynPropsOnLoad( true, false ); % don't load unnecessary stuff
                     obj.cacheFileInfo(cacheFilepath) = dir( cacheFilepath ); % for later comparison
                     cacheFile = load( cacheFilepath );
                     Parameters.dynPropsOnLoad( true, true );
+                    fprintf( '] ' );
                     obj.cacheFileRWsema.releaseReadAccess();
                     obj.treeRoot = cacheFile.cacheTree;
                     obj.cacheDirChanged = false;
@@ -149,14 +155,16 @@ classdef IdCacheDirectory < handle
                 if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
                                       newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                     obj.cacheFileRWsema.getReadAccess();
-                    fprintf( ' [%s: loading changed cacheTree] ', obj.getCacheDirName() );
+                    fprintf( ' [%s: loading changed cacheTree', obj.getCacheDirName() );
                     Parameters.dynPropsOnLoad( true, false );
                     newCacheFile = load( cacheFilepath );
                     Parameters.dynPropsOnLoad( true, true );
+                    fprintf( '] ' );
                     obj.cacheFileRWsema.releaseReadAccess();
-                    fprintf( ' [%s: integrating changed cacheTree] ', obj.getCacheDirName() );
+                    fprintf( ' [%s: integrating changed cacheTree', obj.getCacheDirName() );
                     obj.cacheDirChanged = ...
                             obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
+                    fprintf( '] ' );
                     obj.cacheFileInfo(cacheFilepath) = newCacheFileInfo;
                 end
             end

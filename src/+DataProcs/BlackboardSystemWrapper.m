@@ -64,6 +64,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.ksHashs = obj.ksHashs;
             outputDeps.bindHash = obj.bindHashs;                             
+            outputDeps.v = 1;
         end
         
         function out = getOutput( obj, varargin )

@@ -1,4 +1,4 @@
-classdef FullStreamIdProbStats < FeatureCreators.Base
+classdef FullStreamIdProbStats < FeatureCreators.BlackboardDepFeatureCraetor
     %FULLSTREAMIDPROBABILITIES Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -10,7 +10,7 @@ classdef FullStreamIdProbStats < FeatureCreators.Base
     methods
         
         function obj = FullStreamIdProbStats( )
-            obj = obj@FeatureCreators.Base();
+            obj = obj@FeatureCreators.BlackboardDepFeatureCraetor();
         end
         %% ----------------------------------------------------------------
 
@@ -45,7 +45,8 @@ classdef FullStreamIdProbStats < FeatureCreators.Base
                 @(a)(compressAndScale( a.Data, 1/obj.compressor, @(x)(median( x(x>0.01) )), 0 )), ...
                 {@(a)('idProbs')}, ...
                 {'t'}, ...
-                {@(a)(strcat('class-', a.fList))});
+                {@(a)(strcat('class-', a.fList))});            
+            plainProbs = obj.reshape2featVec(idProbs);
             x = obj.block2feat( idProbs, ...
                 @(b)(lMomentAlongDim( b, [1,2,3], 1, true )), ...
                 2, @(idxs)(sort([idxs idxs idxs])),...
@@ -64,6 +65,8 @@ classdef FullStreamIdProbStats < FeatureCreators.Base
                      {'2.LMom',@(idxs)(idxs(2:2:end))}} );
                 x = obj.concatFeats( x, xtmp );
             end
+            x = obj.concatFeats( plainProbs, x );
+            
         end
         %% ----------------------------------------------------------------
         

@@ -125,7 +125,7 @@ end
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep modelpath filesep modelname '.model.mat'], ...
-    'performanceMeasure', @PerformanceMeasures.BAC_BAextended );
+    'performanceMeasure', @PerformanceMeasures.BAC );
 pipe.modelCreator.verbose( 'on' );
 
 pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_miniMini_TestSet_1.flist';

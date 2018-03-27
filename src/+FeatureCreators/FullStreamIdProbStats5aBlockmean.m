@@ -1,4 +1,4 @@
-classdef FullStreamIdProbStats5aBlockmean < FeatureCreators.BlackboardDepFeatureCraetor
+classdef FullStreamIdProbStats5aBlockmean < FeatureCreators.BlackboardDepFeatureCreator
     %FULLSTREAMIDPROBSTATS5ABLOCKMEAN Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -16,7 +16,7 @@ classdef FullStreamIdProbStats5aBlockmean < FeatureCreators.BlackboardDepFeature
     methods (Access = public)
         
         function obj = FullStreamIdProbStats5aBlockmean( )
-            obj = obj@FeatureCreators.BlackboardDepFeatureCraetor();
+            obj = obj@FeatureCreators.BlackboardDepFeatureCreator();
         end
         
         %% ----------------------------------------------------------------

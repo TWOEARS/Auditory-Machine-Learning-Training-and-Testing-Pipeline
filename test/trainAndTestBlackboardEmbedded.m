@@ -53,7 +53,7 @@ pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe    
-    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats();
+    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats5aBlockmean();
     pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( buildBBS() , pipe.featureCreator );
 else
     pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();
@@ -117,7 +117,7 @@ pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe    
-    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats();
+    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats5aBlockmean();
     pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( buildBBS() , pipe.featureCreator);
 else
     pipe.featureCreator = FeatureCreators.FeatureSet5aBlockmean();

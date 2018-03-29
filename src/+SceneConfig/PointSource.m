@@ -2,8 +2,8 @@ classdef PointSource < SceneConfig.SourceBase & Parameterized
 
     %% -----------------------------------------------------------------------------------
     properties
-        azimuth;
-        distance;
+        azimuth = 0;
+        distance = 3;
     end
 
     %% -----------------------------------------------------------------------------------

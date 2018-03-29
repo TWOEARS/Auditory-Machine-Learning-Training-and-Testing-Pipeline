@@ -2,7 +2,7 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
-        modelPath;
+        model;
         modelParams;
     end
 
@@ -16,7 +16,20 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
             obj = obj@Parameterized( pds );
             obj = obj@ModelTrainers.Base( varargin{:} );
             obj.setParameters( true, varargin{:} );
-            obj.modelPath = modelPath;
+            if isempty( modelPath ) || strcmpi( modelPath, 'noop' )
+                obj.model = [];
+                return;
+            end
+            if ~exist( modelPath, 'file' )
+                error( 'Could not find "%s".', modelPath );
+            end
+            ms = load( modelPath, 'model' );
+            model = ms.model;
+            fieldsModelParams = fieldnames( obj.modelParams );
+            for ii = 1: length( fieldsModelParams )
+                model.(fieldsModelParams{ii}) = obj.modelParams.(fieldsModelParams{ii});
+            end
+            obj.model = model;
         end
         %% ----------------------------------------------------------------
 
@@ -45,15 +58,7 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
     methods (Access = protected)
         
         function model = giveTrainedModel( obj )
-            if ~exist( obj.modelPath, 'file' )
-                error( 'Could not find "%s".', obj.modelPath );
-            end
-            ms = load( obj.modelPath, 'model' );
-            model = ms.model;
-            fieldsModelParams = fieldnames( obj.modelParams );
-            for ii = 1: length( fieldsModelParams )
-                model.(fieldsModelParams{ii}) = obj.modelParams.(fieldsModelParams{ii});
-            end
+            model = obj.model;
         end
         %% ----------------------------------------------------------------
         

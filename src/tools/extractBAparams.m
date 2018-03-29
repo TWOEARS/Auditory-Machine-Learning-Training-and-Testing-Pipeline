@@ -111,15 +111,15 @@ end
 
 bafiles = cellfun( @(c)(c.srcFile), {blockAnnotations.srcFile}', 'UniformOutput', false );
 nonemptybaf = ~cellfun( @isempty, bafiles );
-bafiles = cellfun( @(c)(applyIfNempty( c, @(x)(x{1}) )), bafiles(nonemptybaf), 'UniformOutput', false );
-bafClasses = cellfun( @fileparts, bafiles, 'UniformOutput', false );
-[~,bafClasses] = cellfun( @fileparts, bafClasses, 'UniformOutput', false );
-niClasses = {{'alarm'},{'baby'},{'femaleSpeech'},{'fire'},{'crash'},{'dog'},...
-           {'engine'},{'footsteps'},{'knock'},{'phone'},{'piano'},...
-           {'maleSpeech'},{'femaleScream','maleScream'},{'general'}};
-bafClassIdxs = cellfun( ...
-        @(x)( find( cellfun( @(c)(any( strcmpi( x, c ) )), niClasses ) ) ), bafClasses, ...
-                                                                 'UniformOutput', false );
+bafiles = cellfun( @(x)(x{1}), bafiles(nonemptybaf), 'UniformOutput', false );
+bafFilesepIdxs = cellfun( @(c)( strfind( c, '/' ) ), bafiles, 'UniformOutput', false );
+bafClasses = cellfun( @(fp,idx)(fp(idx(end-1)+1:idx(end)-1)), bafiles, bafFilesepIdxs, 'UniformOutput', false );
+niClassIdxs = containers.Map( {'alarm','baby','femaleSpeech','fire','crash','dog',...
+                               'engine','footsteps','knock','phone','piano',...
+                               'maleSpeech','femaleScream','maleScream','general'}, ...
+                              [1,2,3,4,5,6,7,8,9,10,11,12,13,13,14] );
+bafClassIdxs = cellfun( @(c)(niClassIdxs(c)), bafClasses, 'UniformOutput', false );
+
 [baParams(nonemptybaf).blockClass] = bafClassIdxs{:};
 
 

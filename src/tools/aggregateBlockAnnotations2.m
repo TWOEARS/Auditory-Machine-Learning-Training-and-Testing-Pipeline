@@ -19,35 +19,37 @@ tpIdx = sub2ind( size( yt ), tpIdxR, tpIdxC );
 selfIdx = 1 : numel( bap );
 nonemptyBaps = validBaps & ~isnan( arrayfun( @(ax)(ax.gtAzm), bap ) );
 selfIdx = selfIdx(nonemptyBaps(selfIdx));
-[selfIdxR,selfIdxC] = ind2sub( size( bap ), selfIdx );
-otherIdxs = arrayfun( ...
-    @(r,c)(sub2ind( size( bap ), repmat( r, 1, size( bap, 2 )-1 ), [1:c-1 c+1:size( bap, 2 )] )), ...
-    selfIdxR, selfIdxC, 'UniformOutput', false );
-otherIdxs = cellfun( @(c)(c(nonemptyBaps(c))), otherIdxs, 'UniformOutput', false );
-
-selfGtAzms = wrapTo180( [bap(selfIdx).gtAzm] );
-otherGtAzms = cellfun( @(c)(wrapTo180( [bap(c).gtAzm] )), otherIdxs, 'UniformOutput', false );
-bisectAzms = cellfun( @(s,o)(wrapTo180(s + wrapTo180( o - s )/2)), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
-% mirror to frontal hemisphere
-bisectAzms = cellfun( @(c)(sign(c).*abs(abs(abs(c)-90)-90)), bisectAzms, 'UniformOutput', false );
-spreads = cellfun( @(s,o)(abs( wrapTo180( o - s ) )), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
-isSzero = cellfun( @(c)(c == 0), spreads, 'UniformOutput', false );
-bisectNormAzms = cellfun( @(b,s)((s - 2*abs( b ))./s), bisectAzms, spreads, 'UniformOutput', false );
-bisectNormAzms = cellfun( @(bp,issz)(nansum( [-issz.*ones(1,max(1,numel(bp)));(~issz).*bp], 1 )), ...
-                    bisectNormAzms, isSzero, 'UniformOutput', false );
-isBnaNeg = cellfun( @(c)(c < 0), bisectNormAzms, 'UniformOutput', false );
-bisectNormAzmsNeg = cellfun( @(b,s)(nansum((abs(b)-s/2)./(90-s/2),1)), ...
-                                            bisectAzms, spreads, 'UniformOutput', false );
-bisectNormAzms = cellfun( @(bp,bn,isn)(nansum( [-isn.*bn;(~isn).*bp], 1 )), ...
-                    bisectNormAzms, bisectNormAzmsNeg, isBnaNeg, 'UniformOutput', false );
-otherSnrs = cellfun( @(c)([bap(c).curSnr]), otherIdxs, 'UniformOutput', false );
-otherSnrs = cellfun( @(c)(c - max(c)), otherSnrs, 'UniformOutput', false );
-otherSnrNorms = cellfun( @(c)(max(0,1./abs(c-1).^0.2 - 0.4.*abs(c)./100)), otherSnrs, 'UniformOutput', false );
-% otherSnrNorms(cellfun(@isempty,otherSnrNorms)) = {1};
-
-dist2bisector = cellfun( @(b,s)(double(b)*double(s)'/sum(double(s))), bisectNormAzms, otherSnrNorms, 'UniformOutput', false );
-dist2bisector(cellfun(@isempty,dist2bisector)) = {nan};
-[ag(selfIdx).dist2bisector] = dist2bisector{:};
+if ~isempty( selfIdx )
+    [selfIdxR,selfIdxC] = ind2sub( size( bap ), selfIdx );
+    otherIdxs = arrayfun( ...
+        @(r,c)(sub2ind( size( bap ), repmat( r, 1, size( bap, 2 )-1 ), [1:c-1 c+1:size( bap, 2 )] )), ...
+        selfIdxR, selfIdxC, 'UniformOutput', false );
+    otherIdxs = cellfun( @(c)(c(nonemptyBaps(c))), otherIdxs, 'UniformOutput', false );
+    
+    selfGtAzms = wrapTo180( [bap(selfIdx).gtAzm] );
+    otherGtAzms = cellfun( @(c)(wrapTo180( [bap(c).gtAzm] )), otherIdxs, 'UniformOutput', false );
+    bisectAzms = cellfun( @(s,o)(wrapTo180(s + wrapTo180( o - s )/2)), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
+    % mirror to frontal hemisphere
+    bisectAzms = cellfun( @(c)(sign(c).*abs(abs(abs(c)-90)-90)), bisectAzms, 'UniformOutput', false );
+    spreads = cellfun( @(s,o)(abs( wrapTo180( o - s ) )), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
+    isSzero = cellfun( @(c)(c == 0), spreads, 'UniformOutput', false );
+    bisectNormAzms = cellfun( @(b,s)((s - 2*abs( b ))./s), bisectAzms, spreads, 'UniformOutput', false );
+    bisectNormAzms = cellfun( @(bp,issz)(nansum( [-issz.*ones(1,max(1,numel(bp)));(~issz).*bp], 1 )), ...
+        bisectNormAzms, isSzero, 'UniformOutput', false );
+    isBnaNeg = cellfun( @(c)(c < 0), bisectNormAzms, 'UniformOutput', false );
+    bisectNormAzmsNeg = cellfun( @(b,s)(nansum((abs(b)-s/2)./(90-s/2),1)), ...
+        bisectAzms, spreads, 'UniformOutput', false );
+    bisectNormAzms = cellfun( @(bp,bn,isn)(nansum( [-isn.*bn;(~isn).*bp], 1 )), ...
+        bisectNormAzms, bisectNormAzmsNeg, isBnaNeg, 'UniformOutput', false );
+    otherSnrs = cellfun( @(c)([bap(c).curSnr]), otherIdxs, 'UniformOutput', false );
+    otherSnrs = cellfun( @(c)(c - max(c)), otherSnrs, 'UniformOutput', false );
+    otherSnrNorms = cellfun( @(c)(max(0,1./abs(c-1).^0.2 - 0.4.*abs(c)./100)), otherSnrs, 'UniformOutput', false );
+    % otherSnrNorms(cellfun(@isempty,otherSnrNorms)) = {1};
+    
+    dist2bisector = cellfun( @(b,s)(double(b)*double(s)'/sum(double(s))), bisectNormAzms, otherSnrNorms, 'UniformOutput', false );
+    dist2bisector(cellfun(@isempty,dist2bisector)) = {nan};
+    [ag(selfIdx).dist2bisector] = dist2bisector{:};
+end
 
 %% assign tp (and following fp,fn,tn) per time instead of per block
 

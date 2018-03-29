@@ -26,6 +26,11 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function cacheDirName = getCacheDirName( obj )
+            [~,cacheDirName] = fileparts( obj.topCacheDirectory );
+        end
+        %% -------------------------------------------------------------------------------
+        
         function setCacheTopDir( obj, topDir, createIfnExist )
             if ~exist( topDir, 'dir' ) 
                 if nargin > 2 && createIfnExist
@@ -66,8 +71,16 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function suspend( obj )
+            obj.saveCacheDirectory();
+            obj.treeRoot = Core.IdCacheTreeElem();
+            obj.cacheFileInfo = containers.Map( 'KeyType', 'char', 'ValueType', 'any' );
+            obj.cacheDirChanged = false;
+        end
+        %% -------------------------------------------------------------------------------
+        
         function saveCacheDirectory( obj, filename )
-            if nargin < 2 
+            if nargin < 2 || isempty( filename )
                 filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
@@ -85,15 +98,22 @@ classdef IdCacheDirectory < handle
                     ~isequalDeepCompare( newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                 obj.cacheFileRWsema.getReadAccess();
                 Parameters.dynPropsOnLoad( true, false );
+                fprintf( ' [%s: loading changed cacheTree', obj.getCacheDirName() );
                 newCacheFile = load( cacheFilepath );
                 Parameters.dynPropsOnLoad( true, true );
+                fprintf( '] ' );
                 obj.cacheFileRWsema.releaseReadAccess();
+                fprintf( ' [%s: integrating changed cacheTree', obj.getCacheDirName() );
                 obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
+                fprintf( '] ' );
             end
             cacheTree = obj.treeRoot; %#ok<NASGU>
+            fprintf( ' [%s: saving cacheTree', obj.getCacheDirName() );
             save( cacheWriteFilepath, 'cacheTree' );
+            fprintf( '.' );
             obj.cacheFileRWsema.getWriteAccess();
             copyfile( cacheWriteFilepath, cacheFilepath ); % this blocks cacheFile shorter
+            fprintf( '] ' );
             obj.cacheFileInfo(cacheFilepath) = dir( cacheFilepath );
             obj.cacheFileRWsema.releaseWriteAccess();
             delete( cacheWriteFilepath );
@@ -103,7 +123,7 @@ classdef IdCacheDirectory < handle
         %% -------------------------------------------------------------------------------
         
         function loadCacheDirectory( obj, filename )
-            if nargin < 2
+            if nargin < 2 || isempty( filename )
                 filename = obj.cacheDirectoryFilename;
             end
             if ~isempty( [strfind( filename, '/' ), strfind( filename, '\' )] )
@@ -115,10 +135,12 @@ classdef IdCacheDirectory < handle
                 obj.cacheFileRWsema = ReadersWritersFileSemaphore( cacheFilepath );
                 if exist( cacheFilepath, 'file' )
                     obj.cacheFileRWsema.getReadAccess();
+                    fprintf( ' [%s: loading cacheTree', obj.getCacheDirName() );
                     Parameters.dynPropsOnLoad( true, false ); % don't load unnecessary stuff
                     obj.cacheFileInfo(cacheFilepath) = dir( cacheFilepath ); % for later comparison
                     cacheFile = load( cacheFilepath );
                     Parameters.dynPropsOnLoad( true, true );
+                    fprintf( '] ' );
                     obj.cacheFileRWsema.releaseReadAccess();
                     obj.treeRoot = cacheFile.cacheTree;
                     obj.cacheDirChanged = false;
@@ -133,19 +155,26 @@ classdef IdCacheDirectory < handle
                 if ~isempty( newCacheFileInfo ) && ~isequalDeepCompare( ...
                                       newCacheFileInfo, obj.cacheFileInfo(cacheFilepath) )
                     obj.cacheFileRWsema.getReadAccess();
+                    fprintf( ' [%s: loading changed cacheTree', obj.getCacheDirName() );
                     Parameters.dynPropsOnLoad( true, false );
                     newCacheFile = load( cacheFilepath );
                     Parameters.dynPropsOnLoad( true, true );
+                    fprintf( '] ' );
                     obj.cacheFileRWsema.releaseReadAccess();
+                    fprintf( ' [%s: integrating changed cacheTree', obj.getCacheDirName() );
                     obj.cacheDirChanged = ...
                             obj.treeRoot.integrateOtherTreeNode( newCacheFile.cacheTree );
+                    fprintf( '] ' );
                     obj.cacheFileInfo(cacheFilepath) = newCacheFileInfo;
                 end
             end
         end
         %% -------------------------------------------------------------------------------
         
-        function maintenance( obj, deleteEmpties )
+        function maintenance( obj, deleteEmpties, filename )
+            if nargin < 3 || isempty( filename )
+                filename = obj.cacheDirectoryFilename;
+            end
             cDirs = dir( [obj.topCacheDirectory filesep 'cache.*'] );
             cacheDirs = cell( 0, 3 );
             fprintf( '-> read cache folders\n' );
@@ -242,7 +271,7 @@ classdef IdCacheDirectory < handle
             end
             fprintf( '\n' );
             fprintf( '-> saveCacheDirectory\n' );
-            obj.saveCacheDirectory();
+            obj.saveCacheDirectory( filename );
         end
         %% -------------------------------------------------------------------------------
 
@@ -292,6 +321,11 @@ classdef IdCacheDirectory < handle
                 prefix = [prefix '_'];
             end
             cfgFieldnames = fieldnames( cfg );
+            noCmpIdx = strcmp( 'noCompare', cfgFieldnames );
+            if any( noCmpIdx )
+                cfgFieldnames(noCmpIdx) = [];
+                cfg = rmfield( cfg, 'noCompare' );
+            end
             cfgSubCfgIdxs = cellfun( @(cf)(isstruct( cfg.(cf) )), cfgFieldnames );
             subCfgFieldnames = cfgFieldnames(cfgSubCfgIdxs);
             uSubCfgs = cellfun( ...
@@ -314,12 +348,13 @@ classdef IdCacheDirectory < handle
         end
         %% -------------------------------------------------------------------------------
         
-        function standaloneMaintain( cacheTopDir, deleteEmpties )
-            if nargin < 2, deleteEmpties = true; end
+        function standaloneMaintain( cacheTopDir, deleteEmpties, filename )
+            if nargin < 2 || isempty( deleteEmpties ), deleteEmpties = true; end
+            if nargin < 3 || isempty( filename ), filename = []; end
             cache = Core.IdCacheDirectory();
             cache.setCacheTopDir( cacheTopDir );
-            cache.loadCacheDirectory();
-            cache.maintenance( deleteEmpties );
+            cache.loadCacheDirectory( filename );
+            cache.maintenance( deleteEmpties, filename );
         end
         %% -------------------------------------------------------------------------------
         

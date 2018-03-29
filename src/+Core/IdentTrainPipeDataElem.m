@@ -52,6 +52,17 @@ classdef IdentTrainPipeDataElem < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function clear( obj )
+            obj.x = [];
+            obj.y = [];
+            obj.ysi = [];
+            obj.bIdxs = [];
+            obj.bacfIdxs = [];
+            obj.blockAnnotsCacheFile = [];
+            obj.blockAnnotations = [];
+        end
+        %% -------------------------------------------------------------------------------
+        
         function readFileAnnotations( obj )
             obj.fileAnnotations.type = IdEvalFrame.readEventClass( obj.fileName );
         end

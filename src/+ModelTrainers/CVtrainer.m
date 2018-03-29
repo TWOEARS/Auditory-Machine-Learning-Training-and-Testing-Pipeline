@@ -130,14 +130,14 @@ classdef CVtrainer < ModelTrainers.Base
                 trainer_ff = trainers_tmp(ff);
                 ModelTrainers.Base.featureMask( true, fmask ); % persistent variables are not copied to workers
                 trainer_ff.setData( foldCombi, parallelFolds_tmp.Value{ff} );
-                freemem = memReport() % for debugging
+%                 freemem = memReport() % for debugging
                 trainer_ff.run();
-                freemem = memReport() % for debugging
+%                 freemem = memReport() % for debugging
                 foldsPerformance_tmp(ff) = double( trainer_ff.getPerformance() );
                 fprintf( '\nDone with run %d of CV. Performance = %f\n\n', ...
                                                            ff, foldsPerformance_tmp(ff) );
                 models_tmp{ff} = trainer_ff.getModel();
-                freemem = memReport() % for debugging
+%                 freemem = memReport() % for debugging
             end
             obj.models = models_tmp;
             obj.foldsPerformance = foldsPerformance_tmp;

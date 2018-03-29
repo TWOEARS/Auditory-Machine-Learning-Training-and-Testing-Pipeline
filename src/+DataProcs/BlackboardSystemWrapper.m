@@ -64,6 +64,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.ksHashs = obj.ksHashs;
             outputDeps.bindHash = obj.bindHashs;                             
+            outputDeps.v = 1;
         end
         
         function out = getOutput( obj, varargin )
@@ -78,7 +79,8 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
                 [featureSigVal, fList] = obj.featureCreator.blackboardVal2FeatureSignalVal(val{1});
                 data = [data; featureSigVal];
             end
-            featureSignal = FeatureSignal(proc, 0, 'mono', data, fList);
+            bufferSize_s = size(data, 1) * obj.bbs.dataConnect.timeStep;
+            featureSignal = FeatureSignal(proc, bufferSize_s, 'mono', data, fList);
         end
     end
     

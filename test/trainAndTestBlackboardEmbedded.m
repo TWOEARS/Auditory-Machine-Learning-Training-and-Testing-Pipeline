@@ -38,22 +38,21 @@ else
 end
 
 %% define blackboard
-
-if ~execBaseline
-    % setup blackboard system to be embedded into pipe
-    bbs = BlackboardSystem(0);
-    idModels = setDefaultIdModels();
-    afeCon = BlackboardEmbedding.AuditoryFrontEndConnection();
-    bbs.setRobotConnect(afeCon);
-    bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', 0.2);
-    ppRemoveDc = false;
-    for ii = 1 : numel( idModels )
-        idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
-        idKss{ii}.setInvocationFrequency(10);
+    function bbs = buildBBS()
+        % setup blackboard system to be embedded into pipe
+        bbs = BlackboardSystem(0);
+        idModels = setDefaultIdModels();
+        afeCon = BlackboardEmbedding.AuditoryFrontEndConnection();
+        bbs.setRobotConnect(afeCon);
+        bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', 0.2);
+        ppRemoveDc = false;
+        for ii = 1 : numel( idModels )
+            idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
+            idKss{ii}.setInvocationFrequency(10);
+        end
+        bbs.blackboardMonitor.bind({bbs.scheduler}, {bbs.dataConnect}, 'replaceOld', 'AgendaEmpty' );
+        bbs.blackboardMonitor.bind({bbs.dataConnect}, idKss, 'replaceOld' );
     end
-    bbs.blackboardMonitor.bind({bbs.scheduler}, {bbs.dataConnect}, 'replaceOld', 'AgendaEmpty' );
-    bbs.blackboardMonitor.bind({bbs.dataConnect}, idKss, 'replaceOld' );
-end
 
 %% train
 
@@ -63,8 +62,8 @@ pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe    
-    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats();
-    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs , pipe.featureCreator );
+    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats5aBlockmean();
+    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( buildBBS() , pipe.featureCreator );
 else
     pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 end
@@ -137,15 +136,15 @@ pipe = TwoEarsIdTrainPipe();
 pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe    
-    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats();
-    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( bbs , pipe.featureCreator);
+    pipe.featureCreator = FeatureCreators.FullStreamIdProbStats5aBlockmean();
+    pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( buildBBS() , pipe.featureCreator);
 else
     pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
 end
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep modelpath filesep modelname '.model.mat'], ...
-    'performanceMeasure', @PerformanceMeasures.BAC_BAextended );
+    'performanceMeasure', @PerformanceMeasures.BAC );
 pipe.modelCreator.verbose( 'on' );
 
 pipe.setTrainset( datasets(7:8) );

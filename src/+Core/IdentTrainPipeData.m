@@ -401,16 +401,19 @@ classdef IdentTrainPipeData < handle
         
         function clear( obj, mode )
             if strcmpi( mode, 'all' )
-                clearFields = {'x','y','ysi','bIdxs','bacfIdxs',...
-                               'blockAnnotsCacheFile','blockAnnotations'};
-            elseif strcmpi( mode, 'y' )
-                clearFields = {'y','ysi'};
+                for ff = 1 : numel( obj.data )
+                    obj.data(ff).clear();
+                end
             else
-                clearFields = {};
-            end
-            for ff = 1 : numel( obj.data )
-                for cc = 1 : numel( clearFields )
-                    obj.data(ff).(clearFields{cc}) = [];
+                if strcmpi( mode, 'y' )
+                    clearFields = {'y','ysi'};
+                else
+                    clearFields = {};
+                end
+                for ff = 1 : numel( obj.data )
+                    for cc = 1 : numel( clearFields )
+                        obj.data(ff).(clearFields{cc}) = [];
+                    end
                 end
             end
         end

@@ -43,7 +43,8 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             y = getDataHelper( obj.data, 'y' );
             y = y(sampleIdsIn);
             y_ = y .* (ba_ns+1) .* (1 + ~ba_pp * 9);
-            selectFilter = selectFilter(:) & (y_(:) ~= 1); % pos although ba_ns==0
+            selectFilter = selectFilter(:) & (y_(:) ~= 1); % filter out pos although ba_ns==0
+            selectFilter = selectFilter(:) & (y_(:) ~= -1); % filter out neg_posPresent although ba_ns==0
             y_Idxs = find( selectFilter );
             [throwoutIdxs,nClassSamples,~,labels] = ...
                           DataSelectors.BAC_Selector.getBalThrowoutIdxs( y_(selectFilter), maxDataSize );

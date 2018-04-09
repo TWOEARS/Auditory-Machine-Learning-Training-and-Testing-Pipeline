@@ -23,6 +23,11 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         end
         
         function process( obj, wavFilepath )
+            % disable verbosity of ModelCreator
+            tmpV = Models.Base.verbose();
+            if tmpV            
+                Models.Base.verbose( 'off' );
+            end
             % reset blackboard and KSs
             obj.bbs.blackboard.deleteData();
             warning('off','BB:tNotIncreasing');
@@ -38,7 +43,11 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             % run blackboardSystem
             obj.bbs.run();
             % save blackboard data of blackboardSystem as output
-            obj.output.blackboardData = obj.bbs.blackboard.data;                    
+            obj.output.blackboardData = obj.bbs.blackboard.data;
+            if tmpV
+                Models.Base.verbose( 'on' );
+            end
+            
         end
                 
         function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )

@@ -26,10 +26,21 @@ classdef (Abstract) Base < matlab.mixin.Copyable
         end
         %% -------------------------------------------------------------------------------
         
-        function v = verbose( ~, newV )
+        
+    end
+
+    %% --------------------------------------------------------------------
+    methods (Abstract, Access = protected)
+        [y,score] = applyModelMasked( obj, x )
+    end
+
+    %% --------------------------------------------------------------------
+    methods (Static)
+        
+        function v = verbose( newV )
             persistent verb;    % faking a static property
             if isempty( verb ), verb = false; end
-            if nargin > 1
+            if nargin > 0 
                 if islogical( newV )
                     verb = newV;
                 elseif ischar( newV ) && any( strcmpi( newV, {'true','on','set'} ) )
@@ -43,16 +54,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
             v = verb;
         end
         %% -------------------------------------------------------------------------------
-
-    end
-
-    %% --------------------------------------------------------------------
-    methods (Abstract, Access = protected)
-        [y,score] = applyModelMasked( obj, x )
-    end
-
-    %% --------------------------------------------------------------------
-    methods (Static)
+        
         
         function perf = getPerformance( model, testSet, perfMeasure, ...
                                         maxDataSize, dataSelector, importanceWeighter, ...

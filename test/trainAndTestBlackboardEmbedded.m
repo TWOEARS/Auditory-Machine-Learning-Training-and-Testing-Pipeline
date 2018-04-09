@@ -47,8 +47,13 @@ end
         bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', 0.2);
         ppRemoveDc = false;
         for ii = 1 : numel( idModels )
-            idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
-            idKss{ii}.setInvocationFrequency(10);
+            if ii == 2
+                idKss{2} = bbs.createKS('IdentityKS', {idModels(3).name, idModels(3).dir, ppRemoveDc});
+                idKss{2}.setInvocationFrequency(10);
+            else
+                idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
+                idKss{ii}.setInvocationFrequency(10);
+            end
         end
         bbs.blackboardMonitor.bind({bbs.scheduler}, {bbs.dataConnect}, 'replaceOld', 'AgendaEmpty' );
         bbs.blackboardMonitor.bind({bbs.dataConnect}, idKss, 'replaceOld' );
@@ -138,7 +143,7 @@ pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 1./3 );
 if ~execBaseline
     % embed blackboard system into pipe
     pipe.featureCreator = FeatureCreators.FullStreamIdProbStatsIntegrated( ...
-        FeatureCreators.FullStreamIdProbStats5cBlockmean() );
+        FeatureCreators.FeatureSet5cBlockmean() );
     pipe.blackboardSystem = DataProcs.BlackboardSystemWrapper( buildBBS() , pipe.featureCreator);
 else
     pipe.featureCreator = FeatureCreators.FeatureSet5cBlockmean();
@@ -146,10 +151,10 @@ end
 pipe.labelCreator = feval( labelCreators{classIdx,1}, labelCreators{classIdx,2}{:} );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
     [pwd filesep modelpath filesep modelname '.model.mat'], ...
-    'performanceMeasure', @PerformanceMeasures.BAC );
+    'performanceMeasure', @PerformanceMeasures.BAC_BAextended );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.setTrainset( datasets(7:8) );
+pipe.setTestset( datasets(7:8) );
 pipe.setupData();
 
 srcDataSpec = cell( 1, numel( pipe.pipeline.testSet.folds ) );

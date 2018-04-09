@@ -36,29 +36,6 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
         end
         %% -------------------------------------------------------------------------------
         
-        % override
-        function process( obj, wavFilepath )
-            inData = obj.loadInputData( wavFilepath );
-            obj.blockAnnotations = inData.blockAnnotations;
-            obj.integratedFC.blockAnnotations = inData.blockAnnotations;
-            obj.x = [];
-            for ii = 1 : numel( inData.afeBlocks )
-                obj.baIdx = ii;
-                obj.integratedFC.baIdx = ii;
-                obj.afeData = inData.afeBlocks{ii};
-                obj.integratedFC.afeData = inData.afeBlocks{ii};
-                xd = obj.constructVector();
-                if isempty( obj.x )
-                    obj.x = zeros( numel( inData.afeBlocks ), size( xd{1}, 1 ), size( xd{1}, 2 ) );
-                end
-                obj.x(ii,:,:) = xd{1};
-                fprintf( '.' );
-                if obj.descriptionBuilt, continue; end
-                obj.description = xd{2};
-                obj.descriptionBuilt = true;
-            end
-        end
-        %% ----------------------------------------------------------------
         
         function x = constructVector( obj )
             % constructVector for each feature: compress, scale, average
@@ -69,7 +46,11 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
             %
             %   See getAFErequests
             
+            obj.integratedFC.blockAnnotations = obj.blockAnnotations;
+            obj.integratedFC.baIdx = obj.baIdx;
+            obj.integratedFC.afeData = obj.afeData;
             x = obj.integratedFC.constructVector();
+            obj.integratedFC.descriptionBuilt = true;
                         
             % afeIdx ? : idProbs
             idProbsIndex = numel(obj.integratedFC.getAFErequests()) + 1;            

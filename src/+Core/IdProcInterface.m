@@ -349,6 +349,7 @@ classdef (Abstract) IdProcInterface < handle
     methods (Abstract)
         process( obj, wavFilepath )
     end
+    
     methods (Abstract, Access = protected)
         outputDeps = getInternOutputDependencies( obj )
         out = getOutput( obj, varargin )

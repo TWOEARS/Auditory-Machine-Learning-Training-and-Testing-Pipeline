@@ -72,7 +72,7 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             else
                 obj.sensitivity = obj.tp / tp_fn;
             end
-            if tn_fp == 0;
+            if tn_fp == 0
                 warning( 'No negative true label.' );
                 obj.specificity = nan;
             else

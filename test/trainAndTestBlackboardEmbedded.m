@@ -47,13 +47,8 @@ end
         bbs.setDataConnect('BlackboardEmbedding.AuditoryFrontEndBridgeKS', 0.2);
         ppRemoveDc = false;
         for ii = 1 : numel( idModels )
-            if ii == 2
-                idKss{2} = bbs.createKS('IdentityKS', {idModels(3).name, idModels(3).dir, ppRemoveDc});
-                idKss{2}.setInvocationFrequency(10);
-            else
-                idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
-                idKss{ii}.setInvocationFrequency(10);
-            end
+            idKss{ii} = bbs.createKS('IdentityKS', {idModels(ii).name, idModels(ii).dir, ppRemoveDc});
+            idKss{ii}.setInvocationFrequency(10);
         end
         bbs.blackboardMonitor.bind({bbs.scheduler}, {bbs.dataConnect}, 'replaceOld', 'AgendaEmpty' );
         bbs.blackboardMonitor.bind({bbs.dataConnect}, idKss, 'replaceOld' );

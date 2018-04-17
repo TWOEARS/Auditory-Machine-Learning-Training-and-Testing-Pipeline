@@ -36,6 +36,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
             for ks = obj.bbs.blackboard.KSs 
                 ks{1}.timeStamp();
             end
+            obj.bbs.blackboardMonitor.reset();
             % load AFE data
             in = obj.loadInputData( wavFilepath, 'afeData');
             % give input to AFE-Connection
@@ -73,7 +74,7 @@ classdef BlackboardSystemWrapper < Core.IdProcInterface
         function outputDeps = getInternOutputDependencies( obj )
             outputDeps.ksHashs = obj.ksHashs;
             outputDeps.bindHash = obj.bindHashs;                             
-            outputDeps.v = 1;
+            outputDeps.v = 2;
         end
         
         function out = getOutput( obj, varargin )

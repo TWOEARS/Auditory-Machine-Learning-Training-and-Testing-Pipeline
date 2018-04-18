@@ -301,7 +301,9 @@ classdef RescSparse
             summedResc.data = summedData;
             if ~isempty( obj.id )
                 idxDescr = fieldnames( obj.id );
-                idxDescr = idxDescr(keepDims);
+                idxs = cellfun( @(c)(obj.id.(c)), idxDescr );
+                idxs = arrayfun( @(a)(find(idxs==a)), keepDims );
+                idxDescr = idxDescr(idxs);
                 summedResc.id = ...
                     cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
             end
@@ -335,7 +337,9 @@ classdef RescSparse
             end
             if ~isempty( obj.id )
                 idxDescr = fieldnames( obj.id );
-                idxDescr = idxDescr(keepDims);
+                idxs = cellfun( @(c)(obj.id.(c)), idxDescr );
+                idxs = arrayfun( @(a)(find(idxs==a)), keepDims );
+                idxDescr = idxDescr(idxs);
                 meanedResc.id = ...
                     cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
             end

@@ -78,7 +78,7 @@ classdef FullStreamIdProbStats < FeatureCreators.BlackboardDepFeatureCreator
             [classname1, classname2] = strtok( classInfo.Name, '.' );
             if isempty( classname2 ), outputDeps.featureProc = classname1;
             else outputDeps.featureProc = classname2(2:end); end
-            outputDeps.v = 2;
+            outputDeps.v = 1;
         end
         %% ----------------------------------------------------------------
         

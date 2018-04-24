@@ -5,7 +5,7 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
     %% --------------------------------------------------------------------
     properties (SetAccess = private)
         integratedFC;
-        idProbDeltaLevels = 2;
+        deltaLevels = 2;
     end
     
     %% --------------------------------------------------------------------
@@ -53,9 +53,9 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
             obj.integratedFC.afeData = obj.afeData;
             x = obj.integratedFC.constructVector();
             obj.integratedFC.descriptionBuilt = true;
-                        
+            
             % afeIdx ? : idProbs
-            idProbsIndex = numel(obj.integratedFC.getAFErequests()) + 1;            
+            idProbsIndex = numel(obj.integratedFC.getAFErequests()) + 1;
             idProbs = obj.makeBlockFromAfe( idProbsIndex, [], ...
                 @(a)(a.Data), ...
                 {@(a)('idProbs')}, ...
@@ -76,7 +76,7 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
                 {'2.LMom',@(idxs)(idxs(2:2:end))}} );
             x = obj.concatFeats( x, moments );
             
-            for ii = 1:obj.idProbDeltaLevels
+            for ii = 1:obj.deltaLevels
                 idProbs = obj.transformBlock( idProbs, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
                     @(idxs)(idxs(1:end-1)),...
@@ -93,12 +93,12 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
         %% ----------------------------------------------------------------
         
         function outputDeps = getFeatureInternOutputDependencies( obj )
-            outputDeps = obj.integratedFC.getFeatureInternOutputDependencies();
+            outputDeps.integrated = obj.integratedFC.getFeatureInternOutputDependencies();
+            outputDeps.deltaLevels = obj.deltaLevels;
             classInfo = metaclass( obj );
             [classname1, classname2] = strtok( classInfo.Name, '.' );
-            if isempty( classname2 ), outputDeps.featureProc = strcat( classname1 + outputDeps.featureProc );
-            else outputDeps.featureProc = strcat(classname2(2:end) , outputDeps.featureProc); end
-            outputDeps.idProbDeltaLevels = 2;
+            if isempty( classname2 ), outputDeps.featureProc = classname1;
+            else outputDeps.featureProc = classname2(2:end); end
             outputDeps.v = 1;
         end
     end

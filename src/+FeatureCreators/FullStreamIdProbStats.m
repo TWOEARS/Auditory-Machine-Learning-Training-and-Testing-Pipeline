@@ -3,7 +3,7 @@ classdef FullStreamIdProbStats < FeatureCreators.BlackboardDepFeatureCreator
     %   Detailed explanation goes here
     
     properties
-        idProbDeltaLevels = 2;
+        deltaLevels = 2;
     end
     
     methods
@@ -54,7 +54,7 @@ classdef FullStreamIdProbStats < FeatureCreators.BlackboardDepFeatureCreator
                 {{'1.LMom',@(idxs)(idxs(1:2:end))},...
                 {'2.LMom',@(idxs)(idxs(2:2:end))}} );
             
-            for ii = 1:obj.idProbDeltaLevels
+            for ii = 1:obj.deltaLevels
                 idProbs = obj.transformBlock( idProbs, 1, ...
                     @(b)(b(2:end,:) - b(1:end-1,:)), ...
                     @(idxs)(idxs(1:end-1)),...
@@ -73,7 +73,7 @@ classdef FullStreamIdProbStats < FeatureCreators.BlackboardDepFeatureCreator
         %% ----------------------------------------------------------------
         
         function outputDeps = getFeatureInternOutputDependencies( obj )
-            outputDeps.idProbDeltaLevels = obj.idProbDeltaLevels;
+            outputDeps.deltaLevels = obj.deltaLevels;
             classInfo = metaclass( obj );
             [classname1, classname2] = strtok( classInfo.Name, '.' );
             if isempty( classname2 ), outputDeps.featureProc = classname1;

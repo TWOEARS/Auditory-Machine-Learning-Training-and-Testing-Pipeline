@@ -62,7 +62,7 @@ classdef FullStreamIdProbStatsIntegrated < FeatureCreators.BlackboardDepFeatureC
                 {@(a)(strcat('t-', arrayfun(@(f)(num2str(f)), size(a.Data, 1)-1:-1:0, 'UniformOutput', false)))}, ...
                 {@(a)(strcat('class:', a.fList))});
             
-            if obj.idProbDeltaLevels >= size(idProbs{1}, 1)
+            if obj.deltaLevels >= size(idProbs{1}, 1)
                 error('Not enough observations per block to generate the desired number of derivatives.');
             end
             

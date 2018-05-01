@@ -73,7 +73,7 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
                 lambdas = obj.fullSetModel{aa}.model.lambda;
                 verboseFprintf( obj, '\n2.) CV for determining best lambda...\n' );
                 obj.coreTrainer.setParameters( false, 'lambda', lambdas,...
-                    'maxDataSize', obj.hpsMaxDataSize );
+                    'maxDataSize', min( obj.hpsMaxDataSize, obj.maxDataSize ) );
                 obj.cvTrainer = ModelTrainers.CVtrainer( obj.coreTrainer );
                 obj.cvTrainer.setPerformanceMeasure( obj.performanceMeasure );
                 obj.cvTrainer.setData( obj.trainSet, [] );

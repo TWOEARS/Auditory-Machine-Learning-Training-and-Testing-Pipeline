@@ -301,7 +301,9 @@ classdef RescSparse
             summedResc.data = summedData;
             if ~isempty( obj.id )
                 idxDescr = fieldnames( obj.id );
-                idxDescr = idxDescr(keepDims);
+                idxs = cellfun( @(c)(obj.id.(c)), idxDescr );
+                idxs = arrayfun( @(a)(find(idxs==a)), keepDims );
+                idxDescr = idxDescr(idxs);
                 summedResc.id = ...
                     cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
             end
@@ -321,10 +323,25 @@ classdef RescSparse
                 keepDims_(md) = [];
                 if nargout > 1
                     [meanedResc,meanedDataOrigin] = meanedResc.summarizeDown( keepDims_, rowIdxs, [], @mean, meanedDataOrigin, intraGroupNorm );
+                    warning( 'KeepDims resorting not implemented for meanedDataOrigin!' );
                 else
                     meanedResc = meanedResc.summarizeDown( keepDims_, rowIdxs, [], @mean );
                 end
                 keepDims_ = 1 : size( meanedResc.dataIdxs, 2 );
+            end
+            [~,keepDims_] = sort( keepDims );
+            if ~isequal( keepDims_, 1:size( meanedResc.dataIdxs, 2 ) )
+                meanedResc.dataIdxs = meanedResc.dataIdxs(:,keepDims_);
+                [meanedResc.dataIdxs,sidxs] = sortrows( meanedResc.dataIdxs );
+                meanedResc.data = meanedResc.data(sidxs,:);
+            end
+            if ~isempty( obj.id )
+                idxDescr = fieldnames( obj.id );
+                idxs = cellfun( @(c)(obj.id.(c)), idxDescr );
+                idxs = arrayfun( @(a)(find(idxs==a)), keepDims );
+                idxDescr = idxDescr(idxs);
+                meanedResc.id = ...
+                    cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
             end
         end
         %% -------------------------------------------------------------------------------

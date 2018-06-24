@@ -113,7 +113,7 @@ classdef Base < Core.IdProcInterface
             out.bIdxs = 1 : size( out.y, 1 );
             removeNanBlocks = strcmpi( obj.removeUnclearBlocks, {'block-wise','time-wise'} );
             if ~any( removeNanBlocks ) || any( strcmpi( 'noRemoveNanBlocks', varargin ) )
-                removeNanBlocks_lidx = [];
+                removeNanBlocks_lidx = false( size( out.y, 1 ), 1 );
             else
                 removeNanBlocks_lidx = any( isnan( out.y ), 2 );
                 if removeNanBlocks(2)

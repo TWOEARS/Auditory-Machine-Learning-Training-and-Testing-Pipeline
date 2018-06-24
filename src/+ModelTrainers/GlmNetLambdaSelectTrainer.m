@@ -90,6 +90,7 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
                     lPerfs(1:numel(foldPerfs),ii) = foldPerfs;
                     verboseFprintf( obj, '.' );
                 end
+                obj.fullSetModel{aa}.lPerfs = lPerfs;
                 obj.fullSetModel{aa}.lPerfsMean = nanMean( lPerfs, 2 );
                 obj.fullSetModel{aa}.lPerfsStd = nanStd( lPerfs, 2 );
                 verboseFprintf( obj, 'Done\n' );

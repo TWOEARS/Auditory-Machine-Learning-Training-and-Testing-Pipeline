@@ -44,7 +44,7 @@ if isSegId
     [baParams(isP).azmErr2] = azmErr{:};
 end
 
-baSrcSnr = {blockAnnotations.srcSNRactive}';
+% baSrcSnr = {blockAnnotations.srcSNRactive}';
 % baSrcSnr_db = {blockAnnotations.srcSNR_db}';
 baSrcSnr2 = {blockAnnotations.srcSNR2}';
 baSrcNrj = {blockAnnotations.nrj}';
@@ -55,9 +55,9 @@ baSrcNrjOthers = {blockAnnotations.nrjOthers}';
 if any( isP )
 % if is positive, the first src in the stream is the positive one, because
 % of the restriction of positives to the first source in a scene config
-curSnrP_ = cellfun( @(x)(x(1)), baSrcSnr(isP) );
-curSnrP = num2cell( min( max( curSnrP_, -35 ), 35 ) );
-[baParams(isP).curSnr] = curSnrP{:};
+% curSnrP_ = cellfun( @(x)(x(1)), baSrcSnr(isP) );
+% curSnrP = num2cell( min( max( curSnrP_, -35 ), 35 ) );
+% [baParams(isP).curSnr] = curSnrP{:};
 curNrjoP_ = cellfun( @(x)(x(1)), baSrcNrjOthers(isP) );
 curNrjoP = num2cell( min( max( curNrjoP_, -35 ), 35 ) );
 [baParams(isP).curNrjOthers] = curNrjoP{:};
@@ -78,11 +78,11 @@ curSnr2P = num2cell( min( max( curSnr2P_, -35 ), 35 ) );
 [baParams(isP).curSnr2] = curSnr2P{:};
 end
 
-nCond = (yt < 0) & (~isSegId | ~cellfun( @isempty, baSrcSnr ));
+nCond = (yt < 0) & (~isSegId | ~cellfun( @isempty, baSrcSnr2 ));
 
 if any( nCond )
 % if is negative, the most dominant src in the stream is selected
-[~,curSnr2NmaxIdx] = cellfun( @(x)(max( x )), baSrcSnr(nCond), 'UniformOutput', false );
+[~,curSnr2NmaxIdx] = cellfun( @(x)(max( x )), baSrcSnr2(nCond), 'UniformOutput', false );
 curSnr2N_ = cellfun( @(x,x2)(x(x2)), baSrcSnr2(nCond), curSnr2NmaxIdx );
 curSnr2N = num2cell( min( max( curSnr2N_, -35 ), 35 ) );
 [baParams(nCond).curSnr2] = curSnr2N{:};

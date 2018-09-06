@@ -58,7 +58,6 @@ classdef BAC_BAextended < PerformanceMeasures.Base
         function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, ~, dpi, testSetIdData )
             dpi.yTrue = yTrue;
             dpi.yPred = yPred;
-            dpi.iw = iw;
             tps = yTrue == 1 & yPred > 0;
             tns = yTrue == -1 & yPred < 0;
             fps = yTrue == -1 & yPred > 0;

@@ -128,8 +128,8 @@ end
 
 [ag(isytR,:).posPresent] = deal( 1 );
 [ag(~isytR,:).posPresent] = deal( 0 );
-acell_curSnr = repmat( num2cell( [bap(isyt).curSnr] )', 1, size( ag, 2 ) );
-[ag(isytR,:).posSnr] = acell_curSnr{:};
+acell_curSnr2 = repmat( num2cell( [bap(isyt).curSnr2] )', 1, size( ag, 2 ) );
+[ag(isytR,:).posSnr] = acell_curSnr2{:};
 
 %% reshape assignments and aggregate baParams
 

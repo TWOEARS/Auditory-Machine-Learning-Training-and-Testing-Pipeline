@@ -31,7 +31,7 @@ ytIdxs = sub2ind( size( yt ), ytIdxR, ytIdxC );
 end
 
 if any( ~isyt )
-tmp = reshape( double( [bap(~isyt,:).curSnr] ), size( bap(~isyt,:) ) );
+tmp = reshape( double( [bap(~isyt,:).curSnr2] ), size( bap(~isyt,:) ) );
 [~,maxCurSnrIdx] = max( tmp, [], 2 );
 nIdxs = sub2ind( size( yt ), find( ~isyt ), maxCurSnrIdx );
 % [ag(~isyt).curSnr] = bap(nIdxs).curSnr;

@@ -56,6 +56,9 @@ classdef BAC_BAextended < PerformanceMeasures.Base
         % -----------------------------------------------------------------
     
         function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, ~, dpi, testSetIdData )
+            dpi.yTrue = yTrue;
+            dpi.yPred = yPred;
+            dpi.iw = iw;
             tps = yTrue == 1 & yPred > 0;
             tns = yTrue == -1 & yPred < 0;
             fps = yTrue == -1 & yPred > 0;
@@ -66,7 +69,7 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             obj.fn = sum( fns );
             tp_fn = sum( yTrue == 1 );
             tn_fp = sum( yTrue == -1 );
-            if tp_fn == 0;
+            if tp_fn == 0
                 warning( 'No positive true label.' );
                 obj.sensitivity = nan;
             else

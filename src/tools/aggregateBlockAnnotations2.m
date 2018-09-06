@@ -16,40 +16,40 @@ tpIdx = sub2ind( size( yt ), tpIdxR, tpIdxC );
 
 %% compute dist2bisector
 
-selfIdx = 1 : numel( bap );
-nonemptyBaps = validBaps & ~isnan( arrayfun( @(ax)(ax.gtAzm), bap ) );
-selfIdx = selfIdx(nonemptyBaps(selfIdx));
-if ~isempty( selfIdx )
-    [selfIdxR,selfIdxC] = ind2sub( size( bap ), selfIdx );
-    otherIdxs = arrayfun( ...
-        @(r,c)(sub2ind( size( bap ), repmat( r, 1, size( bap, 2 )-1 ), [1:c-1 c+1:size( bap, 2 )] )), ...
-        selfIdxR, selfIdxC, 'UniformOutput', false );
-    otherIdxs = cellfun( @(c)(c(nonemptyBaps(c))), otherIdxs, 'UniformOutput', false );
+% selfIdx = 1 : numel( bap );
+% nonemptyBaps = validBaps & ~isnan( arrayfun( @(ax)(ax.gtAzm), bap ) );
+% selfIdx = selfIdx(nonemptyBaps(selfIdx));
+% if ~isempty( selfIdx )
+%     [selfIdxR,selfIdxC] = ind2sub( size( bap ), selfIdx );
+%     otherIdxs = arrayfun( ...
+%         @(r,c)(sub2ind( size( bap ), repmat( r, 1, size( bap, 2 )-1 ), [1:c-1 c+1:size( bap, 2 )] )), ...
+%         selfIdxR, selfIdxC, 'UniformOutput', false );
+%     otherIdxs = cellfun( @(c)(c(nonemptyBaps(c))), otherIdxs, 'UniformOutput', false );
     
-    selfGtAzms = wrapTo180( [bap(selfIdx).gtAzm] );
-    otherGtAzms = cellfun( @(c)(wrapTo180( [bap(c).gtAzm] )), otherIdxs, 'UniformOutput', false );
-    bisectAzms = cellfun( @(s,o)(wrapTo180(s + wrapTo180( o - s )/2)), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
+%     selfGtAzms = wrapTo180( [bap(selfIdx).gtAzm] );
+%     otherGtAzms = cellfun( @(c)(wrapTo180( [bap(c).gtAzm] )), otherIdxs, 'UniformOutput', false );
+%     bisectAzms = cellfun( @(s,o)(wrapTo180(s + wrapTo180( o - s )/2)), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
     % mirror to frontal hemisphere
-    bisectAzms = cellfun( @(c)(sign(c).*abs(abs(abs(c)-90)-90)), bisectAzms, 'UniformOutput', false );
-    spreads = cellfun( @(s,o)(abs( wrapTo180( o - s ) )), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
-    isSzero = cellfun( @(c)(c == 0), spreads, 'UniformOutput', false );
-    bisectNormAzms = cellfun( @(b,s)((s - 2*abs( b ))./s), bisectAzms, spreads, 'UniformOutput', false );
-    bisectNormAzms = cellfun( @(bp,issz)(nansum( [-issz.*ones(1,max(1,numel(bp)));(~issz).*bp], 1 )), ...
-        bisectNormAzms, isSzero, 'UniformOutput', false );
-    isBnaNeg = cellfun( @(c)(c < 0), bisectNormAzms, 'UniformOutput', false );
-    bisectNormAzmsNeg = cellfun( @(b,s)(nansum((abs(b)-s/2)./(90-s/2),1)), ...
-        bisectAzms, spreads, 'UniformOutput', false );
-    bisectNormAzms = cellfun( @(bp,bn,isn)(nansum( [-isn.*bn;(~isn).*bp], 1 )), ...
-        bisectNormAzms, bisectNormAzmsNeg, isBnaNeg, 'UniformOutput', false );
-    otherSnrs = cellfun( @(c)([bap(c).curSnr]), otherIdxs, 'UniformOutput', false );
-    otherSnrs = cellfun( @(c)(c - max(c)), otherSnrs, 'UniformOutput', false );
-    otherSnrNorms = cellfun( @(c)(max(0,1./abs(c-1).^0.2 - 0.4.*abs(c)./100)), otherSnrs, 'UniformOutput', false );
-    % otherSnrNorms(cellfun(@isempty,otherSnrNorms)) = {1};
+%     bisectAzms = cellfun( @(c)(sign(c).*abs(abs(abs(c)-90)-90)), bisectAzms, 'UniformOutput', false );
+%     spreads = cellfun( @(s,o)(abs( wrapTo180( o - s ) )), num2cell( selfGtAzms ), otherGtAzms, 'UniformOutput', false );
+%     isSzero = cellfun( @(c)(c == 0), spreads, 'UniformOutput', false );
+%     bisectNormAzms = cellfun( @(b,s)((s - 2*abs( b ))./s), bisectAzms, spreads, 'UniformOutput', false );
+%     bisectNormAzms = cellfun( @(bp,issz)(nansum( [-issz.*ones(1,max(1,numel(bp)));(~issz).*bp], 1 )), ...
+%         bisectNormAzms, isSzero, 'UniformOutput', false );
+%     isBnaNeg = cellfun( @(c)(c < 0), bisectNormAzms, 'UniformOutput', false );
+%     bisectNormAzmsNeg = cellfun( @(b,s)(nansum((abs(b)-s/2)./(90-s/2),1)), ...
+%         bisectAzms, spreads, 'UniformOutput', false );
+%     bisectNormAzms = cellfun( @(bp,bn,isn)(nansum( [-isn.*bn;(~isn).*bp], 1 )), ...
+%         bisectNormAzms, bisectNormAzmsNeg, isBnaNeg, 'UniformOutput', false );
+%     otherSnrs = cellfun( @(c)([bap(c).curSnr]), otherIdxs, 'UniformOutput', false );
+%     otherSnrs = cellfun( @(c)(c - max(c)), otherSnrs, 'UniformOutput', false );
+%     otherSnrNorms = cellfun( @(c)(max(0,1./abs(c-1).^0.2 - 0.4.*abs(c)./100)), otherSnrs, 'UniformOutput', false );
+%     % otherSnrNorms(cellfun(@isempty,otherSnrNorms)) = {1};
     
-    dist2bisector = cellfun( @(b,s)(double(b)*double(s)'/sum(double(s))), bisectNormAzms, otherSnrNorms, 'UniformOutput', false );
-    dist2bisector(cellfun(@isempty,dist2bisector)) = {nan};
-    [ag(selfIdx).dist2bisector] = dist2bisector{:};
-end
+%     dist2bisector = cellfun( @(b,s)(double(b)*double(s)'/sum(double(s))), bisectNormAzms, otherSnrNorms, 'UniformOutput', false );
+%     dist2bisector(cellfun(@isempty,dist2bisector)) = {nan};
+%     [ag(selfIdx).dist2bisector] = dist2bisector{:};
+% end
 
 %% assign tp (and following fp,fn,tn) per time instead of per block
 
@@ -84,10 +84,10 @@ if ~isempty( tpIdxR )
     [ag(tpIdx_).azmErr] = acell{:};
     acell = num2cell( tpAzmErr2 );
     [ag(tpIdx_).azmErr2] = acell{:};
-    acell = num2cell( [bap(tpIdx).curSnr] );
-    a2cell = num2cell( [bap(tpIdx_).curSnr] );
-    [ag(tpIdx).curSnr] = a2cell{:};
-    [ag(tpIdx_).curSnr] = acell{:};
+%     acell = num2cell( [bap(tpIdx).curSnr] );
+%     a2cell = num2cell( [bap(tpIdx_).curSnr] );
+%     [ag(tpIdx).curSnr] = a2cell{:};
+%     [ag(tpIdx_).curSnr] = acell{:};
     acell = num2cell( [bap(tpIdx).curNrj] );
     a2cell = num2cell( [bap(tpIdx_).curNrj] );
     [ag(tpIdx).curNrj] = a2cell{:};
@@ -96,26 +96,26 @@ if ~isempty( tpIdxR )
     a2cell = num2cell( [bap(tpIdx_).curNrjOthers] );
     [ag(tpIdx).curNrjOthers] = a2cell{:};
     [ag(tpIdx_).curNrjOthers] = acell{:};
-    acell = num2cell( [bap(tpIdx).curSnr_db] );
-    a2cell = num2cell( [bap(tpIdx_).curSnr_db] );
-    [ag(tpIdx).curSnr_db] = a2cell{:};
-    [ag(tpIdx_).curSnr_db] = acell{:};
-    acell = num2cell( [bap(tpIdx).curNrj_db] );
-    a2cell = num2cell( [bap(tpIdx_).curNrj_db] );
-    [ag(tpIdx).curNrj_db] = a2cell{:};
-    [ag(tpIdx_).curNrj_db] = acell{:};
-    acell = num2cell( [bap(tpIdx).curNrjOthers_db] );
-    a2cell = num2cell( [bap(tpIdx_).curNrjOthers_db] );
-    [ag(tpIdx).curNrjOthers_db] = a2cell{:};
-    [ag(tpIdx_).curNrjOthers_db] = acell{:};
+%     acell = num2cell( [bap(tpIdx).curSnr_db] );
+%     a2cell = num2cell( [bap(tpIdx_).curSnr_db] );
+%     [ag(tpIdx).curSnr_db] = a2cell{:};
+%     [ag(tpIdx_).curSnr_db] = acell{:};
+%     acell = num2cell( [bap(tpIdx).curNrj_db] );
+%     a2cell = num2cell( [bap(tpIdx_).curNrj_db] );
+%     [ag(tpIdx).curNrj_db] = a2cell{:};
+%     [ag(tpIdx_).curNrj_db] = acell{:};
+%     acell = num2cell( [bap(tpIdx).curNrjOthers_db] );
+%     a2cell = num2cell( [bap(tpIdx_).curNrjOthers_db] );
+%     [ag(tpIdx).curNrjOthers_db] = a2cell{:};
+%     [ag(tpIdx_).curNrjOthers_db] = acell{:};
     acell_curSnr2 = num2cell( [bap(tpIdx).curSnr2] );
     a2cell = num2cell( [bap(tpIdx_).curSnr2] );
     [ag(tpIdx).curSnr2] = a2cell{:};
     [ag(tpIdx_).curSnr2] = acell_curSnr2{:};
-    acell = num2cell( [ag(tpIdx).dist2bisector] );
-    acell2 = num2cell( [ag(tpIdx_).dist2bisector] );
-    [ag(tpIdx).dist2bisector] = acell2{:};
-    [ag(tpIdx_).dist2bisector] = acell{:};
+%     acell = num2cell( [ag(tpIdx).dist2bisector] );
+%     acell2 = num2cell( [ag(tpIdx_).dist2bisector] );
+%     [ag(tpIdx).dist2bisector] = acell2{:};
+%     [ag(tpIdx_).dist2bisector] = acell{:};
     acell = num2cell( [bap(tpIdx).blockClass] );
     acell2 = num2cell( [bap(tpIdx_).blockClass] );
     [ag(tpIdx).blockClass] = acell2{:};
@@ -124,10 +124,6 @@ if ~isempty( tpIdxR )
     acell2 = num2cell( [bap(tpIdx_).gtAzm] );
     [ag(tpIdx).gtAzm] = acell2{:};
     [ag(tpIdx_).gtAzm] = acell{:};
-    acell = num2cell( [bap(tpIdx).estAzm] );
-    acell2 = num2cell( [bap(tpIdx_).estAzm] );
-    [ag(tpIdx).estAzm] = acell2{:};
-    [ag(tpIdx_).estAzm] = acell{:};
 end
 
 [ag(isytR,:).posPresent] = deal( 1 );

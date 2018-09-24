@@ -514,6 +514,10 @@ classdef RescSparse
             end
             maxMidxs = num2cell( max( midxs, [], 1 ) );
             minMidxs = int16( min( midxs, [], 1 ) );
+            if isempty( maxMidxs )
+                mat = nan( 0 );
+                return;
+            end
             mat(maxMidxs{:}) = 0;
             if nargout > 1
                 sdomat{maxMidxs{:},2} = {};

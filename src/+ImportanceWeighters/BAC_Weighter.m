@@ -17,9 +17,9 @@ classdef BAC_Weighter < ImportanceWeighters.Base
         % -----------------------------------------------------------------
     
         function [importanceWeights] = getImportanceWeights( obj, sampleIds )
-            importanceWeights = ones( size( sampleIds ) );
             y = getDataHelper( obj.data, 'y' );
             y = y(sampleIds,:);
+            importanceWeights = ones( size( y ) );
             for cc = 1 : size( y, 2 )
                 labels = unique( y(:,cc) );
                 lw = obj.labelWeights;

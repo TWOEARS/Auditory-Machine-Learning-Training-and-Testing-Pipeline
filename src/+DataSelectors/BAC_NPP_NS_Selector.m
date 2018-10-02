@@ -25,6 +25,7 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             ba = getDataHelper( obj.data, 'blockAnnotations' );
             ba = ba(sampleIdsIn);
             ba_ns = cat( 1, ba.nActivePointSrcs );
+            nsNotNa = [];
             if obj.discardNsNotNa
                 % nPointSrcsSceneConfig is only in blockAnnotations if they
                 % are loaded through GatherFeaturesProc
@@ -34,7 +35,7 @@ classdef BAC_NPP_NS_Selector < DataSelectors.Base
             end
             obj.verboseOutput = sprintf( ['\nOut of a pool of %d samples,\n' ...
                                             'discard %d where na ~= ns\n'], ...
-                                         numel( nsNotNa ), sum( nsNotNa ) );
+                                         numel( ba_ns ), sum( nsNotNa ) );
             if ~any( selectFilter )
                 return;
             end

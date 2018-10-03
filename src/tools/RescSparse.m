@@ -58,7 +58,7 @@ classdef RescSparse
             obj.dataAdd = dataAdd;
             obj.data = obj.dataConvert( zeros( 0 ) );
             obj.dataIdxs = obj.dataIdxsConvert( zeros( 0 ) );
-            obj.id = [];
+            obj.id = struct.empty;
         end
         %% -------------------------------------------------------------------------------
         function obj = setDataType( obj, newDataType )

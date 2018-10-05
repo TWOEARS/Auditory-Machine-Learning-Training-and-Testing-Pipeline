@@ -15,7 +15,7 @@ if isfield( resc, 'id' ) && ~isempty( resc.id )
         error( 'AMLTTP:apiUsage', 'existing RESC structure differs from BAPI to be added' );
     end
 else
-    resc.id.counts = 1;
+    resc.id(1).counts = 1;
 end
 
 C = zeros( numel( bapi ), numel( bapiFields ) );

@@ -133,11 +133,11 @@ classdef BAC_BAextended < PerformanceMeasures.Base
                 agAsgns = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns );
                 obj.resc_t = addDpiToResc( obj.resc_t, agAsgns, cat( 1, agBapis{:} ) );
             end
-            fprintf( ':' );
-            if any( ~cellfun( @isempty, agAsgns2 ) )
-                agAsgns2 = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns2 );
-                obj.resc_t2 = addDpiToResc( obj.resc_t2, agAsgns2, cat( 1, agBapis2{:} ) );
-            end
+%             fprintf( ':' );
+%             if any( ~cellfun( @isempty, agAsgns2 ) )
+%                 agAsgns2 = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns2 );
+%                 obj.resc_t2 = addDpiToResc( obj.resc_t2, agAsgns2, cat( 1, agBapis2{:} ) );
+%             end
             fprintf( ';' );
             fprintf( '\n' );
         end
@@ -176,7 +176,6 @@ classdef BAC_BAextended < PerformanceMeasures.Base
                                                            yt, yp, blockAnnotations, scp )
             [blockAnnotations, yt, yp, sameTimeIdxs] = findSameTimeBlocks( blockAnnotations, yt, yp );
             [bap, asg] = extractBAparams( blockAnnotations, scp, yp, yt );
-            pis = baParams2bapIdxs( bap );
             fprintf( '.' );
             if isfield( blockAnnotations, 'estAzm' ) % is segId
                 usti = unique( sameTimeIdxs )';
@@ -197,14 +196,17 @@ classdef BAC_BAextended < PerformanceMeasures.Base
                     agYp(bb,1:sumStibb) = yp(stibb);
                 end
                 agBap(:,maxc+1:end) = [];
-                [agBap2, agAsgn2] = aggregateBlockAnnotations2( agBap, agYp, agYt );
-                [agBap, agAsgn] = aggregateBlockAnnotations( agBap, agYp, agYt );
-                agAsg = mat2cell( agAsgn, size( agAsgn, 1 ), [1,1,1,1] );
+                [agBap3, asg] = aggregateBlockAnnotations3( agBap, agYp, agYt );
+%                 [agBap2, agAsg2] = aggregateBlockAnnotations2( agBap, agYp, agYt );
+                agAsg2 = [];
+                [agBap, agAsg] = aggregateBlockAnnotations( agBap, agYp, agYt );
                 agPis = baParams2bapIdxs( agBap );
-                agAsg2 = mat2cell( agAsgn2, size( agAsgn2, 1 ), [1,1,1,1] );
-                agPis2 = baParams2bapIdxs( agBap2 );
+%                 agPis2 = baParams2bapIdxs( agBap2 );
+                agPis2 = [];
+                pis = baParams2bapIdxs( agBap3 );
                 fprintf( ',' );
             else
+                pis = baParams2bapIdxs( bap );
                 agPis = [];
                 agPis2 = [];
                 agAsg = [];

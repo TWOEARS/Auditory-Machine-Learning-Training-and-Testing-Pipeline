@@ -4,15 +4,15 @@ ag = bap;
 validBaps = ~isnan( arrayfun( @(ax)(ax.scpId), bap ) );
 
 isyt = yt > 0;
+isyp = yp > 0;
 [ytIdxR,ytIdxC] = find( isyt );
 assert( numel( unique( ytIdxR ) ) == numel( ytIdxR ) ); % because I defined it in my test scripts: target sounds only on src1
 isytR = any( isyt, 2 );
-isyp = yp > 0;
 isypR = any( isyp, 2 );
-istpR = isytR & isypR;
-tpIdxR = ytIdxR(istpR(ytIdxR));
-tpIdxC = ytIdxC(istpR(ytIdxR));
-tpIdx = sub2ind( size( yt ), tpIdxR, tpIdxC );
+ist2tpR = isytR & isypR;
+t2tpIdxR = find( ist2tpR );
+tpIdxC = ytIdxC(ist2tpR(ytIdxR));
+tpIdx = sub2ind( size( yt ), t2tpIdxR, tpIdxC );
 
 %% compute dist2bisector
 
@@ -54,15 +54,16 @@ tpIdx = sub2ind( size( yt ), tpIdxR, tpIdxC );
 %% assign tp (and following fp,fn,tn) per time instead of per block
 
 istp_ = false( size( ag ) );
-if ~isempty( tpIdxR )
+if ~isempty( t2tpIdxR )
     tp_gtAzms = [bap(tpIdx).gtAzm];
     assert( all( ~isnan( tp_gtAzms ) ) );
-    azmErrs = arrayfun( @(x)(x.estAzm), bap(tpIdxR,:) ) - repmat( tp_gtAzms', 1, size( bap, 2 ) );
+    azmErrs = arrayfun( @(x)(x.estAzm), bap(t2tpIdxR,:) ) - repmat( tp_gtAzms', 1, size( bap, 2 ) );
     azmErrs = abs( wrapTo180( azmErrs ) );
-    azmErrs(~isyp(tpIdxR,:)) = nan;
+    azmErrs(~isyp(t2tpIdxR,:)) = nan;
     [tpAzmErr,tpIdxC_] = min( azmErrs, [], 2 );
     tpAzmErr2 = nanMean( azmErrs, 2 );
-    tpIdx_ = sub2ind( size( ag ), tpIdxR, tpIdxC_ );
+    tpAzmErr3 = nanStd( azmErrs, 2 );
+    tpIdx_ = sub2ind( size( ag ), t2tpIdxR, tpIdxC_ );
     istp_(tpIdx_) = true;
 end
 
@@ -76,26 +77,30 @@ istn_ = ~isfn_ & ~isyp & validBaps;
 %% assign case-insensitive baParams changes
 
 % [ag.nAct_segStream] = deal( nan );
+acell_nyp = repmat( num2cell( sum( yp > 0, 2 ) ), 1, size( ag, 2 ) );
+[ag(:,:).nYp] = acell_nyp{:};
 
 %% assign case-sensitive baParams changes
 
-if ~isempty( tpIdxR )
+if ~isempty( t2tpIdxR )
     acell = num2cell( tpAzmErr );
     [ag(tpIdx_).azmErr] = acell{:};
     acell = num2cell( tpAzmErr2 );
     [ag(tpIdx_).azmErr2] = acell{:};
+    acell = num2cell( tpAzmErr3 );
+    [ag(tpIdx_).azmErr3] = acell{:};
 %     acell = num2cell( [bap(tpIdx).curSnr] );
 %     a2cell = num2cell( [bap(tpIdx_).curSnr] );
 %     [ag(tpIdx).curSnr] = a2cell{:};
 %     [ag(tpIdx_).curSnr] = acell{:};
-    acell = num2cell( [bap(tpIdx).curNrj] );
-    a2cell = num2cell( [bap(tpIdx_).curNrj] );
-    [ag(tpIdx).curNrj] = a2cell{:};
-    [ag(tpIdx_).curNrj] = acell{:};
-    acell = num2cell( [bap(tpIdx).curNrjOthers] );
-    a2cell = num2cell( [bap(tpIdx_).curNrjOthers] );
-    [ag(tpIdx).curNrjOthers] = a2cell{:};
-    [ag(tpIdx_).curNrjOthers] = acell{:};
+%     acell = num2cell( [bap(tpIdx).curNrj] );
+%     a2cell = num2cell( [bap(tpIdx_).curNrj] );
+%     [ag(tpIdx).curNrj] = a2cell{:};
+%     [ag(tpIdx_).curNrj] = acell{:};
+%     acell = num2cell( [bap(tpIdx).curNrjOthers] );
+%     a2cell = num2cell( [bap(tpIdx_).curNrjOthers] );
+%     [ag(tpIdx).curNrjOthers] = a2cell{:};
+%     [ag(tpIdx_).curNrjOthers] = acell{:};
 %     acell = num2cell( [bap(tpIdx).curSnr_db] );
 %     a2cell = num2cell( [bap(tpIdx_).curSnr_db] );
 %     [ag(tpIdx).curSnr_db] = a2cell{:};
@@ -128,15 +133,15 @@ end
 
 [ag(isytR,:).posPresent] = deal( 1 );
 [ag(~isytR,:).posPresent] = deal( 0 );
-acell_curSnr2 = repmat( num2cell( [bap(isyt).curSnr2] )', 1, size( ag, 2 ) );
-[ag(isytR,:).posSnr] = acell_curSnr2{:};
+% acell_curSnr2 = repmat( num2cell( [bap(isyt).curSnr2] )', 1, size( ag, 2 ) );
+% [ag(isytR,:).posSnr] = acell_curSnr2{:};
 
 %% reshape assignments and aggregate baParams
 
-asgn(:,1) = istp_(validBaps);
-asgn(:,2) = istn_(validBaps);
-asgn(:,3) = isfp_(validBaps);
-asgn(:,4) = isfn_(validBaps);
+asgn{1} = istp_(validBaps);
+asgn{2} = istn_(validBaps);
+asgn{3} = isfp_(validBaps);
+asgn{4} = isfn_(validBaps);
 ag = ag(validBaps);
 
 end

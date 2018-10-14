@@ -138,10 +138,10 @@ end
 
 %% reshape assignments and aggregate baParams
 
-asgn{1} = istp_(validBaps);
-asgn{2} = istn_(validBaps);
-asgn{3} = isfp_(validBaps);
-asgn{4} = isfn_(validBaps);
+asgn{1}(:,1) = istp_(validBaps);
+asgn{2}(:,1) = istn_(validBaps);
+asgn{3}(:,1) = isfp_(validBaps);
+asgn{4}(:,1) = isfn_(validBaps);
 ag = ag(validBaps);
 
 end

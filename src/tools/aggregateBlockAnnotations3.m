@@ -37,10 +37,10 @@ acell_nyp = repmat( num2cell( sum( yp > 0, 2 ) ), 1, size( ag, 2 ) );
 
 %% 
 
-asgn{1} = istp(validBaps);
-asgn{2} = istn(validBaps);
-asgn{3} = isfp(validBaps);
-asgn{4} = isfn(validBaps);
+asgn{1}(:,1) = istp(validBaps);
+asgn{2}(:,1) = istn(validBaps);
+asgn{3}(:,1) = isfp(validBaps);
+asgn{4}(:,1) = isfn(validBaps);
 ag = ag(validBaps);
 
 end

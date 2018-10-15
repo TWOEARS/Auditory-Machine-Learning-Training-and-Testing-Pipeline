@@ -150,9 +150,9 @@ classdef MultiSceneCfgsIdProcWrapper < DataProcs.IdProcWrapper
         %% -------------------------------------------------------------------------------
         
         % override of DataProcs.IdProcWrapper's method
-        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName )
+        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName, cacheDirectoryDirSuppl )
             for ii = 1 : numel( obj.wrappedProcs )
-                obj.wrappedProcs{ii}.setCacheSystemDir( cacheSystemDir, nPathLevelsForCacheName );
+                obj.wrappedProcs{ii}.setCacheSystemDir( cacheSystemDir, nPathLevelsForCacheName, cacheDirectoryDirSuppl );
             end
         end
         %% -------------------------------------------------------------------------------

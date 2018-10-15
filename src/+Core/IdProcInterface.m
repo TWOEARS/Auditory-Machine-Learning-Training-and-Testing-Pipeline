@@ -190,9 +190,13 @@ classdef (Abstract) IdProcInterface < handle
         end
         %% -------------------------------------------------------------------------------
 
-        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName )
+        function setCacheSystemDir( obj, cacheSystemDir, nPathLevelsForCacheName, cacheDirectoryDirSuppl )
             if exist( cacheSystemDir, 'dir' )
-                obj.cacheSystemDir = fullfile( cacheSystemDir, obj.procName );
+                if nargin < 4 || isempty( cacheDirectoryDirSuppl )
+                    obj.cacheSystemDir = fullfile( cacheSystemDir, obj.procName );
+                else
+                    obj.cacheSystemDir = fullfile( cacheSystemDir, obj.procName, cacheDirectoryDirSuppl );
+                end
                 obj.cacheDirectory.setCacheTopDir( obj.cacheSystemDir, true );
             else
                 error( 'cannot find directory "%s": does it exist?', cacheSystemDir ); 

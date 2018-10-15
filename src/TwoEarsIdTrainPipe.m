@@ -42,12 +42,16 @@ classdef TwoEarsIdTrainPipe < handle
             %
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.addOptional( 'cacheDirectoryDirSuppl', '' );
+            ip.addOptional( 'cddsUseIdxs', inf );
             ip.addOptional( 'nPathLevelsForCacheName', 3 );
             ip.parse( varargin{:} );
             ModelTrainers.Base.featureMask( true, [] ); % reset the feature mask
             fprintf( '\nmodelTrainers.Base.featureMask set to []\n' );
             obj.pipeline = Core.IdentificationTrainingPipeline( ...
                                           'cacheSystemDir', ip.Results.cacheSystemDir, ...
+                                          'cacheDirectoryDirSuppl', ip.Results.cacheDirectoryDirSuppl, ...
+                                          'cddsUseIdxs', ip.Results.cddsUseIdxs, ...
                                           'nPathLevelsForCacheName', ip.Results.nPathLevelsForCacheName );
             obj.dataSetupAlreadyDone = false;
         end

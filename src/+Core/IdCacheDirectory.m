@@ -181,8 +181,12 @@ classdef IdCacheDirectory < handle
             for ii = 1 : numel( cDirs )
                 fprintf( '%d/%d ', ii, numel( cDirs ) );
                 if ~exist( [obj.topCacheDirectory filesep cDirs(ii).name filesep 'cfg.mat'], 'file' )
-                    fprintf( '''%s'' does not contain a ''cfg.mat''.\nPress key to continue\n', cDirs(ii).name );
-                    pause;
+                    if ~exist( [obj.topCacheDirectory filesep cDirs(ii).name filesep 'cacheDirectory.mat'], 'file' )
+                        fprintf( '''%s'' does not contain a ''cfg.mat''.\nPress key to continue\n', cDirs(ii).name );
+                        pause;
+                    else
+                        fprintf( '''%s'' is a cacheDirectory\n', cDirs(ii).name );
+                    end
                 else
                     cdContents = dir( [obj.topCacheDirectory filesep cDirs(ii).name filesep '*.mat'] );
                     if deleteEmpties && all( strcmpi( 'cfg.mat', {cdContents.name} ) | strcmpi( 'fdesc.mat', {cdContents.name} ) )
@@ -270,8 +274,9 @@ classdef IdCacheDirectory < handle
                 fprintf( '%d/%d ', ii, size( cacheDirs, 1 ) );
             end
             fprintf( '\n' );
-            fprintf( '-> saveCacheDirectory\n' );
+            fprintf( '-> saveCacheDirectory ' );
             obj.saveCacheDirectory( filename );
+            fprintf( '\n' );
         end
         %% -------------------------------------------------------------------------------
 

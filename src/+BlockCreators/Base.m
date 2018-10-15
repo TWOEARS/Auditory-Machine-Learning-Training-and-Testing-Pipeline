@@ -94,7 +94,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         % override of Core.IdProcInterface's method
-        function setCacheSystemDir( ~, ~, ~ )
+        function setCacheSystemDir( ~, ~, ~, ~ )
         end
         %% -------------------------------------------------------------------------------
         

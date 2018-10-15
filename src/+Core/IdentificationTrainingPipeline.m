@@ -16,6 +16,8 @@ classdef IdentificationTrainingPipeline < handle
         trainSet;
         testSet;
         cacheSystemDir;
+        cacheDirectoryDirSuppl;
+        cddsUseIdxs;
         nPathLevelsForCacheName;
     end
     
@@ -36,9 +38,13 @@ classdef IdentificationTrainingPipeline < handle
         function obj = IdentificationTrainingPipeline( varargin )
             ip = inputParser;
             ip.addOptional( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+            ip.addOptional( 'cacheDirectoryDirSuppl', '' );
+            ip.addOptional( 'cddsUseIdxs', inf );
             ip.addOptional( 'nPathLevelsForCacheName', 3 );
             ip.parse( varargin{:} );
             obj.cacheSystemDir = ip.Results.cacheSystemDir;
+            obj.cacheDirectoryDirSuppl = ip.Results.cacheDirectoryDirSuppl;
+            obj.cddsUseIdxs = ip.Results.cddsUseIdxs;
             obj.nPathLevelsForCacheName = ip.Results.nPathLevelsForCacheName;
             obj.dataPipeProcs = {};
             obj.data = Core.IdentTrainPipeData();
@@ -66,7 +72,13 @@ classdef IdentificationTrainingPipeline < handle
             if ~isa( idProc, 'Core.IdProcInterface' )
                 error( 'idProc must be of type Core.IdProcInterface.' );
             end
-            idProc.setCacheSystemDir( obj.cacheSystemDir, obj.nPathLevelsForCacheName );
+            if ismember( numel( obj.dataPipeProcs ) + 1, obj.cddsUseIdxs ) ...
+                    || (numel( obj.cddsUseIdxs ) == 1 && isinf( obj.cddsUseIdxs ) )
+                idProc.setCacheSystemDir( obj.cacheSystemDir, obj.nPathLevelsForCacheName, ...
+                                          obj.cacheDirectoryDirSuppl );
+            else
+                idProc.setCacheSystemDir( obj.cacheSystemDir, obj.nPathLevelsForCacheName, '' );
+            end
             idProc.connectIdData( obj.data );
             dataPipeProc = Core.DataPipeProc( idProc ); 
             dataPipeProc.init();

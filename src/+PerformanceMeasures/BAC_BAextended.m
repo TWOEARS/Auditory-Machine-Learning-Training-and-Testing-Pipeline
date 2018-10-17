@@ -196,10 +196,10 @@ classdef BAC_BAextended < PerformanceMeasures.Base
                     agYp(bb,1:sumStibb) = yp(stibb);
                 end
                 agBap(:,maxc+1:end) = [];
-                [agBap3, asg] = aggregateBlockAnnotations3( agBap, agYp, agYt );
+                [agBap3, asg, azmErrs] = aggregateBlockAnnotations3( agBap, agYp, agYt );
 %                 [agBap2, agAsg2] = aggregateBlockAnnotations2( agBap, agYp, agYt );
                 agAsg2 = [];
-                [agBap, agAsg] = aggregateBlockAnnotations( agBap, agYp, agYt );
+                [agBap, agAsg] = aggregateBlockAnnotations( agBap, agYp, agYt, azmErrs );
                 agPis = baParams2bapIdxs( agBap );
 %                 agPis2 = baParams2bapIdxs( agBap2 );
                 agPis2 = [];

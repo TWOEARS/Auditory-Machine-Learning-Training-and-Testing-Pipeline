@@ -1,4 +1,4 @@
-function [ag, asgn] = aggregateBlockAnnotations3( bap, yp, yt )
+function [ag, asgn, azmErrs] = aggregateBlockAnnotations3( bap, yp, yt )
 
 ag = bap;
 validBaps = ~isnan( arrayfun( @(ax)(ax.scpId), bap ) );
@@ -9,10 +9,7 @@ isfp = ((yp ~= yt) & (yp > 0));
 isfn = ((yp ~= yt) & (yp < 0));
 
 isyt = yt > 0;
-isyp = yp > 0;
 isytR = any( isyt, 2 );
-isypR = any( isyp, 2 );
-ist2tpR = isytR & isypR;
 
 %%
 

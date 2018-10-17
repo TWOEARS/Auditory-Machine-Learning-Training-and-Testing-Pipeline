@@ -1,4 +1,4 @@
-function [ag, asgn] = aggregateBlockAnnotations( bap, yp, yt )
+function [ag, asgn] = aggregateBlockAnnotations( bap, yp, yt, azmErrs )
 
 isyt = yt > 0;
 isyp = yp > 0;
@@ -34,10 +34,10 @@ if any( ist2tpR )
     tp_gtAzms = [ag(ist2tpR).gtAzm];
     assert( all( ~isnan( tp_gtAzms ) ) );
     tpEstAzms = arrayfun( @(x)(x.estAzm), bap(ist2tpR,:) );
-    azmErrs = tpEstAzms - repmat( tp_gtAzms', 1, size( bap, 2 ) );
-    azmErrs = abs( wrapTo180( azmErrs ) );
-    azmErrs(~isyp(ist2tpR,:)) = nan;
-    tpAzmErrs = num2cell( nanMean( azmErrs, 2 ) );
+    azmErrs_tp = tpEstAzms - repmat( tp_gtAzms', 1, size( bap, 2 ) );
+    azmErrs_tp = abs( wrapTo180( azmErrs_tp ) );
+    azmErrs_tp(~isyp(ist2tpR,:)) = nan;
+    tpAzmErrs = num2cell( nanMean( azmErrs_tp, 2 ) );
     [ag(ist2tpR).azmErr] = tpAzmErrs{:};
 end
 end
@@ -66,7 +66,6 @@ if any( ~isytR )
 [ag(~isytR).nYp] = deal( 0 );
 end
 
-azmErrs = arrayfun( @(x)(x.azmErr), bap );
 azmErrs2 = nanMean( azmErrs, 2 );
 azmErrs3 = nanStd( azmErrs, 2 );
 tmp = num2cell( azmErrs2 );

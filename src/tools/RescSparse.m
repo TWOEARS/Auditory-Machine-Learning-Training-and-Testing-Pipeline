@@ -201,11 +201,12 @@ classdef RescSparse
             data(rowIdxEq ~= 0,:) = [];
             [rigtidxs,order] = sortrows( [rowIdxGt,double( idxs )] );
             insidxs = rigtidxs(:,1);
-            incidxs = sort( [insidxs; (1:size( obj.dataIdxs, 1 ))'] );
-            obj.dataIdxs(end+1,:) = obj.dataIdxsConvert( 0 );
-            obj.data(end+1,:) = obj.dataConvert( 0 );
-            obj.dataIdxs = obj.dataIdxs(incidxs,:);
-            obj.data = obj.data(incidxs,:);
+            if ~isempty( obj.data )
+                insidxsWoEndp1 = min( [insidxs,repmat( size( obj.dataIdxs, 1 ), size( insidxs ) )], [], 2 );
+                incidxs = sort( [insidxsWoEndp1; (1:size( obj.dataIdxs, 1 ))'] );
+                obj.dataIdxs = obj.dataIdxs(incidxs,:);
+                obj.data = obj.data(incidxs,:);
+            end
             insidxs = insidxs + (0:numel( insidxs )-1)';
             obj.dataIdxs(insidxs,:) = rigtidxs(:,2:end);
             obj.data(insidxs,:) = data(order,:);

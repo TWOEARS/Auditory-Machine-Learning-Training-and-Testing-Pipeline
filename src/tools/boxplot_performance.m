@@ -14,12 +14,17 @@ boxplot_grps( labels, cgroup, nvPairs, varargin{:} );
 ylabel( 'test performance' );
 set( gca,'YGrid','on' );
 % set( gca, 'YTick', 0:0.1:1 );
-ylim( [(min([varargin{:}])-mod(min([varargin{:}]),0.10)) 1] );
+% ylim( [(min([varargin{:}])-mod(min([varargin{:}]),0.10)) 1] );
 
 texts = findobj(gca,'Type','text');
 set( texts,'FontSize',11, 'Interpreter', 'tex' );
-textPos = get( texts, 'Position' );
-textExt = cell2mat( get( texts, 'Extent' ) );
+if numel( texts ) > 1
+    textPos = get( texts, 'Position' );
+    textExt = cell2mat( get( texts, 'Extent' ) );
+else
+    textPos = {get( texts, 'Position' )};
+    textExt = get( texts, 'Extent' );
+end
 maxHeight = max( textExt(:,4) );
 heightSaved = -textPos{1}(2) - maxHeight;
 textPos = cellfun( @(c)([c(1) -maxHeight-4 0]), textPos, 'UniformOutput', false );

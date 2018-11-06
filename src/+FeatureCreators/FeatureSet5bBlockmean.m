@@ -5,6 +5,7 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
         deltasLevels;
         compressor = 10;
         sfProc;
+        softMask;
     end
     
     %% --------------------------------------------------------------------
@@ -17,7 +18,11 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
         function obj = FeatureSet5bBlockmean( )
             obj = obj@FeatureCreators.Base();
             obj.deltasLevels = 2;
-            obj.sfProc = [];
+            afeRequests = obj.getAFErequests();
+            fbProc = gammatoneProc( [], afeRequests{2}.params );
+            obj.sfProc = spectralFeaturesProc( [], afeRequests{2}.params );
+            obj.sfProc.addLowerDependencies( {fbProc} );
+            obj.sfProc.prepareForProcessing( 'bUseInterp', false );
         end
         %% ----------------------------------------------------------------
 
@@ -41,6 +46,32 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
                 );
         end
         %% ----------------------------------------------------------------
+        
+        % override of FeatureCreators.Base's method
+        function process( obj, wavFilepath )
+            inData = obj.loadInputData( wavFilepath );
+            obj.blockAnnotations = [inData.blockAnnotations{:}]';
+            obj.x = [];
+            runningBaIdx = 0;
+            for ii = 1 : numel( inData.blockAnnotations)
+                obj.afeData = inData.afeBlocks{ii};
+                for jj = 1 : numel( inData.blockAnnotations{ii} )
+                    runningBaIdx = runningBaIdx + 1;
+                    obj.baIdx = runningBaIdx;
+                    obj.softMask = inData.ksData{ii}(jj);
+                    xd = obj.constructVector();
+                    if isempty( obj.x )
+                        obj.x = zeros( numel( obj.blockAnnotations ), size( xd{1}, 1 ), size( xd{1}, 2 ) );
+                    end
+                    obj.x(runningBaIdx,:,:) = xd{1};
+                    fprintf( '.' );
+                    if obj.descriptionBuilt, continue; end
+                    obj.description = xd{2};
+                    obj.descriptionBuilt = true;
+                end
+            end
+        end
+        %% -------------------------------------------------------------------------------
 
         function x = constructVector( obj )
             % constructVector for each feature: compress, scale, average
@@ -51,17 +82,13 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
             % 
             %   See getAFErequests
 
-            rm = obj.afeData(2);
+            sm = obj.softMask;
+            softmask = (sm.Data) .^ obj.compressor;
+            obj.afeData = SegmentIdentityKS.maskAFEData( obj.afeData, softmask, sm.cfHz, 1/sm.FsHz );
 
-            if isempty( obj.sfProc )
-                afeRequests = obj.getAFErequests();
-                fbProc = gammatoneProc( [], afeRequests{2}.params );
-                obj.sfProc = spectralFeaturesProc( [], afeRequests{2}.params );
-                obj.sfProc.addLowerDependencies( {fbProc} );
-                obj.sfProc.prepareForProcessing( 'bUseInterp', false );
-            end
             obj.sfProc.reset();
             
+            rm = obj.afeData(2);
             rmR = compressAndScale( rm{1}.Data, 1/obj.compressor, @(x)(median( x(x>0.01) )), 0 );
             rmL = compressAndScale( rm{2}.Data, 1/obj.compressor, @(x)(median( x(x>0.01) )), 0 );
             rmLR = 0.5 * rmR + 0.5 * rmL;
@@ -85,8 +112,7 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
                 mod = mod(2:end,:) - mod(1:end-1,:);
                 x = [x, lMomentAlongDim( mod, [1,2], 1, true )]; %#ok<AGROW>
             end
-            % last afeIdx is SoftMask
-            sm = obj.afeData(3);
+            % softMask
             x = [x, lMomentAlongDim( sm.Data, [1,2,3], 1, true )];
             x = [x, sum( sm.Data(:) )];
             curBA = obj.blockAnnotations(obj.baIdx);
@@ -169,6 +195,7 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
                          {'2.LMom', @(idxs)(idxs(2:2:end))}} ) );
                 end
                 % softmask
+                obj.afeData(3) = obj.softMask;
                 sm = obj.makeBlockFromAfe( 3, 1, ...
                     @(a)(a.Data), ...
                     {@(a)(a.Name), @(a)([num2str(numel(a.cfHz)) '-ch']), @(a)(a.Channel)}, ...

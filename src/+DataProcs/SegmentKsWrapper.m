@@ -234,30 +234,25 @@ classdef SegmentKsWrapper < DataProcs.BlackboardKsWrapper
             end                   
             for ss = 1 : nStreams
                 segData = segHypos.data(ss);
-                softmask = (segData.softMask) .^ obj.softMaskExponent;
-                obj.out.afeBlocks{end+1,1} = SegmentIdentityKS.maskAFEData( ...
-                                       afeData, softmask, segData.cfHz, segData.hopSize );
-                softMaskSignal = struct( ...
-                                   'FsHz', {1/segData.hopSize}, ...
-                                   'Name', {'SoftMask'}, 'Label', {'SoftMask'}, ...
-                                   'cfHz', {segData.cfHz}, ...
-                                   'Dimensions', {'nSamples x nFilters'}, ...
-                                   'Channel', {'mono'}, ...
-                                   'Data', {segData.softMask} );
-                softMaskSignalKey = max( cell2mat( obj.out.afeBlocks{end,1}.keys ) ) + 1;               
-                obj.out.afeBlocks{end,1}(softMaskSignalKey) = softMaskSignal;
+                softMaskSignals(ss) = struct( ...
+                                           'FsHz', {1/segData.hopSize}, ...
+                                           'Name', {'SoftMask'}, 'Label', {'SoftMask'}, ...
+                                           'cfHz', {segData.cfHz}, ...
+                                           'Dimensions', {'nSamples x nFilters'}, ...
+                                           'Channel', {'mono'}, ...
+                                           'Data', {segData.softMask} );
                 thisStreamSrcIdxs = find( streamSrcAssignment == ss );
-                maskedBlockAnnotations = obj.maskBA( blockAnnotations, thisStreamSrcIdxs );  %#ok<FNDSB>
-                maskedBlockAnnotations.estAzm = segData.refAzm;
-                maskedBlockAnnotations.nStreams = nStreams;
-                if isempty(obj.out.blockAnnotations)
-                    obj.out.blockAnnotations = maskedBlockAnnotations;
-                else
-                    obj.out.blockAnnotations(end+1,1) = maskedBlockAnnotations;
-                end
+                maskedBlockAnnotations_ = obj.maskBA( blockAnnotations, thisStreamSrcIdxs );  %#ok<FNDSB>
+                maskedBlockAnnotations_.estAzm = segData.refAzm;
+                maskedBlockAnnotations_.nStreams = nStreams;
+                maskedBlockAnnotations(ss) = maskedBlockAnnotations_;
             end
+            obj.out.ksData{end+1,1} = softMaskSignals;
+            obj.out.blockAnnotations{end+1,1} = maskedBlockAnnotations;
             warning( 'on', 'BBS:badBlockTimeRequest' );
         end
+        
+
         %% -------------------------------------------------------------------------------
         
         function outputDeps = getKsInternOutputDependencies( obj )

@@ -1,4 +1,4 @@
-classdef (Abstract) Base < handle
+classdef (Abstract) Base < matlab.mixin.Copyable
     
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
@@ -11,17 +11,6 @@ classdef (Abstract) Base < handle
         
         function obj = connectData( obj, data )
             obj.data = data;
-        end
-        % -----------------------------------------------------------------
-        
-        function d = getData( obj, dataField )
-            if isa( obj.data, 'Core.IdentTrainPipeData' )
-                d = obj.data(:,dataField);
-            elseif isstruct( obj.data ) && isfield( obj.data, dataField )
-                d = obj.data.(dataField);
-            else
-                error( 'AMLTTP:ApiUsage', 'improper usage of DataSelectors API' );
-            end
         end
         % -----------------------------------------------------------------
         

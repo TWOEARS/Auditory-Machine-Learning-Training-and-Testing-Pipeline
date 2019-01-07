@@ -7,6 +7,9 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
         hpsCrange;
         hpsGammaRange;
         makeProbModel;
+        usePca;
+        pcaVarThres;
+        useSelectHeuristic;
     end
     
     %% -----------------------------------------------------------------------------------
@@ -15,7 +18,7 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
         function obj = SVMmodelSelectTrainer( varargin )
             pds{1} = struct( 'name', 'hpsEpsilons', ...
                              'default', 0.001, ...
-                             'valFun', @(x)(isfloat(x) && x > 0) );
+                             'valFun', @(x)(isfloat(x) && all( x > 0 )) );
             pds{2} = struct( 'name', 'hpsKernels', ...
                              'default', 0, ...
                              'valFun', @(x)(rem(x,1) == 0 && all(x == 0 | x == 2)) );
@@ -28,14 +31,31 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
             pds{5} = struct( 'name', 'makeProbModel', ...
                              'default', false, ...
                              'valFun', @islogical );
+            pds{6} = struct( 'name', 'usePca', ...
+                             'default', false, ...
+                             'valFun', @islogical );
+            pds{7} = struct( 'name', 'pcaVarThres', ...
+                             'default', 0.99, ...
+                             'valFun', @(x)(isfloat(x) && x > 0 && x <= 1) );
+            pds{8} = struct( 'name', 'useSelectHeuristic', ...
+                             'default', false, ...
+                             'valFun', @islogical );
             obj = obj@Parameterized( pds );
             obj = obj@ModelTrainers.HpsTrainer( varargin{:} );
             obj.setParameters( true, ...
                 'buildCoreTrainer', @ModelTrainers.SVMtrainer, ...
-                'hpsCoreTrainerParams', {'makeProbModel', false}, ...
-                 varargin{:} );
+                'hpsCoreTrainerParams', ...
+                    {'makeProbModel', false,...
+                     'usePca', obj.usePca, 'pcaVarThres', obj.pcaVarThres, ...
+                     'dataSelector',obj.dataSelector, ...
+                     'importanceWeighter',obj.importanceWeighter}, ...
+                varargin{:} );
             obj.setParameters( false, 'finalCoreTrainerParams', ...
-                                      {'makeProbModel', obj.makeProbModel} );
+                                      {'makeProbModel', obj.makeProbModel,...
+                                       'usePca', obj.usePca, ...
+                                       'pcaVarThres', obj.pcaVarThres, ...
+                                       'dataSelector',obj.dataSelector,...
+                                       'importanceWeighter',obj.importanceWeighter} );
         end
         %% -------------------------------------------------------------------------------
 
@@ -44,13 +64,32 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
     %% -----------------------------------------------------------------------------------
     methods (Access = protected)
         
+        function hpsSets = getHpsRandomSearchSets( obj )
+            hpsSets = zeros( 0, 4 );
+            while size( hpsSets, 1 ) < obj.hpsSearchBudget(1)
+                hpsCs = rand( 1 );
+                hpsGs = rand( 1 );
+                hpsEs = obj.hpsEpsilons(randi( numel( obj.hpsEpsilons ) ));
+                hpsKs = obj.hpsKernels(randi( numel( obj.hpsKernels ) ));
+                hpsSets(end+1,:) = cat( 2, hpsKs, hpsEs, hpsCs, hpsGs ); %#ok<AGROW>
+                hpsSets = uniquetol( hpsSets, 0.05, 'ByRows', true );
+            end
+            hpsSets(:,3) = 10.^( (obj.hpsCrange(2) - obj.hpsCrange(1)) ...
+                                                      * hpsSets(:,3) + obj.hpsCrange(1) );
+            hpsSets(:,4) = 10.^( (obj.hpsGammaRange(2) - obj.hpsGammaRange(1)) ...
+                                                  * hpsSets(:,4) + obj.hpsGammaRange(1) );
+            hpsSets = hpsSets(randperm( size( hpsSets, 1 ) ),:);
+            hpsSets = cell2struct( num2cell(hpsSets), {'kernel','epsilon','c','gamma'},2 );
+        end
+        %% -------------------------------------------------------------------------------
+        
         function hpsSets = getHpsGridSearchSets( obj )
             hpsCs = logspace( obj.hpsCrange(1), ...
                               obj.hpsCrange(2), ...
-                              obj.hpsSearchBudget );
+                              obj.hpsSearchBudget(1) );
             hpsGs = logspace( obj.hpsGammaRange(1), ...
                               obj.hpsGammaRange(2), ...
-                              obj.hpsSearchBudget );
+                              obj.hpsSearchBudget(1) );
             [kGrid, eGrid, cGrid, gGrid] = ndgrid( ...
                                                 obj.hpsKernels, ...
                                                 obj.hpsEpsilons, ...
@@ -59,11 +98,67 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
             hpsSets = [kGrid(:), eGrid(:), cGrid(:), gGrid(:)];
             hpsSets(hpsSets(:,1)~=2,4) = 1; %set gamma equal for kernels other than rbf
             hpsSets = unique( hpsSets, 'rows' );
+            hpsSets = hpsSets(randperm( size( hpsSets, 1 ) ),:);
             hpsSets = cell2struct( num2cell(hpsSets), {'kernel','epsilon','c','gamma'},2 );
         end
         %% -------------------------------------------------------------------------------
         
-        function refinedHpsTrainer = refineGridTrainer( obj, hps )
+        function refineGridTrainer( obj, hps )
+            numBests = ceil( obj.hpsSearchBudget(1) / 2 );
+            bestParamSets = hps.params(end-numBests+1:end);
+            cRefinedRange = [floor( log10( min( [bestParamSets.c] ) ) ), ...
+                             ceil( log10( max( [bestParamSets.c] ) ) )];
+            gRefinedRange = [floor( log10( min( [bestParamSets.gamma] ) ) ), ...
+                             ceil( log10( max( [bestParamSets.gamma] ) ) )];
+            eRefinedRange = unique( [bestParamSets.epsilon] );
+            kRefinedRange = unique( [bestParamSets.kernel] );
+            obj.setParameters( false, ...
+                'hpsGammaRange', gRefinedRange, ...
+                'hpsCrange', cRefinedRange, ...
+                'hpsEpsilons', eRefinedRange, ...
+                'hpsKernels', kRefinedRange );
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override
+        function hpsAddInfo = getHpsAddInfo( obj )
+            tTrain = cellfun( @(c)(c.trainTime), obj.hpsCVtrainer.models );
+            hpsAddInfo.tTrain = mean( tTrain );
+            szTrain = cellfun( @(c)(c.trainsetSize(1)), obj.hpsCVtrainer.models );
+            hpsAddInfo.szTrain = mean( szTrain(:,1) );
+            tTest = cellfun( @(c)(c.testTime), obj.hpsCVtrainer.models );
+            hpsAddInfo.tTest = mean( tTest );
+        end
+        %% -------------------------------------------------------------------------------
+
+        % override
+        function hps = sortHpsSetsByPerformance( obj, hps )
+            hps = sortHpsSetsByPerformance@ModelTrainers.HpsTrainer( obj, hps );
+            if obj.useSelectHeuristic
+                s = hps.stds;
+                tte = [hps.addInfo.tTest];
+                ttr = [hps.addInfo.tTrain];
+                [u_szt,~,ic] = uniquetol( [hps.addInfo.szTrain], 0.1 );
+                for ii = 1 : numel( u_szt )
+                    max_tr_u_sz(ii) = max( ttr(ic==ii) );
+                    max_te_u_sz(ii) = max( tte(ic==ii) );
+                end
+                ttr = ttr ./ max_tr_u_sz(ic');
+                tte = tte ./ max_te_u_sz(ic');
+                tPenalty = s .* (0.5*tte+0.5*ttr);
+                p = [hps.perfs] - tPenalty;
+                [~,idx] = sort( p );
+                hps.perfs = hps.perfs(idx);
+                hps.stds = hps.stds(idx);
+                hps.dataSizes = hps.dataSizes(idx);
+                hps.testDataSizes = hps.testDataSizes(idx);
+                hps.params = hps.params(idx);
+                hps.addInfo = hps.addInfo(idx);
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function refinedHpsTrainer = refineGridTrainerLegacy( obj, hps )
             refinedHpsTrainer = ModelTrainers.SVMmodelSelectTrainer( ...
                                                        'hpsKernels', obj.hpsKernels, ...
                                                        'makeProbModel', obj.makeProbModel, ...

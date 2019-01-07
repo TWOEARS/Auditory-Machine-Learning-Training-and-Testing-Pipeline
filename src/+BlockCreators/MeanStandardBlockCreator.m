@@ -55,9 +55,9 @@ classdef MeanStandardBlockCreator < BlockCreators.StandardBlockCreator
                         if iscell( annotSeq )
                             as_szs = cellfun( @(c)( size( c, 2 ) ), annotSeq(1,:) );
                             blockAnnots(ii).(seqAname) = ...
-                                   mat2cell( nanmean( cell2mat( annotSeq ), 1 ), 1, as_szs );
+                                   mat2cell( nanMean( cell2mat( annotSeq ), 1 ), 1, as_szs );
                         else
-                            blockAnnots(ii).(seqAname) = nanmean( annotSeq, 1 );
+                            blockAnnots(ii).(seqAname) = nanMean( annotSeq, 1 );
                         end
                     else
                         error( 'unexpected annotations sequence structure' );

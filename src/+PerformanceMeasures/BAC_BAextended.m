@@ -55,25 +55,26 @@ classdef BAC_BAextended < PerformanceMeasures.Base
         end
         % -----------------------------------------------------------------
     
-        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, ~, ~, testSetIdData )
+        function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, ~, dpi, testSetIdData )
+            dpi.yTrue = yTrue;
+            dpi.yPred = yPred;
             tps = yTrue == 1 & yPred > 0;
             tns = yTrue == -1 & yPred < 0;
             fps = yTrue == -1 & yPred > 0;
             fns = yTrue == 1 & yPred < 0;
-            dpi = struct.empty;
             obj.tp = sum( tps );
             obj.tn = sum( tns );
             obj.fp = sum( fps );
             obj.fn = sum( fns );
             tp_fn = sum( yTrue == 1 );
             tn_fp = sum( yTrue == -1 );
-            if tp_fn == 0;
+            if tp_fn == 0
                 warning( 'No positive true label.' );
                 obj.sensitivity = nan;
             else
                 obj.sensitivity = obj.tp / tp_fn;
             end
-            if tn_fp == 0;
+            if tn_fp == 0
                 warning( 'No negative true label.' );
                 obj.specificity = nan;
             else
@@ -81,11 +82,11 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             end
             obj.acc = (obj.tp + obj.tn) / (tp_fn + tn_fp); 
             performance = 0.5 * obj.sensitivity + 0.5 * obj.specificity;
-            obj = obj.analyzeBAextended( yTrue, yPred, testSetIdData );
+            obj = obj.analyzeBAextended( yTrue, yPred, testSetIdData, dpi.sampleIds );
         end
         % -----------------------------------------------------------------
 
-        function obj = analyzeBAextended( obj, yTrue, yPred, testSetIdData )
+        function obj = analyzeBAextended( obj, yTrue, yPred, testSetIdData, sampleIds )
             fprintf( 'analyzing BA-extended' );
             obj.resc_b = RescSparse( 'uint32', 'uint8' );
             obj.resc_t = RescSparse( 'uint32', 'uint8' );
@@ -98,16 +99,20 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             agAsgns2 = cell( numel( testSetIdData.data ), 1 );
             blockAnnotsCacheFiles = testSetIdData(:,'blockAnnotsCacheFile');
             [bacfClassIdxs,bacfci_ic] = PerformanceMeasures.BAC_BAextended.getFileIds( blockAnnotsCacheFiles );
-            sampleFileIdxs = testSetIdData(:,'pointwiseFileIdxs');
+            sampleFileIdxs_all = testSetIdData(:,'pointwiseFileIdxs');
+            sampleFileIdxs = sampleFileIdxs_all(sampleIds);
             for ii = 1 : numel( testSetIdData.data )
                 scp.classIdx = nan;
-                scp.dd = nan;
                 scp.fileClassId = bacfClassIdxs(ii);
                 scp.fileId = sum( bacfci_ic(1:ii) == bacfci_ic(ii) );
                 blockAnnotations_ii = testSetIdData(ii,'blockAnnotations');
+                sampleIds_ii = sampleIds(sampleFileIdxs==ii);
+                sampleIds_ii = sampleIds_ii - sum( sampleFileIdxs_all <= ii-1 );
+                blockAnnotations_ii = blockAnnotations_ii(sampleIds_ii);
                 yt_ii = yTrue(sampleFileIdxs==ii,:);
                 yp_ii = yPred(sampleFileIdxs==ii,:);
                 bacfIdxs_ii = testSetIdData(ii,'bacfIdxs');
+                bacfIdxs_ii = bacfIdxs_ii(sampleIds_ii);
                 for jj = 1 : numel( blockAnnotsCacheFiles{ii} )
                     scp.id = jj;
                     blockAnnotations = blockAnnotations_ii(bacfIdxs_ii==jj);
@@ -124,11 +129,15 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             asgns = PerformanceMeasures.BAC_BAextended.catAsgns( asgns );
             obj.resc_b = addDpiToResc( obj.resc_b, asgns, cat( 1, bapis{:} ) );
             fprintf( ':' );
-            agAsgns = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns );
-            obj.resc_t = addDpiToResc( obj.resc_t, agAsgns, cat( 1, agBapis{:} ) );
-            fprintf( ':' );
-            agAsgns2 = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns2 );
-            obj.resc_t2 = addDpiToResc( obj.resc_t2, agAsgns2, cat( 1, agBapis2{:} ) );
+            if any( ~cellfun( @isempty, agAsgns ) )
+                agAsgns = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns );
+                obj.resc_t = addDpiToResc( obj.resc_t, agAsgns, cat( 1, agBapis{:} ) );
+            end
+%             fprintf( ':' );
+%             if any( ~cellfun( @isempty, agAsgns2 ) )
+%                 agAsgns2 = PerformanceMeasures.BAC_BAextended.catAsgns( agAsgns2 );
+%                 obj.resc_t2 = addDpiToResc( obj.resc_t2, agAsgns2, cat( 1, agBapis2{:} ) );
+%             end
             fprintf( ';' );
             fprintf( '\n' );
         end
@@ -167,7 +176,6 @@ classdef BAC_BAextended < PerformanceMeasures.Base
                                                            yt, yp, blockAnnotations, scp )
             [blockAnnotations, yt, yp, sameTimeIdxs] = findSameTimeBlocks( blockAnnotations, yt, yp );
             [bap, asg] = extractBAparams( blockAnnotations, scp, yp, yt );
-            pis = baParams2bapIdxs( bap );
             fprintf( '.' );
             if isfield( blockAnnotations, 'estAzm' ) % is segId
                 usti = unique( sameTimeIdxs )';
@@ -188,14 +196,17 @@ classdef BAC_BAextended < PerformanceMeasures.Base
                     agYp(bb,1:sumStibb) = yp(stibb);
                 end
                 agBap(:,maxc+1:end) = [];
-                [agBap2, agAsgn2] = aggregateBlockAnnotations2( agBap, agYp, agYt );
-                [agBap, agAsgn] = aggregateBlockAnnotations( agBap, agYp, agYt );
-                agAsg = mat2cell( agAsgn, size( agAsgn, 1 ), [1,1,1,1] );
+                [agBap3, asg, azmErrs] = aggregateBlockAnnotations3( agBap, agYp, agYt );
+%                 [agBap2, agAsg2] = aggregateBlockAnnotations2( agBap, agYp, agYt );
+                agAsg2 = [];
+                [agBap, agAsg] = aggregateBlockAnnotations( agBap, agYp, agYt, azmErrs );
                 agPis = baParams2bapIdxs( agBap );
-                agAsg2 = mat2cell( agAsgn2, size( agAsgn2, 1 ), [1,1,1,1] );
-                agPis2 = baParams2bapIdxs( agBap2 );
+%                 agPis2 = baParams2bapIdxs( agBap2 );
+                agPis2 = [];
+                pis = baParams2bapIdxs( agBap3 );
                 fprintf( ',' );
             else
+                pis = baParams2bapIdxs( bap );
                 agPis = [];
                 agPis2 = [];
                 agAsg = [];

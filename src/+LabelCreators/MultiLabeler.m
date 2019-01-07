@@ -18,11 +18,6 @@ classdef MultiLabeler < LabelCreators.Base
         end
         %% -------------------------------------------------------------------------------
         
-    end
-
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
-        
         function [y,ysi] = label( obj, blockAnnotations )
             y = [];
             ysi = {};
@@ -34,6 +29,11 @@ classdef MultiLabeler < LabelCreators.Base
             end
         end
         %% -------------------------------------------------------------------------------
+        
+    end
+
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
 
         function outputDeps = getLabelInternOutputDependencies( obj )
             for ii = 1 : numel( obj.individualLabelers )

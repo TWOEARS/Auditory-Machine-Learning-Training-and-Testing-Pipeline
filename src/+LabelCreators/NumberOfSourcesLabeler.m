@@ -22,6 +22,15 @@ classdef NumberOfSourcesLabeler < LabelCreators.Base
         end
         %% -------------------------------------------------------------------------------
 
+        function [y,ysi] = label( obj, blockAnnotations )
+            pointSrcIdxs = ~isnan( blockAnnotations.srcAzms ) ;
+            srcsBlockEnergies = cellfun( @mean, blockAnnotations.globalSrcEnergy(pointSrcIdxs) );
+            activeSources = srcsBlockEnergies > obj.srcMinEnergy;
+            y = sum( activeSources );
+            ysi = {find( activeSources )};
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% -----------------------------------------------------------------------------------
@@ -30,15 +39,6 @@ classdef NumberOfSourcesLabeler < LabelCreators.Base
         function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps.srcMinEnergy = obj.srcMinEnergy;
             outputDeps.v = 2;
-        end
-        %% -------------------------------------------------------------------------------
-
-        function [y,ysi] = label( obj, blockAnnotations )
-            pointSrcIdxs = ~isnan( blockAnnotations.srcAzms ) ;
-            srcsBlockEnergies = cellfun( @mean, blockAnnotations.globalSrcEnergy(pointSrcIdxs) );
-            activeSources = srcsBlockEnergies > obj.srcMinEnergy;
-            y = sum( activeSources );
-            ysi = {find( activeSources )};
         end
         %% -------------------------------------------------------------------------------
                 

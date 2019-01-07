@@ -3,9 +3,9 @@ classdef SourceBase < matlab.mixin.Copyable & matlab.mixin.Heterogeneous & Param
     %% -----------------------------------------------------------------------------------
     properties
         data;
-        offset;
-        normalize;
-        normalizeLevel;
+        offset = 0.5;
+        normalize = true;
+        normalizeLevel = 1.0;
     end
 
     %% -----------------------------------------------------------------------------------

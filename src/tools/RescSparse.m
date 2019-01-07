@@ -58,7 +58,7 @@ classdef RescSparse
             obj.dataAdd = dataAdd;
             obj.data = obj.dataConvert( zeros( 0 ) );
             obj.dataIdxs = obj.dataIdxsConvert( zeros( 0 ) );
-            obj.id = [];
+            obj.id = struct.empty;
         end
         %% -------------------------------------------------------------------------------
         function obj = setDataType( obj, newDataType )
@@ -201,11 +201,12 @@ classdef RescSparse
             data(rowIdxEq ~= 0,:) = [];
             [rigtidxs,order] = sortrows( [rowIdxGt,double( idxs )] );
             insidxs = rigtidxs(:,1);
-            incidxs = sort( [insidxs; (1:size( obj.dataIdxs, 1 ))'] );
-            obj.dataIdxs(end+1,:) = obj.dataIdxsConvert( 0 );
-            obj.data(end+1,:) = obj.dataConvert( 0 );
-            obj.dataIdxs = obj.dataIdxs(incidxs,:);
-            obj.data = obj.data(incidxs,:);
+            if ~isempty( obj.data )
+                insidxsWoEndp1 = min( [insidxs,repmat( size( obj.dataIdxs, 1 ), size( insidxs ) )], [], 2 );
+                incidxs = sort( [insidxsWoEndp1; (1:size( obj.dataIdxs, 1 ))'] );
+                obj.dataIdxs = obj.dataIdxs(incidxs,:);
+                obj.data = obj.data(incidxs,:);
+            end
             insidxs = insidxs + (0:numel( insidxs )-1)';
             obj.dataIdxs(insidxs,:) = rigtidxs(:,2:end);
             obj.data(insidxs,:) = data(order,:);
@@ -301,12 +302,51 @@ classdef RescSparse
             summedResc.data = summedData;
             if ~isempty( obj.id )
                 idxDescr = fieldnames( obj.id );
-                idxDescr = idxDescr(keepDims);
+                idxs = cellfun( @(c)(obj.id.(c)), idxDescr );
+                idxs = arrayfun( @(a)(find(idxs==a)), keepDims );
+                idxDescr = idxDescr(idxs);
                 summedResc.id = ...
                     cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function [meanedResc,meanedDataOrigin] = meanDown( obj, keepDims, rowIdxs, sdoPrior, intraGroupNorm )
+            meanedResc = obj;
+            if nargin < 3, rowIdxs = []; end
+            if nargin < 4, sdoPrior = []; end
+            meanedDataOrigin = sdoPrior;
+            if nargin < 5, intraGroupNorm = []; end
+            keepDims_ = 1 : size( obj.dataIdxs, 2 );
+            meanDims = keepDims_;
+            meanDims(keepDims) = [];
+            for md = flip( meanDims )
+                keepDims_(md) = [];
+                if nargout > 1
+                    [meanedResc,meanedDataOrigin] = meanedResc.summarizeDown( keepDims_, rowIdxs, [], @mean, meanedDataOrigin, intraGroupNorm );
+                    warning( 'KeepDims resorting not implemented for meanedDataOrigin!' );
+                else
+                    meanedResc = meanedResc.summarizeDown( keepDims_, rowIdxs, [], @mean );
+                end
+                keepDims_ = 1 : size( meanedResc.dataIdxs, 2 );
+            end
+            [~,keepDims_] = sort( keepDims );
+            if ~isequal( keepDims_, 1:size( meanedResc.dataIdxs, 2 ) )
+                meanedResc.dataIdxs = meanedResc.dataIdxs(:,keepDims_);
+                [meanedResc.dataIdxs,sidxs] = sortrows( meanedResc.dataIdxs );
+                meanedResc.data = meanedResc.data(sidxs,:);
+            end
+            if ~isempty( obj.id )
+                idxDescr = fieldnames( obj.id );
+                idxs = cellfun( @(c)(obj.id.(c)), idxDescr );
+                idxs = arrayfun( @(a)(find(idxs==a)), keepDims );
+                idxDescr = idxDescr(idxs);
+                meanedResc.id = ...
+                    cell2struct( num2cell( 1:numel( idxDescr ) )', idxDescr );
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
 
         function robj = resample( obj, depIdx, rIdx, resample_weights, conditions )
             if nargin >= 5 && ~isempty( conditions )
@@ -475,6 +515,10 @@ classdef RescSparse
             end
             maxMidxs = num2cell( max( midxs, [], 1 ) );
             minMidxs = int16( min( midxs, [], 1 ) );
+            if isempty( maxMidxs )
+                mat = nan( 0 );
+                return;
+            end
             mat(maxMidxs{:}) = 0;
             if nargout > 1
                 sdomat{maxMidxs{:},2} = {};

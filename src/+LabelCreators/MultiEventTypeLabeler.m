@@ -56,31 +56,6 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             obj.procName = [obj.procName '(' strcat( obj.types{1}{:} ) ')'];
         end
         %% -------------------------------------------------------------------------------
-
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
-        
-        function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
-            outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
-            outputDeps.types = obj.types;
-            outputDeps.negOut = obj.negOut;
-            outputDeps.srcPrioMethod = obj.srcPrioMethod;
-            outputDeps.nrgSrcsFilter = obj.nrgSrcsFilter;
-            outputDeps.sourcesMinEnergy = obj.sourcesMinEnergy;
-            outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
-            outputDeps.segIdTargetSrcFilter = sortrows( obj.segIdTargetSrcFilter );
-            outputDeps.fileFilterOut = obj.fileFilterOut;
-            outputDeps.v = 9;
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function eit = eventIsType( obj, typeIdx, type )
-            eit = any( strcmp( type, obj.types{typeIdx} ) );
-        end
-        %% -------------------------------------------------------------------------------
         
         function [y, ysi] = label( obj, blockAnnotations )
             [activeTypes, relBlockEventOverlap, srcIdxs] = obj.getActiveTypes( blockAnnotations );
@@ -119,7 +94,7 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
                 for ii = 1 : size( obj.segIdTargetSrcFilter, 1 )
                     srcf = obj.segIdTargetSrcFilter(ii,1);
                     typef = obj.segIdTargetSrcFilter(ii,2);
-                    srcfAzm = obj.lastConfig{obj.sceneId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
+                    srcfAzm = obj.lastConfig{obj.sceneId,obj.foldId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
                     if isa( srcfAzm, 'SceneConfig.ValGen' )
                         srcfAzm = srcfAzm.val;
                     end
@@ -153,6 +128,31 @@ classdef MultiEventTypeLabeler < LabelCreators.Base
             end
         end
         %% -------------------------------------------------------------------------------
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function outputDeps = getLabelInternOutputDependencies( obj )
+            outputDeps.minBlockEventRatio = obj.minBlockToEventRatio;
+            outputDeps.maxNegBlockToEventRatio = obj.maxNegBlockToEventRatio;
+            outputDeps.types = obj.types;
+            outputDeps.negOut = obj.negOut;
+            outputDeps.srcPrioMethod = obj.srcPrioMethod;
+            outputDeps.nrgSrcsFilter = obj.nrgSrcsFilter;
+            outputDeps.sourcesMinEnergy = obj.sourcesMinEnergy;
+            outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
+            outputDeps.segIdTargetSrcFilter = sortrows( obj.segIdTargetSrcFilter );
+            outputDeps.fileFilterOut = obj.fileFilterOut;
+            outputDeps.v = 9;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function eit = eventIsType( obj, typeIdx, type )
+            eit = any( strcmp( type, obj.types{typeIdx} ) );
+        end
+        %% -------------------------------------------------------------------------------
+
         function [activeTypes, relBlockEventOverlap, srcIdxs] = getActiveTypes( obj, blockAnnotations )
             [relBlockEventOverlap, srcIdxs] = obj.relBlockEventsOverlap( blockAnnotations );
             activeTypes = relBlockEventOverlap >= obj.minBlockToEventRatio;

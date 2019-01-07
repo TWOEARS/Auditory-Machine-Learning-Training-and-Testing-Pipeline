@@ -42,27 +42,6 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.TimeSeriesLabelCreator
             obj.procName = [obj.procName '(' strcat( obj.types{1}{:} ) ')'];
         end
         %% -------------------------------------------------------------------------------
-
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
-        
-        function outputDeps = getLabelInternOutputDependencies( obj )
-            outputDeps.types = obj.types;
-            outputDeps.negOut = obj.negOut;
-            outputDeps.srcPrioMethod = obj.srcPrioMethod;
-            outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
-            outputDeps.segIdTargetSrcFilter = sortrows( obj.segIdTargetSrcFilter );
-            outputDeps.fileFilterOut = obj.fileFilterOut;
-            outputDeps.v = 1;
-        end
-        %% -------------------------------------------------------------------------------
-        
-        function eit = eventIsType( obj, typeIdx, type )
-            eit = any( strcmp( type, obj.types{typeIdx} ) );
-        end
-        %% -------------------------------------------------------------------------------
         
         function [y, ysi] = label( obj, blockAnnotations )
             [activeTypes, srcIdxs] = obj.getActiveTypes( blockAnnotations );
@@ -100,7 +79,7 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.TimeSeriesLabelCreator
 %                 for ii = 1 : size( obj.segIdTargetSrcFilter, 1 )
 %                     srcf = obj.segIdTargetSrcFilter(ii,1);
 %                     typef = obj.segIdTargetSrcFilter(ii,2);
-%                     srcfAzm = obj.lastConfig{obj.sceneId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
+%                     srcfAzm = obj.lastConfig{obj.sceneId,obj.foldId}.preceding.preceding.preceding.preceding.preceding.sceneCfg.sources(srcf).azimuth;
 %                     if isa( srcfAzm, 'SceneConfig.ValGen' )
 %                         srcfAzm = srcfAzm.val;
 %                     end
@@ -123,6 +102,27 @@ classdef MultiEventTypeTimeSeriesLabeler < LabelCreators.TimeSeriesLabelCreator
 %                     return;
 %                 end
 %             end
+        end
+        %% -------------------------------------------------------------------------------
+
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
+        
+        function outputDeps = getLabelInternOutputDependencies( obj )
+            outputDeps.types = obj.types;
+            outputDeps.negOut = obj.negOut;
+            outputDeps.srcPrioMethod = obj.srcPrioMethod;
+            outputDeps.srcTypeFilterOut = sortrows( obj.srcTypeFilterOut );
+            outputDeps.segIdTargetSrcFilter = sortrows( obj.segIdTargetSrcFilter );
+            outputDeps.fileFilterOut = obj.fileFilterOut;
+            outputDeps.v = 1;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function eit = eventIsType( obj, typeIdx, type )
+            eit = any( strcmp( type, obj.types{typeIdx} ) );
         end
         %% -------------------------------------------------------------------------------
         

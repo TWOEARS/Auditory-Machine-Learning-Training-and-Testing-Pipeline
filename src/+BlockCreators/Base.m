@@ -94,7 +94,7 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         % override of Core.IdProcInterface's method
-        function setCacheSystemDir( ~, ~, ~ )
+        function setCacheSystemDir( ~, ~, ~, ~ )
         end
         %% -------------------------------------------------------------------------------
         
@@ -130,7 +130,6 @@ classdef Base < Core.IdProcInterface
 
         %% -------------------------------------------------------------------------------
         function processInternal( obj, varargin )
-            obj.inputProc.sceneId = obj.sceneId;
             if nargin < 2  || any( strcmpi( 'afeBlocks', varargin ) )
                 in = obj.loadInputData( obj.curWavFilepath, 'afeData', 'annotations' );
                 [obj.blockAnnotations,obj.afeBlocks] = ...

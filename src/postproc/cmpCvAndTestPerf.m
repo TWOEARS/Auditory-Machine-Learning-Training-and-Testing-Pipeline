@@ -1,32 +1,42 @@
-function [testPerfu, cvPerfu, cvStdu, ncu, lu] = cmpCvAndTestPerf( trainModelDir, testModelDir, bPlot, plotTitle )
-
-trainModelDirEntry = dir( [trainModelDir filesep '*.model.mat'] );
-trainModelVars = load( [trainModelDir filesep trainModelDirEntry.name] );
-
-lambdas = trainModelVars.model.model.lambda;
-nc = sum( abs( trainModelVars.model.model.beta ) > 0 );
-
-cvPerf = trainModelVars.model.lPerfsMean';
-cvStd = trainModelVars.model.lPerfsStd';
+function [testPerfu, cvPerfu, cvStdu, ncu, lu] = cmpCvAndTestPerf( testModelDir, bPlot, plotTitle )
 
 testModelDirEntry = dir( [testModelDir filesep '*.model.mat'] );
 testModelVars = load( [testModelDir filesep testModelDirEntry.name] );
 
-testPerf = double( testModelVars.testPerfresults );
+lambdas = testModelVars.model.model.lambda;
+nc = sum( abs( testModelVars.model.model.beta ) > 0 );
+
+cvPerf = testModelVars.model.lPerfsMean';
+cvStd = testModelVars.model.lPerfsStd';
 
 nc0i = (nc == 0);
 nc(nc0i) = [];
 cvPerf(nc0i) = [];
 cvStd(nc0i) = [];
-testPerf(nc0i) = [];
 lambdas(nc0i) = [];
+
+testPerf = double( testModelVars.testPerfresults );
+if numel( testPerf ) == 1 % only for best lambda
+    testLambda = testModelVars.model.lambda;
+elseif numel( testPerf ) == numel( testModelVars.model.model.lambda )
+    testPerf(nc0i) = [];
+else
+    error( 'duh' );
+end
 
 [ncu, ~, ncui] = unique( nc );
 for ii = 1 : length( ncu )
-    testPerfu(ii) = mean( testPerf(ncui==ii) );
+    if numel( testPerf ) == numel( lambdas ), testPerfu(ii) = mean( testPerf(ncui==ii) ); end
     cvPerfu(ii) = mean( cvPerf(ncui==ii) );
     cvStdu(ii) = mean( cvStd(ncui==ii) );
     lu(ii) = mean( lambdas(ncui==ii) );
+end
+
+if numel( testPerf ) == 1
+    ncu_test = nc(lambdas == testLambda);
+    testPerfu = testPerf;
+else
+    ncu_test = ncu;
 end
 
 if nargin > 2 && bPlot
@@ -35,7 +45,11 @@ if nargin > 2 && bPlot
     ax = gca;
     set( ax, 'XScale', 'log' );
     hold all;
-    hTestPlot = plot( ncu, testPerfu, 'g', 'LineWidth', 3 );
+    if numel( testPerf ) == 1
+        hTestPlot = plot( ncu_test, testPerfu, 'gx', 'LineWidth', 3 );
+    else
+        hTestPlot = plot( ncu_test, testPerfu, 'g', 'LineWidth', 3 );
+    end
     xlabel( '# of coefficients' );
     ylabel( 'BAC_2' );
     legend( 'cvPerf', 'testPerf' );

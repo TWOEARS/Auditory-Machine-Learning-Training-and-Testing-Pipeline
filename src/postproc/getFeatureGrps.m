@@ -1,4 +1,10 @@
 function grps = getFeatureGrps( fdescription )
+% GETFEATUREGRPS extract all unique feature groups from feature set
+% description
+%
+% fdescription -- feature set description as produced by AMLTTP
+
+%%
 
 g = cat( 2, fdescription{:} );
 

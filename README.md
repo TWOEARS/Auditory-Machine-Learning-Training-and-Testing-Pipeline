@@ -23,6 +23,7 @@ Computational Framework](https://github.com/TWOEARS/). You will need to download
 - https://github.com/TWOEARS/binaural-simulator
 - https://github.com/TWOEARS/SOFA
 - https://github.com/TWOEARS/main
+- https://github.com/TWOEARS/stream-segregation-training-pipeline.git  (if you want to use spatial segregation in AMLTTP)
 
 In your "main"-directory, please first edit TwoEarsPath.xml to point to your 
 respective directories.

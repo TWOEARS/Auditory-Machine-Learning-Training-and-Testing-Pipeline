@@ -1,6 +1,10 @@
 function [ mask ] = maskFromGlmNetModel( res_path, thres )
-%MASKFROMGLMNETMODEL extracts a feature mask from GlmNetModel results
-%   Detailed explanation goes here
+%MASKFROMGLMNETMODEL extracts a feature mask from trained glmnet model beta
+% coefficients
+% 
+% res_path - dir containing model mat
+% thres - threshold: absolute beta values above will lead to inclusion of
+% the feature in the mask.
 
 %% init
 if nargin < 2, thres=0.0; end;
@@ -13,6 +17,6 @@ assert(isa(arc_hndl.model, 'models.GlmNetModel'));
 
 % find coefficients
 coefs = glmnetCoef( arc_hndl.model.model, arc_hndl.model.lambda );
-mask = coefs(2:end) > thres;
+mask = abs( coefs(2:end) ) > thres;
 
 end

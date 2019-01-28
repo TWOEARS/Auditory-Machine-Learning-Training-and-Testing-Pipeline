@@ -35,6 +35,7 @@ Once Matlab opened, the source code folders need to be added to the Matlab path.
 This will be accomplished by executing the following commands in:
 ```Matlab
 >> addpath( '<path-to-your-TwoEars-Main-directory>' )
+>> addpath( '<path-to-your-AMLTTP-directory>' )
 >> startAMLTTP
 ```
 

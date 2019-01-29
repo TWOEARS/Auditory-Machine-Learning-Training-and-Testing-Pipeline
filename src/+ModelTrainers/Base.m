@@ -110,6 +110,9 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                                                obj.trainSet, obj.maxDataSize, ...
                                                obj.dataSelector, obj.importanceWeighter );
             verboseFprintf( obj, verbOutput );
+            if numel( unique( y ) ) == 1
+                fprintf( 'Only one unique value for y!\n' );
+            end
             tic;
             obj.buildModel( x, y, iw );
             trainTime = toc;
@@ -139,7 +142,8 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                                                                      dataSelector, ...
                                                                      importanceWeighter,...
                                                                      permuteData, ...
-                                                                     applyFmask )
+                                                                     applyFmask, ...
+                                                                     loadBAs )
             y = getDataHelper( dataset, 'y' );
             verbOutput = '';
             if isempty( y )
@@ -149,8 +153,10 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
             end
             x = getDataHelper( dataset, 'x' );
             sampleIds = 1 : size( x, 1 );
-            if nargout >= 5
+            if nargout >= 5 && (nargin < 7 || loadBAs)
                 ba = getDataHelper( dataset, 'blockAnnotations' );
+            elseif nargout >= 5 && nargin >= 7 && ~loadBAs
+                ba = struct.empty;
             end
             nanXidxs = any( isnan( x ), 2 );
             infXidxs = any( isinf( x ), 2 );

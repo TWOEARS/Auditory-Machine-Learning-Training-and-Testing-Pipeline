@@ -137,7 +137,7 @@ classdef IdEvalFrame < handle
                 end
                 fclose( annotFid );
             else
-                warning( sprintf( 'label annotation file not found: %s.txt. Assuming no events.', soundFileName ) );
+                fprintf( 'Without label annotation file for %s, assuming no events.\n', soundFileName );
             end
         end
         

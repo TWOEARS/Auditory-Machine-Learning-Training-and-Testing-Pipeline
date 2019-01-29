@@ -30,6 +30,8 @@ classdef TwoEarsIdTrainPipe < handle
         dataFlists = [];              % list of files to split in train and test
         trainFlists = [];          % file list with train examples
         testFlists = [];           % file list with test examples
+        srcDataSpec;               
+        wfasgns;                   % wav-fold assignments
     end
     
     %% -----------------------------------------------------------------------------------
@@ -77,7 +79,7 @@ classdef TwoEarsIdTrainPipe < handle
             ip.addOptional( 'trainerFeedDataType', @single );
             ip.addOptional( 'stopAfterProc', inf );
             ip.addOptional( 'fs', 44100 );
-            ip.addOptional( 'wavFoldAssignments', {} );
+%             ip.addOptional( 'wavFoldAssignments', {} );
             ip.addOptional( 'classesOnMultipleSourcesFilter', {} );
             ip.addOptional( 'pipeReUse', 0 );
             ip.addOptional( 'keepData', 'no' ); % 'no','y','x'
@@ -85,7 +87,6 @@ classdef TwoEarsIdTrainPipe < handle
             hrir = ip.Results.hrir;
             fs = ip.Results.fs;
             classesOnMultipleSourcesFilter = ip.Results.classesOnMultipleSourcesFilter;
-            wavFoldAssignments = ip.Results.wavFoldAssignments;
             useGatherFeaturesProc = ip.Results.gatherFeaturesProc;
             trainerFeedDataType = ip.Results.trainerFeedDataType;
             loadBlockAnnotations = ip.Results.loadBlockAnnotations;
@@ -95,6 +96,7 @@ classdef TwoEarsIdTrainPipe < handle
             dataSelector = ip.Results.dataSelector;
             stopAfterProc = ip.Results.stopAfterProc;
             pipeReUseIdx = ip.Results.pipeReUse;
+            wavFoldAssignments = [cat( 1, obj.srcDataSpec{:} ),cat( 1, obj.wfasgns{:} )];
 
             if isempty( obj.featureCreator )
                 error( 'Please specify featureCreator.' );
@@ -246,7 +248,15 @@ classdef TwoEarsIdTrainPipe < handle
                     dataFolds{ii}.loadFileList( obj.dataFlists{ii}, obj.checkFileExistence );
                 end
                 obj.pipeline.connectData( Core.IdentTrainPipeData.combineData( dataFolds{:} ) );
+                % not sure the following is reasonable wrt folds setup
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
+            end
+            obj.srcDataSpec = cell( 1, numel( obj.pipeline.trainSet.folds ) );
+            obj.wfasgns = cell( 1, numel( obj.pipeline.trainSet.folds ) );
+            for kk = 1 : numel( obj.pipeline.trainSet.folds )
+                trainFold_kk = obj.pipeline.trainSet.folds{kk};
+                obj.srcDataSpec{kk} = trainFold_kk(:,'fileName');
+                obj.wfasgns{kk} = repmat( {kk}, size( obj.srcDataSpec{kk} ) );
             end
             obj.dataSetupAlreadyDone = true;
         end

@@ -39,7 +39,7 @@ else
     ncu_test = ncu;
 end
 
-if nargin > 2 && bPlot
+if nargin >= 2 && bPlot
     fig = figure;
     hCvPlot = mseb( ncu, cvPerfu, cvStdu );
     ax = gca;
@@ -51,9 +51,9 @@ if nargin > 2 && bPlot
         hTestPlot = plot( ncu_test, testPerfu, 'g', 'LineWidth', 3 );
     end
     xlabel( '# of coefficients' );
-    ylabel( 'BAC_2' );
+    ylabel( 'Performance' );
     legend( 'cvPerf', 'testPerf' );
-    if nargin > 3
+    if nargin >= 3
         title( plotTitle );
     end
     set( ax, 'XLim', [ncu(1), ncu(end)] );

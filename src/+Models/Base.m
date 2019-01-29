@@ -68,7 +68,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable
                 maxDataSize = inf; 
             end
             [x,yTrue,iw,vo,~,sampleIds] = ModelTrainers.Base.getSelectedData( testSet, ...
-                             maxDataSize, dataSelector, importanceWeighter, false, false );
+                             maxDataSize, dataSelector, importanceWeighter, false, false, false );
             if nargin < 7  || isempty( getDatapointInfo )
                 getDatapointInfo = false; 
             end

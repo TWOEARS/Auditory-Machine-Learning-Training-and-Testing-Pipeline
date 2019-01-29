@@ -10,7 +10,7 @@ classdef IdentTrainPipeDataElem < handle
         bacfIdxs;
         blockAnnotsCacheFile;
         fileAnnotations = struct;
-        blockAnnotations;
+        blockAnnotations = struct.empty;
         containedIn;
     end
     
@@ -59,7 +59,7 @@ classdef IdentTrainPipeDataElem < handle
             obj.bIdxs = [];
             obj.bacfIdxs = [];
             obj.blockAnnotsCacheFile = [];
-            obj.blockAnnotations = [];
+            obj.blockAnnotations = struct.empty;
         end
         %% -------------------------------------------------------------------------------
         

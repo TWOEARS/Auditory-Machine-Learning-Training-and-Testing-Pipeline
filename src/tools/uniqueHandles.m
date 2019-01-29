@@ -1,4 +1,9 @@
 function uh = uniqueHandles( handleCell )
+% UNIQUEHANDLES returns all unique handles from a cell
+%
+% handleCell - cell containing handles
+
+%%
 
 if isempty( handleCell )
     uh = {};

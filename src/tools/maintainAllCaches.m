@@ -1,5 +1,14 @@
 function maintainAllCaches( idPipeCacheDir, chooseDirs, parM )
+% MAINTAINALLCACHES execute Core.IdCacheDirectory.standaloneMaintain for
+% all (or selected) cacheDirectories
+%
+% idPipeCacheDir - Directory containing all cacheDirectories
+% chooseDirs - whether or not to first select which cacheDirectories to
+% execute maintenance upon
+% parM - optional. Number of parallel maintenance processes, if parallelToolbox
+% available. Default: 12
 
+%%
 if nargin < 2 || isempty( chooseDirs ), chooseDirs = false; end
 if nargin < 3 || isempty( parM ), parM = 12; end
 

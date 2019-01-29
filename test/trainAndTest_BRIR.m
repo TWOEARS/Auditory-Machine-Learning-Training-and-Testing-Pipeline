@@ -1,6 +1,4 @@
-function trainAndTest_BRIR( classname )
-
-if nargin < 1, classname = 'baby'; end;
+function trainAndTest_BRIR()
 
 addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
 startAMLTTP();
@@ -17,15 +15,15 @@ pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
 % <classname> will be 1, rest -1
 oneVsRestLabeler = ... 
-    LabelCreators.MultiEventTypeLabeler( 'types', {{classname}}, 'negOut', 'rest' );
+    LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = oneVsRestLabeler;
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
-    'performanceMeasure', @PerformanceMeasures.BAC2, ...
+    'performanceMeasure', @PerformanceMeasures.BAC, ...
     'cvFolds', 4, ...
     'alpha', 0.99 );
 pipe.modelCreator.verbose( 'on' );
 
-pipe.trainset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
+pipe.trainset = 'DCASE13_mini_TrainSet.flist';
 pipe.testset = [];
 pipe.setupData();
 
@@ -43,14 +41,14 @@ sc.addSource( SceneConfig.BRIRsource( brirs{1}, 'speakerId', 2, ...
 sc.setBRIRheadOrientation( 0.4 ); % point of recorded azm range (0..1)
 pipe.init( sc, 'hrir', [], 'fs', 16000 ); % empty hrir to avoid usage of default HRIR
 
-modelPath = pipe.pipeline.run( 'modelName', classname, 'modelPath', 'test_brir' );
+modelPath = pipe.pipeline.run( 'modelName', 'baby', 'modelPath', 'test_brir' );
 
 
 pipe = TwoEarsIdTrainPipe();
 pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
 % <classname> will be 1, rest -1
 oneVsRestLabeler = ... 
-    LabelCreators.MultiEventTypeLabeler( 'types', {{classname}}, 'negOut', 'rest' );
+    LabelCreators.MultiEventTypeLabeler( 'types', {{'baby'}}, 'negOut', 'rest' );
 pipe.labelCreator = oneVsRestLabeler;
 pipe.modelCreator = ...
     ModelTrainers.LoadModelNoopTrainer( ...
@@ -61,7 +59,7 @@ pipe.modelCreator = ...
 
 
 pipe.trainset = [];
-pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TestSet_1.flist';
+pipe.testset = 'DCASE13_mini_TestSet.flist';
 pipe.setupData();
 
 sc = SceneConfig.SceneConfiguration();
@@ -76,8 +74,8 @@ sc.addSource( SceneConfig.BRIRsource( brirs{1}, 'speakerId', 2, ...
     'snr', SceneConfig.ValGen( 'manual', 0 ),...
     'loop', 'randomSeq' );
 sc.setBRIRheadOrientation( 0.4 ); % point of recorded azm range (0..1)
-pipe.init( sc, 'hrir', [] ); % empty hrir to avoid usage of default HRIR
+pipe.init( sc, 'hrir', [], 'fs', 16000 ); % empty hrir to avoid usage of default HRIR
 
-modelPath1 = pipe.pipeline.run( 'modelName', classname, 'modelPath', 'test_brir' );
+modelPath1 = pipe.pipeline.run( 'modelName', 'baby', 'modelPath', 'test_brir' );
 
 fprintf( ' Testing -- Saved at %s -- \n\n', modelPath1 );

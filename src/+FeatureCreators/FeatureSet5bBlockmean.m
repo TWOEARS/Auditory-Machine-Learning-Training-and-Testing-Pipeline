@@ -72,6 +72,21 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
             end
         end
         %% -------------------------------------------------------------------------------
+        
+        function setBlockAnnotations( obj, newBA )
+            obj.blockAnnotations = newBA;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function setBaIdx( obj, newBaIdx )
+            obj.baIdx = newBaIdx;
+        end
+        %% -------------------------------------------------------------------------------
+        
+        function setSoftmask( obj, newSoftmask )
+            obj.softMask = newSoftmask;
+        end
+        %% -------------------------------------------------------------------------------
 
         function x = constructVector( obj )
             % constructVector for each feature: compress, scale, average
@@ -86,6 +101,13 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
             softmask = (sm.Data) .^ obj.compressor;
             obj.afeData = SegmentIdentityKS.maskAFEData( obj.afeData, softmask, sm.cfHz, 1/sm.FsHz );
 
+            if isempty( obj.sfProc ) || ~isa( obj.sfProc, 'spectralFeaturesProc' )
+                afeRequests = obj.getAFErequests();
+                fbProc = gammatoneProc( [], afeRequests{2}.params );
+                obj.sfProc = spectralFeaturesProc( [], afeRequests{2}.params );
+                obj.sfProc.addLowerDependencies( {fbProc} );
+                obj.sfProc.prepareForProcessing( 'bUseInterp', false );
+            end
             obj.sfProc.reset();
             
             rm = obj.afeData(2);

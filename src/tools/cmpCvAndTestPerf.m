@@ -52,7 +52,7 @@ if nargin >= 2 && bPlot
     end
     xlabel( '# of coefficients' );
     ylabel( 'Performance' );
-    legend( 'cvPerf', 'testPerf' );
+    legend( 'cvPerf', 'testPerf', 'Location', 'best' );
     if nargin >= 3
         title( plotTitle );
     end

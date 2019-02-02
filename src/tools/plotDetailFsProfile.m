@@ -51,7 +51,7 @@ set( gca, 'xtick',log10(binr),'xticklabel', round(binr) );
 set( gca, 'FontSize', 12, 'YGrid', 'on' );
 xlabel( 'freq (upper end of bin)' );
 ylabel( 'grp impact' );
-ylim( gca, [0 0.7] );
+% ylim( gca, [0 0.7] );
 xlim( gca, log10([100 8800]) );
 rotateXLabels( gca, 60 );
 legend( {'ratemap', 'onsetStrength', 'amplitude modulation'}, 'Location', 'Best' );

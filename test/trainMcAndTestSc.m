@@ -1,7 +1,6 @@
 function trainMcAndTestSc()
 
-addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startAMLTTP();
+startTwoEars('tt_general.config.xml');
 
 %% training
 if ~exist( fullfile( 'test_mc_training', 'speech.model.mat' ), 'file' )

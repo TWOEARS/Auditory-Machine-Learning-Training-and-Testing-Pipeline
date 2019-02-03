@@ -478,9 +478,15 @@ classdef RescSparse
                 idxsMask = repmat( {':'}, 1, diDim );
                 idxsMask{cdim} = @(x)(x == argIdxs(ii));
                 argRowIdxs{ii} = obj.getRowIdxs( idxsMask );
-                argDataIdxs{ii} = obj.dataIdxs(argRowIdxs{ii},:);
-                argData{ii} = obj.data(argRowIdxs{ii},:);
-                argGroups{ii} = repmat( ii, size( argRowIdxs{ii}, 1 ), 1 );
+                if ~isempty( argRowIdxs{ii} )
+                    argDataIdxs{ii} = obj.dataIdxs(argRowIdxs{ii},:);
+                    argData{ii} = obj.data(argRowIdxs{ii},:);
+                    argGroups{ii} = repmat( ii, size( argRowIdxs{ii}, 1 ), 1 );
+                else
+                    argDataIdxs{ii} = argDataIdxs{ii-1}(1,:);
+                    argData{ii} = 0;
+                    argGroups{ii} = ii;
+                end
             end
             if all( cellfun( @isempty, argRowIdxs ) )
                 return;

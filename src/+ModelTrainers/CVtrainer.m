@@ -32,6 +32,18 @@ classdef CVtrainer < ModelTrainers.Base
             usePCT = usePCT_staticVar;
         end
         
+        function loadBAs = loadBlockAnnotations( newValue )
+            persistent loadBAs_staticVar;
+            if isempty( loadBAs_staticVar )
+                loadBAs_staticVar = false;
+            end
+            if nargin > 0
+                if ~islogical( newValue ), newValue = logical( newValue ); end
+                loadBAs_staticVar = newValue;
+            end
+            loadBAs = loadBAs_staticVar;
+        end
+        
     end
     
     %% --------------------------------------------------------------------
@@ -125,10 +137,8 @@ classdef CVtrainer < ModelTrainers.Base
                 foldsIdx_tmp(ff) = [];
                 fc = cat( 1, parallelFolds_tmp.Value{foldsIdx_tmp} ); %#ok<PFBNS>
                 foldCombi = struct( 'x', {cat( 1, fc(:).x )}, ...
-                                    'y', {cat( 1, fc(:).y )} );
-%                 foldCombi = struct( 'x', {cat( 1, fc(:).x )}, ...
-%                                     'y', {cat( 1, fc(:).y )}, ...
-%                                     'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
+                                    'y', {cat( 1, fc(:).y )}, ...
+                                    'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
                 trainer_ff = trainers_tmp(ff);
                 ModelTrainers.Base.featureMask( true, fmask ); % persistent variables are not copied to workers
                 trainer_ff.setData( foldCombi, parallelFolds_tmp.Value{ff} );
@@ -152,10 +162,8 @@ classdef CVtrainer < ModelTrainers.Base
                 foldsIdx(ff) = [];
                 fc = cat( 1, obj.folds{foldsIdx} ); 
                 foldsRecombinedData = struct( 'x', {cat( 1, fc(:).x )}, ...
-                                              'y', {cat( 1, fc(:).y )} );
-%                 foldsRecombinedData = struct( 'x', {cat( 1, fc(:).x )}, ...
-%                                               'y', {cat( 1, fc(:).y )}, ...
-%                                               'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
+                                              'y', {cat( 1, fc(:).y )}, ...
+                                              'blockAnnotations', {cat( 1, fc(:).blockAnnotations )} );
                 obj.trainer.setData( foldsRecombinedData, obj.folds{ff} );
                 verboseFprintf( obj, 'Starting run %d of CV... \n', ff );
 %                 freemem = memReport() % for debugging
@@ -200,13 +208,10 @@ classdef CVtrainer < ModelTrainers.Base
             obj.folds = obj.trainSet.splitInPermutedStratifiedFolds( obj.nFolds );
             for ff = 1 : obj.nFolds
                 fprintf( '\nPreparing fold %d\n', ff );
-                [x,y] = ModelTrainers.Base.getSelectedData( obj.folds{ff}, maxFoldDataSize, ...
-                                                        obj.trainer.dataSelector, [], true, false );
-                obj.folds{ff} = struct( 'x', {x}, 'y', {y} );
-%                 [x,y,~,~,ba] = ModelTrainers.Base.getSelectedData( obj.folds{ff}, ...
-%                                         maxFoldDataSize, obj.trainer.dataSelector, [], ...
-%                                                                             true, false );
-%                 obj.folds{ff} = struct( 'x', {x}, 'y', {y}, 'blockAnnotations', {ba} );
+                [x,y,~,~,ba] = ModelTrainers.Base.getSelectedData( obj.folds{ff}, ...
+                                        maxFoldDataSize, obj.trainer.dataSelector, [], ...
+                                        true, false, ModelTrainers.CVtrainer.loadBlockAnnotations );
+                obj.folds{ff} = struct( 'x', {x}, 'y', {y}, 'blockAnnotations', {ba} );
             end
             obj.recreateFolds = false;
             obj.lastMaxFoldSize = maxFoldDataSize;

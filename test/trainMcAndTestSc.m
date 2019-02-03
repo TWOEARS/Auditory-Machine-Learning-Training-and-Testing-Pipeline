@@ -45,7 +45,7 @@ sc(2).addSource( SceneConfig.DiffuseSource( 'offset', SceneConfig.ValGen( 'manua
                  'loop', 'randomSeq',...
                  'snr', SceneConfig.ValGen( 'manual', 0 ) );
 sc(2).setLengthRef( 'source', 1, 'min', 10 );
-sc(2).setSceneNormalization( true, 1 )
+sc(2).setSceneNormalization( true, 1 );
 pipe.init( sc, 'fs', 16000 );
 
 % pipeline run

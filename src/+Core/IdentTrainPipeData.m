@@ -426,13 +426,19 @@ classdef IdentTrainPipeData < handle
 
         function combinedData = combineData( varargin )
             combinedData = Core.IdentTrainPipeData();
+            combinedData.folds = {};
             for ii = 1 : numel(varargin)
                 idData_ii = varargin{ii};
                 nDii = numel( idData_ii.data );
                 combinedData.data(end+1:end+nDii) = idData_ii.data;
                 arrayfun( @(a)(a.addContainers( {combinedData} )), ...
                                                       combinedData.data(end-nDii+1:end) );
-                combinedData.folds{ii} = idData_ii;
+                if nDii > 0
+                    combinedData.folds = [combinedData.folds idData_ii.folds];
+                end
+            end
+            if isempty( combinedData.folds )
+                combinedData.folds = {combinedData};
             end
         end
         

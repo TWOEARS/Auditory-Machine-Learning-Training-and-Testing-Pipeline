@@ -148,6 +148,28 @@ classdef BAC_BAextended < PerformanceMeasures.Base
     %% --------------------------------------------------------------------
     methods (Static)
         
+        function [cl,cli] = classList( newValue )
+            persistent classList_staticVar;
+            persistent classListIdxs_staticVar;
+            if isempty( classList_staticVar )
+                classList_staticVar = cell(0);
+                classListIdxs_staticVar = struct;
+            end
+            if nargin > 0
+                if ~iscell( newValue ), error( 'must be cell of stringcells' ); end
+                classList_staticVar = newValue;
+                classListIdxs_staticVar = struct;
+                for ii = 1 : numel( classList_staticVar )
+                    for jj = 1 : numel( classList_staticVar{ii} )
+                        classListIdxs_staticVar.(classList_staticVar{ii}{jj}) = ii;
+                    end
+                end
+            end
+            cl = classList_staticVar;
+            cli = classListIdxs_staticVar;
+        end
+        % -----------------------------------------------------------------
+        
         function asgns = catAsgns( asgns )
             asgns = cat( 1, asgns{:} );
             asgns = {cat( 1, asgns{:,1} ), cat( 1, asgns{:,2} ), ...
@@ -192,11 +214,9 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             [~,bacfiles] = cellfun( @(x)(applyIfNempty(x,@fileparts)), bacfiles, 'UniformOutput', false );
             [~,bacfClasses] = cellfun( @(c)( strtok(c,'.') ), bacfiles, 'UniformOutput', false );
             [bacfClasses,~] = cellfun( @(c)( strtok(c,'.') ), bacfClasses, 'UniformOutput', false );
-            niClasses = {{'alarm'},{'baby'},{'femaleSpeech'},{'fire'},{'crash'},{'dog'},...
-                {'engine'},{'footsteps'},{'knock'},{'phone'},{'piano'},...
-                {'maleSpeech'},{'femaleScream','maleScream'},{'general'}};
+            classList = PerformanceMeasures.BAC_BAextended.classList;
             bacfClassIdxs = cellfun( ...
-                @(x)( find( cellfun( @(c)(any( strcmpi( x, c ) )), niClasses ) ) ), ...
+                @(x)( find( cellfun( @(c)(any( strcmpi( x, c ) )), classList ) ) ), ...
                 bacfClasses, 'UniformOutput', false );
             bacfClassIdxs(cellfun(@isempty,bacfClassIdxs)) = {nan};
             bacfClassIdxs = cell2mat( bacfClassIdxs );
@@ -379,10 +399,8 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             bafiles = cellfun( @(x)(x{1}), bafiles(nonemptybaf), 'UniformOutput', false );
             bafFilesepIdxs = cellfun( @(c)( strfind( c, '/' ) ), bafiles, 'UniformOutput', false );
             bafClasses = cellfun( @(fp,idx)(fp(idx(end-1)+1:idx(end)-1)), bafiles, bafFilesepIdxs, 'UniformOutput', false );
-            niClassIdxs = struct( 'alarm', 1, 'baby', 2, 'femaleSpeech', 3, 'fire', 4, 'crash', 5, 'dog', 6, ...
-                'engine', 7, 'footsteps', 8, 'knock', 9, 'phone', 10, 'piano', 11, ...
-                'maleSpeech', 12, 'femaleScream', 13, 'maleScream', 13, 'general', 14 );
-            bafClassIdxs = cellfun( @(c)(niClassIdxs.(c)), bafClasses, 'UniformOutput', false );
+            [~,classIdxs] = PerformanceMeasures.BAC_BAextended.classList;
+            bafClassIdxs = cellfun( @(c)(classIdxs.(c)), bafClasses, 'UniformOutput', false );
             
             [baParams(nonemptybaf).blockClass] = bafClassIdxs{:};
             

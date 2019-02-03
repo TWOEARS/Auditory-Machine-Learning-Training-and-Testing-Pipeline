@@ -190,6 +190,7 @@ classdef TwoEarsIdTrainPipe < handle
                     'alpha', 0.99 );
             end
             obj.pipeline.addModelCreator( obj.modelCreator );
+            ModelTrainers.CVtrainer.loadBlockAnnotations( loadBlockAnnotations );
         end
         %% -------------------------------------------------------------------------------
 
@@ -251,11 +252,11 @@ classdef TwoEarsIdTrainPipe < handle
                 % not sure the following is reasonable wrt folds setup
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
             end
-            obj.srcDataSpec = cell( 1, numel( obj.pipeline.trainSet.folds ) );
-            obj.wfasgns = cell( 1, numel( obj.pipeline.trainSet.folds ) );
-            for kk = 1 : numel( obj.pipeline.trainSet.folds )
-                trainFold_kk = obj.pipeline.trainSet.folds{kk};
-                obj.srcDataSpec{kk} = trainFold_kk(:,'fileName');
+            obj.srcDataSpec = cell( 1, numel( obj.pipeline.data.folds ) );
+            obj.wfasgns = cell( 1, numel( obj.pipeline.data.folds ) );
+            for kk = 1 : numel( obj.pipeline.data.folds )
+                dataFold_kk = obj.pipeline.data.folds{kk};
+                obj.srcDataSpec{kk} = dataFold_kk(:,'fileName');
                 obj.wfasgns{kk} = repmat( {kk}, size( obj.srcDataSpec{kk} ) );
             end
             obj.dataSetupAlreadyDone = true;

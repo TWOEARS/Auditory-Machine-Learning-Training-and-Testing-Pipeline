@@ -164,7 +164,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                 warning( 'There are NaNs or INFs in the data -- throwing those vectors away!' );
                 x(nanXidxs | infXidxs,:) = [];
                 y(nanXidxs | infXidxs,:) = [];
-                if nargout >= 5
+                if nargout >= 5 && ~isempty( ba )
                     ba(nanXidxs | infXidxs) = [];
                 end
                 sampleIds(nanXidxs | infXidxs) = [];
@@ -178,7 +178,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                 verbOutput = dataSelector.verboseOutput;
                 x = x(selectFilter,:);
                 y = y(selectFilter,:);
-                if nargout >= 5
+                if nargout >= 5 && ~isempty( ba )
                     ba = ba(selectFilter);
                 end
                 sampleIds = sampleIds(selectFilter);
@@ -198,7 +198,7 @@ classdef (Abstract) Base < matlab.mixin.Copyable & Parameterized
                 permIds = randperm( size( y, 1 ) )';
                 x = x(permIds,:);
                 y = y(permIds,:);
-                if nargout >= 5
+                if nargout >= 5 && ~isempty( ba )
                     ba = ba(permIds);
                 end
                 sampleIds = sampleIds(permIds);

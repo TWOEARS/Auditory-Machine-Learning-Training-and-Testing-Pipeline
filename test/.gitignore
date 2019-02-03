@@ -22,3 +22,4 @@ amlttpRun.*.*.*
 /test_dnnlocNoSrcs
 /test_rwc
 /parpool_tmps/*
+/test_multiclass_training

@@ -4,8 +4,11 @@ classdef FeatureSet5bBlockmean < FeatureCreators.Base
     properties (SetAccess = private)
         deltasLevels;
         compressor = 10;
-        sfProc;
         softMask;
+    end
+    
+    properties (SetAccess = private, Transient )
+        sfProc;
     end
     
     %% --------------------------------------------------------------------

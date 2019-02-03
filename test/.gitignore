@@ -21,3 +21,4 @@ amlttpRun.*.*.*
 /numSrc
 /test_dnnlocNoSrcs
 /test_rwc
+/parpool_tmps/*

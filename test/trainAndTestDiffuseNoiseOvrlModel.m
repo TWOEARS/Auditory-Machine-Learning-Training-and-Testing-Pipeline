@@ -1,27 +1,29 @@
-function trainAndTestDiffuseNoiseOvrlModel( classname )
+function trainAndTestDiffuseNoiseOvrlModel()
 
-if nargin < 1, classname = 'footsteps'; end;
+startTwoEars('tt_general.config.xml');
 
-addPathsIfNotIncluded( cleanPathFromRelativeRefs( [pwd '/..'] ) ); 
-startAMLTTP();
-
-
-pipe = TwoEarsIdTrainPipe();
-pipe.featureCreator = FeatureCreators.FeatureSetRmAmsBlockmean();
-% <classname> will be 1, rest -1
-oneVsRestLabeler = ... 
-    LabelCreators.MultiEventTypeLabeler( 'types', {{classname}}, 'negOut', 'rest' );
-pipe.labelCreator = oneVsRestLabeler;
+%% training & testing
+% pipeline creation
+pipe = TwoEarsIdTrainPipe( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
+pipe.featureCreator = FeatureCreators.FeatureSet5Blockmean();
+pipe.labelCreator = LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, 'negOut', 'rest', ...
+                                                         'labelBlockSize_s', 0.5 );
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
-    'performanceMeasure', @PerformanceMeasures.BAC2, ...
-    'cvFolds', 4, ...
-    'alpha', 0.99 );
+    'performanceMeasure', @PerformanceMeasures.BAC, ...
+    'cvFolds', 'preFolded', ...  % most reasonable if supplying prefolded dataset definitions
+    'alpha', 0.99 );  % prevents numeric instabilities (compared to 1)
 pipe.modelCreator.verbose( 'on' );
+ModelTrainers.CVtrainer.useParallelComputing( false );
 
-pipe.trainset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TrainSet_1.flist';
-pipe.testset = 'learned_models/IdentityKS/trainTestSets/NIGENS160807_mini_TestSet_1.flist';
+% data setup
+pipe.setTrainset( {'DCASE13_mini_TrainSet_f1.flist',...
+                   'DCASE13_mini_TrainSet_f2.flist',...
+                   'DCASE13_mini_TrainSet_f3.flist',...
+                   'DCASE13_mini_TrainSet_f4.flist'} );
+pipe.setTestset( {'DCASE13_mini_TestSet.flist'} );
 pipe.setupData();
 
+% scene setup
 sc = SceneConfig.SceneConfiguration();
 sc.addSource( SceneConfig.PointSource( ...
         'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
@@ -30,11 +32,22 @@ sc.addSource( SceneConfig.DiffuseSource( ...
     'loop', 'randomSeq',...
     'snr', SceneConfig.ValGen( 'manual', 0 ),...
     'snrRef', 1 );
-sc.setLengthRef( 'source', 1, 'min', 10 );
-pipe.init( sc );
+sc.setLengthRef( 'source', 1, 'min', 20 );
+pipe.init( sc, 'fs', 16000 );
 
-modelPath = pipe.pipeline.run( 'modelName', classname, 'modelPath', 'test_diffuseWhtNoiseOvrl' );
-
+% pipeline run
+[modelPath,model,testPerf] = pipe.pipeline.run( 'modelName', 'noisy', 'modelPath', 'test_noisy_training' );
 fprintf( ' -- Model is saved at %s -- \n', modelPath );
+
+% short analysis
+fprintf( 'Sensitivity: %.2f\n', testPerf.sensitivity );
+fprintf( 'Specificity: %.2f\n', testPerf.specificity );
+
+cmpCvAndTestPerf( modelPath, true );
+plotCVperfNCoefLambda( model );
+
+fDescription = pipe.featureCreator.description;
+[~,fImpacts] = model.getBestLambdaCVresults();
+plotDetailFsProfile( fDescription, fImpacts, '', false );
 
 

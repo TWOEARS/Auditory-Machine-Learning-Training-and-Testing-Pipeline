@@ -24,3 +24,5 @@ amlttpRun.*.*.*
 /parpool_tmps/*
 /test_multiclass_training
 /test_nsrcs_training
+/test_noisy_training
+/test_multilabel_training

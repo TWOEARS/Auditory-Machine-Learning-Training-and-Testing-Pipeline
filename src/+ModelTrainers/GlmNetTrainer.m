@@ -66,6 +66,7 @@ classdef GlmNetTrainer < ModelTrainers.Base & Parameterized
             fprintf( '\nGlmNet training with alpha=%f\n\tsize(x) = %dx%d\n\n', ...
                                         glmOpts.alpha, size(x,1), size(x,2) );
             obj.model.model = glmnet( double( x ), double( y ), family, glmOpts );
+            obj.model.trainedWithAlpha = obj.alpha;
         end
         %% ----------------------------------------------------------------
 

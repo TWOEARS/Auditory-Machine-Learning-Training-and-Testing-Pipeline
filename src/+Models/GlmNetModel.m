@@ -11,6 +11,7 @@ classdef GlmNetModel < Models.DataScalingModel
     %% --------------------------------------------------------------------
     properties
         lambda;
+        trainedWithAlpha = [];
     end
     
     %% --------------------------------------------------------------------

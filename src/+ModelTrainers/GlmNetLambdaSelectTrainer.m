@@ -109,6 +109,7 @@ classdef GlmNetLambdaSelectTrainer < ModelTrainers.Base & Parameterized
             alphaPerfs = zeros( size( obj.fullSetModel ) );
             for aa = 1 : numel( obj.fullSetModel )
                 alphaPerfs(aa) = max( obj.fullSetModel{aa}.lPerfsMean );
+                verboseFprintf( obj, 'max CV performance for alpha=%.2f: %.2f\n', obj.alphas(aa), alphaPerfs(aa) );
             end
             [~,max_aa] = max( alphaPerfs );
             model = obj.fullSetModel{max_aa};

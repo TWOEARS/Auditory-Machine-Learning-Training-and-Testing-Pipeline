@@ -29,3 +29,4 @@ amlttpRun.*.*.*
 /test_azm_training
 /alphaGroupedMulticlass
 /test_featMask
+/test_brir_training

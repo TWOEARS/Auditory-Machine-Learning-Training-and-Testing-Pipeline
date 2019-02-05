@@ -1,4 +1,4 @@
-function trainAndTest_featMask()
+function trainAndTest_featMask_svm()
 
 startTwoEars('tt_general.config.xml');
 

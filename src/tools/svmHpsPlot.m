@@ -1,5 +1,11 @@
 function svmHpsPlot( c, g, perf )
+% SVMHPSPLOT plot hyperparameter performance over C and Gamma
+%
+% c - cost hyperparameter values
+% g - gamma hyperparameter values
+% perf - performance values of respective hyperparameters
 
+%%
 c = log10( c );
 g = log10( g );
 

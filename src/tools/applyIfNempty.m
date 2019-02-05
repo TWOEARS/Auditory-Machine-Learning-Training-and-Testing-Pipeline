@@ -1,10 +1,16 @@
-function res = applyIfNempty( x, fun )
+function varargout = applyIfNempty( x, fun )
+% APPLYIFNEMPTY utility function particularly for applying functions with
+% cellfun to cell arrays that might have empty cells
+%
+% use like:
+% a = cellfun( @(c)(applyIfNempty(c,@yourFun), ca, 'UniformOutput', false );
 
+%%
 if isempty( x )
-    res = [];
+    varargout(1:nargout) = cell( 1, nargout );
     return;
 end
 
-res = fun( x );
+[varargout{1:nargout}] = fun( x );
 
 end

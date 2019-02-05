@@ -1,15 +1,17 @@
 classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
     
+    %% ---------------------------------------------------------------------------------------------
     properties (SetAccess = protected)
-        type;   % one of 'manual', 'set', 'random'
+        type = 'manual';   % one of 'manual', 'set', 'random'
         val;    % depending on type: specific value, cell of possible values, or random range
     end
     
+    %% ---------------------------------------------------------------------------------------------
     properties (Access = protected)
         instantiated = false;
     end
     
-    %%
+    %% ---------------------------------------------------------------------------------------------
     methods
         
         function obj = ValGen( type, val )
@@ -19,6 +21,7 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
             obj.type = type;
             obj.val = val;
         end
+        %% -----------------------------------------------------------------------------------------
         
         function instance = instantiate( obj )
             if isempty( obj )  ||  obj.instantiated
@@ -29,6 +32,7 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
             instance.val = obj.value();
             instance.instantiated = true;
         end
+        %% -----------------------------------------------------------------------------------------
         
         function val = value( obj )
             switch obj.type
@@ -47,6 +51,7 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
                     val = rand( 1 ) * (max( obj.val) - min( obj.val )) + min( obj.val );
             end
         end
+        %% -----------------------------------------------------------------------------------------
         
         function e = isequal( obj1, obj2 )
             e = zeros( size( obj2 ) );
@@ -65,6 +70,7 @@ classdef ValGen < matlab.mixin.Copyable & matlab.mixin.Heterogeneous
             end
             e = logical( e );
         end
+        %% -----------------------------------------------------------------------------------------
         
     end
     

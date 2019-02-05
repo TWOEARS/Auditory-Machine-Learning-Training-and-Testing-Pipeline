@@ -7,12 +7,12 @@ classdef SceneConfiguration < matlab.mixin.Copyable
         snrRefs; % TODO: there should only be one scene-wide SNRref.
         loopSrcs; % 'no','self','randomSeq'
         room;
-        brirHeadOrientIdx;
-        lenRefType; % 'source', 'time'
-        lenRefArg; % srcId, time in s
-        minLen; % time in s
-        normalize;
-        normalizeLevel;
+        brirHeadOrientIdx = 1;
+        lenRefType = 'source'; % 'source', 'time'
+        lenRefArg = 1; % srcId, time in s
+        minLen = 0; % time in s
+        normalize = false;
+        normalizeLevel = 1.0;
     end
 
     %% --------------------------------------------------------------------

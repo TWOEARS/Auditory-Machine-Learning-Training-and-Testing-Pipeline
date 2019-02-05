@@ -23,6 +23,7 @@ Computational Framework](https://github.com/TWOEARS/). You will need to download
 - https://github.com/TWOEARS/binaural-simulator
 - https://github.com/TWOEARS/SOFA
 - https://github.com/TWOEARS/main
+- https://github.com/TWOEARS/stream-segregation-training-pipeline.git  (if you want to use spatial segregation in AMLTTP)
 
 In your "main"-directory, please first edit TwoEarsPath.xml to point to your 
 respective directories.
@@ -35,6 +36,7 @@ Once Matlab opened, the source code folders need to be added to the Matlab path.
 This will be accomplished by executing the following commands in:
 ```Matlab
 >> addpath( '<path-to-your-TwoEars-Main-directory>' )
+>> addpath( '<path-to-your-AMLTTP-directory>' )
 >> startAMLTTP
 ```
 

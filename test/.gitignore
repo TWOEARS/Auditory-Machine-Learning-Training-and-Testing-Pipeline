@@ -20,3 +20,13 @@ amlttpRun.*.*.*
 /test_buildMultiPointSrcsAzmDistrData
 /numSrc
 /test_dnnlocNoSrcs
+/test_rwc
+/parpool_tmps/*
+/test_multiclass_training
+/test_nsrcs_training
+/test_noisy_training
+/test_multilabel_training
+/test_azm_training
+/alphaGroupedMulticlass
+/test_featMask
+/test_brir_training

@@ -3,6 +3,7 @@ classdef GlmNetModel < Models.DataScalingModel
     %% --------------------------------------------------------------------
     properties (SetAccess = {?ModelTrainers.GlmNetTrainer, ?ModelTrainers.GlmNetLambdaSelectTrainer})
         model;
+        lPerfs;
         lPerfsMean;
         lPerfsStd;
     end
@@ -10,6 +11,7 @@ classdef GlmNetModel < Models.DataScalingModel
     %% --------------------------------------------------------------------
     properties
         lambda;
+        trainedWithAlpha = [];
     end
     
     %% --------------------------------------------------------------------
@@ -29,16 +31,18 @@ classdef GlmNetModel < Models.DataScalingModel
             if nargin < 2, lambda = obj.lambda; end
             coefs = glmnetCoef( obj.model, lambda );
             if iscell( coefs )
-                coefs = squeeze( cellSqueezeFun( @(c)(mean( c, 2 )), coefs, 2, true ) );
-                coefs = coefs{1};
+                coefs = cat( 2, coefs{:} );
             end
             coefsAtLambda = abs( coefs );
-            sumCoefs = sum( coefsAtLambda(2:end) );
-            if sumCoefs > 0
-                coefsAtLambda = coefsAtLambda(2:end) / sumCoefs;
+            sumCoefs = sum( coefsAtLambda(2:end,:), 1 );
+            if all( sumCoefs > 0 )
+                coefsAtLambda = coefsAtLambda(2:end,:) ./ ...
+                                                repmat( sumCoefs, size( coefsAtLambda, 1 ) - 1, 1 );
             else
-                coefsAtLambda = coefsAtLambda(2:end);
+                error( 'This should not happen. Why does this branch exist?' );
+                coefsAtLambda = coefsAtLambda(2:end,:);
             end
+            coefsAtLambda = mean( coefsAtLambda, 2 );
             [impact,cIdx] = sort( coefsAtLambda );
         end
         %% -----------------------------------------------------------------
@@ -100,8 +104,8 @@ classdef GlmNetModel < Models.DataScalingModel
     methods (Access = protected)
         
         function [y,score] = applyModelToScaledData( obj, x )
-            y = glmnetPredict( obj.model, x, obj.lambda, 'class' );
-            score = glmnetPredict( obj.model, x, obj.lambda, 'response' );
+            y = glmnetPredict( obj.model, double( x ), obj.lambda, 'class' );
+            score = glmnetPredict( obj.model, double( x ), obj.lambda, 'response' );
             if any( strcmpi( obj.model.class, {'elnet','fishnet'} ) )
                 y = score;
             end

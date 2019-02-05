@@ -239,6 +239,7 @@ classdef IdentTrainPipeData < handle
                 end
                 return;
             end
+            warning( 'Splitting data into %d folds -- not fitting with pre-set fold number; pre-set folds will be void.', nFolds );
             for ii = nFolds : -1 : 1, permFolds{ii} = Core.IdentTrainPipeData(); end
             if ~exist( 'stratifyLabels', 'var' ) || isempty( stratifyLabels )
                 if obj.autoStratify, obj.autoSetStratificationLabels(); end

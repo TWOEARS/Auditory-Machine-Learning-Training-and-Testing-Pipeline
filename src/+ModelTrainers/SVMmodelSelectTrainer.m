@@ -108,8 +108,14 @@ classdef SVMmodelSelectTrainer < ModelTrainers.HpsTrainer & Parameterized
             bestParamSets = hps.params(end-numBests+1:end);
             cRefinedRange = [floor( log10( min( [bestParamSets.c] ) ) ), ...
                              ceil( log10( max( [bestParamSets.c] ) ) )];
+            if cRefinedRange(1) == cRefinedRange(2)
+                cRefinedRange = cRefinedRange + [-1 1];
+            end
             gRefinedRange = [floor( log10( min( [bestParamSets.gamma] ) ) ), ...
                              ceil( log10( max( [bestParamSets.gamma] ) ) )];
+            if gRefinedRange(1) == gRefinedRange(2)
+                gRefinedRange = gRefinedRange + [-1 1];
+            end
             eRefinedRange = unique( [bestParamSets.epsilon] );
             kRefinedRange = unique( [bestParamSets.kernel] );
             obj.setParameters( false, ...

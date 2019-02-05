@@ -1,6 +1,10 @@
-function [testPerfu, cvPerfu, cvStdu, ncu, lu] = cmpCvAndTestPerf( testModelDir, bPlot, plotTitle )
+function [testPerfu, cvPerfu, cvStdu, ncu, lu] = cmpCvAndTestPerf( testModelDir, bPlot, plotTitle, modelName )
 
-testModelDirEntry = dir( [testModelDir filesep '*.model.mat'] );
+if nargin >= 4
+    testModelDirEntry = dir( [testModelDir filesep modelName '.model.mat'] );
+else
+    testModelDirEntry = dir( [testModelDir filesep '*.model.mat'] );
+end
 testModelVars = load( [testModelDir filesep testModelDirEntry.name] );
 
 lambdas = testModelVars.model.model.lambda;
@@ -20,6 +24,8 @@ if numel( testPerf ) == 1 % only for best lambda
     testLambda = testModelVars.model.lambda;
 elseif numel( testPerf ) == numel( testModelVars.model.model.lambda )
     testPerf(nc0i) = [];
+elseif numel( testPerf ) == 0
+    testPerf = [];
 else
     error( 'duh' );
 end
@@ -32,9 +38,15 @@ for ii = 1 : length( ncu )
     lu(ii) = mean( lambdas(ncui==ii) );
 end
 
+lgEntries = {'cvPerf','testPerf'};
+
 if numel( testPerf ) == 1
     ncu_test = nc(lambdas == testLambda);
     testPerfu = testPerf;
+elseif isempty( testPerf )
+    testPerfu = [];
+    ncu_test = [];
+    lgEntries(2) = [];
 else
     ncu_test = ncu;
 end
@@ -52,7 +64,7 @@ if nargin >= 2 && bPlot
     end
     xlabel( '# of coefficients' );
     ylabel( 'Performance' );
-    legend( 'cvPerf', 'testPerf', 'Location', 'best' );
+    legend( lgEntries, 'Location', 'best' );
     if nargin >= 3
         title( plotTitle );
     end

@@ -28,3 +28,4 @@ amlttpRun.*.*.*
 /test_multilabel_training
 /test_azm_training
 /alphaGroupedMulticlass
+/test_featMask

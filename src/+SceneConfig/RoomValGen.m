@@ -1,6 +1,6 @@
 classdef RoomValGen < SceneConfig.ValGen
 
-    %%
+    %% ---------------------------------------------------------------------------------------------
     methods
         
         function obj = RoomValGen( val )
@@ -13,6 +13,7 @@ classdef RoomValGen < SceneConfig.ValGen
             end
             obj = obj@SceneConfig.ValGen( 'manual', val );
         end
+        %% -----------------------------------------------------------------------------------------
         
         function val = value( obj )
             if obj.instantiated, val = value@SceneConfig.ValGen( obj ); return; end
@@ -27,6 +28,7 @@ classdef RoomValGen < SceneConfig.ValGen
             room.set( 'RT60', obj.val.rt60.value() );
             val = room;
         end
+        %% -----------------------------------------------------------------------------------------
         
         % TODO: rt60? reflection coeffs? absorb coeffs? Position?
     end

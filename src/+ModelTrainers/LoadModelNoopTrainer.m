@@ -2,7 +2,7 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
     
     %% --------------------------------------------------------------------
     properties (SetAccess = {?Parameterized})
-        modelPath;
+        model;
         modelParams;
     end
 
@@ -10,26 +10,47 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
     methods
 
         function obj = LoadModelNoopTrainer( modelPath, varargin )
-            pds{1} = struct( 'name', 'performanceMeasure', ...
-                             'default', @PerformanceMeasures.BAC2, ...
-                             'valFun', @(x)(isa( x, 'function_handle' )), ...
-                             'setCallback', @(ob, n, o)(ob.setPerformanceMeasure( n )) );
-            pds{2} = struct( 'name', 'modelParams', ...
+            pds{1} = struct( 'name', 'modelParams', ...
                              'default', struct(), ...
                              'valFun', @(x)(isstruct( x )) );
-            pds{3} = struct( 'name', 'maxDataSize', ...
-                             'default', inf, ...
-                             'valFun', @(x)(isinf(x) || (rem(x,1) == 0 && x > 0)) );
             obj = obj@Parameterized( pds );
+            obj = obj@ModelTrainers.Base( varargin{:} );
             obj.setParameters( true, varargin{:} );
-            obj.modelPath = modelPath;
+            if isempty( modelPath ) || strcmpi( modelPath, 'noop' )
+                obj.model = [];
+                return;
+            end
+            if ~exist( modelPath, 'file' )
+                error( 'Could not find "%s".', modelPath );
+            end
+            ms = load( modelPath, 'model' );
+            model = ms.model;
+            fieldsModelParams = fieldnames( obj.modelParams );
+            for ii = 1: length( fieldsModelParams )
+                model.(fieldsModelParams{ii}) = obj.modelParams.(fieldsModelParams{ii});
+            end
+            obj.model = model;
         end
         %% ----------------------------------------------------------------
 
-        function buildModel( ~, ~, ~ )
+        function buildModel( ~, ~, ~, ~ )
             % noop
         end
         %% ----------------------------------------------------------------
+        
+        % override of ModelTrainers.Base
+        function model = getModel( obj )
+            model = obj.giveTrainedModel();
+            if ~isa( model, 'Models.Base' )
+                error( 'giveTrainedModel must produce an Models.Base object.' );
+            end
+            if ~isempty( ModelTrainers.Base.featureMask )
+                assert( isequal( model.featureMask, ModelTrainers.Base.featureMask ) );
+            else
+                ModelTrainers.Base.featureMask( true, model.featureMask );
+            end
+        end
+        %% -------------------------------------------------------------------------------
 
     end
     
@@ -37,15 +58,7 @@ classdef LoadModelNoopTrainer < ModelTrainers.Base & Parameterized
     methods (Access = protected)
         
         function model = giveTrainedModel( obj )
-            if ~exist( obj.modelPath, 'file' )
-                error( 'Could not find "%s".', obj.modelPath );
-            end
-            ms = load( obj.modelPath, 'model' );
-            model = ms.model;
-            fieldsModelParams = fieldnames( obj.modelParams );
-            for ii = 1: length( fieldsModelParams )
-                model.(fieldsModelParams{ii}) = obj.modelParams.(fieldsModelParams{ii});
-            end
+            model = obj.model;
         end
         %% ----------------------------------------------------------------
         

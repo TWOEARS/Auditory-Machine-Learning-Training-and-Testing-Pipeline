@@ -26,6 +26,18 @@ classdef EnergyDependentLabeler < LabelCreators.Base
         end
         %% -------------------------------------------------------------------------------
 
+        function [y, ysi] = label( obj, blockAnnotations )
+            rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
+                                  blockAnnotations, obj.sourceIds, obj.sourcesMinEnergy );
+            if rejectBlock
+                y = NaN;
+                ysi = {};
+            else
+                [y, ysi] = obj.labelEnergeticBlock( blockAnnotations );
+            end
+        end
+        %% -------------------------------------------------------------------------------
+
     end
     
     %% -----------------------------------------------------------------------------------
@@ -38,18 +50,6 @@ classdef EnergyDependentLabeler < LabelCreators.Base
             outputDeps.v = 2;
         end
         %% -------------------------------------------------------------------------------
-
-        function [y, ysi] = label( obj, blockAnnotations )
-            rejectBlock = LabelCreators.EnergyDependentLabeler.isEnergyTooLow( ...
-                                  blockAnnotations, obj.sourceIds, obj.sourcesMinEnergy );
-            if rejectBlock
-                y = NaN;
-                ysi = {};
-            else
-                [y, ysi] = obj.labelEnergeticBlock( blockAnnotations );
-            end
-        end
-        %% -------------------------------------------------------------------------------
                 
     end
     %% -----------------------------------------------------------------------------------
@@ -59,9 +59,11 @@ classdef EnergyDependentLabeler < LabelCreators.Base
         %% -------------------------------------------------------------------------------
         
         function eTooLow = isEnergyTooLow( blockAnnots, sourceIds, sourcesMinEnergy )
-            sourceIds(sourceIds > size( blockAnnots.srcEnergy, 2 )) = [];
-            eAvgOverChannels = cellfun( @mean, blockAnnots.srcEnergy(:,sourceIds) );
-            eTooLow = sum( log( sourcesMinEnergy ./ eAvgOverChannels ) ) < 0;
+            sourceIds(sourceIds > size( blockAnnots.globalSrcEnergy, 2 )) = [];
+            srcsGlobalRefEnergyMeanChannel = cellfun( @(c)(sum(10.^(c./10)) ./ 2 ), ...
+                                                      blockAnnots.globalSrcEnergy(sourceIds) );
+            srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
+            eTooLow = sum( log( sourcesMinEnergy ./ srcsGlobalRefEnergyMeanChannel_db ) ) < 0;
         end
         %% -------------------------------------------------------------------------------
         

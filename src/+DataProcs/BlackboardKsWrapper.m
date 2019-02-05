@@ -49,11 +49,10 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         
         function process( obj, wavFilepath )
             warning( 'off', 'BB:tNotIncreasing' );
-            obj.inputProc.sceneId = obj.sceneId;
             inData = obj.loadInputData( wavFilepath, 'blockAnnotations', 'afeBlocks' );
             bas = inData.blockAnnotations;
             afes = inData.afeBlocks;
-            obj.out = struct( 'afeBlocks', {{}}, 'blockAnnotations', {[]} );
+            obj.out = struct( 'ksData', {{}}, 'blockAnnotations', {{}} );
             [~,ksReqHashes] = obj.getAfeRequests();
             for aa = 1 : numel( afes )
                 afeData = afes{aa};
@@ -96,6 +95,20 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
             warning( 'on', 'BB:tNotIncreasing' );
         end
         %% -------------------------------------------------------------------------------
+
+        % override of DataProcs.IdProcInterface's method
+        function [out, outFilepath] = loadProcessedData( obj, wavFilepath, varargin )
+            [tmpOut, outFilepath] = loadProcessedData@Core.IdProcInterface( ...
+                                                obj, wavFilepath, 'ksData', 'blockAnnotations' );
+            out.ksData = tmpOut.ksData;
+            out.blockAnnotations = tmpOut.blockAnnotations;
+            if nargin < 3  || any( strcmpi( 'afeBlocks', varargin ) )
+                inData = obj.loadInputData( wavFilepath, 'afeBlocks' );
+                out.afeBlocks = inData.afeBlocks;
+            end
+        end
+        %% -------------------------------------------------------------------------------
+        
         
     end
     
@@ -109,7 +122,7 @@ classdef BlackboardKsWrapper < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
 
         function out = getOutput( obj, varargin )
-            out.afeBlocks = obj.out.afeBlocks;
+            out.ksData = obj.out.ksData;
             out.blockAnnotations = obj.out.blockAnnotations;
         end
         %% -------------------------------------------------------------------------------

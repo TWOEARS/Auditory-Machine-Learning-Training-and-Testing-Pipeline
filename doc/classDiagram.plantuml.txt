@@ -1,0 +1,975 @@
+@startuml
+
+set namespaceSeparator none
+
+
+class TwoEarsIdTrainPipe{
+  init( sceneCfgs, hrir )
+  setTrainset( newTrainFlists )
+  setTestset( newTestFlists )
+  setupData()
+}
+TwoEarsIdTrainPipe o-- "pipeline (1)" Core.IdentificationTrainingPipeline: sets up >
+TwoEarsIdTrainPipe ..> DataProcs.MultiSceneCfgsIdProcWrapper: sets scene configuration(s)
+
+
+class Core.IdentificationTrainingPipeline{
+  cacheDirectoryDirSuppl
+  cddsUseIdxs
+  addModelCreator( trainer )
+  resetDataProcs( pipeReUseIdx )
+  addDataPipeProc( idProc )
+  setTrainData( trainData )
+  setTestData( testData )
+  run( modelname )
+}
+Core.IdentificationTrainingPipeline o-- "data (1)" Core.IdentTrainPipeData
+Core.IdentificationTrainingPipeline *-- "dataPipeProcs (*)" Core.DataPipeProc: runs cascade
+Core.IdentificationTrainingPipeline o-- "trainer (1)" ModelTrainers.Base: runs
+
+
+class Core.DataPipeProc{
+  connectToOutputFrom( outputtingProc )
+  connectData( data )
+  checkDataFiles()
+  run()
+}
+Core.DataPipeProc o-- "dataFileProcessor (1)" Core.IdProcInterface: executes for each file
+Core.DataPipeProc o-- Core.IdentTrainPipeData
+
+
+class Core.IdCacheDirectory{
+  getCacheDirName()
+  setCacheTopDir( topDir )
+  getCacheFilepath( cfg, createIfnExist )
+  suspend()
+  loadCacheDirectory()
+  saveCacheDirectory()
+  maintenance()
+  {static} standaloneMaintain( cacheTopDir, deleteEmpties, filename )
+  {static} cacheDuplicateRemove( dir1, dir2 )
+}
+Core.IdCacheDirectory *-up- "treeRoot (1)" Core.IdCacheTreeElem
+
+
+class Core.IdCacheTreeElem{
+  cfg
+  path
+  getCfg( cfgList, createIfMissing )
+  integrateOtherTreeNode( otherNode )
+  findAllLeaves( cfgList )
+}
+Core.IdCacheTreeElem *-- "cfgSubs (*)" Core.IdCacheTreeElem
+
+
+class Core.IdentTrainPipeData{
+  stratificationLabels
+  autoStratify
+  subsref()
+  subsasgn()
+  length()
+  autoSetStratificationLabels()
+  splitInPermutedStratifiedFolds( nFolds, stratifyLabels )
+  getDisjunctSubsetIdxs( labels )
+  getFilesLabeled( label, labelValue )
+  getMinDisjunctSubsetsSize( labels )
+  getShare( ratio, stratifyLabels )
+  getFileIdx( fileNames )
+  saveDataFList( flistName, baseDir )
+  loadFileList( flistName, checkFileExistence )
+  clear( mode )
+  {static} combineData( varargin )
+}
+Core.IdentTrainPipeData *-- "data (*)" Core.IdentTrainPipeDataElem
+Core.IdentTrainPipeData o-- "folds (*)" Core.IdentTrainPipeData
+
+
+class Core.IdentTrainPipeDataElem{
+  fileName
+  x
+  y
+  ysi
+  bIdxs
+  bacfIdxs
+  blockAnnotsCacheFile
+  blockAnnotations
+  fileAnnotations
+  containedIn
+  setFileName( fileName )
+  addContainers( containers )
+  getFileAnnotation( aLabel )
+  clear()
+  readFileAnnotations()
+  {static} addPPtoBas( bas, y )
+}
+
+
+abstract class Core.IdProcInterface{
+  procCacheFolderNames
+  sceneId
+  foldId
+  saveImmediately
+  setLoadSemaphore
+  init()
+  saveCacheDirectory()
+  loadCacheDirectory()
+  connectIdData( idData )
+  hasFileAlreadyBeenProcessed( wavFilepath )
+  getOutputFilepath( wavFilepath )
+  loadProcessedData( wavFilepath, varargin )
+  loadInputData( wavFilepath, varargin )
+  processSaveAndGetOutput( wavFilepath )
+  save( savFilepath, out )
+  saveOutput( wavFilepath )
+  getOutputDependencies()
+  ..
+  {abstract} process( wavFilepath )
+  {abstract} getInternOutputDependencies()
+  {abstract} getOutput( varargin )
+}
+Core.IdProcInterface o-up- "inputProc (1)" Core.IdProcInterface
+Core.IdProcInterface *-up- "cacheDirectory (1)" Core.IdCacheDirectory
+Core.IdProcInterface o-up- "idData (1)" Core.IdentTrainPipeData
+
+
+Core.IdProcInterface <|-- DataProcs.AuditoryFEmodule
+class DataProcs.AuditoryFEmodule{
+  managerObject
+  dataObject
+  afeParams
+  process( wavFilepath)
+}
+
+
+Core.IdProcInterface <|-- DataProcs.GatherFeaturesProc
+class DataProcs.GatherFeaturesProc{
+  sceneCfgDataUseRatio
+  sceneCfgPrioDataUseRatio
+  selectPrioClass
+  prioClass
+  dataConverter
+  loadBlockAnnotations
+  process( wavFilepath)
+}
+DataProcs.GatherFeaturesProc o-- "dataSelector (1)" DataSelectors.Base
+DataProcs.GatherFeaturesProc ..> Core.IdentTrainPipeData: loads feature vectors and labels
+
+
+Core.IdProcInterface <|-- DataProcs.IdProcWrapper
+class DataProcs.IdProcWrapper{
+  process( wavFilepath)
+}
+DataProcs.IdProcWrapper o-- "wrappedProcs (*)" Core.IdProcInterface
+
+
+Core.IdProcInterface <|-- DataProcs.IdSimConvRoomWrapper
+class DataProcs.IdSimConvRoomWrapper{
+  convRoomSim
+  reverberationMaxOrder
+  IRDataset
+  earSout
+  annotsOut
+  outFs
+  getDataFs()
+  process( wavFilepath)
+}
+DataProcs.IdSimConvRoomWrapper o-- "sceneConfig (1)" SceneConfig.SceneConfiguration
+
+
+DataProcs.IdProcWrapper <|-- DataProcs.MultiSceneCfgsIdProcWrapper
+class DataProcs.MultiSceneCfgsIdProcWrapper{
+  wavFoldsAssignment
+  setSceneConfig( multiSceneCfgs )
+  getCurrentFoldId( wavFilepath )
+  getCurrentFoldSceneConfig( ii, foldId )
+  hasFileAlreadyBeenProcessed( wavFilepath )
+  processSaveAndGetOutput( wavFilepath )
+  process( wavFilepath)
+}
+DataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneProc (1)" DataProcs.SceneEarSignalProc
+DataProcs.MultiSceneCfgsIdProcWrapper o-- "sceneConfigurations (*)" SceneConfig.SceneConfiguration
+
+
+DataProcs.IdProcWrapper <|-- DataProcs.ParallelRequestsAFEmodule
+class DataProcs.ParallelRequestsAFEmodule{
+  fs
+  afeRequests
+  process( wavFilepath)
+}
+DataProcs.ParallelRequestsAFEmodule *-- "individualAfeProcs (*)" DataProcs.AuditoryFEmodule
+DataProcs.ParallelRequestsAFEmodule ..> BlockCreators.Base: usual dataflow >
+
+DataProcs.IdProcWrapper <|-- DataProcs.SceneEarSignalProc
+class DataProcs.SceneEarSignalProc{
+  earSout
+  annotsOut
+  classesOnMultipleSourcesFilter
+  getDatafs()
+  process( wavFilepath)
+  annotateNrj( signal, nrjAnnots, signalId, annotsName, returnDb, q )
+  {static} adjustSNR( fs, signal1, sig1OnOffs, signal2, snrdB )
+  {static} runningEnergy( fs, signal, blockSec, stepSec )
+  {static} detectActivity( fs, signal, thresdB, hSec, blockSec, stepSec )
+}
+DataProcs.SceneEarSignalProc o-- "sceneConfig (1)" SceneConfig.SceneConfiguration
+DataProcs.SceneEarSignalProc o-- "binauralSim (1)" DataProcs.IdSimConvRoomWrapper
+DataProcs.SceneEarSignalProc ..> DataProcs.ParallelRequestsAFEmodule: usual dataflow >
+
+
+Core.IdProcInterface <|-- BlockCreators.Base
+abstract class BlockCreators.Base{
+  shiftSize_s
+  blockSize_s
+  process( wavFilepath )
+  cutDataBlock( afeData, backOffset_s )
+  ..
+  {abstract} getBlockCreatorOutputDependencies()
+  {abstract} blockify( afeStream, streamAnnotations )
+}
+BlockCreators.Base ..> FeatureCreators.Base: usual dataflow >
+BlockCreators.Base ..> DataProcs.BlackboardKsWrapper: alternative dataflow >
+
+BlockCreators.Base <|-- BlockCreators.StandardBlockCreator
+class BlockCreators.StandardBlockCreator{
+  getBlockCreatorOutputDependencies()
+  blockify( afeData, annotations )
+  {static} extendAnnotations( sceneConfig, annotations )
+}
+
+BlockCreators.StandardBlockCreator <|-- BlockCreators.MeanStandardBlockCreator
+class BlockCreators.MeanStandardBlockCreator{
+  getBlockCreatorOutputDependencies()
+  blockify( afeData, annotations )
+  {static} extendMeanAnnotations( avgdBlockAnnots )
+  {static} adjustPreMeanAnnotations( annotations )
+}
+
+BlockCreators.Base <|-- BlockCreators.FullFileBlockCreator
+class BlockCreators.FullFileBlockCreator{
+  getBlockCreatorOutputDependencies()
+  blockify( afeData, annotations )
+}
+
+BlockCreators.MeanStandardBlockCreator <|-- BlockCreators.DistractedBlockCreator
+class BlockCreators.DistractedBlockCreator{
+  distractorIdxs
+  rejectThreshold
+  getBlockCreatorOutputDependencies()
+  blockify( afeData, annotations )
+}
+
+
+Core.IdProcInterface <|-- LabelCreators.Base
+abstract class LabelCreators.Base{
+  labelBlockSize_s
+  labelBlockSize_auto
+  removeUnclearBlocks
+  process( wavFilepath )
+  ..
+  {abstract} getLabelInternOutputDependencies()
+  {abstract} label( annotations )
+}
+LabelCreators.Base ..> DataProcs.GatherFeaturesProc: usual dataflow >
+
+LabelCreators.Base <|-- LabelCreators.MultiLabeler
+class LabelCreators.MultiLabeler{
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+LabelCreators.MultiLabeler o-- "individualLabelers (1*)" LabelCreators.Base
+
+LabelCreators.Base <|-- LabelCreators.NumberOfSourcesLabeler
+class LabelCreators.NumberOfSourcesLabeler{
+  srcMinEnergy
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+
+LabelCreators.Base <|-- LabelCreators.EnergyDependentLabeler
+abstract class LabelCreators.EnergyDependentLabeler{
+  sourcesMinEnergy
+  sourcesId
+  label( blockAnnotations )
+  ..
+  {abstract} labelEnergeticBlock( blockAnnotations )
+  {static} isEnergyTooLow( blockAnnots, srcIds, srcMinEnergy )
+}
+
+LabelCreators.EnergyDependentLabeler <|-- LabelCreators.AzmLabeler
+class LabelCreators.AzmLabeler{
+  labelEnergeticBlock( blockAnnotations )
+  getLabelInternOutputDependencies()
+}
+
+LabelCreators.EnergyDependentLabeler <|-- LabelCreators.AzmDistributionLabeler
+class LabelCreators.AzmDistributionLabeler{
+  angularResolution
+  labelEnergeticBlock( blockAnnotations )
+  getLabelInternOutputDependencies()
+}
+
+LabelCreators.Base <|-- LabelCreators.MultiEventTypeLabeler
+class LabelCreators.MultiEventTypeLabeler{
+  minBlockToEventRatio
+  maxNegBlockToEventRatio
+  types
+  negOut
+  srcPrioMethod
+  segIdTargetSrcFilter
+  srcTypeFilterOut
+  fileFilterOut
+  nrgSrcsFilter
+  sourcesMinEnergy
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+
+LabelCreators.MultiEventTypeLabeler <|-- LabelCreators.IdAzmDistributionLabeler
+class LabelCreators.IdAzmDistributionLabeler{
+  angularResolution
+  label( blockAnnotations )
+  getLabelInternOutputDependencies()
+}
+
+LabelCreators.Base <|-- LabelCreators.TimeSeriesLabelCreator
+class LabelCreators.TimeSeriesLabelCreator{
+  getLabelInternOutputDependencies()
+  label( annotations )
+}
+
+LabelCreators.TimeSeriesLabelCreator <|-- LabelCreators.MultiEventTypeBlockInterpreteTimeSeriesLabeler
+class LabelCreators.MultiEventTypeBlockInterpreteTimeSeriesLabeler{
+  blockLength
+  minBlockToEventRatio
+  maxNegBlockToEventRatio
+  types
+  negOut
+  srcPrioMethod
+  segIdTargetSrcFilter
+  srcTypeFilterOut
+  fileFilterOut
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+
+LabelCreators.TimeSeriesLabelCreator <|-- LabelCreators.MultiEventTypeTimeSeriesLabeler
+class LabelCreators.MultiEventTypeTimeSeriesLabeler{
+  types
+  negOut
+  srcPrioMethod
+  segIdTargetSrcFilter
+  srcTypeFilterOut
+  fileFilterOut
+  getLabelInternOutputDependencies()
+  label( blockAnnotations )
+}
+
+
+Core.IdProcInterface <|-- DataProcs.BlackboardKsWrapper
+abstract class DataProcs.BlackboardKsWrapper{
+  kss
+  bbs
+  afeDataIndexOffset
+  out
+  getAFErequests()
+  process( wavFilepath )
+  ..
+  {abstract} getKsInternOutputDependencies()
+  {abstract} preproc()
+  {abstract} postproc( afeData, blockAnnotations )
+}
+DataProcs.BlackboardKsWrapper ..> FeatureCreators.Base: alternative dataflow >
+
+DataProcs.BlackboardKsWrapper <|-- DataProcs.DnnLocKsWrapper
+class DataProcs.DnnLocKsWrapper{
+  getKsInternOutputDependencies()
+  preproc()
+  postproc( afeData, blockAnnotations )
+  {static} addLocData( afedata, locData )
+  {static} addLocDecisionData( afeData, locDecisionData )
+}
+
+DataProcs.BlackboardKsWrapper <|-- DataProcs.LocIdKsWrapper
+class DataProcs.LocIdKsWrapper{
+  getKsInternOutputDependencies()
+  preproc()
+  postproc( afeData, blockAnnotations )
+  {static} addIdData( afedata, idData )
+}
+
+DataProcs.BlackboardKsWrapper <|-- DataProcs.SegmentKsWrapper
+class DataProcs.SegmentKsWrapper{
+  varAzmSigma
+  segSrcAssignmentMethod
+  useDnnLocKs
+  useNsrcsKs
+  nsrcsBias
+  nsrcsRndPlusMinusBias
+  srcSegregateNrjThreshold
+  getKsInternOutputDependencies()
+  preproc( blockAnnotations )
+  postproc( afeData, blockAnnotations )
+  maskBA( blockAnnotations, srcIdxs )
+}
+
+
+Core.IdProcInterface <|-- FeatureCreators.Base
+abstract class FeatureCreators.Base{
+  description
+  setAfeData( afeData )
+  process( wavFilepath )
+  ..
+  {abstract} getAFErequests()
+  {abstract} getFeatureInternOutputDependencies()
+  {abstract} constructVector()
+}
+FeatureCreators.Base ..> LabelCreators.Base: usual dataflow >
+
+FeatureCreators.Base <|-- FeatureCreators.FeatureSet1Blockmean
+class FeatureCreators.FeatureSet1Blockmean{
+  getAFErequests()
+  constructVector()
+  getFeatureInternOutputDependencies()
+}
+
+FeatureCreators.Base <|-- FeatureCreators.FeatureSet5aBlockmean
+class FeatureCreators.FeatureSet5aBlockmean{
+  getAFErequests()
+  constructVector()
+  getFeatureInternOutputDependencies()
+}
+
+FeatureCreators.Base <|-- FeatureCreators.FeatureSet5bBlockmean
+class FeatureCreators.FeatureSet5bBlockmean{
+  getAFErequests()
+  constructVector()
+  getFeatureInternOutputDependencies()
+}
+
+FeatureCreators.Base <|-- FeatureCreators.FeatureSet5Blockmean
+class FeatureCreators.FeatureSet5Blockmean{
+  getAFErequests()
+  constructVector()
+  getFeatureInternOutputDependencies()
+}
+
+FeatureCreators.Base <|-- FeatureCreators.TimeSeriesFeatureCreator
+class FeatureCreators.TimeSeriesFeatureCreator{
+  constructVector()
+  {abstract} getAFErequests()
+  {abstract} constructTSvector()
+  {abstract} getTSfeatureInternOutputDependencies()
+  {static} resampleDataBlock( dataBlock, srcFsHz, targetFsHz, targetNt )
+}
+
+FeatureCreators.TimeSeriesFeatureCreator <|-- FeatureCreators.FeatureSet5aRawTimeSeries
+class FeatureCreators.FeatureSet5aRawTimeSeries{
+  getAFErequests()
+  constructTSvector()
+  getTSfeatureInternOutputDependencies()
+}
+
+
+abstract class Models.Base{
+  featureMask
+  trainTime
+  testTime
+  {static} verbose
+  applyModel( x )
+  ..
+  {abstract} applyModelMasked( x )
+  ..
+  {static} getPerformance( model, testSet, perfMeasure, maxDataSize, dataSelector, importanceWeighter, getDatapointInfo )
+}
+Models.Base ..> PerformanceMeasures.Base: produces
+
+Models.Base <|-- Models.DataScalingModel
+abstract class Models.DataScalingModel{
+  dataTranslators
+  dataScalors
+  scale2zeroMeanUnitVar( x, saveScalingFactors )
+  ..
+  {abstract} applyModelToScaledData( x )
+}
+
+Models.DataScalingModel <|-- Models.GlmNetModel
+class Models.GlmNetModel{
+  setLambda( newLambda )
+  getCoefImpacts( lambda )
+  getBestLambdaCVresults()
+  getBestMinStdCVresults()
+  getHighestLambdaWithinStdCVresults()
+  getLambdasAndNCoefs()
+}
+
+Models.Base <|-- Models.RandomForestModel
+class Models.RandomForestModel{
+  model
+  applyModelToScaledData( x )
+}
+
+Models.Base <|-- Models.SVMmodel
+class Models.SVMmodel{
+  useProbModel
+  model
+  applyModelToScaledData( x )
+}
+
+Models.Base <|-- Models.HPSmodel
+class Models.HPSmodel{
+  hpsSet
+  model
+  applyModelMasked( x )
+}
+Models.HPSmodel *-- "model (1) " Models.Base
+
+Models.DataScalingModel <|-- Models.PcaReducedModel
+abstract class Models.PcaReducedModel{
+  explainedVarianceThreshold
+  reduceToPCs( x, setPCs )
+  applyModelToScaledData( x )
+  {abstract} applyModelToReducedData( x )
+}
+
+Models.Base <|-- Models.SvmPcaModel
+class Models.SvmPcaModel{
+  useProbModel
+  model
+  applyModelToReducedData( x )
+}
+
+
+abstract class ModelTrainers.Base{
+  {static} balMaxData
+  {static} featureMask
+  maxDataSize
+  maxTestDataSize
+  setData( trainSet, testSet )
+  getModel()
+  verbose( newV )
+  getPerformance( getDatapointInfo )
+  run()
+  getPermutedTrainingData()
+  ..
+  {abstract} buildModel( x, y, iw )
+  {abstract} giveTrainedModel()
+  {static} getSelectedData( ... )
+}
+ModelTrainers.Base ..> Models.Base: produces
+ModelTrainers.Base o-- "performanceMeasure (1)" PerformanceMeasures.Base
+ModelTrainers.Base o-- "trainSet (1), testSet (1)" Core.IdentTrainPipeData
+ModelTrainers.Base o-- "dataSelector (1)" DataSelectors.Base
+ModelTrainers.Base o-- "importanceWeighter (1)" ImportanceWeighters.Base
+
+ModelTrainers.Base <|-- ModelTrainers.CVtrainer
+class ModelTrainers.CVtrainer{
+  {static} useParallelComputing
+  models
+  setNumberOfFolds( nFolds )
+  run()
+  buildModel()
+  getPerformance()
+}
+ModelTrainers.CVtrainer o-- "trainer (1)" ModelTrainers.Base
+
+ModelTrainers.Base <|-- ModelTrainers.GlmNetLambdaSelectTrainer
+class ModelTrainers.GlmNetLambdaSelectTrainer{
+  alphas
+  family
+  nLambda
+  hpsMaxDataSize
+  cvFolds
+  run()
+  buildModel()
+}
+ModelTrainers.GlmNetLambdaSelectTrainer *-- "cvTrainer (1)" ModelTrainers.CVtrainer
+ModelTrainers.GlmNetLambdaSelectTrainer *-- "coreTrainer (1)" ModelTrainers.GlmNetTrainer
+
+ModelTrainers.Base <|-- ModelTrainers.GlmNetTrainer
+class ModelTrainers.GlmNetTrainer{
+  alpha
+  family
+  nLambda
+  lambda
+  buildModel( x, y )
+}
+
+ModelTrainers.Base <|-- ModelTrainers.HpsTrainer
+abstract class ModelTrainers.HpsTrainer{
+  hpsSets
+  hpsRefineStages
+  hpsSearchBudget
+  hpsCvFolds
+  hpsMaxDataSize
+  finalMaxDataSize
+  run()
+  ..
+  {abstract} getHpsGridSearchSets()
+  {abstract} getHpsRandomSearchSets()
+  {abstract} refineGridTrainer( hps )
+}
+ModelTrainers.HpsTrainer *-- "hpsCVtrainer (1)" ModelTrainers.CVtrainer
+ModelTrainers.HpsTrainer *-- "coreTrainer (1)" ModelTrainers.Base
+ModelTrainers.HpsTrainer ..> Models.HPSmodel: produces
+
+ModelTrainers.Base <|-- ModelTrainers.LoadModelNoopTrainer
+class ModelTrainers.LoadModelNoopTrainer{
+  model
+  modelParams
+  buildModel( x, y )
+  giveTrainedModel()
+}
+
+ModelTrainers.HpsTrainer <|-- ModelTrainers.SVMmodelSelectTrainer
+class ModelTrainers.SVMmodelSelectTrainer{
+  hpsEpsilons
+  hpsKernels
+  hpsCrange
+  hpsGammaRange
+  makeProbModel
+  usePca
+  pcaVarThres
+  useSelectHeuristic
+  getHpsRandomSearchSets()
+  getHpsGridSearchSets()
+  refineGridTrainer( hps )
+}
+ModelTrainers.SVMmodelSelectTrainer *-- ModelTrainers.SVMtrainer
+
+ModelTrainers.Base <|-- ModelTrainers.SVMtrainer
+class ModelTrainers.SVMtrainer{
+  epsilon
+  kernel
+  c
+  gamma
+  makeProbModel
+  usePca
+  pcaVarThres
+  buildModel( x, y )
+}
+
+ModelTrainers.HpsTrainer <|-- ModelTrainers.RFmodelSelectTrainer
+class ModelTrainers.RFmodelSelectTrainer{
+  hpsNtreesRange
+  hpsMinLeafSizeRange
+  method
+  hpsNumPredictorsToSampleFunctions
+  hpsInBagSamplesRange
+  predictorSelection
+  useSelectHeuristic
+  getHpsRandomSearchSets()
+  getHpsGridSearchSets()
+  refineGridTrainer( hps )
+}
+ModelTrainers.RFmodelSelectTrainer *-- ModelTrainers.RandomForestTrainer
+
+ModelTrainers.Base <|-- ModelTrainers.RandomForestTrainer
+class ModelTrainers.RandomForestTrainer{
+  nTrees
+  method
+  minLeafSize
+  numPredictorsToSample
+  inBagSamples
+  predictorSelection
+  buildModel( x, y )
+}
+
+
+abstract class PerformanceMeasures.Base{
+  performance
+  datapointInfo
+  Base( yTrue, yPred, iw, datapointInfo, testSetIdData )
+  ...
+  strapOffDpi()
+  getBacfDpi( bacfIdx, bacfSubidx )
+  makeDatapointInfoStats( fieldname, compiledPerfField )
+  {abstract} calcPerformance( yTrue, yPred, iw, dpi, testSetIdData )
+  {abstract} eqPm( other )
+  {abstract} gtPm( other )
+  {abstract} char()
+  {abstract} double()
+}
+
+PerformanceMeasures.Base <|-- PerformanceMeasures.BAC
+class PerformanceMeasures.BAC{
+  tp
+  fp
+  tn
+  fn
+  sensitivity
+  specificity
+  acc
+  BAC( yTrue, yPred, datapointInfo )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, iw, dpi )
+}
+
+PerformanceMeasures.BAC <|-- PerformanceMeasures.BAC2
+class PerformanceMeasures.BAC2{
+  bac
+  BAC2( yTrue, yPred, varargin )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, iw, dpi )
+}
+
+PerformanceMeasures.Base <|-- PerformanceMeasures.ImportanceWeightedSquareBalancedAccuracy
+class PerformanceMeasures.ImportanceWeightedSquareBalancedAccuracy{
+  tp
+  fp
+  tn
+  fn
+  sensitivity
+  specificity
+  acc
+  bac
+  ImportanceWeightedSquareBalancedAccuracy( yTrue, yPred, varargin )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, iw, dpi )
+}
+
+PerformanceMeasures.Base <|-- PerformanceMeasures.BAC_BAextended
+class PerformanceMeasures.BAC_BAextended{
+  tp
+  fp
+  tn
+  fn
+  sensitivity
+  specificity
+  acc
+  BAC_BAextended( yTrue, yPred, varargin )
+  strapOffDpi()
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, ~, dpi, testSetIdData )
+}
+PerformanceMeasures.BAC_BAextended *-- "resc_b (1), resc_t (1), resc_t2 (1)" RescSparse
+
+PerformanceMeasures.Base <|-- PerformanceMeasures.Fscore
+class PerformanceMeasures.Fscore{
+  tp
+  fp
+  tn
+  fn
+  recall
+  precision
+  acc
+  Fscore( yTrue, yPred, varargin )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, iw, dpi )
+}
+
+PerformanceMeasures.Base <|-- PerformanceMeasures.MultinomialBAC
+class PerformanceMeasures.MultinomialBAC{
+  confusionMatrix
+  sens
+  acc
+  MultinomialBAC( yTrue, yPred, varargin )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, iw, dpi )
+}
+
+PerformanceMeasures.Base <|-- PerformanceMeasures.NSE
+class PerformanceMeasures.NSE{
+  mae
+  NSE( yTrue, yPred, varargin )
+  epPm( other ) 
+  gtPm( other )
+  double()
+  char()
+  calcPerformance( yTrue, yPred, iw, dpi )
+  getConfusionMatrix( ypRange )
+}
+
+
+class SceneConfig.ValGen{
+  type
+  val
+  instantiate()
+  value()
+  isequal( other )
+}
+
+class SceneConfig.SourceBase{
+  data
+  offset
+  normalize
+  normalizeLevel
+  instantiate()
+  isequal( other )
+}
+
+class SceneConfig.SceneConfiguration{
+  snrRefs
+  loopSrcs
+  lenRefType
+  lenRefArg
+  minLen
+  normalize
+  normalizeLevel
+  addSource( source, varargin )
+  addRoom( room )
+  setBRIRheadOrientation( brirHeadOrientIdx )
+  setLengthRef( refType, refArg, varargins )
+  instantiate()
+  getSingleConfig( srcIdx )
+  isequal( other )
+}
+SceneConfig.SceneConfiguration *-- "sources (*)" SceneConfig.SourceBase
+SceneConfig.SceneConfiguration *-- "SNRs (*)" SceneConfig.ValGen
+SceneConfig.SceneConfiguration *-- "room (1)" SceneConfig.RoomValGen
+
+SceneConfig.ValGen <|-- SceneConfig.RoomValGen
+class SceneConfig.RoomValGen{
+  RoomValGen( val )
+  value()
+}
+
+SceneConfig.SourceBase <|-- SceneConfig.PointSource
+class SceneConfig.PointSource{
+  loop
+  instantiate()
+  isequal( other )
+}
+SceneConfig.PointSource *-- "azimuth (1)" SceneConfig.ValGen
+SceneConfig.PointSource *-- "distance (1)" SceneConfig.ValGen
+
+SceneConfig.ValGen <|-- SceneConfig.NoiseValGen
+class SceneConfig.NoiseValGen{
+  NoiseValGen( val )
+  value()
+}
+
+SceneConfig.ValGen <|-- SceneConfig.FileListValGen
+class SceneConfig.FileListValGen{
+  filesepsAreUnix
+  eqTestFlistPrep
+  FileListValGen( val )
+  prepEqTestFlist()
+  isequal( other )
+}
+
+SceneConfig.ValGen <|-- SceneConfig.MultiFileListValGen
+class SceneConfig.MultiFileListValGen{
+  useFileListId
+  MultiFileListValGen( val )
+  instantiate()
+  isequal( other )
+}
+
+SceneConfig.SourceBase <|-- SceneConfig.DiffuseSource
+class SceneConfig.DiffuseSource{
+  instantiate()
+  isequal( other )
+}
+
+SceneConfig.SourceBase <|-- SceneConfig.BRIRsource
+class SceneConfig.BRIRsource{
+  brirFName
+  speakerId
+  azimuth
+  isequal( other )
+  calcAzimuth( brirHeadOrientIdx )
+}
+
+
+abstract class DataSelectors.Base{
+  data
+  connectData( data )
+  {abstract} getDataSelection( sampleIdsIn, maxDataSize )
+}
+
+DataSelectors.Base <|-- DataSelectors.IgnorantSelector
+class DataSelectors.IgnorantSelector{
+  getDataSelection( sampleIdsIn, maxDataSize )
+}
+
+DataSelectors.Base <|-- DataSelectors.BAC_Selector
+class DataSelectors.BAC_Selector{
+  getDataSelection( sampleIdsIn, maxDataSize )
+  {static} getBalThrowoutIdxs( y, maxDataSize )
+}
+
+DataSelectors.Base <|-- DataSelectors.BAC_NPP_NS_Selector
+class DataSelectors.BAC_NPP_NS_Selector{
+  discardNsNotNa
+  subsampleToSmallestClass
+  getDataSelection( sampleIdsIn, maxDataSize )
+}
+
+
+abstract class ImportanceWeighters.Base{
+  data
+  connectData( data )
+  {abstract} getImportanceWeights( sampleIds )
+}
+
+ImportanceWeighters.Base <|-- ImportanceWeighters.IgnorantWeighter
+class ImportanceWeighters.IgnorantWeighter{
+  getImportanceWeights( sampleIds )
+}
+
+ImportanceWeighters.Base <|-- ImportanceWeighters.BAC_Weighter
+class ImportanceWeighters.BAC_Weighter{
+  labelWeights
+  getImportanceWeights( sampleIds )
+}
+
+ImportanceWeighters.Base <|-- ImportanceWeighters.BAC_NS_NPP_Weighter
+class ImportanceWeighters.BAC_NS_NPP_Weighter{
+  getImportanceWeights( sampleIds )
+}
+
+
+DataProcs.IdProcWrapper <|-- LabelCreators.MultiExecuteLabeler
+class LabelCreators.MultiExecuteLabeler{
+  process( wavFilepath)
+}
+LabelCreators.MultiExecuteLabeler o-- "individualLabelers (*)" LabelCreators.Base
+
+
+class IdEvalFrame{
+  {static} readEventClass( soundFileName )
+  {static} readOnOffAnnotations( soundFileName, isAbsPath )
+}
+
+
+class RescSparse{
+  dataConvert
+  dataIdxsConvert
+  data
+  dataIdxs
+  id
+  dataInitialize
+  dataAdd
+  get( idxs )
+  getRowIndexed( rowIdxs )
+  getRowIdxs( idxsMask )
+  deleteData( rowIdxs )
+  filter( varargin )
+  addData( idxs, data, areIdxsPresorted )
+  rowSearch( idxs, preRowIdxGt )
+  partJoin( otherObj, keepMask, overrideMask )
+  summarizeDown( keepDims, rowIdxs, idxReplaceMask, fun, sdoPrior, intraGroupNorm )
+  meanDown( keepDims, rowIdxs, sdoPrior, intraGroupNorm )
+  resample( depIdx, rIdx, resample_weights, conditions )
+  idxDistribution( depIdx, defIdx )
+  combineFun( fun, cdim, argIdxs, cidx, newDataType, sdo )
+  resc2mat( ridx2midx, rowIdxs, sdo )
+}

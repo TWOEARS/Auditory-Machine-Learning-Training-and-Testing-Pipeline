@@ -34,10 +34,6 @@ classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
         end
         
         %% -------------------------------------------------------------------------------
-    end
-    
-    %% -----------------------------------------------------------------------------------
-    methods (Access = protected)
         
         function [y,ysi] = label( obj, blockAnnotations )
             [activeTypes, ~, activeSrcIdxs] = getActiveTypes( obj, blockAnnotations );
@@ -65,6 +61,10 @@ classdef IdAzmDistributionLabeler < LabelCreators.MultiEventTypeLabeler
         end
         
         %% -----------------------------------------------------------------------------------
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    methods (Access = protected)
         function outputDeps = getLabelInternOutputDependencies( obj )
             outputDeps = getLabelInternOutputDependencies@LabelCreators.MultiEventTypeLabeler(obj);
             outputDeps.nAzimuthBins = obj.nAzimuthBins;

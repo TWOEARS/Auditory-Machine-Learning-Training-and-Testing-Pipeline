@@ -2,10 +2,15 @@ classdef Base < Core.IdProcInterface
     % Base Abstract base class for specifying features sets with which features
     % are extracted.
     %% -----------------------------------------------------------------------------------
-    properties (SetAccess = protected)
+    properties (SetAccess = protected, Transient)
         x;
         blockAnnotations;
+        baIdx;
         afeData;                    % current AFE signals used for vector construction
+    end
+    
+    %% -----------------------------------------------------------------------------------
+    properties (SetAccess = protected)
         description;
         descriptionBuilt = false;
     end
@@ -32,14 +37,17 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function process( obj, wavFilepath )
-            obj.inputProc.sceneId = obj.sceneId;
             inData = obj.loadInputData( wavFilepath );
             obj.blockAnnotations = inData.blockAnnotations;
             obj.x = [];
-            for afeBlock = inData.afeBlocks'
-                obj.afeData = afeBlock{1};
+            for ii = 1 : numel( inData.afeBlocks )
+                obj.baIdx = ii;
+                obj.afeData = inData.afeBlocks{ii};
                 xd = obj.constructVector();
-                obj.x(end+1,:) = xd{1};
+                if isempty( obj.x )
+                    obj.x = zeros( numel( inData.afeBlocks ), size( xd{1}, 1 ), size( xd{1}, 2 ) );
+                end
+                obj.x(ii,:,:) = xd{1};
                 fprintf( '.' );
                 if obj.descriptionBuilt, continue; end
                 obj.description = xd{2};
@@ -59,14 +67,13 @@ classdef Base < Core.IdProcInterface
                 if isfield( tmpOut, 'blockAnnotations' ) % new version
                     obj.blockAnnotations = tmpOut.blockAnnotations;
                 else % old version; ba was saved in blockCreator cache
-                    obj.inputProc.sceneId = obj.sceneId;
                     inData = obj.loadInputData( wavFilepath, 'blockAnnotations' );
                     obj.blockAnnotations = inData.blockAnnotations;
                     obj.save( wavFilepath );
                 end
             end
             out = obj.getOutput( varargin{:} );
-            fdescFilepath = [obj.getCurrentFolder() filesep 'fdesc.mat'];
+            fdescFilepath = [obj.lastFolder{obj.sceneId,obj.foldId} filesep 'fdesc.mat'];
             if ~obj.descriptionBuilt 
                 if exist( fdescFilepath, 'file' )
                     fdescFileSema = setfilesemaphore( fdescFilepath, 'semaphoreOldTime', 30 );
@@ -221,7 +228,31 @@ classdef Base < Core.IdProcInterface
             for ii = 1 : size( grps, 2 )
                 grps{1,ii} = cat( 2, grps{:,ii} );
             end
-            grps(2,:) = [];
+            grps(2:end,:) = [];
+            grps = FeatureCreators.Base.removeGrpDuplicates( grps );
+            b{2} = grps;
+        end
+        %% -------------------------------------------------------------------------------
+
+        function b = reshape2timeSeriesFeatVec( obj, bl )
+            b{1} = reshape( bl{1}, size( bl{1}, 1), [] );
+            if obj.descriptionBuilt, return; end
+            for ii = 2 : size( bl, 2 ) - 1
+                bl{ii} = bl{ii+1};
+            end
+            bl(end) = [];
+            for ii = 1 : size( bl, 2 ) - 1
+                blszii = size( bl{1} );
+                blszii(ii+1) = 1;
+                blszii(1) = [];
+                dgprs{ii} = repmat( shiftdim( bl{ii+1}, 2-ii ), blszii );
+                dgprs{ii} = reshape( dgprs{ii}, 1, [] );
+            end
+            grps = cat( 1, dgprs{:} );
+            for ii = 1 : size( grps, 2 )
+                grps{1,ii} = cat( 2, grps{:,ii} );
+            end
+            grps(2:end,:) = [];
             grps = FeatureCreators.Base.removeGrpDuplicates( grps );
             b{2} = grps;
         end

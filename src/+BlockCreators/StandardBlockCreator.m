@@ -18,12 +18,18 @@ classdef StandardBlockCreator < BlockCreators.Base
     methods (Access = protected)
         
         function outputDeps = getBlockCreatorInternOutputDependencies( obj )
-            outputDeps.v = 3;
+            outputDeps.v = 4;
         end
         %% ------------------------------------------------------------------------------- 
 
         function [blockAnnots,afeBlocks] = blockify( obj, afeData, annotations )
-            annotations = obj.extendAnnotations( annotations );
+            currentDependencies = obj.getOutputDependencies();
+            while ~isfield(currentDependencies, 'sceneCfg')
+                currentDependencies = currentDependencies.preceding;
+            end
+            sceneConfig = currentDependencies.sceneCfg;
+            annotations = BlockCreators.StandardBlockCreator.extendAnnotations( ...
+                                                               sceneConfig, annotations );
             anyAFEsignal = afeData(1);
             if isa( anyAFEsignal, 'cell' ), anyAFEsignal = anyAFEsignal{1}; end;
             streamLen_s = double( size( anyAFEsignal.Data, 1 ) ) / anyAFEsignal.FsHz;
@@ -53,19 +59,20 @@ classdef StandardBlockCreator < BlockCreators.Base
                     if ~isstruct( annot.t ) % time series
                         if length( annot.t ) == size( annot.(seqAname), 1 )
                             isTinBlock = (annot.t >= blockOn) & (annot.t <= blockOff);
-                            blockAnnots(ii).(seqAname).(seqAname)(~isTinBlock,:) = [];
-                            blockAnnots(ii).(seqAname).t(~isTinBlock) = [];
+                            blockAnnots(ii).(seqAname).(seqAname) = ...
+                                      blockAnnots(ii).(seqAname).(seqAname)(isTinBlock,:);
+                            blockAnnots(ii).(seqAname).t = ...
+                                                 blockAnnots(ii).(seqAname).t(isTinBlock);
                         else
                             error( 'unexpected annotations sequence structure' );
                         end
                     elseif all( isfield( annot.t, {'onset','offset'} ) ) % event series
                         if isequal( size( annot.t.onset ), size( annot.t.offset ) ) && ...
                                 length( annot.t.onset ) == size( annot.(seqAname), 1 )
-                            isEventInBlock = arrayfun( @(eon,eoff)(...
-                                               (eon >= blockOn && eon <= blockOff) || ...
-                                              (eoff >= blockOn && eoff <= blockOff) || ...
-                                               (eon <= blockOn && eoff >= blockOff)...
-                                                       ), annot.t.onset, annot.t.offset );
+                            isEventInBlock = ...
+                                  (annot.t.onset >= blockOn & annot.t.onset <= blockOff) | ...
+                                (annot.t.offset >= blockOn & annot.t.offset <= blockOff) | ...
+                                  (annot.t.onset <= blockOn & annot.t.offset >= blockOff);
                             blockAnnots(ii).(seqAname).(seqAname)(~isEventInBlock,:) = [];
                             blockAnnots(ii).(seqAname).t.onset(~isEventInBlock) = [];
                             blockAnnots(ii).(seqAname).t.offset(~isEventInBlock) = [];
@@ -81,68 +88,6 @@ classdef StandardBlockCreator < BlockCreators.Base
             blockAnnots = flipud( blockAnnots );
         end
         %% ------------------------------------------------------------------------------- 
-        
-        % TODO: this is the wrong place for the annotation computation; it
-        % should be done in SceneEarSignalProc -- and is now here, for the
-        % moment, to avoid recomputation with SceneEarSignalProc.
-        
-        function annotations = extendAnnotations( obj, annotations )
-            currentDependencies = obj.getOutputDependencies();
-            sceneConfig = currentDependencies.preceding.preceding.sceneCfg;
-            annotations.srcSNR.t = annotations.srcEnergy.t;
-            annotations.srcSNR.srcSNR = cell( size( annotations.srcEnergy.srcEnergy ) );
-            annotations.srcSNR_avgSelf.t = annotations.srcEnergy.t;
-            annotations.srcSNR_avgSelf.srcSNR_avgSelf = cell( size( annotations.srcEnergy.srcEnergy ) );
-            annotations.oneVsAllAvgSnrs.t = annotations.srcEnergy.t;
-            avgBilateralSNRs = nan( numel( sceneConfig.sources ) );
-            if std( sceneConfig.snrRefs ) ~= 0
-                error( 'AMLTTP:usage:snrRefMustBeSame', 'different snrRefs not supported' );
-            end
-            for ss = 1 : numel( sceneConfig.sources )
-                avgBilateralSNRs(ss,ss) = 0;
-                avgBilateralSNRs(ss,sceneConfig.snrRefs(ss)) = sceneConfig.SNRs(ss).value;
-            end
-            refSNRs = avgBilateralSNRs(:,sceneConfig.snrRefs(1));
-            oneVsAllSNRs = zeros( size( refSNRs ) );
-            for ss = 1 : numel( sceneConfig.sources )
-                if ss ~= sceneConfig.snrRefs(ss)
-                    for sss = 1 : size( avgBilateralSNRs, 1 )
-                        if ~isnan( avgBilateralSNRs(sss,ss) )
-                            refDiff = avgBilateralSNRs(sss,ss) - refSNRs(sss);
-                            avgBilateralSNRs(:,ss) = refSNRs + refDiff;
-                            break;
-                        end
-                    end
-                end
-                idxs = 1 : size( avgBilateralSNRs, 1 );
-                idxs(ss) = [];
-                oneVsAllSNRs(ss) = addSnrs( avgBilateralSNRs(idxs,ss) );
-            end
-            annotations.oneVsAllAvgSnrs.oneVsAllAvgSnrs = ...
-                                      repmat( num2cell( single( oneVsAllSNRs )' ), ...
-                                              numel( annotations.oneVsAllAvgSnrs.t ), 1 );
-            srcsRelEnergy = cellfun( @mean, annotations.srcEnergy.srcEnergy );
-            meanSrcsRelEnergy = nan( 1, size( srcsRelEnergy, 2 ) );
-            for ss = 1 : size( srcsRelEnergy, 2 )
-                meanSrcsRelEnergy(ss) = mean( srcsRelEnergy(srcsRelEnergy(:,ss) >= -40,ss) );
-            end
-            srcsEnergy = srcsRelEnergy - repmat( meanSrcsRelEnergy, ...
-                                                 numel( annotations.srcEnergy.t ), 1 );
-            for ss = 1 : numel( sceneConfig.sources )
-                srcBilateralSnrs = repmat( avgBilateralSNRs(ss,:), ...
-                                           numel( annotations.srcEnergy.t ), 1 );
-                idxs = 1 : size( avgBilateralSNRs, 1 );
-                idxs(ss) = [];
-                tmpSE = srcsEnergy + srcBilateralSnrs;
-                for ii = 1 : size( tmpSE, 1 )
-                    annotations.srcSNR_avgSelf.srcSNR_avgSelf{ii,ss} = single( ...
-                                                             addSnrs( -tmpSE(ii,idxs) ) );
-                    annotations.srcSNR.srcSNR{ii,ss} = single( ...
-                        annotations.srcSNR_avgSelf.srcSNR_avgSelf{ii,ss} + tmpSE(ii,ss) );
-                end
-            end
-        end
-        %% ------------------------------------------------------------------------------- 
     
     end
     %% ----------------------------------------------------------------------------------- 
@@ -150,6 +95,53 @@ classdef StandardBlockCreator < BlockCreators.Base
     methods (Static)
         
         %% ------------------------------------------------------------------------------- 
+        
+        % TODO: this is the wrong place for the annotation computation; it
+        % should be done in SceneEarSignalProc -- and is now here, for the
+        % moment, to avoid recomputation with SceneEarSignalProc.
+        
+        function annotations = extendAnnotations( sceneConfig, annotations )
+            annotations.srcSNR_db.t = annotations.globalSrcEnergy.t;
+            annotations.srcSNR_db.srcSNR_db = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.nrj_db.t = annotations.globalSrcEnergy.t;
+            annotations.nrj_db.nrj_db = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.nrjOthers_db.t = annotations.globalSrcEnergy.t;
+            annotations.nrjOthers_db.nrjOthers_db = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            annotations.nActivePointSrcs.t = annotations.globalSrcEnergy.t;
+            annotations.nActivePointSrcs.nActivePointSrcs = zeros( size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            if std( sceneConfig.snrRefs ) ~= 0
+                error( 'AMLTTP:usage:snrRefMustBeSame', 'different snrRefs not supported' );
+            end
+            snrRef = sceneConfig.snrRefs(1);
+            nSrcs = size( annotations.globalSrcEnergy.globalSrcEnergy, 2 );
+            srcsGlobalRefEnergyMeanChannel = zeros( ...
+                                    size( annotations.globalSrcEnergy.globalSrcEnergy ) );
+            for ss = 1 : nSrcs
+                srcsGlobalRefEnergyMeanChannel(:,ss) = mean( ...
+                       cell2mat( annotations.globalSrcEnergy.globalSrcEnergy(:,ss) ), 2 );
+            end
+            srcsGlobalRefEnergyMeanChannel_db = 10 * log10( srcsGlobalRefEnergyMeanChannel );
+            snrRefNrjOffsets = cell2mat( annotations.globalNrjOffsets.globalNrjOffsets ) ...
+                                  - annotations.globalNrjOffsets.globalNrjOffsets{snrRef};
+            annotations.globalNrjOffsets = snrRefNrjOffsets;
+            for ss = 1 : nSrcs
+                otherIdxs = 1 : size( srcsGlobalRefEnergyMeanChannel, 2 );
+                otherIdxs(ss) = [];
+                srcsCurrentSrcRefEnergy_db = srcsGlobalRefEnergyMeanChannel_db ...
+                                                                   - snrRefNrjOffsets(ss);
+                srcsCurrentSrcRefEnergy = 10.^(srcsCurrentSrcRefEnergy_db./10);
+                sumOtherSrcsEnergy = sum( srcsCurrentSrcRefEnergy(:,otherIdxs), 2 );
+                sumOthersSrcsEnergy_db = 10 * log10( sumOtherSrcsEnergy );
+                annotations.nrjOthers_db.nrjOthers_db(:,ss) = single( sumOthersSrcsEnergy_db );
+                annotations.nrj_db.nrj_db(:,ss) = single( srcsCurrentSrcRefEnergy_db(:,ss) );
+                annotations.srcSNR_db.srcSNR_db(:,ss) = single( ...
+                              srcsCurrentSrcRefEnergy_db(:,ss) - sumOthersSrcsEnergy_db );
+            end
+            haveSrcsEnergy = srcsGlobalRefEnergyMeanChannel_db > -40;
+            isAmbientSource = all( isnan( annotations.srcAzms.srcAzms ), 1 );
+            haveSrcsEnergy(:,isAmbientSource) = [];
+            annotations.nActivePointSrcs.nActivePointSrcs = single( sum( haveSrcsEnergy, 2 ) );
+        end
         %% ------------------------------------------------------------------------------- 
         
     end

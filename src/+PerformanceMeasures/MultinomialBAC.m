@@ -3,6 +3,7 @@ classdef MultinomialBAC < PerformanceMeasures.Base
     %% --------------------------------------------------------------------
     properties (SetAccess = protected)
         confusionMatrix;
+        cmLabels;
         sens;
         acc;
     end
@@ -41,12 +42,12 @@ classdef MultinomialBAC < PerformanceMeasures.Base
         % -----------------------------------------------------------------
     
         function [obj, performance, dpi] = calcPerformance( obj, yTrue, yPred, iw, dpi, ~ )
-            labels = unique( [yTrue;yPred] );
+            obj.cmLabels = unique( [yTrue;yPred] );
             n_acc = 0;
-            for tt = 1 : numel( labels )
-                for pp = 1 : numel( labels )
+            for tt = 1 : numel( obj.cmLabels )
+                for pp = 1 : numel( obj.cmLabels )
                     obj.confusionMatrix(tt,pp) = ...
-                                     sum( (yTrue == labels(tt)) & (yPred == labels(pp)) );
+                                     sum( (yTrue == obj.cmLabels(tt)) & (yPred == obj.cmLabels(pp)) );
                 end
                 n_tt = sum( obj.confusionMatrix(tt,:) );
                 if n_tt > 0

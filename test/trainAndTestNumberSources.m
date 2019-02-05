@@ -57,8 +57,10 @@ pipe.init( sc, 'fs', 16000 );
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
 % short analysis
-fprintf( 'Confusion matrix (rows ~ true type, columns ~ predicted type):\n\n' );
+fprintf( 'Confusion matrix (rows ~ true type, columns ~ predicted type):\nLabels:' );
+disp( testPerf.cmLabels' );
 disp( testPerf.confusionMatrix );
+fprintf( '\n' );
 
 fDescription = pipe.featureCreator.description;
 [~,fImpacts] = model.getBestLambdaCVresults();

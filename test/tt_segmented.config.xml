@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <requirements>
-    <TwoEarsPart sub="src" startup="startBinauralSimulator">binaural-simulator</TwoEarsPart>
+    <TwoEarsPart sub="src" startup="startBinauralSimulator" branch="fix_headLimitsTorso_unsetIfFullHeadRange">binaural-simulator</TwoEarsPart>
     <TwoEarsPart startup="startAuditoryFrontEnd">auditory-front-end</TwoEarsPart>
     <TwoEarsPart startup="startBlackboardSystem">blackboard-system</TwoEarsPart>
     <TwoEarsPart startup="startAMLTTP">machine-learning-training</TwoEarsPart>

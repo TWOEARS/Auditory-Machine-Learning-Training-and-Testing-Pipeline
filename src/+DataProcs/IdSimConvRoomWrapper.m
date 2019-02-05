@@ -27,7 +27,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             obj.convRoomSim = simulator.SimulatorConvexRoom();
             set(obj.convRoomSim, ...
                 'BlockSize', 4096, ...
-                'SampleRate', 44100, ...
+                'SampleRate', 44100, ... % default sample rate
                 'MaximumDelay', 0.05 ... % for distances up to ~15m
                 );
             if ~isempty( hrirFile )
@@ -68,8 +68,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
 
         function process( obj, wavFilepath )
             sceneConfigInst = obj.sceneConfig.instantiate();
-            signal = obj.loadSound( sceneConfigInst, wavFilepath );
             obj.setupSceneConfig( sceneConfigInst );
+            signal = obj.loadSound( sceneConfigInst, wavFilepath );
             if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
                 obj.earSout = signal{1};
                 t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
@@ -180,11 +180,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 obj.convRoomSim.Sources{1}.Azimuth = obj.srcAzimuth;
             elseif isa( sceneConfig.sources(1), 'SceneConfig.BRIRsource' ) 
                 obj.convRoomSim.Sources{1} = simulator.source.Point();
-                brirSofa = SOFAload( ...
-                            db.getFile( sceneConfig.sources(1).brirFName ), 'nodata' );
-                headOrientIdx = ceil( sceneConfig.brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
-                headOrientation = SOFAconvertCoordinates( ...
-                         brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
+
                 if isempty( obj.IRDataset ) ...
                    || ~strcmp( obj.IRDataset.fname, sceneConfig.sources(1).brirFName ) ...
                    || (isfield( obj.IRDataset, 'speakerId' ) ~= ~isempty( sceneConfig.sources(1).speakerId ) ) ...
@@ -206,8 +202,24 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                     obj.IRDataset.fname = sceneConfig.sources(1).brirFName;
                 end
                 obj.convRoomSim.Sources{1}.IRDataset = obj.IRDataset.dir;
-                obj.convRoomSim.rotateHead( headOrientation(1), 'absolute' );
+
+                % load SOFA meta + some IR data (to get the sample rate)
+                brirSofa = SOFAload( ...
+                             db.getFile( sceneConfig.sources(1).brirFName ), [1 2], 'N' );
+                
+                headOrientation = SceneConfig.BRIRsource.getBrirHeadOrientation( ...
+                                                brirSofa, sceneConfig.brirHeadOrientIdx );
                 obj.srcAzimuth = sceneConfig.sources(1).azimuth;
+                [crp(1),crp(2)] = obj.convRoomSim.getCurrentRobotPosition();
+                [~,~,brirTorsoDefault] = obj.convRoomSim.Sources{1}.getHeadLimits();
+                obj.convRoomSim.moveRobot( crp(1), crp(2), brirTorsoDefault, 'absolute' );
+                % 'absolute' mode means: relative wrt torso...
+                headToTorsoAzm = mod( headOrientation(1), 360 ) - mod( brirTorsoDefault, 360 );
+                obj.convRoomSim.rotateHead( headToTorsoAzm, 'absolute' );
+                
+                % set processing sample rate
+                set( obj.convRoomSim, 'SampleRate', brirSofa.Data.SamplingRate );
+            
             else % ~is diffuse
                 obj.convRoomSim.Sources{1} = simulator.source.Binaural();
                 channelMapping = [1 2];

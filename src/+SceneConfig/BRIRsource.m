@@ -9,7 +9,7 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
     %% -----------------------------------------------------------------------------------
     
     properties (SetAccess = protected)
-        azimuth;
+        azimuth; % src-to-head
     end
 %% -----------------------------------------------------------------------------------
 
@@ -35,19 +35,35 @@ classdef BRIRsource < SceneConfig.SourceBase & Parameterized
         %% -------------------------------------------------------------------------------
 
         function calcAzimuth( obj, brirHeadOrientIdx )
-            brirSofa = SOFAload( db.getFile( obj.brirFName ), 'nodata' );
-            headOrientIdx = ceil( brirHeadOrientIdx * size( brirSofa.ListenerView, 1 ));
-            headOrientation = SOFAconvertCoordinates( ...
-                brirSofa.ListenerView(headOrientIdx,:),'cartesian','spherical' );
             if isempty( obj.speakerId )
                 sid = 1;
             else
                 sid = obj.speakerId;
             end
-            brirSrcPos = SOFAconvertCoordinates( ...
-                        brirSofa.EmitterPosition(sid,:) - brirSofa.ListenerPosition, ...
-                                                                'cartesian','spherical' );
-            obj.azimuth = brirSrcPos(1) - headOrientation(1);
+            brirFile = db.getFile( obj.brirFName );
+            srcPosition = sofa.getLoudspeakerPositions(brirFile, sid, 'cartesian');
+            listenerPosition = sofa.getListenerPositions(brirFile, 1, 'cartesian');
+            brirSrcOrientation = SOFAconvertCoordinates(...
+                                srcPosition - listenerPosition, 'cartesian', 'spherical');
+            headOrientation = SceneConfig.BRIRsource.getBrirHeadOrientation( ...
+                                                            brirFile, brirHeadOrientIdx );
+            obj.azimuth = wrapTo180( brirSrcOrientation(1) - headOrientation(1) );
+        end
+        %% -------------------------------------------------------------------------------
+    end
+    %% -----------------------------------------------------------------------------------
+    
+    methods (Static)
+        
+        function headOrientation = getBrirHeadOrientation( brirFile, brirHeadOrientIdx )
+            [~, listenerIdxs] = sofa.getListenerPositions(brirFile, 1, 'cartesian');
+            [availableAzimuths, availableElevations] = ...
+                                         sofa.getHeadOrientations(brirFile, listenerIdxs);
+            % only consider entries with approx. zero elevation angle
+            availableAzimuths = availableAzimuths( abs( availableElevations ) < 0.01 );
+            availableAzimuths = wrapTo360( availableAzimuths );
+            headOrientIdx = round( 1 + brirHeadOrientIdx * (size( availableAzimuths, 1 ) - 1));
+            headOrientation = availableAzimuths(headOrientIdx,1);
         end
         %% -------------------------------------------------------------------------------
     end

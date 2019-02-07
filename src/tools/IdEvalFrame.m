@@ -132,7 +132,7 @@ classdef IdEvalFrame < handle
                     [on,b] = strtok( annotLine );
                     onsetOffsets(end,1) = str2double( on );
                     [off,t] = strtok( b );
-                    types{end+1} = strtrim( t );
+                    types{end+1,1} = strtrim( t );
                     onsetOffsets(end,2) = str2double( off );
                 end
                 fclose( annotFid );

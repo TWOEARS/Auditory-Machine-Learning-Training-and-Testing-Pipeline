@@ -1,5 +1,18 @@
 function [sens,spec,maxSubsets,sensCIs,specCIs,tmp] = getPerformanceDecorrMaximumSubset( resc, depVars, mhReqs, msReqs, decorrVars )
 
+if nargin < 2 || isempty( depVars )
+    depVars = resc.id.scpId;
+end
+if nargin < 3
+    mhReqs = {resc.id.classIdx,[],false};
+end
+if nargin < 4
+    msReqs = {};
+end
+if nargin < 5
+    decorrVars = [resc.id.fileClassId,resc.id.fileId];
+end
+
 if ~isempty( mhReqs )
     mhVars = [mhReqs{:,1}];
 else

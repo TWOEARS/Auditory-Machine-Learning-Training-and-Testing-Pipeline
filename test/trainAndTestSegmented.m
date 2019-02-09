@@ -86,6 +86,8 @@ end
 dcaseClasses = {{'alert'},{'clearthroat'},{'cough'},{'doorslam'},{'drawer'},{'keyboard'},...
                 {'keys'},{'knock'},{'laughter'},{'mouse'},{'pageturn'},...
                 {'pendrop'},{'phone'},{'speech'},{'switch'},{'void'}};
+scp(1).azms = [-45,0];
+
 % pipeline creation
 pipe = TwoEarsIdTrainPipe( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
 pipe.ksWrapper = DataProcs.SegmentKsWrapper( ...
@@ -117,10 +119,10 @@ pipe.setupData();
 % scene setup
 sc = SceneConfig.SceneConfiguration();
 sc.addSource( SceneConfig.PointSource( ...
-                     'azimuth',SceneConfig.ValGen('manual',-45), ...
+                     'azimuth',SceneConfig.ValGen('manual',scp(1).azms(1)), ...
                      'data', SceneConfig.FileListValGen( 'pipeInput' )  )  );
 sc.addSource( SceneConfig.PointSource( ...
-                     'azimuth',SceneConfig.ValGen('manual',0), ...
+                     'azimuth',SceneConfig.ValGen('manual',scp(1).azms(2)), ...
                      'data', SceneConfig.MultiFileListValGen( pipe.srcDataSpec ) ),...
                  'snr', SceneConfig.ValGen( 'manual', 0 ),...
                  'loop', 'randomSeq' );
@@ -134,7 +136,7 @@ pipe.init( sc, 'fs', 16000, 'loadBlockAnnotations', true, ...
 [modelPath,model,testPerf] = pipe.pipeline.run( 'modelName', 'segmModel', 'modelPath', 'test_segmented' );
 fprintf( ' -- Model is saved at %s -- \n\n', modelPath );
 
-% short analysis
+%% short analysis
 cmpCvAndTestPerf( modelPath, true );
 plotCVperfNCoefLambda( model );
 
@@ -144,22 +146,15 @@ plotDetailFsProfile( fDescription, fImpacts, '', false );
 
 
 [sens_b,spec_b] = getPerformanceDecorrMaximumSubset( testPerf.resc_b, ...
-                                                     [testPerf.resc_b.id.posPresent], ...
-                                                     {[testPerf.resc_b.id.classIdx],[],false;}, ...
-                                                     {},...
-                                                     [testPerf.resc_b.id.fileClassId,testPerf.resc_b.id.fileId] );
+                                                     [testPerf.resc_b.id.posPresent] );
 sens_b = sens_b(2);
 spec_b_npp = spec_b(1);
 spec_b_pp = spec_b(2);
-fprintf( 'Sensitivity: %.2f\n', sens_b );
-fprintf( 'Specificity/positive present: %.2f\n', spec_b_pp );
-fprintf( 'Specificity/no positive present: %.2f\n', spec_b_npp );
+fprintf( 'Sensitivity/stream-wise: %.2f\n', sens_b );
+fprintf( 'Specificity/stream-wise/positive present: %.2f\n', spec_b_pp );
+fprintf( 'Specificity/stream-wise/no positive present: %.2f\n', spec_b_npp );
 
-[sens_t,spec_t] = getPerformanceDecorrMaximumSubset( testPerf.resc_t, ...
-                                                     [testPerf.resc_t.id.scpId], ...
-                                                     {[testPerf.resc_t.id.classIdx],[],false;}, ...
-                                                     {},...
-                                                     [testPerf.resc_t.id.fileClassId,testPerf.resc_t.id.fileId] );
+[sens_t,spec_t] = getPerformanceDecorrMaximumSubset( testPerf.resc_t );
 bac_t = 0.5*sens_t+0.5*spec_t;
 fprintf( 'Sensitivity/time-wise: %.2f\n', sens_t );
 fprintf( 'Specificity/time-wise: %.2f\n', spec_t );
@@ -175,22 +170,36 @@ azmErr_ppd = getAttributeDecorrMaximumSubset( rs_t_ppd, rs_t_ppd.id.azmErr, ...
 azmErr_ppd = (azmErr_ppd-1)*5;
 fprintf( 'AzmErr/positive present and detected: %.2f\n', azmErr_ppd );
 
-nyp_ppd = getAttributeDecorrMaximumSubset(   rs_t_ppd, rs_t_ppd.id.nYp, ...
-                                             [rs_t_ppd.id.scpId], ...
-                                             {[rs_t_ppd.id.classIdx],[],false;},...
-                                             {},...
-                                             [rs_t_ppd.id.fileClassId,rs_t_ppd.id.fileId] );
+nyp_ppd = getAttributeDecorrMaximumSubset( rs_t_ppd, rs_t_ppd.id.nYp );
 nyp_ppd = nyp_ppd - 1;
-fprintf( 'NEP/positive present and detected: %.2f\n', nyp_ppd-1 );
+fprintf( 'NEP/positive present and detected: %.2f\n', nyp_ppd - 1 );
 
 rs_t_npp = testPerf.resc_t.filter( testPerf.resc_t.id.posPresent, @(x)(x==2) );
-nyp_npp = getAttributeDecorrMaximumSubset(   rs_t_npp, rs_t_npp.id.nYp, ...
-                                             [rs_t_npp.id.scpId], ...
-                                             {[rs_t_npp.id.classIdx],[],false;},...
-                                             {},...
-                                             [rs_t_npp.id.fileClassId,rs_t_npp.id.fileId] );
+nyp_npp = getAttributeDecorrMaximumSubset( rs_t_npp, rs_t_npp.id.nYp );
 nyp_npp = nyp_npp - 1;
 fprintf( 'NP/no positive present: %.2f\n', nyp_npp );
+
+% conditioned on: positive present and detected
+rs_b_pp = testPerf.resc_b.filter( testPerf.resc_b.id.posPresent, @(x)(x==1) );
+rs_b_ppd = rs_b_pp.filter( rs_b_pp.id.nYp, @(x)(x==1) );
+[placementLlh_scp_azms_ppd, ~, ~, bapr_scp_ppd] = getAzmPlacement( rs_b_ppd, rs_t_ppd, 'estAzm', 0 );
+[llhTPplacem_stats_avgNsp,azmsInterp] = computeInterpPlacementLlh( placementLlh_scp_azms_ppd, ...
+                                                                   scp, 5, true, [], [], [], true );
+
+fprintf( 'BAPR: %.2f\n', bapr_scp_ppd );
+
+figure;
+hold on;
+patch( [azmsInterp, flip( azmsInterp )], [llhTPplacem_stats_avgNsp(2,:), flip( llhTPplacem_stats_avgNsp(3,:))], 1, 'facealpha', 0.1, 'edgecolor', 'none', 'facecolor', [0,0,0.8] );
+plot( azmsInterp, llhTPplacem_stats_avgNsp(6,:), 'DisplayName', 'median', 'LineWidth', 2, 'color', [0,0,0.8] );
+ylabel( 'Placement likelihood' );
+ylim( [0 1] );
+xlim( [0 180] );
+xlabel( 'Distance to correct azimuth (°)' );
+set( gca, 'XTick', [0,20,45,90,135,180] );
+title( 'Interpolated Placement Likelihood' );
+
+
 
 end
 

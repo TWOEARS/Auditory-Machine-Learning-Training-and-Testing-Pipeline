@@ -357,7 +357,8 @@ classdef IdentTrainPipeData < handle
             if isempty( flistName ), return; end
             obj.data = Core.IdentTrainPipeDataElem.empty;
             try
-                fid = fopen( db.getFile( flistName ) );
+                flistpath = db.getFile( flistName );
+                fid = fopen( flistpath );
             catch err
                 warning( err.message );
                 error( '%s not found!', flistName );
@@ -367,7 +368,7 @@ classdef IdentTrainPipeData < handle
                 fprintf( '.' );
                 if checkFileExistence
                     curDir = pwd;
-                    cd( fileparts( flistName ) );
+                    cd( fileparts( flistpath ) );
                     try
                         filepath = db.getFile( fileList{1}{ff} );
                         filepath = cleanPathFromRelativeRefs( filepath );

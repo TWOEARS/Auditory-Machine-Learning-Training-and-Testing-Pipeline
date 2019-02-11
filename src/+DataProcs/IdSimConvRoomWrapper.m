@@ -242,8 +242,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
                 if strcmpi( eventType, 'general' )
                     onOffs = zeros(0,2);
                 else
-                    [onOffs,etypes] = ...
-                                IdEvalFrame.readOnOffAnnotations( wavFilepath );
+                    [onOffs,etypes] = IdEvalFrame.readOnOffAnnotations( wavFilepath, true );
                     onOffs = onOffs + startOffset;
                 end
             elseif isfloat( src ) && size( src, 2 ) == 1
@@ -280,7 +279,7 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             end
             srcLen_s = size( signal{1}, 1 ) / obj.convRoomSim.SampleRate;
             obj.annotsOut.srcFile = struct( 't', struct( 'onset', {startOffset}, ...
-                                                 'offset', {srcLen_s - startOffset} ), ...
+                                                         'offset', {srcLen_s - startOffset} ), ...
                                             'srcFile', {{wavFilepath}} );
         end
         %% ----------------------------------------------------------------

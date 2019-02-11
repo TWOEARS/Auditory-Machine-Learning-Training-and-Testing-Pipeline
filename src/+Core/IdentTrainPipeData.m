@@ -366,6 +366,8 @@ classdef IdentTrainPipeData < handle
             for ff = 1 : length( fileList{1} )
                 fprintf( '.' );
                 if checkFileExistence
+                    curDir = pwd;
+                    cd( fileparts( flistName ) );
                     try
                         filepath = db.getFile( fileList{1}{ff} );
                         filepath = cleanPathFromRelativeRefs( filepath );
@@ -374,6 +376,7 @@ classdef IdentTrainPipeData < handle
                         warning( err.message );
                         error( '%s, referenced in %s, not found!', fileList{1}{ff}, flistName );
                     end
+                    cd( curDir );
                     p = fileparts( filepath );
                     addPathsIfNotIncluded( p );
                     filepath = which( filepath ); % ensure absolute path

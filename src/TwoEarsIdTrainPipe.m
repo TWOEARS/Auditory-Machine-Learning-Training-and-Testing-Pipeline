@@ -70,9 +70,9 @@ classdef TwoEarsIdTrainPipe < handle
             ip = inputParser;
             ip.addOptional( 'hrir', ...
                             'impulse_responses/qu_kemar_anechoic/QU_KEMAR_anechoic_3m.sofa' );
-            ip.addOptional( 'sceneCfgDataUseRatio', inf );
-            ip.addOptional( 'sceneCfgPrioDataUseRatio', inf );
-            ip.addOptional( 'selectPrioClass', [] );
+            ip.addOptional( 'nSamplesPerSceneInstance', inf );
+            ip.addOptional( 'nSamplesPerTargetSceneInstance', inf );
+            ip.addOptional( 'selectTargetLabel', [] );
             ip.addOptional( 'dataSelector', DataSelectors.IgnorantSelector() );
             ip.addOptional( 'loadBlockAnnotations', false );
             ip.addOptional( 'gatherFeaturesProc', true );
@@ -90,9 +90,9 @@ classdef TwoEarsIdTrainPipe < handle
             useGatherFeaturesProc = ip.Results.gatherFeaturesProc;
             trainerFeedDataType = ip.Results.trainerFeedDataType;
             loadBlockAnnotations = ip.Results.loadBlockAnnotations;
-            sceneCfgDataUseRatio = ip.Results.sceneCfgDataUseRatio;
-            sceneCfgPrioDataUseRatio = ip.Results.sceneCfgPrioDataUseRatio;
-            selectPrioClass = ip.Results.selectPrioClass;
+            nSamplesPerSceneInstance = ip.Results.nSamplesPerSceneInstance;
+            nSamplesPerTargetSceneInstance = ip.Results.nSamplesPerTargetSceneInstance;
+            selectTargetLabel = ip.Results.selectTargetLabel;
             dataSelector = ip.Results.dataSelector;
             stopAfterProc = ip.Results.stopAfterProc;
             pipeReUseIdx = ip.Results.pipeReUse;
@@ -165,9 +165,9 @@ classdef TwoEarsIdTrainPipe < handle
                       || isempty( obj.pipeline.dataPipeProcs{6+ksWrapperIdxAdd} ) )
                 gatherFeaturesProc = DataProcs.GatherFeaturesProc( ...
                                               loadBlockAnnotations, trainerFeedDataType );
-                gatherFeaturesProc.setSceneCfgDataUseRatio( ...
-                                              sceneCfgDataUseRatio, dataSelector, ...
-                                              sceneCfgPrioDataUseRatio, selectPrioClass );
+                gatherFeaturesProc.setNsamplesPerSceneInstance( ...
+                                              nSamplesPerSceneInstance, dataSelector, ...
+                                              nSamplesPerTargetSceneInstance, selectTargetLabel );
                 multiCfgProcs{6+ksWrapperIdxAdd} = ...
                     DataProcs.MultiSceneCfgsIdProcWrapper( ...
                                  obj.binSim, gatherFeaturesProc, [], wavFoldAssignments );

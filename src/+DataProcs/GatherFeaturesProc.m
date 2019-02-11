@@ -2,10 +2,10 @@ classdef GatherFeaturesProc < Core.IdProcInterface
     
     %% -----------------------------------------------------------------------------------
     properties (SetAccess = private, Transient)
-        sceneCfgDataUseRatio = 1;
-        sceneCfgPrioDataUseRatio = 1;
+        nSamplesPerSceneInstance = 1;
+        nSamplesPerTargetSceneInstance = 1;
         dataSelector;
-        selectPrioClass = [];
+        selectTargetLabel = [];
         loadBlockAnnotations = false;
         prioClass = [];
         dataConverter;
@@ -30,15 +30,15 @@ classdef GatherFeaturesProc < Core.IdProcInterface
         end
         %% -------------------------------------------------------------------------------
 
-        function setSceneCfgDataUseRatio( obj, sceneCfgDataUseRatio, dataSelector, ...
-                                               sceneCfgPrioDataUseRatio, selectPrioClass )
-            obj.sceneCfgDataUseRatio = sceneCfgDataUseRatio;
+        function setNsamplesPerSceneInstance( obj, nSamplesPerSceneInstance, dataSelector, ...
+                                               nSamplesPerTargetSceneInstance, selectTargetLabel )
+            obj.nSamplesPerSceneInstance = nSamplesPerSceneInstance;
             if nargin < 3, dataSelector = DataSelectors.IgnorantSelector(); end
-            if nargin < 4, sceneCfgPrioDataUseRatio = 1; end
-            if nargin < 5, selectPrioClass = []; end
+            if nargin < 4, nSamplesPerTargetSceneInstance = 1; end
+            if nargin < 5, selectTargetLabel = []; end
             obj.dataSelector = dataSelector;
-            obj.sceneCfgPrioDataUseRatio = sceneCfgPrioDataUseRatio;
-            obj.selectPrioClass = selectPrioClass;
+            obj.nSamplesPerTargetSceneInstance = nSamplesPerTargetSceneInstance;
+            obj.selectTargetLabel = selectTargetLabel;
         end
         %% -------------------------------------------------------------------------------
 
@@ -64,10 +64,10 @@ classdef GatherFeaturesProc < Core.IdProcInterface
             inDataFilepath = obj.inputProc.inputProc.getOutputFilepath( wavFilepath );
             dataFile = obj.idData(wavFilepath);
             fprintf( '.' );
-            if ~isempty( obj.selectPrioClass ) && any( xy.y == obj.selectPrioClass )
-                nUsePoints = min( [size( xy.x, 1 ), obj.sceneCfgPrioDataUseRatio] );
+            if ~isempty( obj.selectTargetLabel ) && any( xy.y == obj.selectTargetLabel )
+                nUsePoints = min( [size( xy.x, 1 ), obj.nSamplesPerTargetSceneInstance] );
             else
-                nUsePoints = min( [size( xy.x, 1 ), obj.sceneCfgDataUseRatio] );
+                nUsePoints = min( [size( xy.x, 1 ), obj.nSamplesPerSceneInstance] );
             end
             obj.dataSelector.connectData( xy );
             useIdxs = obj.dataSelector.getDataSelection( 1:size( xy.x, 1 ), nUsePoints );

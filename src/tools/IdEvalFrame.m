@@ -155,6 +155,7 @@ classdef IdEvalFrame < handle
             errors.negpredval = errors.trueneg / errors.testneg;
             errors.acc = (errors.truepos + errors.trueneg) / ...
                 (errors.condpos + errors.condneg);
+            errors.bac = 0.5 * errors.sensitivity + 0.5 * errors.specificity;
         end
         
     end

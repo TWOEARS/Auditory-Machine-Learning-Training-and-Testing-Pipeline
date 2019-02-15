@@ -156,6 +156,11 @@ classdef IdEvalFrame < handle
             errors.acc = (errors.truepos + errors.trueneg) / ...
                 (errors.condpos + errors.condneg);
             errors.bac = 0.5 * errors.sensitivity + 0.5 * errors.specificity;
+            if errors.condpos > 0
+                errors.prec = errors.truepos / errors.testpos;
+            else
+                errors.prec = nan;
+            end
         end
         
     end

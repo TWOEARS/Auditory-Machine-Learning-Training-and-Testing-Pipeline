@@ -4,9 +4,12 @@ classdef FeatureSet5cBlockmean < FeatureCreators.Base
     properties (SetAccess = private)
         deltasLevels;
         compressor = 10;
+    end
+
+    properties (SetAccess = private, Transient )
         sfProc;
     end
-    
+
     %% --------------------------------------------------------------------
     methods (Static)
     end
@@ -17,7 +20,11 @@ classdef FeatureSet5cBlockmean < FeatureCreators.Base
         function obj = FeatureSet5cBlockmean( )
             obj = obj@FeatureCreators.Base();
             obj.deltasLevels = 2;
-            obj.sfProc = [];
+            afeRequests = obj.getAFErequests();
+            fbProc = gammatoneProc( [], afeRequests{2}.params );
+            obj.sfProc = spectralFeaturesProc( [], afeRequests{2}.params );
+            obj.sfProc.addLowerDependencies( {fbProc} );
+            obj.sfProc.prepareForProcessing( 'bUseInterp', false );
         end
         %% ----------------------------------------------------------------
 
@@ -53,7 +60,7 @@ classdef FeatureSet5cBlockmean < FeatureCreators.Base
 
             rm = obj.afeData(2);
 
-            if isempty( obj.sfProc )
+            if isempty( obj.sfProc ) || ~isa( obj.sfProc, 'spectralFeaturesProc' )
                 afeRequests = obj.getAFErequests();
                 fbProc = gammatoneProc( [], afeRequests{2}.params );
                 obj.sfProc = spectralFeaturesProc( [], afeRequests{2}.params );

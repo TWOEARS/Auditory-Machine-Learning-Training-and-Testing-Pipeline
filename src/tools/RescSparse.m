@@ -483,7 +483,11 @@ classdef RescSparse
                     argData{ii} = obj.data(argRowIdxs{ii},:);
                     argGroups{ii} = repmat( ii, size( argRowIdxs{ii}, 1 ), 1 );
                 else
-                    argDataIdxs{ii} = argDataIdxs{ii-1}(1,:);
+                    if ii > 1 && size( argDataIdxs{ii-1}, 1 ) > 0
+                        argDataIdxs{ii} = argDataIdxs{ii-1}(1,:);
+                    else
+                        argDataIdxs{ii} = [];
+                    end
                     argData{ii} = 0;
                     argGroups{ii} = ii;
                 end

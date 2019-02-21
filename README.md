@@ -13,6 +13,10 @@ serves the specific purpose of training and evaluation of block-based auditory
 object-type, object-location, and number-of-sources classifiers using data from 
 simulated auditory scenes generated within the same framework.
 
+In [1], we have developed and analyzed robust binaural sound event detection models using AMLTTP.
+
+[1] Trowitzsch, Ivo, et al (2017). *Robust detection of environmental sounds in binaural auditory scenes*, IEEE/ACM Transactions on Audio, Speech, and Language Processing 25(6), 1344-1356.
+
 
 ## Installation
 
@@ -40,8 +44,8 @@ This will be accomplished by executing the following commands in:
 >> startAMLTTP
 ```
 
-The complete functionality of the AMLTTP will be discussed in detail in the accompanying
-[Online user manual](http://twoears.aipa.tu-berlin.de/doc/amlttp/) very soon.
+The complete functionality of the AMLTTP will be explained in detail in the accompanying
+[Online user manual](http://twoears.aipa.tu-berlin.de/doc/amlttp/).
 
 
 ## Credits
@@ -51,7 +55,7 @@ Universität Berlin.
 
 If you use this software, please cite as
 
-Ivo Trowitzsch, Youssef Kashef, and Klaus Obermayer. (2016). Auditory Machine Learning Training and Testing Pipeline: AMLTTP v2.0-alpha [Software]. Zenodo. http://doi.org/10.5281/zenodo.192504
+Ivo Trowitzsch, Youssef Kashef, and Klaus Obermayer. (2019). Auditory Machine Learning Training and Testing Pipeline: AMLTTP v3.0 [Software]. Zenodo. http://doi.org/10.5281/zenodo.2575086
 
 [![DOI](https://zenodo.org/badge/41019651.svg)](https://zenodo.org/badge/latestdoi/41019651)
 

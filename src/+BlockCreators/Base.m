@@ -4,9 +4,12 @@ classdef Base < Core.IdProcInterface
     properties (SetAccess = private)
         shiftSize_s;                % shift between blocks
         blockSize_s;                % size of the AFE data block in seconds
+        curWavFilepath;
+    end
+    
+    properties (SetAccess = private, Transient)
         afeBlocks;
         blockAnnotations;
-        curWavFilepath;
     end
     
     %% -----------------------------------------------------------------------------------

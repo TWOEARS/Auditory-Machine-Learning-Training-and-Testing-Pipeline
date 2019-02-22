@@ -36,3 +36,5 @@ for idx = idxs
         end
     end
 end
+
+fclose( fid );

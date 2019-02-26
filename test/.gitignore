@@ -30,3 +30,4 @@ amlttpRun.*.*.*
 /alphaGroupedMulticlass
 /test_featMask
 /test_brir_training
+/test_instantLabels

@@ -157,6 +157,8 @@ classdef Base < Core.IdProcInterface
                     end
                     if numel( vaii{jj} ) ~= size( b{1}, ii )
                         vaii{1} = repmat( vaii(1), 1, size( b{1}, ii ) );
+                    elseif ~iscell( vaii{1} )
+                        vaii{1} = vaii(1);
                     end
                 end
                 if numel( vaii ) > 1 && numel( vaii{2} ) ~= size( b{1}, ii )

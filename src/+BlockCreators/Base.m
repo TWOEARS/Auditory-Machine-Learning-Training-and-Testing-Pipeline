@@ -34,24 +34,8 @@ classdef Base < Core.IdProcInterface
         %% -------------------------------------------------------------------------------
         
         function afeBlock = cutDataBlock( obj, afeData, backOffset_s )
-            afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
-            for afeKey = afeData.keys
-                afeSignal = afeData(afeKey{1});
-                if isa( afeSignal, 'cell' )
-                    afeSignalExtract = cell( size( afeSignal ) );
-                    for ii = 1 : numel( afeSignal )
-                        afeSignalExtract{ii} = ...
-                            afeSignal{ii}.cutSignalCopyReducedToArray( obj.blockSize_s,...
-                                                                       backOffset_s );
-                    end
-                else
-                    afeSignalExtract = ...
-                        afeSignal.cutSignalCopyReducedToArray( obj.blockSize_s, ...
-                                                               backOffset_s );
-                end
-                afeBlock(afeKey{1}) = afeSignalExtract;
-            end
-            %fprintf( '.' );
+            % this function exists for backwards compatibility
+            afeBlock = BlockCreators.Base.cutAfeData( afeData, obj.blockSize_s, backOffset_s );
         end
         %% ------------------------------------------------------------------------------- 
 
@@ -170,6 +154,27 @@ classdef Base < Core.IdProcInterface
     methods (Static)
         
         %% ------------------------------------------------------------------------------- 
+        
+        function afeBlock = cutAfeData( afeData, blockSize_s, backOffset_s )
+            afeBlock = containers.Map( 'KeyType', 'int32', 'ValueType', 'any' );
+            for afeKey = afeData.keys
+                afeSignal = afeData(afeKey{1});
+                if isa( afeSignal, 'cell' )
+                    afeSignalExtract = cell( size( afeSignal ) );
+                    for ii = 1 : numel( afeSignal )
+                        afeSignalExtract{ii} = ...
+                            afeSignal{ii}.cutSignalCopyReducedToArray( blockSize_s,...
+                                                                       backOffset_s );
+                    end
+                else
+                    afeSignalExtract = ...
+                        afeSignal.cutSignalCopyReducedToArray( blockSize_s, ...
+                                                               backOffset_s );
+                end
+                afeBlock(afeKey{1}) = afeSignalExtract;
+            end
+            %fprintf( '.' );
+        end
         %% ------------------------------------------------------------------------------- 
         
     end

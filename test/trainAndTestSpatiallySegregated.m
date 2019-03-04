@@ -1,4 +1,4 @@
-function trainAndTestSegmented()
+function trainAndTestSpatiallySegregated()
 
 startTwoEars('tt_segmented.config.xml');
 segmModelFileName = '70c4feac861e382413b4c4bfbf895695.mat';

@@ -91,63 +91,8 @@ for nsp = nsps
 end
 
 azmsInterp = 0:2.5:180;
-redist_llhValues = nan( 0, numel( azmsInterp ) );
-for nsp = nsps
-    llhppad_tmp_nsp = cellfun( @sort, llhppad_tmp{nsp}, 'un', false );
-    ad_tmp_nsp = ad_tmp{nsp};
-    if numel( llhppad_tmp_nsp ) == 1 && ad_tmp_nsp == 0
-        continue;
-    end
-    redist_llhIdx_nsp = 0;
-    redist_llhIdxMax_nsp = cellfun( @numel, llhppad_tmp_nsp );
-    nUseAzms = max( ceil( (numel( llhppad_tmp_nsp ) - 1) / 3 ), min( 4, numel( ad_tmp_nsp )-1 ) );
-    sampleAzmsRange = ceil( (numel( llhppad_tmp_nsp ) - 1) / nUseAzms );
-    sampled_llhppad = nan( 1, nUseAzms+1 );
-    sampled_azms = nan( 1, nUseAzms+1 );
-    sampled_azms(1) = ad_tmp_nsp(1);
-    for jj = 1 : 1000*(max( arrayfun( @(a)(numel(a.azms)), sceneDescr ) )-nsp)
-        redist_llhIdx_nsp_ = ceil( max( min( (redist_llhIdx_nsp + randn()*0.01), 1 ), 0+eps ) ...
-                                   * redist_llhIdxMax_nsp(1) );
-        sampled_llhppad(1) = llhppad_tmp_nsp{1}(redist_llhIdx_nsp_);
-        redist_llhIdx_nsp = redist_llhIdx_nsp + 0.01;
-        if redist_llhIdx_nsp > 1
-            redist_llhIdx_nsp = 0;
-        end
-        useAzmIdx = sampleAzmsRange * (0 : nUseAzms-1) + 1 + randi( sampleAzmsRange, 1, nUseAzms );
-        useAzmIdx = unique( min( [useAzmIdx; repmat( numel( llhppad_tmp_nsp ), 1, nUseAzms )], [], 1 ) );
-        if numel( useAzmIdx ) ~= nUseAzms
-            useAzmIdx = unique( [1, useAzmIdx, useAzmIdx - 1] );
-            useAzmIdx(1+randperm( numel( useAzmIdx )-1, numel( useAzmIdx ) - nUseAzms - 1)) = [];
-            useAzmIdx(1) = [];
-        end
-        sampled_azms(2:end) = ad_tmp_nsp(useAzmIdx);
-        for ii = 1 : nUseAzms
-            redist_llhIdx_nsp_ = ceil( max( min( (redist_llhIdx_nsp + randn()*0.01), 1 ), 0+eps ) ...
-                                       * redist_llhIdxMax_nsp(useAzmIdx(ii)) );
-            sampled_llhppad(ii+1) = llhppad_tmp_nsp{useAzmIdx(ii)}(redist_llhIdx_nsp_);
-        end
-        redist_llhValues(end+1,:) = interp1( sampled_azms, sampled_llhppad, azmsInterp, 'pchip', nan );
-    end
-end
-
-llhTPplacement_stats(1,:) = median( redist_llhValues, 1, 'omitnan' );
-llhTPplacement_stats(2,:) = quantile( redist_llhValues, 0.75, 1 );
-llhTPplacement_stats(3,:) = quantile( redist_llhValues, 0.25, 1 );
-sLlh = sort( redist_llhValues );
-ncSllh = sum( ~isnan( sLlh ), 1 );
-ncSllh = max( ncSllh, ones( size( ncSllh ) ) );
-indIdxs = sub2ind( size( sLlh ), min( ncSllh, ceil( 1 + ncSllh/2 + 1.96*sqrt( ncSllh )/2 ) ), 1 : size( sLlh, 2 ) );
-llhTPplacement_stats(4,:) = sLlh(indIdxs);
-indIdxs = sub2ind( size( sLlh ), max( ones( size( ncSllh ) ), floor( ncSllh/2 - 1.96*sqrt( ncSllh )/2 ) ), 1 : size( sLlh, 2 ) );
-llhTPplacement_stats(5,:) = sLlh(indIdxs);
-% https://www.ucl.ac.uk/child-health/short-courses-events/about-statistical-courses/statistics-and-research-methods/chapter-8-content-2
-llhTPplacement_stats(6,:) = nanMean( redist_llhValues, 1 );
-llhIsNan = isnan( llhTPplacement_stats );
-llhTPplacement_stats_ = smoothdata( llhTPplacement_stats, 2, 'sgolay', 18 );
-llhTPplacement_stats_(:,1:8) = repmat( 1:-1/7:0, 6, 1 ) .* llhTPplacement_stats(:,1:8) ...
-                             + repmat( 0:1/7:1, 6, 1 ) .* llhTPplacement_stats_(:,1:8);
-llhTPplacement_stats = llhTPplacement_stats_;
-llhTPplacement_stats(llhIsNan) = nan;
-
+llhTPplacement_stats = interpSmoothStats( ad_tmp, llhppad_tmp, azmsInterp, ...
+                                          1000*(max( nsps ) + 1 - nsps), ...
+                                          'pchip', {'sgolay', 18} );
 
 end

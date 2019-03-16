@@ -31,3 +31,4 @@ amlttpRun.*.*.*
 /test_featMask
 /test_brir_training
 /test_instantLabels
+/test_segr5d

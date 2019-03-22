@@ -185,7 +185,11 @@ classdef RescSparse
             end
             rowIdxEq = zeros( size( idxs, 1 ), 1 );
             rowIdxGt = zeros( size( idxs, 1 ), 1 );
-            iis = [1, size( idxs, 1 ), 2:size( idxs, 1 )-1];
+            if size( idxs, 1 ) > 1
+                iis = [1, size( idxs, 1 ), 2:size( idxs, 1 )-1];
+            else
+                iis = 1;
+            end
             for ii = iis
                 if (nargin >=4) && areIdxsPresorted && (ii==2) && (rowIdxGt(1)==rowIdxGt(end)) && (all( rowIdxEq == 0 ))
                     rowIdxGt(:) = rowIdxGt(1);

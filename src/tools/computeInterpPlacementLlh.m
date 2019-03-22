@@ -93,6 +93,6 @@ end
 azmsInterp = 0:2.5:180;
 llhTPplacement_stats = interpSmoothStats( ad_tmp, llhppad_tmp, azmsInterp, ...
                                           1000*(max( nsps ) + 1 - nsps), ...
-                                          'pchip', {'sgolay', 18} );
+                                          'pchip', {'sgolay', 18}, true );
 
 end

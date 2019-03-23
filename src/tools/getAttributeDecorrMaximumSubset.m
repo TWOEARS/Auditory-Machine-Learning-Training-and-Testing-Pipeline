@@ -1,6 +1,6 @@
 function [attrVal,maxSubsets,tmp] = getAttributeDecorrMaximumSubset( resc, attrVar, depVars, mhReqs, msReqs, decorrVars )
 
-if nargin < 3 || isempty( depVars )
+if nargin < 3 || (isempty( depVars ) && all( decorrVars ~= resc.id.scpId ))
     depVars = resc.id.scpId;
 end
 if nargin < 4
@@ -66,7 +66,7 @@ if ~isequal( decVars__, decorrVars_ )
     tmpAttr.data = tmpAttr.data(sidxs,:);
 end
 
-tmpm = tmpAttr.meanDown( depVars_, ':' );
+tmpm = tmpAttr.meanDown( [depVars_, attrVar_], ':' );
 fprintf( '.' );
 attrVal = tmpm.resc2mat();
 fprintf( '.' );

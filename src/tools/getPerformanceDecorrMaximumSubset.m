@@ -1,6 +1,6 @@
 function [sens,spec,maxSubsets,sensCIs,specCIs,tmp] = getPerformanceDecorrMaximumSubset( resc, depVars, mhReqs, msReqs, decorrVars )
 
-if nargin < 2 || isempty( depVars )
+if nargin < 2 || (isempty( depVars ) && all( decorrVars ~= resc.id.scpId ))
     depVars = resc.id.scpId;
 end
 if nargin < 3
@@ -77,11 +77,16 @@ tmpVal.data = ones( size( tmpVal.data ) );
 perfVal = squeeze( tmpVal.resc2mat() );
 perf(~perfVal) = nan;
 
-sens = squeeze( perf(1,:,:) );
-if size( perf, 1 ) > 1
-    spec = squeeze( perf(2,:,:) );
+if isempty( depVars ) && isequal( size( perf ), [1 2] )
+    sens = perf(1);
+    spec = perf(2);
 else
-    spec = [];
+    sens = squeeze( perf(1,:,:) );
+    if size( perf, 1 ) > 1
+        spec = squeeze( perf(2,:,:) );
+    else
+        spec = [];
+    end
 end
 % if nargout > 3
 %     sensCIs = squeeze( perf(5:6,:,:) );

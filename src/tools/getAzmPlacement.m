@@ -2,11 +2,12 @@ function [placementLlh_scp_azms,...
           pr_maxAzmErr_nyp1_scp,...
           pr_maxAzmErr_scp,...
           bapr_scp,...
-          rs_scps] = getAzmPlacement( rs_b_pp, rs_t_pp, azmIdStr, maxCorrectAzmErr )
+          rs_scps] = getAzmPlacement( rs_b_pp, rs_t_pp, azmIdStr, maxCorrectAzmErr, beStrictAboutClassAppearance )
 
 if nargin < 3, azmIdStr = 'gtAzm'; end
 if nargin < 4, maxCorrectAzmErr = 0; end
 maxCorrectAzmErrBAPI = round( maxCorrectAzmErr/5 ) + 1;
+if nargin < 5, beStrictAboutClassAppearance = true; end
 
 rsb_scps = unique( rs_b_pp.dataIdxs(:,[rs_b_pp.id.scpId,rs_b_pp.id.scpIdExt]), 'rows' );
 rst_scps = unique( rs_t_pp.dataIdxs(:,[rs_t_pp.id.scpId,rs_t_pp.id.scpIdExt]), 'rows' );
@@ -94,17 +95,20 @@ for ii = 1 : size( rs_scps, 1 )
     
         % b_tp_nyp1
         counts_ii_b_tp_nyp1 = getCounts1( rs_b_tp_nyp1_scpii, combs_notIn_b_tp_nyp1, ...
-                                          1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId' );
+                                          1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId', ...
+                                          beStrictAboutClassAppearance );
         counts_b_tp_nyp1(ii,1) = nanSum( counts_ii_b_tp_nyp1(:) );
 
         % b_tp_nyp234
         counts_ii_b_tp_nyp234 = getCounts1( rs_b_tp_nyp234_scpii, combs_notIn_b_tp_nyp234, ...
-                                            1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId' );
+                                            1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId', ...
+                                            beStrictAboutClassAppearance );
         counts_b_tp_nyp234(ii,1) = nanSum( counts_ii_b_tp_nyp234(:) );
 
         % b_fn_nyp123
         counts_ii_b_fn_nyp123 = getCounts1( rs_b_fn_nyp123_scpii, combs_notIn_b_fn_nyp123, ...
-                                            4, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId' );
+                                            4, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId', ...
+                                            beStrictAboutClassAppearance );
         counts_b_fn_nyp123(ii,1) = nanSum( counts_ii_b_fn_nyp123(:) );
 
         % t_pp
@@ -117,36 +121,43 @@ for ii = 1 : size( rs_scps, 1 )
         tmp_di(:,rs_t_pp_scpii.id.counts) = 14;
         rs_t_pp_scpii = rs_t_pp_scpii.addData( tmp_di, tmp_d, true );
         counts_ii_t_pp = getCounts1( rs_t_pp_scpii, combs_notIn_t_pp, ...
-                                     14, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId' );
+                                     14, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId', ...
+                                     beStrictAboutClassAppearance );
         counts_t_pp_scp(ii,1) = nanSum( counts_ii_t_pp(:) );
 
         % t_tp_maxAzmErr_nyp1
         counts_ii_t_pp_maxAzmErr_nyp1 = getCounts1( rs_t_pp_maxAzmErr_nyp1_scpii, combs_notIn_t_pp_maxAzmErr_nyp1, ...
-                                                    1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId' );
+                                                    1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId', ...
+                                                    beStrictAboutClassAppearance );
         counts_t_pp_maxAzmErr_nyp1_scp(ii,1) = nanSum( counts_ii_t_pp_maxAzmErr_nyp1(:) );
 
         % t_tp_maxAzmErr
         counts_ii_t_pp_maxAzmErr = getCounts1( rs_t_pp_maxAzmErr_scpii, combs_notIn_t_pp_maxAzmErr, ...
-                                               1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId' );
+                                               1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, 'scpId', ...
+                                               beStrictAboutClassAppearance );
         counts_t_pp_maxAzmErr_scp(ii,1) = nanSum( counts_ii_t_pp_maxAzmErr(:) );
 
     end
     
     % b_tp
     azmDist_counts_ii_tp = getCounts1( rs_b_tp_scpii, combs_notIn_b_tp, ...
-                                       1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr );
+                                       1, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr, ...
+                                       beStrictAboutClassAppearance );
     
     % b_fp
     azmDist_counts_ii_fp = getCounts1( rs_b_fp_scpii, combs_notIn_b_fp, ...
-                                       3, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr );
+                                       3, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr, ...
+                                       beStrictAboutClassAppearance );
     
     % b_fn
     azmDist_counts_ii_fn = getCounts1( rs_b_fn_scpii, combs_notIn_b_fn, ...
-                                       4, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr );
+                                       4, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr, ...
+                                       beStrictAboutClassAppearance );
     
     % b_tn
     azmDist_counts_ii_tn = getCounts1( rs_b_tn_scpii, combs_notIn_b_tn, ...
-                                       2, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr );
+                                       2, rs_scps(ii,1), rs_scps(ii,2), azmIdStr, azmIdStr, ...
+                                       beStrictAboutClassAppearance );
     
     azmDist_posCounts_ii = nan( 2, max( numel( azmDist_counts_ii_tp ), numel( azmDist_counts_ii_fp ) ) );
     azmDist_posCounts_ii(1,1:numel( azmDist_counts_ii_tp )) = azmDist_counts_ii_tp;
@@ -199,7 +210,7 @@ function eids = getEssentialIds( rs, azmIdStr )
     end
 end
 
-function counts = getCounts1( rs, eids_notIncluded_butNeeded, c_rep, scpid, scpide, azmIdStr, countsDepId )
+function counts = getCounts1( rs, eids_notIncluded_butNeeded, c_rep, scpid, scpide, azmIdStr, countsDepId, beStrictAboutClassAppearance )
     if ~isempty( rs.dataIdxs ) && ~isempty( eids_notIncluded_butNeeded )
         combs_notUsed_dataIdxs = zeros( size( eids_notIncluded_butNeeded, 1 ), size( rs.dataIdxs, 2 ) );
         combs_notUsed_dataIdxs(:,rs.id.classIdx) = eids_notIncluded_butNeeded(:,1);
@@ -218,11 +229,17 @@ function counts = getCounts1( rs, eids_notIncluded_butNeeded, c_rep, scpid, scpi
     rs.dataIdxs(:,cid) = round( rs.data * df255maxFactor );
     rs.id.cid = cid;
     if ~isempty( rs.data )
-        counts = getAttributeDecorrMaximumSubset( rs, rs.id.cid, ...
-            [rs.id.(countsDepId)], ...
-            {[rs.id.classIdx],[],false;},...
-            {},...
-            [rs.id.fileClassId,rs.id.fileId] );
+        if nargin >= 8 && beStrictAboutClassAppearance
+            counts = getAttributeDecorrMaximumSubset( rs, rs.id.cid, ...
+                [rs.id.(countsDepId)], ...
+                {[rs.id.classIdx],[],false;},...
+                {},...
+                [rs.id.fileClassId,rs.id.fileId] );
+        else
+            counts = getAttributeDecorrMaximumSubset( rs, rs.id.cid, ...
+                [rs.id.(countsDepId)], {}, {},...
+                [rs.id.classIdx,rs.id.fileClassId,rs.id.fileId] );        
+        end
     else
         counts = zeros( 1, 0 );
     end

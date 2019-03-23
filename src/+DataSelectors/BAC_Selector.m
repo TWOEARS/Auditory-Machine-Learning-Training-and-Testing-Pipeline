@@ -42,7 +42,7 @@ classdef BAC_Selector < DataSelectors.Base
             nLabels = numel( labels );
             nClassSamples = zeros( nLabels, 1 );
             nRemaining = maxDataSize;
-            throwoutIdxs = [];
+            throwoutIdxs = zeros( 0, 1 );
             for ii = labelOrder'
                 nKeep = min( int32( nRemaining/nLabels ), nPerLabel(ii) );
                 nClassSamples(ii) = nKeep;

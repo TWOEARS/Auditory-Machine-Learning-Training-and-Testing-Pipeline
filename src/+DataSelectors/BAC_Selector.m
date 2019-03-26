@@ -50,7 +50,7 @@ classdef BAC_Selector < DataSelectors.Base
                 nLabels = nLabels - 1;
                 lIdxs = find( y == labels(ii) );
                 lIdxs = lIdxs(randperm(nPerLabel(ii)));
-                throwoutIdxs = [throwoutIdxs; lIdxs(nKeep+1:end)];
+                throwoutIdxs = [throwoutIdxs; lIdxs(nKeep+1:end,:)];
             end
         end
         % -----------------------------------------------------------------

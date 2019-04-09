@@ -2,19 +2,16 @@ function trainAndTestInstantLabels()
 
 startTwoEars('tt_general.config.xml');
 
-blockLength = 5; 
-labelBlockLength = 10e-3;
-
 %% training
 if ~exist( fullfile( 'test_instantLabels', 'speech.model.mat' ), 'file' )
 % pipeline creation
 pipe = TwoEarsIdTrainPipe( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
-pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( blockLength, min( 1.0, max( 0.2, labelBlockLength/2 ) ) );
+pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 0.2 );
 pipe.featureCreator = FeatureCreators.MultiBlocksFeatureCreator( ...
-    {FeatureCreators.FeatureSet5Blockmean(), FeatureCreators.FeatureSet5Blockmean()}, ...
-    [blockLength, labelBlockLength] );
+    {FeatureCreators.FeatureSet5Blockmean(), FeatureCreators.FeatureSet5Blockmean(), FeatureCreators.FeatureSet5Blockmean()}, ...
+    [0.5, 0.5, 0.01], [0.5, 0, 0] ); % block1: -1s..-0.5s, block2: -0.5s..0s, block3: -0.01s..0s
 pipe.labelCreator = LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, 'negOut', 'rest', ...
-                                                         'labelBlockSize_s', labelBlockLength );
+                                                         'labelBlockSize_s', 0.01 );
 pipe.modelCreator = ModelTrainers.GlmNetLambdaSelectTrainer( ...
     'performanceMeasure', @PerformanceMeasures.BAC, ...
     'cvFolds', 'preFolded', ...  % most reasonable if supplying prefolded dataset definitions
@@ -63,10 +60,12 @@ end
 %% testing
 % pipeline creation
 pipe = TwoEarsIdTrainPipe( 'cacheSystemDir', [getMFilePath() '/../../idPipeCache'] );
-pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( blockLength, min( 1.0, max( 1./3, labelBlockLength/2 ) ) );
-pipe.featureCreator = FeatureCreators.MultiBlocksFeatureCreator( {FeatureCreators.FeatureSet5Blockmean(), FeatureCreators.FeatureSet5Blockmean()}, [blockLength, labelBlockLength] );
+pipe.blockCreator = BlockCreators.MeanStandardBlockCreator( 1.0, 0.2 );
+pipe.featureCreator = FeatureCreators.MultiBlocksFeatureCreator( ...
+    {FeatureCreators.FeatureSet5Blockmean(), FeatureCreators.FeatureSet5Blockmean(), FeatureCreators.FeatureSet5Blockmean()}, ...
+    [0.5, 0.5, 0.01], [0.5, 0, 0] ); % block1: -1s..-0.5s, block2: -0.5s..0s, block3: -0.01s..0s
 pipe.labelCreator = LabelCreators.MultiEventTypeLabeler( 'types', {{'speech'}}, 'negOut', 'rest', ...
-                                                         'labelBlockSize_s', labelBlockLength );
+                                                         'labelBlockSize_s', 0.01 );
 pipe.modelCreator = ModelTrainers.LoadModelNoopTrainer( ...
         fullfile( modelPath, ['speech' '.model.mat'] ), ...
         'performanceMeasure', @PerformanceMeasures.BAC,...

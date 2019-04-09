@@ -7,6 +7,7 @@ classdef MultiBlocksFeatureCreator < FeatureCreators.Base
     properties (SetAccess = private)
         featureCreators;
         blockLengths;
+        block_back_offsets;
         arAssociations;
     end
     
@@ -17,10 +18,16 @@ classdef MultiBlocksFeatureCreator < FeatureCreators.Base
     %% --------------------------------------------------------------------
     methods (Access = public)
         
-        function obj = MultiBlocksFeatureCreator( featureCreators, blockLengths )
+        function obj = MultiBlocksFeatureCreator( featureCreators, blockLengths, block_back_offsets )
             obj = obj@FeatureCreators.Base();
             obj.featureCreators = featureCreators;
             obj.blockLengths = blockLengths;
+            if nargin < 3 || isempty( block_back_offsets )
+                block_back_offsets = zeros( size( blockLengths ) );
+            elseif ~isequal( size( block_back_offsets ), size( blockLengths ) )
+                error( 'size( block_back_offsets ) must equal size( blockLengths ).' );
+            end
+            obj.block_back_offsets = block_back_offsets;
         end
         %% ----------------------------------------------------------------
 
@@ -44,14 +51,18 @@ classdef MultiBlocksFeatureCreator < FeatureCreators.Base
                 for jj = 1 : numel( obj.arAssociations{ii} )
                     ad(jj) = obj.afeData(obj.arAssociations{ii}(jj));
                 end
-                if obj.blockAnnotations(obj.baIdx).blockOffset ...
-                        - obj.blockAnnotations(obj.baIdx).blockOnset > obj.blockLengths(ii)
-                    ad = BlockCreators.Base.cutAfeData( ad, obj.blockLengths(ii), 0 );
+                curBAlen = obj.blockAnnotations(obj.baIdx).blockOffset ...
+                    - obj.blockAnnotations(obj.baIdx).blockOnset;
+                if  (curBAlen > (obj.blockLengths(ii) + obj.block_back_offsets(ii))) ...
+                        || (obj.block_back_offsets(ii) > 0)
+                    ad = BlockCreators.Base.cutAfeData( ad, obj.blockLengths(ii), obj.block_back_offsets(ii) );
                 end
                 obj.featureCreators{ii}.afeData = ad;
                 x_ii = obj.featureCreators{ii}.constructVector();
                 if ~obj.descriptionBuilt
-                    x_ii{2} = cellfun( @(c)([c {['bl' num2str( obj.blockLengths(ii) )]}]), x_ii{2}, 'UniformOutput', false );
+                    x_ii{2} = cellfun( ...
+                        @(c)([c {['bl' num2str( obj.blockLengths(ii) )], ['blo' num2str( obj.block_back_offsets(ii) )]}]), ...
+                        x_ii{2}, 'UniformOutput', false );
                     obj.featureCreators{ii}.descriptionBuilt = true;
                 end
                 x = obj.concatFeats( x, x_ii );

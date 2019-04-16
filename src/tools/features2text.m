@@ -1,17 +1,23 @@
-function features2text( featureDescFile, idxs, fileName )
+function features2text( featureDesc, idxs, fileName )
 % FEATURES2TEXT extract feature set description and put to text file
 % 
-% featureDescFile -- mat file with feature set description (format as
-% produced by AMLTTP feature creators)
+% featureDesc -- path to mat file with feature set description (format as
+% produced by AMLTTP feature creators) OR feature set description itself
 % idxs -- optional, only output selected indexes. default: all
 % fileName -- name of output text file. If omitted, output to command
 % window.
  
 %%
-load( featureDescFile, 'description' );
+if iscell( featureDesc )
+    description = featureDesc;
+else
+    load( featureDesc, 'description' );
+end
 
 if nargin < 2 || isempty( idxs )
-    idxs = 1 : numel( description ); %#ok<USENS>
+    idxs = 1 : numel( description ); 
+elseif islogical( idxs )
+    idxs = find( idxs );
 end
 
 if nargin > 2 && ~isempty( fileName )
@@ -23,7 +29,7 @@ end
 if size( idxs, 1 ) ~= 1, idxs = idxs'; end
 
 for idx = idxs
-    for ii = 1 : numel( description{idx} ) %#ok<IDISVAR>
+    for ii = 1 : numel( description{idx} ) 
         if ischar( description{idx}{ii} )
             fprintf( fid, '%s', description{idx}{ii} );
         else
@@ -37,4 +43,4 @@ for idx = idxs
     end
 end
 
-fclose( fid );
+if fid ~= 1, fclose( fid ); end

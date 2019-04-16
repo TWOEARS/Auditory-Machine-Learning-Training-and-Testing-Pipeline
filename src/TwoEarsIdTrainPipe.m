@@ -262,7 +262,16 @@ classdef TwoEarsIdTrainPipe < handle
             obj.dataSetupAlreadyDone = true;
         end
         %% -------------------------------------------------------------------------------
-        
+
+        function setupSingleFileData( obj, singleFilepath )
+            singleFileData = Core.IdentTrainPipeData();
+            singleFileData.loadSingleFile( singleFilepath );
+            obj.pipeline.setTrainData( singleFileData );
+            obj.srcDataSpec = {singleFileData(:,'fileName')};
+            obj.wfasgns = {{1}};
+            obj.dataSetupAlreadyDone = true;
+        end
+
     end
 
 end

@@ -393,6 +393,18 @@ classdef IdentTrainPipeData < handle
         end
         %% -------------------------------------------------------------------------------
         
+        function loadSingleFile( obj, filePath )
+            fprintf( '%s\n', filePath );
+            if ~exist( filePath, 'file' )
+                error( '%s not found!', filePath );
+            end
+            p = fileparts( filePath );
+            addPathsIfNotIncluded( p );
+            filePath = which( filePath ); % ensure absolute path
+            obj.data = Core.IdentTrainPipeDataElem( filePath, obj );
+        end
+        %% -------------------------------------------------------------------------------
+        
         function fIdx = getFileIdx( obj, fileNames )
             if ~iscell( fileNames ), fileNames = {fileNames}; end
             fIdx = [];

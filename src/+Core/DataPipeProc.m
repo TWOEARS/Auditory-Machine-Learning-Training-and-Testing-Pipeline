@@ -134,6 +134,7 @@ classdef DataPipeProc < handle
             ndf = numel( datalist );
             dfii = 1;
             foldsProcessed = {};
+            if ~isempty( datalist )
             for dataFile = datalist(randperm(length(datalist)))'
                 isFirstRunInFold = obj.determineWhetherFirstFileInFold( foldsProcessed, dataFile );
                 if isFirstRunInFold % with the first file in each fold, caches of wrapped procs often update
@@ -175,6 +176,7 @@ classdef DataPipeProc < handle
                 fprintf( '\n' );
 %                 freemem = memReport() % for debugging
 %                 fprintf( '\n' );
+            end
             end
             obj.dataFileProcessor.saveCacheDirectory();
             fprintf( '..;\n' );

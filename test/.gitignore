@@ -32,3 +32,4 @@ amlttpRun.*.*.*
 /test_brir_training
 /test_instantLabels
 /test_segr5d
+/tmp_genFeatureMask

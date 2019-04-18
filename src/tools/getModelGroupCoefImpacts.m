@@ -7,6 +7,9 @@ for mm = 1 : numel( modelpathes )
     mf = load( modelpathes{mm} );
     fd_ = fd;
     fd = mf.featureCreator.description;
+    if ~isempty( mf.model.featureMask )
+        fd = fd(mf.model.featureMask);
+    end
     if mm > 1 && ~isequal( fd, fd_ )
         error( 'Models have different feature descriptions.' );
     end

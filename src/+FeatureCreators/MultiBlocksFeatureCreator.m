@@ -75,6 +75,7 @@ classdef MultiBlocksFeatureCreator < FeatureCreators.Base
                 outputDeps.(['fc' num2str( ii )]) = obj.featureCreators{ii}.getInternOutputDependencies();
             end
             outputDeps.blockLengths = obj.blockLengths;
+            outputDeps.block_back_offsets = obj.block_back_offsets;
             classInfo = metaclass( obj );
             [classname1, classname2] = strtok( classInfo.Name, '.' );
             if isempty( classname2 ), outputDeps.featureProc = classname1;

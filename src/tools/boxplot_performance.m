@@ -17,7 +17,7 @@ set( gca,'YGrid','on' );
 % ylim( [(min([varargin{:}])-mod(min([varargin{:}]),0.10)) 1] );
 
 texts = findobj(gca,'Type','text');
-set( texts,'FontSize',11, 'Interpreter', 'tex' );
+set( texts,'FontSize',12, 'Interpreter', 'tex' );
 if numel( texts ) > 1
     textPos = get( texts, 'Position' );
     textExt = cell2mat( get( texts, 'Extent' ) );

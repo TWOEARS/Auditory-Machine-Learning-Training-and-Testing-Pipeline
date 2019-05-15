@@ -1,4 +1,4 @@
-function boostedInterp_stats = interpSmoothStats( x_groups, y_groups, xq, nGroupBoosts, interpMethod, smoothingParams, firstElemMandatory )
+function boostedInterp_stats = interpSmoothStats( x_groups, y_groups, xq, nGroupBoosts, interpMethod, smoothingParams, firstElemMandatory, extrap )
 % INTERPSMOOTHSTATS boosted 1-D interpolation, returning smoothed
 % statistics. Boosting inside groups of data.
 %
@@ -12,6 +12,9 @@ function boostedInterp_stats = interpSmoothStats( x_groups, y_groups, xq, nGroup
 %                               smoothing window}
 % firstElemMandatory: boolean, whether the first element of each x_groups
 %                     must be included, or can be included
+% extrap: boolean, whether to extrapolate or not
+%%
+if nargin < 8 || isempty( extrap ), extrap = false; end
 
 %%
 femadd = double( ~firstElemMandatory );
@@ -56,6 +59,10 @@ for gg = 1 : numel( y_groups )
             subsampled_y_gg(ii+1-femadd) = y_gg{subsampleIdxs(ii)}(y_gg_ySampleIdx);
         end
         yq(end+1,:) = interp1( subsampled_x_gg, subsampled_y_gg, xq, interpMethod, nan );
+        if extrap
+            tmp = interp1( subsampled_x_gg, subsampled_y_gg, xq, 'nearest', 'extrap' );
+            yq(end,isnan( yq(end,:) )) = tmp(isnan( yq(end,:) ));
+        end
     end
 end
 
@@ -77,8 +84,16 @@ boostedInterp_stats(6,:) = nanMean( yq, 1 );
 bisIsNan = isnan( boostedInterp_stats );
 smoothed_stats = smoothdata( boostedInterp_stats, 2, smoothingParams{:} );
 if firstElemMandatory
-    smoothed_stats(:,1:8) = repmat( 1:-1/7:0, 6, 1 ) .* boostedInterp_stats(:,1:8) ...
-                            + repmat( 0:1/7:1, 6, 1 ) .* smoothed_stats(:,1:8);
+    fes = mean( cellfun( @(c)(c(1)), x_groups ) );
+    [~,fesidx] = min( abs( xq - fes ) );
+    fesw = 3;
+    fesidxs = fesidx-fesw:fesidx+fesw;
+    bisr = [0:1/fesw:1,1-1/fesw:-1/fesw:0];
+    bisr(fesidxs<1 | fesidxs>size(smoothed_stats,2)) = [];
+    ssr = 1 - bisr;
+    fesidxs(fesidxs<1 | fesidxs>size(smoothed_stats,2)) = [];
+    smoothed_stats(:,fesidxs) = repmat( bisr, 6, 1 ) .* boostedInterp_stats(:,fesidxs) ...
+                                + repmat( ssr, 6, 1 ) .* smoothed_stats(:,fesidxs);
 end
 boostedInterp_stats = smoothed_stats;
 boostedInterp_stats(bisIsNan) = nan;

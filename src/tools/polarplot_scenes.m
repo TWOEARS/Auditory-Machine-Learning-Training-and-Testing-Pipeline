@@ -1,10 +1,13 @@
-function polarplot_scenes( ascp, iis, compress_iis )
+function polarplot_scenes( ascp, iis, bCompress_iis, bHlTargetSrcs )
 
 if nargin < 2 || isempty( iis )
     iis = 1:numel( ascp );
 end
-if nargin < 3 || isempty( compress_iis )
-    compress_iis = false;
+if nargin < 3 || isempty( bCompress_iis )
+    bCompress_iis = false;
+end
+if nargin < 4 || isempty( bHlTargetSrcs )
+    bHlTargetSrcs = true;
 end
 
 figure;
@@ -28,7 +31,7 @@ for ii = iis
             rrazmsquant = [rrazmsquant rrazmsquant(end):1:round(jj)];
         end
     end
-    if ~compress_iis
+    if ~bCompress_iis
         rr = rr + 0.1;
     else
         minfreerr = find( all( rr_azms(:,wrapTo1_360(rrazmsquant)), 2 ), 1 );
@@ -42,8 +45,10 @@ for ii = iis
         pphColor = get( pph, 'Color' );
         hold on
         polarscatter( deg2rad( sazms ), repmat( rr, size( sazms ) ), 'filled', 'MarkerFaceColor', pphColor );
-        polarscatter( deg2rad( ascp(ii).azms(1) ), rr, 'filled', 'MarkerFaceColor', [0.2,0.6,0.2] );
-        polarscatter( deg2rad( ascp(ii).azms(1) ), rr, 80, [0.2,0.6,0.2], 'MarkerFaceAlpha', 0.8 );
+        if bHlTargetSrcs
+            polarscatter( deg2rad( ascp(ii).azms(1) ), rr, 'filled', 'MarkerFaceColor', [0.2,0.6,0.2] );
+            polarscatter( deg2rad( ascp(ii).azms(1) ), rr, 80, [0.2,0.6,0.2], 'MarkerFaceAlpha', 0.8 );
+        end
     end
 end
 

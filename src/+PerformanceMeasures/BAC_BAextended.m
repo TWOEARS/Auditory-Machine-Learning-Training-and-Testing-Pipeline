@@ -396,7 +396,7 @@ classdef BAC_BAextended < PerformanceMeasures.Base
             
             bafiles = cellfun( @(c)(c.srcFile), {blockAnnotations.srcFile}', 'UniformOutput', false );
             nonemptybaf = ~cellfun( @isempty, bafiles );
-			nonemptybaf = nonemptybaf & cellfun( @(x)(any([x{:,2}]==1)), bafiles(nonemptybaf) );
+			nonemptybaf(nonemptybaf) = cellfun( @(x)(any([x{:,2}]==1)), bafiles(nonemptybaf) );
             bafiles = cellfun( @(x)(x{[x{:,2}]==1,1}), bafiles(nonemptybaf), 'UniformOutput', false );
             bafFilesepIdxs = cellfun( @(c)( strfind( c, '/' ) ), bafiles, 'UniformOutput', false );
             bafClasses = cellfun( @(fp,idx)(fp(idx(end-1)+1:idx(end)-1)), bafiles, bafFilesepIdxs, 'UniformOutput', false );

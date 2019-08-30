@@ -70,7 +70,8 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             sceneConfigInst = obj.sceneConfig.instantiate();
             obj.setupSceneConfig( sceneConfigInst );
             signal = obj.loadSound( sceneConfigInst, wavFilepath );
-            if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' )
+            if isa( sceneConfigInst.sources(1), 'SceneConfig.DiffuseSource' ) || ...
+                    isa( sceneConfigInst.sources(1), 'SceneConfig.DirectInputSource' )
                 obj.earSout = signal{1};
                 t = obj.convRoomSim.BlockSize : obj.convRoomSim.BlockSize : size( signal{1}, 1 );
                 t = t / obj.convRoomSim.SampleRate;
@@ -236,8 +237,18 @@ classdef IdSimConvRoomWrapper < Core.IdProcInterface
             onOffs = [];
             eventType = '';
             if ischar( src ) % then it is a filename
-                signal{1} = getPointSourceSignalFromWav( ...
-                             src, obj.convRoomSim.SampleRate, startOffset, false, 'max' );
+                if ~isa( sceneConfig.sources(1), 'SceneConfig.DirectInputSource' )
+                    signal{1} = getPointSourceSignalFromWav( ...
+                                 src, obj.convRoomSim.SampleRate, startOffset, false, 'max' );
+                else
+                    [sourceWavSignal,wavFs] = audioread( src );
+                    if wavFs ~= obj.convRoomSim.SampleRate
+                        sourceWavSignal = resample(sourceWavSignal, obj.convRoomSim.SampleRate, wavFs);
+                    end
+                    nZeros = floor( obj.convRoomSim.SampleRate * startOffset );
+                    zeroOffset = zeros( nZeros, 2 ) + mean( sourceWavSignal, 1 );
+                    signal{1} = [zeroOffset; sourceWavSignal; zeroOffset];
+                end
                 eventType = IdEvalFrame.readEventClass( wavFilepath );
                 if strcmpi( eventType, 'general' )
                     onOffs = zeros(0,2);

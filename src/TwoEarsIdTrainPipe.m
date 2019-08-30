@@ -242,7 +242,7 @@ classdef TwoEarsIdTrainPipe < handle
                     testFolds{ii}.loadFileList( obj.testFlists{ii}, obj.checkFileExistence );
                 end
                 obj.pipeline.setTestData( Core.IdentTrainPipeData.combineData( testFolds{:} ) );
-            else
+            elseif ~isempty( obj.dataFlists )
                 dataFolds = cell( 1, numel( obj.dataFlists ) );
                 for ii = 1 : numel( obj.dataFlists )
                     dataFolds{ii} = Core.IdentTrainPipeData();
@@ -251,6 +251,8 @@ classdef TwoEarsIdTrainPipe < handle
                 obj.pipeline.connectData( Core.IdentTrainPipeData.combineData( dataFolds{:} ) );
                 % not sure the following is reasonable wrt folds setup
                 obj.pipeline.splitIntoTrainAndTestSets( obj.trainsetShare );
+            else
+                obj.pipeline.connectData( Core.IdentTrainPipeData() );
             end
             obj.srcDataSpec = cell( 1, numel( obj.pipeline.data.folds ) );
             obj.wfasgns = cell( 1, numel( obj.pipeline.data.folds ) );

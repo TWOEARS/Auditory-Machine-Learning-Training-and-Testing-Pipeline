@@ -54,7 +54,7 @@ classdef GatherFeaturesProc < Core.IdProcInterface
                     sceneCfgDeps = sceneCfgDeps.preceding;
                 end
                 isNotPointSource = @(x)(isa( x, 'SceneConfig.DiffuseSource' ) || isa( x, 'SceneConfig.DirectInputSource' ) );
-				npssc = sum( arrayfun( @(a)(~isNotPointSource), sceneCfgDeps.sceneCfg.sources ) );
+				npssc = sum( arrayfun( @(a)(~isNotPointSource(a)), sceneCfgDeps.sceneCfg.sources ) );
                 [xy.blockAnnotations(:).nPointSrcsSceneConfig] = deal( npssc );
             else
                 xy = obj.loadInputData( wavFilepath, 'x', 'y', 'ysi' );

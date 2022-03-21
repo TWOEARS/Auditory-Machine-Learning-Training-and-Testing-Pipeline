@@ -45,7 +45,7 @@ This will be accomplished by executing the following commands in:
 ```
 
 The complete functionality of the AMLTTP will be explained in detail in the accompanying
-[Online user manual](http://twoears.aipa.tu-berlin.de/doc/amlttp/).
+[Online user manual](http://docs.twoears.eu/en/latest/afe/).
 
 
 ## Credits
